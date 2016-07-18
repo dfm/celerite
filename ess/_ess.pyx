@@ -26,7 +26,7 @@ cdef extern from "GRP.hpp":
         double obtain_Determinant()
 
 
-cdef class GRPSolver:
+cdef class CythonGRPSolver:
 
     cdef GRP* solver
     cdef unsigned int m

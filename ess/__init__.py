@@ -10,4 +10,4 @@ except NameError:
 if not __ESS_SETUP__:
     __all__ = ["GRPSolver"]
 
-    from ._ess import GRPSolver
+    from .ess import GRPSolver
