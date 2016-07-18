@@ -5,9 +5,11 @@ from __future__ import division, print_function
 import pytest
 import numpy as np
 
+from .ess import GRPSolver
 from ._ess import CythonGRPSolver
 
-__all__ = ["test_invalid_parameters", "test_log_determinant", "test_solve"]
+__all__ = ["test_invalid_parameters", "test_log_determinant", "test_solve",
+           "test_order"]
 
 
 def test_invalid_parameters(seed=42):
@@ -58,3 +60,28 @@ def test_solve(seed=42):
     K = solver.get_matrix()
     b = np.random.randn(len(t))
     assert np.allclose(solver.apply_inverse(b), np.linalg.solve(K, b))
+
+
+def test_order(seed=42):
+    np.random.seed(seed)
+    t = np.random.rand(500)
+    yerr = np.random.uniform(0.1, 0.5, len(t))
+    b = np.random.randn(len(t))
+    inds = np.argsort(t)
+
+    solver = GRPSolver(np.random.randn(3), np.random.randn(3),
+                       np.random.rand(3))
+
+    solver.compute(t, yerr)
+    K = solver.solver.get_matrix()
+    x1 = solver.apply_inverse(b)
+    x2 = np.empty_like(x1)
+    x2[inds] = np.linalg.solve(K, b[inds])
+    assert np.allclose(x1, x2)
+
+    t = np.sort(t)
+    solver.compute(t, yerr)
+    K = solver.solver.get_matrix()
+    x1 = solver.apply_inverse(b)
+    x2 = np.linalg.solve(K, b)
+    assert np.allclose(x1, x2)
