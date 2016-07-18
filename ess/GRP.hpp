@@ -70,217 +70,151 @@
 #include <Eigen/Dense>
 #include <Eigen/Sparse>
 
+#define GRP_DIMENSION_MISMATCH 1
+
 class GRP {
-private:
-    // Number of unknowns.
-    int N;
-
-    // Rank of the separable part.
-    int m;
-
-    // The semi-separable matrix is of the form diag(d) + triu(U*V,1) + tril((U*V)',-1).
-    Eigen::VectorXd alpha;
-    Eigen::VectorXcd beta;
-    Eigen::VectorXd t;
-
-    // Diagonal entries of the matrix.
-    Eigen::VectorXd d;
-
-    // Size of the extended sparse matrix.
-    int M;
-
-    // Number of non-zeros per block.
-    int blocknnz;
-
-    // Total number of non-zeros.
-    int nnz;
-
-    // Size of each block, will be 2m+1.
-    int nBlockSize;
-
-    // Starting index of each of the blocks.
-    std::vector<int> nBlockStart;
-    // Vector of triplets used to store the sparse matrix.
-    std::vector<Eigen::Triplet<std::complex<double> > > triplets;
-    // The extended sparse matrix.
-    Eigen::SparseMatrix<std::complex<double> > Aex;
-
-    // Stores the factorization.
-    Eigen::SparseLU<Eigen::SparseMatrix<std::complex<double> >, Eigen::COLAMDOrdering<int> > factorize;
-
 public:
 
-    GRP(
-        const int N,
-        const int m,
-        const Eigen::VectorXd alpha,
-        const Eigen::VectorXcd beta,
-        const Eigen::VectorXd t,
-        const Eigen::VectorXd d
-    );
-    GRP(
-        const int N,
-        const int m,
-        double* alpha,
-        std::complex<double>* beta,
-        double* t,
-        double* d
-    );
-    void assemble_Extended_Matrix();
-    void factorize_Extended_Matrix();
-    void obtain_Solution(
-        const Eigen::VectorXd rhs,
-        Eigen::VectorXd& solution,
-        Eigen::VectorXcd& solutionex
-    );
-    void obtain_Solution(
-        double* rhs,
-        double* solution
-    );
-    double obtain_Determinant();
+  GRP(const Eigen::VectorXd alpha, const Eigen::VectorXcd beta)
+  : alpha_(alpha)
+  , beta_(beta)
+  , m_(alpha.rows())
+  {};
 
-    // Obtain error, i.e., ||Ax-b||_{\inf}
-    /* double obtain_Error(const Eigen::VectorXd rhs, const Eigen::VectorXd& solex); */
+  GRP(size_t m, double* alpha, std::complex<double>* beta) {
+    m_ = m;
+    alpha_ = Eigen::Map<Eigen::MatrixXd>(alpha, m, 1);
+    beta_ = Eigen::Map<Eigen::MatrixXcd>(beta, m, 1);
+  };
+
+  void compute (const Eigen::VectorXd t, const Eigen::VectorXd d);
+  void compute (size_t N, double* t, double* d) {
+    compute(Eigen::Map<Eigen::MatrixXd>(t, N, 1),
+            Eigen::Map<Eigen::MatrixXd>(d, N, 1));
+  };
+
+  Eigen::VectorXd solve (const Eigen::VectorXd rhs) const;
+  void solve(double* rhs, double* solution) const;
+  double get_log_determinant () const;
+
+private:
+  Eigen::VectorXd alpha_;
+  Eigen::VectorXcd beta_;
+
+  // Number of unknowns.
+  size_t N_;
+
+  // Rank of the separable part.
+  size_t m_;
+
+  // Size of the extended sparse matrix.
+  size_t M_;
+
+  // Locations of the blocks.
+  std::vector<size_t> nBlockStart_;
+
+  // The extended sparse matrix.
+  Eigen::SparseLU<Eigen::SparseMatrix<std::complex<double> >,
+                  Eigen::COLAMDOrdering<int> > factor_;
 };
 
-GRP::GRP (const int N, const int m, const Eigen::VectorXd alpha, const Eigen::VectorXcd beta, const Eigen::VectorXd t, const Eigen::VectorXd d) {
-    this->N     = N;
-    this->m     = m;
-    this->alpha = alpha;
-    this->beta  = beta;
-    this->t     = t;
-    this->d     = d;
+void GRP::compute (const Eigen::VectorXd t, const Eigen::VectorXd d) {
+  if (t.rows() != d.rows())
+    throw GRP_DIMENSION_MISMATCH;
+  N_ = t.rows();
+
+  Eigen::MatrixXcd gamma = Eigen::MatrixXcd(m_, N_-1);
+  for (size_t i = 0; i < m_; ++i)
+    for (size_t j = 0; j < N_-1; ++j)
+      gamma(i,j) = exp(-beta_(i) * fabs(t(j) - t(j+1)));
+
+  // Declare 2*m as a variable, since this will be used frequently.
+  size_t twom = 2 * m_;
+
+  // Declare the blocksize, which is the repeating structure along the
+  // diagonal.
+  size_t nBlockSize = twom+1;
+
+  // Size of the extended sparse matrix.
+  M_ = N_*nBlockSize-twom;
+
+  // Obtain the starting index of each of the block.
+  for (size_t k = 0; k < N_; ++k) nBlockStart_.push_back(k*nBlockSize);
+
+  // Assembles block by block except the identity matrices on the
+  // supersuperdiagonal.
+  std::vector<Eigen::Triplet<std::complex<double> > > triplets;
+  for (size_t nBlock = 0; nBlock < N_-1; ++nBlock) {
+    // The starting row and column for the blocks.
+    // Assemble the diagonal first.
+    triplets.push_back(
+        Eigen::Triplet<std::complex<double> >(
+          nBlockStart_[nBlock], nBlockStart_[nBlock], d(nBlock)));
+    for (size_t k=0; k < m_; ++k) {
+      triplets.push_back(
+          Eigen::Triplet<std::complex<double> >(
+            nBlockStart_[nBlock]+k+1, nBlockStart_[nBlock], gamma(k,nBlock)));
+      triplets.push_back(
+          Eigen::Triplet<std::complex<double> >(
+            nBlockStart_[nBlock], nBlockStart_[nBlock]+k+1, gamma(k,nBlock)));
+      triplets.push_back(
+          Eigen::Triplet<std::complex<double> >(
+            nBlockStart_[nBlock]+m_+k+1, nBlockStart_[nBlock]+twom+1, alpha_(k)));
+      triplets.push_back(
+          Eigen::Triplet<std::complex<double> >(
+            nBlockStart_[nBlock]+twom+1, nBlockStart_[nBlock]+m_+k+1, alpha_(k)));
+      triplets.push_back(
+          Eigen::Triplet<std::complex<double> >(
+            nBlockStart_[nBlock]+k+1, nBlockStart_[nBlock]+k+m_+1, -1.0));
+      triplets.push_back(
+          Eigen::Triplet<std::complex<double> >(
+            nBlockStart_[nBlock]+k+m_+1, nBlockStart_[nBlock]+k+1, -1.0));
+    }
+  }
+  triplets.push_back(Eigen::Triplet<std::complex<double> >(M_-1, M_-1, d(N_-1)));
+
+  // Assembles the supersuperdiagonal identity blocks.
+  for (size_t nBlock = 0; nBlock < N_-2; ++nBlock) {
+    for (size_t k = 0; k < m_; ++k) {
+      triplets.push_back(
+          Eigen::Triplet<std::complex<double> >(
+            nBlockStart_[nBlock]+k+m_+1, nBlockStart_[nBlock]+twom+k+2, gamma(k,nBlock+1)));
+      triplets.push_back(
+          Eigen::Triplet<std::complex<double> >(
+            nBlockStart_[nBlock]+twom+k+2, nBlockStart_[nBlock]+k+m_+1, gamma(k,nBlock+1)));
+    }
+  }
+
+  // Assemble the matrix from triplets.
+  Eigen::SparseMatrix<std::complex<double> > Aex;
+  Aex.resize(M_, M_);
+  Aex.setFromTriplets(triplets.begin(), triplets.end());
+  factor_.compute(Aex);
 }
 
-GRP::GRP (
-    const int N,
-    const int m,
-    double* alpha,
-    std::complex<double>* beta,
-    double* t,
-    double* d
-) {
-    this->N     = N;
-    this->m     = m;
-    this->alpha = Eigen::Map<Eigen::MatrixXd>(alpha, m, 1);
-    this->beta  = Eigen::Map<Eigen::MatrixXcd>(beta, m, 1);
-    this->t     = Eigen::Map<Eigen::MatrixXd>(t, N, 1);
-    this->d     = Eigen::Map<Eigen::MatrixXd>(d, N, 1);
+Eigen::VectorXd GRP::solve (const Eigen::VectorXd rhs) const {
+  // Assemble the extended right hand side `rhsex'
+  Eigen::VectorXcd rhsex = Eigen::VectorXcd::Zero(M_);
+  for (size_t nBlock = 0; nBlock < N_; ++nBlock)
+      rhsex(nBlockStart_[nBlock]) = rhs(nBlock);
+
+  Eigen::VectorXcd solutionex = factor_.solve(rhsex);
+
+  Eigen::VectorXd solution = Eigen::VectorXd(N_);
+  for (size_t nBlock = 0; nBlock < N_; ++nBlock)
+    solution(nBlock) = solutionex(nBlockStart_[nBlock]).real();
+
+  return solution;
 }
 
-void GRP::assemble_Extended_Matrix() {
-    Eigen::MatrixXcd gamma = Eigen::MatrixXcd(m,N-1);
-    for (int i=0; i<m; ++i) {
-        for (int j=0; j<N-1; ++j) {
-            gamma(i,j)  =   exp(-beta(i)*fabs(t(j)-t(j+1)));
-        }
-    }
-    //  Declare 2*m as a variable, since this will be used frequently.
-    int twom = 2*m;
-
-    //  Number of non-zeros per matrix block in the extended sparse matrix.
-    //  This includes the '1' on the diagonal, the two negative identity
-    //  matrices above and below the diagonal, the vectors u, u', v and v'.
-    blocknnz = 6*m+1;
-
-    //  Declare the blocksize, which is the repeating structure along the diagonal.
-    nBlockSize = twom+1;
-
-    //  Size of the extended sparse matrix.
-    M = N*nBlockSize-twom;
-
-    //  Number of non-zero entries in the matrix. The identity matrices on the
-    //  supersuperdiagonals which were not included in the blocknnz has been
-    //  accounted for here.
-    //  This number is correct and has been checked with MATLAB.
-    nnz = (N-1)*blocknnz+(N-2)*twom+1;
-
-    //  Obtain the starting index of each of the block.
-    for (int k=0; k<N; ++k) {
-        nBlockStart.push_back(k*nBlockSize);
-    }
-
-    //  Assembles block by block except the identity matrices on the supersuperdiagonal.
-    for (int nBlock=0; nBlock<N-1; ++nBlock) {
-        //  The starting row and column for the blocks.
-        //  Assemble the diagonal first.
-        triplets.push_back(
-            Eigen::Triplet<std::complex<double> >(
-                nBlockStart[nBlock], nBlockStart[nBlock], d(nBlock)));
-        for (int k=0; k<m; ++k) {
-            triplets.push_back(
-                Eigen::Triplet<std::complex<double> >(
-                    nBlockStart[nBlock]+k+1,nBlockStart[nBlock],gamma(k,nBlock)));
-            triplets.push_back(
-                Eigen::Triplet<std::complex<double> >(
-                    nBlockStart[nBlock],nBlockStart[nBlock]+k+1,gamma(k,nBlock)));
-            triplets.push_back(
-                Eigen::Triplet<std::complex<double> >(
-                    nBlockStart[nBlock]+m+k+1,nBlockStart[nBlock]+twom+1,alpha(k)));
-            triplets.push_back(
-                Eigen::Triplet<std::complex<double> >(
-                    nBlockStart[nBlock]+twom+1,nBlockStart[nBlock]+m+k+1,alpha(k)));
-            triplets.push_back(
-                Eigen::Triplet<std::complex<double> >(
-                    nBlockStart[nBlock]+k+1,nBlockStart[nBlock]+k+m+1,-1.0));
-            triplets.push_back(
-                Eigen::Triplet<std::complex<double> >(
-                    nBlockStart[nBlock]+k+m+1,nBlockStart[nBlock]+k+1,-1.0));
-        }
-    }
-    triplets.push_back(Eigen::Triplet<std::complex<double> >(M-1,M-1,d(N-1)));
-
-    //  Assebmles the supersuperdiagonal identity blocks.
-    for (int nBlock=0; nBlock<N-2; ++nBlock) {
-        for (int k=0; k<m; ++k) {
-            triplets.push_back(
-                Eigen::Triplet<std::complex<double> >(
-                    nBlockStart[nBlock]+k+m+1,nBlockStart[nBlock]+twom+k+2,gamma(k,nBlock+1)));
-            triplets.push_back(
-                Eigen::Triplet<std::complex<double> >(
-                    nBlockStart[nBlock]+twom+k+2,nBlockStart[nBlock]+k+m+1,gamma(k,nBlock+1)));
-        }
-    }
-
-    //  Set the size of the extended sparse matrix.
-    Aex.resize(M,M);
-
-    //  Assemble the matrix from triplets.
-    Aex.setFromTriplets(triplets.begin(), triplets.end());
+void GRP::solve(double* rhs, double* solution) const {
+  Eigen::Map<Eigen::VectorXd> rhs_(rhs, N_, 1);
+  Eigen::VectorXd solution_ = solve(rhs_);
+  for (int i = 0; i < N_; ++i) solution[i] = solution_[i];
 }
 
-void GRP::factorize_Extended_Matrix() {
-    //  Compute the sparse LU factorization of matrix `Aex'
-    factorize.compute(Aex);
-}
-
-void GRP::obtain_Solution(const Eigen::VectorXd rhs, Eigen::VectorXd& solution, Eigen::VectorXcd& solutionex) {
-    //  Assemble the extended right hand side `rhsex'
-    Eigen::VectorXcd rhsex = Eigen::VectorXcd::Zero(M);
-    for (int nBlock=0; nBlock<N; ++nBlock) {
-        rhsex(nBlockStart[nBlock]) = rhs(nBlock);
-    }
-
-    //  Obtain the solution
-    solutionex = factorize.solve(rhsex);
-
-    //  Desired solution vector
-    solution = Eigen::VectorXd(N);
-    for (int nBlock=0; nBlock<N; ++nBlock) {
-        solution(nBlock) = solutionex(nBlockStart[nBlock]).real();
-    }
-}
-
-void GRP::obtain_Solution(double* rhs, double* solution) {
-    Eigen::Map<Eigen::VectorXd> rhs_(rhs, this->N, 1);
-    Eigen::VectorXd solution_;
-    Eigen::VectorXcd solex;
-    this->obtain_Solution(rhs_, solution_, solex);
-    for (int i = 0; i < N; ++i) solution[i] = solution_[i];
-}
-
-double GRP::obtain_Determinant() {
-    return factorize.logAbsDeterminant().real();
+double GRP::get_log_determinant () const {
+  return factor_.logAbsDeterminant().real();
 }
 
 #endif /* defined(__GRP_HPP__) */

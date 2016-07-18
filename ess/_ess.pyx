@@ -19,11 +19,10 @@ cdef extern from "complex":
 cdef extern from "GRP.hpp":
 
     cdef cppclass GRP:
-        GRP(int N, int m, double* alpha, double complex* beta, double* t, double* d)
-        void assemble_Extended_Matrix()
-        void factorize_Extended_Matrix()
-        void obtain_Solution(double* rhs, double* solution)
-        double obtain_Determinant()
+        GRP (int m, double* alpha, double complex* beta)
+        void compute (int N, double* t, double* d)
+        void solve (double* rhs, double* solution)
+        double get_log_determinant ()
 
 
 cdef class CythonGRPSolver:
@@ -78,32 +77,33 @@ cdef class CythonGRPSolver:
         self.diagonal = d + np.sum(alpha).real
 
         self.solver = new GRP(
-            self.N, self.m,
+            self.m,
             <double*>(self.alpha.data),
             <double complex*>(self.beta.data),
+        )
+        self.solver.compute(
+            self.N,
             <double*>(self.t.data),
             <double*>(self.diagonal.data)
         )
-        self.solver.assemble_Extended_Matrix()
-        self.solver.factorize_Extended_Matrix()
 
     def __dealloc__(self):
         del self.solver
 
     property log_determinant:
         def __get__(self):
-            return self.solver.obtain_Determinant()
+            return self.solver.get_log_determinant()
 
     def apply_inverse(self, np.ndarray[DTYPE_t, ndim=1] y, in_place=False):
         if y.shape[0] != self.N:
             raise ValueError("dimension mismatch")
 
         if in_place:
-            self.solver.obtain_Solution(<double*>y.data, <double*>y.data)
+            self.solver.solve(<double*>y.data, <double*>y.data)
             return y
 
         cdef np.ndarray[DTYPE_t, ndim=1] alpha = np.empty_like(y, dtype=DTYPE)
-        self.solver.obtain_Solution(<double*>y.data, <double*>alpha.data)
+        self.solver.solve(<double*>y.data, <double*>alpha.data)
         return alpha
 
     def get_matrix(self):
