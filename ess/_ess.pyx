@@ -41,6 +41,8 @@ cdef class GRPSolver:
                   np.ndarray[CDTYPE_t, ndim=1] beta,
                   np.ndarray[DTYPE_t, ndim=1] t,
                   d=1e-10):
+        if not np.all(np.diff(t) > 0.0):
+            raise ValueError("times must be sorted")
 
         # Check the shape and roots:
         if alpha.shape[0] != beta.shape[0]:

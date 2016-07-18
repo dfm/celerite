@@ -86,9 +86,6 @@ private:
     // Diagonal entries of the matrix.
     Eigen::VectorXd d;
 
-    // Determinant of the extended sparse matrix.
-    double determinant;
-
     // Size of the extended sparse matrix.
     int M;
 
@@ -283,9 +280,7 @@ void GRP::obtain_Solution(double* rhs, double* solution) {
 }
 
 double GRP::obtain_Determinant() {
-    //  Obtain determinant
-    determinant = factorize.logAbsDeterminant().real();
-    return determinant;
+    return factorize.logAbsDeterminant().real();
 }
 
 #endif /* defined(__GRP_HPP__) */
