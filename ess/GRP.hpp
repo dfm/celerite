@@ -79,7 +79,7 @@ private:
     int m;
 
     // The semi-separable matrix is of the form diag(d) + triu(U*V,1) + tril((U*V)',-1).
-    Eigen::VectorXcd alpha;
+    Eigen::VectorXd alpha;
     Eigen::VectorXcd beta;
     Eigen::VectorXd t;
 
@@ -113,7 +113,7 @@ public:
     GRP(
         const int N,
         const int m,
-        const Eigen::VectorXcd alpha,
+        const Eigen::VectorXd alpha,
         const Eigen::VectorXcd beta,
         const Eigen::VectorXd t,
         const Eigen::VectorXd d
@@ -121,7 +121,7 @@ public:
     GRP(
         const int N,
         const int m,
-        std::complex<double>* alpha,
+        double* alpha,
         std::complex<double>* beta,
         double* t,
         double* d
@@ -143,7 +143,7 @@ public:
     /* double obtain_Error(const Eigen::VectorXd rhs, const Eigen::VectorXd& solex); */
 };
 
-GRP::GRP (const int N, const int m, const Eigen::VectorXcd alpha, const Eigen::VectorXcd beta, const Eigen::VectorXd t, const Eigen::VectorXd d) {
+GRP::GRP (const int N, const int m, const Eigen::VectorXd alpha, const Eigen::VectorXcd beta, const Eigen::VectorXd t, const Eigen::VectorXd d) {
     this->N     = N;
     this->m     = m;
     this->alpha = alpha;
@@ -155,14 +155,14 @@ GRP::GRP (const int N, const int m, const Eigen::VectorXcd alpha, const Eigen::V
 GRP::GRP (
     const int N,
     const int m,
-    std::complex<double>* alpha,
+    double* alpha,
     std::complex<double>* beta,
     double* t,
     double* d
 ) {
     this->N     = N;
     this->m     = m;
-    this->alpha = Eigen::Map<Eigen::MatrixXcd>(alpha, m, 1);
+    this->alpha = Eigen::Map<Eigen::MatrixXd>(alpha, m, 1);
     this->beta  = Eigen::Map<Eigen::MatrixXcd>(beta, m, 1);
     this->t     = Eigen::Map<Eigen::MatrixXd>(t, N, 1);
     this->d     = Eigen::Map<Eigen::MatrixXd>(d, N, 1);

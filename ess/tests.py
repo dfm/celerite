@@ -14,24 +14,24 @@ def test_invalid_parameters(seed=42):
     np.random.seed(seed)
     t = np.random.rand(50)
 
-    alpha = np.array([1.0, 1.0]).astype(np.complex128)
+    alpha = np.array([1.0, 1.0])
     beta = np.array([1.0 + 1j, 1.0 - 1j])
     with pytest.raises(ValueError):
         GRPSolver(alpha, beta, t)
     t = np.sort(t)
     GRPSolver(alpha, beta, t)
 
-    alpha = np.array([1.0, 5.0]).astype(np.complex128)
+    alpha = np.array([1.0, 5.0])
     beta = np.array([1.0 + 1j, 1.0 - 1j])
     with pytest.raises(ValueError):
         GRPSolver(alpha, beta, t)
 
-    alpha = np.array([1.0, 1.0]).astype(np.complex128)
+    alpha = np.array([1.0, 1.0])
     beta = np.array([1.0 + 1j, 1.0])
     with pytest.raises(ValueError):
         GRPSolver(alpha, beta, t)
 
-    alpha = np.array([1.0]).astype(np.complex128)
+    alpha = np.array([1.0])
     beta = np.array([1.0 + 1j, 1.0 - 1j])
     with pytest.raises(ValueError):
         GRPSolver(alpha, beta, t)
@@ -41,7 +41,7 @@ def test_log_determinant(seed=42):
     np.random.seed(seed)
     t = np.sort(np.random.rand(500))
     diag = np.random.uniform(0.1, 0.5, len(t))
-    alpha = np.array([1.0, 10.0, 10.0]).astype(np.complex128)
+    alpha = np.array([1.0, 10.0, 10.0])
     beta = np.array([0.5, 1.0 + 1j, 1.0 - 1j])
     solver = GRPSolver(alpha, beta, t, diag)
     K = solver.get_matrix()
@@ -52,7 +52,7 @@ def test_solve(seed=42):
     np.random.seed(seed)
     t = np.sort(np.random.rand(500))
     diag = np.random.uniform(0.1, 0.5, len(t))
-    alpha = np.array([1.0, 10.0, 10.0]).astype(np.complex128)
+    alpha = np.array([1.0, 10.0, 10.0])
     beta = np.array([0.5, 1.0 + 1j, 1.0 - 1j])
     solver = GRPSolver(alpha, beta, t, diag)
     K = solver.get_matrix()

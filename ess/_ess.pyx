@@ -19,7 +19,7 @@ cdef extern from "complex":
 cdef extern from "GRP.hpp":
 
     cdef cppclass GRP:
-        GRP(int N, int m, double complex* alpha, double complex* beta, double* t, double* d)
+        GRP(int N, int m, double* alpha, double complex* beta, double* t, double* d)
         void assemble_Extended_Matrix()
         void factorize_Extended_Matrix()
         void obtain_Solution(double* rhs, double* solution)
@@ -37,7 +37,7 @@ cdef class GRPSolver:
     cdef np.ndarray diagonal
 
     def __cinit__(self,
-                  np.ndarray[CDTYPE_t, ndim=1] alpha,
+                  np.ndarray[DTYPE_t, ndim=1] alpha,
                   np.ndarray[CDTYPE_t, ndim=1] beta,
                   np.ndarray[DTYPE_t, ndim=1] t,
                   d=1e-10):
@@ -79,7 +79,7 @@ cdef class GRPSolver:
 
         self.solver = new GRP(
             self.N, self.m,
-            <double complex*>(self.alpha.data),
+            <double*>(self.alpha.data),
             <double complex*>(self.beta.data),
             <double*>(self.t.data),
             <double*>(self.diagonal.data)
