@@ -79,10 +79,9 @@ private:
     int m;
 
     // The semi-separable matrix is of the form diag(d) + triu(U*V,1) + tril((U*V)',-1).
-    Eigen::VectorXd alpha;
-    Eigen::VectorXd beta;
+    Eigen::VectorXcd alpha;
+    Eigen::VectorXcd beta;
     Eigen::VectorXd t;
-    Eigen::MatrixXd gamma;
 
     // Diagonal entries of the matrix.
     Eigen::VectorXd d;
@@ -103,30 +102,30 @@ private:
     int nBlockSize;
 
     // Starting index of each of the blocks.
-    std::vector<double> nBlockStart;
+    std::vector<int> nBlockStart;
     // Vector of triplets used to store the sparse matrix.
-    std::vector<Eigen::Triplet<double> > triplets;
+    std::vector<Eigen::Triplet<std::complex<double> > > triplets;
     // The extended sparse matrix.
-    Eigen::SparseMatrix<double> Aex;
+    Eigen::SparseMatrix<std::complex<double> > Aex;
 
     // Stores the factorization.
-    Eigen::SparseLU<Eigen::SparseMatrix<double>, Eigen::COLAMDOrdering<int> > factorize;
+    Eigen::SparseLU<Eigen::SparseMatrix<std::complex<double> >, Eigen::COLAMDOrdering<int> > factorize;
 
 public:
 
     GRP(
         const int N,
         const int m,
-        const Eigen::VectorXd alpha,
-        const Eigen::VectorXd beta,
+        const Eigen::VectorXcd alpha,
+        const Eigen::VectorXcd beta,
         const Eigen::VectorXd t,
         const Eigen::VectorXd d
     );
     GRP(
         const int N,
         const int m,
-        double* alpha,
-        double* beta,
+        std::complex<double>* alpha,
+        std::complex<double>* beta,
         double* t,
         double* d
     );
@@ -135,7 +134,7 @@ public:
     void obtain_Solution(
         const Eigen::VectorXd rhs,
         Eigen::VectorXd& solution,
-        Eigen::VectorXd& solutionex
+        Eigen::VectorXcd& solutionex
     );
     void obtain_Solution(
         double* rhs,
@@ -144,10 +143,10 @@ public:
     double obtain_Determinant();
 
     // Obtain error, i.e., ||Ax-b||_{\inf}
-    double obtain_Error(const Eigen::VectorXd rhs, const Eigen::VectorXd& solex);
+    /* double obtain_Error(const Eigen::VectorXd rhs, const Eigen::VectorXd& solex); */
 };
 
-GRP::GRP (const int N, const int m, const Eigen::VectorXd alpha, const Eigen::VectorXd beta, const Eigen::VectorXd t, const Eigen::VectorXd d) {
+GRP::GRP (const int N, const int m, const Eigen::VectorXcd alpha, const Eigen::VectorXcd beta, const Eigen::VectorXd t, const Eigen::VectorXd d) {
     this->N     = N;
     this->m     = m;
     this->alpha = alpha;
@@ -159,21 +158,21 @@ GRP::GRP (const int N, const int m, const Eigen::VectorXd alpha, const Eigen::Ve
 GRP::GRP (
     const int N,
     const int m,
-    double* alpha,
-    double* beta,
+    std::complex<double>* alpha,
+    std::complex<double>* beta,
     double* t,
     double* d
 ) {
     this->N     = N;
     this->m     = m;
-    this->alpha = Eigen::Map<Eigen::MatrixXd>(alpha, m, 1);
-    this->beta  = Eigen::Map<Eigen::MatrixXd>(beta, m, 1);
+    this->alpha = Eigen::Map<Eigen::MatrixXcd>(alpha, m, 1);
+    this->beta  = Eigen::Map<Eigen::MatrixXcd>(beta, m, 1);
     this->t     = Eigen::Map<Eigen::MatrixXd>(t, N, 1);
     this->d     = Eigen::Map<Eigen::MatrixXd>(d, N, 1);
 }
 
 void GRP::assemble_Extended_Matrix() {
-    gamma = Eigen::MatrixXd(m,N-1);
+    Eigen::MatrixXcd gamma = Eigen::MatrixXcd(m,N-1);
     for (int i=0; i<m; ++i) {
         for (int j=0; j<N-1; ++j) {
             gamma(i,j)  =   exp(-beta(i)*fabs(t(j)-t(j+1)));
@@ -208,23 +207,41 @@ void GRP::assemble_Extended_Matrix() {
     for (int nBlock=0; nBlock<N-1; ++nBlock) {
         //  The starting row and column for the blocks.
         //  Assemble the diagonal first.
-        triplets.push_back(Eigen::Triplet<double>(nBlockStart[nBlock], nBlockStart[nBlock], d(nBlock)));
+        triplets.push_back(
+            Eigen::Triplet<std::complex<double> >(
+                nBlockStart[nBlock], nBlockStart[nBlock], d(nBlock)));
         for (int k=0; k<m; ++k) {
-            triplets.push_back(Eigen::Triplet<double>(nBlockStart[nBlock]+k+1,nBlockStart[nBlock],gamma(k,nBlock)));
-            triplets.push_back(Eigen::Triplet<double>(nBlockStart[nBlock],nBlockStart[nBlock]+k+1,gamma(k,nBlock)));
-            triplets.push_back(Eigen::Triplet<double>(nBlockStart[nBlock]+m+k+1,nBlockStart[nBlock]+twom+1,alpha(k)));
-            triplets.push_back(Eigen::Triplet<double>(nBlockStart[nBlock]+twom+1,nBlockStart[nBlock]+m+k+1,alpha(k)));
-            triplets.push_back(Eigen::Triplet<double>(nBlockStart[nBlock]+k+1,nBlockStart[nBlock]+k+m+1,-1.0));
-            triplets.push_back(Eigen::Triplet<double>(nBlockStart[nBlock]+k+m+1,nBlockStart[nBlock]+k+1,-1.0));
+            triplets.push_back(
+                Eigen::Triplet<std::complex<double> >(
+                    nBlockStart[nBlock]+k+1,nBlockStart[nBlock],gamma(k,nBlock)));
+            triplets.push_back(
+                Eigen::Triplet<std::complex<double> >(
+                    nBlockStart[nBlock],nBlockStart[nBlock]+k+1,gamma(k,nBlock)));
+            triplets.push_back(
+                Eigen::Triplet<std::complex<double> >(
+                    nBlockStart[nBlock]+m+k+1,nBlockStart[nBlock]+twom+1,alpha(k)));
+            triplets.push_back(
+                Eigen::Triplet<std::complex<double> >(
+                    nBlockStart[nBlock]+twom+1,nBlockStart[nBlock]+m+k+1,alpha(k)));
+            triplets.push_back(
+                Eigen::Triplet<std::complex<double> >(
+                    nBlockStart[nBlock]+k+1,nBlockStart[nBlock]+k+m+1,-1.0));
+            triplets.push_back(
+                Eigen::Triplet<std::complex<double> >(
+                    nBlockStart[nBlock]+k+m+1,nBlockStart[nBlock]+k+1,-1.0));
         }
     }
-    triplets.push_back(Eigen::Triplet<double>(M-1,M-1,d(N-1)));
+    triplets.push_back(Eigen::Triplet<std::complex<double> >(M-1,M-1,d(N-1)));
 
     //  Assebmles the supersuperdiagonal identity blocks.
     for (int nBlock=0; nBlock<N-2; ++nBlock) {
         for (int k=0; k<m; ++k) {
-            triplets.push_back(Eigen::Triplet<double>(nBlockStart[nBlock]+k+m+1,nBlockStart[nBlock]+twom+k+2,gamma(k,nBlock+1)));
-            triplets.push_back(Eigen::Triplet<double>(nBlockStart[nBlock]+twom+k+2,nBlockStart[nBlock]+k+m+1,gamma(k,nBlock+1)));
+            triplets.push_back(
+                Eigen::Triplet<std::complex<double> >(
+                    nBlockStart[nBlock]+k+m+1,nBlockStart[nBlock]+twom+k+2,gamma(k,nBlock+1)));
+            triplets.push_back(
+                Eigen::Triplet<std::complex<double> >(
+                    nBlockStart[nBlock]+twom+k+2,nBlockStart[nBlock]+k+m+1,gamma(k,nBlock+1)));
         }
     }
 
@@ -240,9 +257,9 @@ void GRP::factorize_Extended_Matrix() {
     factorize.compute(Aex);
 }
 
-void GRP::obtain_Solution(const Eigen::VectorXd rhs, Eigen::VectorXd& solution, Eigen::VectorXd& solutionex) {
+void GRP::obtain_Solution(const Eigen::VectorXd rhs, Eigen::VectorXd& solution, Eigen::VectorXcd& solutionex) {
     //  Assemble the extended right hand side `rhsex'
-    Eigen::VectorXd rhsex = Eigen::VectorXd::Zero(M);
+    Eigen::VectorXcd rhsex = Eigen::VectorXcd::Zero(M);
     for (int nBlock=0; nBlock<N; ++nBlock) {
         rhsex(nBlockStart[nBlock]) = rhs(nBlock);
     }
@@ -253,30 +270,21 @@ void GRP::obtain_Solution(const Eigen::VectorXd rhs, Eigen::VectorXd& solution, 
     //  Desired solution vector
     solution = Eigen::VectorXd(N);
     for (int nBlock=0; nBlock<N; ++nBlock) {
-        solution(nBlock) = solutionex(nBlockStart[nBlock]);
+        solution(nBlock) = solutionex(nBlockStart[nBlock]).real();
     }
 }
 
 void GRP::obtain_Solution(double* rhs, double* solution) {
     Eigen::Map<Eigen::VectorXd> rhs_(rhs, this->N, 1);
-    Eigen::VectorXd solution_, solex;
+    Eigen::VectorXd solution_;
+    Eigen::VectorXcd solex;
     this->obtain_Solution(rhs_, solution_, solex);
     for (int i = 0; i < N; ++i) solution[i] = solution_[i];
 }
 
-double GRP::obtain_Error(const Eigen::VectorXd rhs, const Eigen::VectorXd& solex) {
-    //  Assemble the extended right hand side `rhsex'
-    Eigen::VectorXd rhsex = Eigen::VectorXd::Zero(M);
-    for (int nBlock=0; nBlock<N; ++nBlock) {
-        rhsex(nBlockStart[nBlock]) = rhs(nBlock);
-    }
-    double error = (Aex*solex-rhsex).cwiseAbs().maxCoeff();
-    return error;
-}
-
 double GRP::obtain_Determinant() {
     //  Obtain determinant
-    determinant = factorize.logAbsDeterminant();
+    determinant = factorize.logAbsDeterminant().real();
     return determinant;
 }
 

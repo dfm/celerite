@@ -6,15 +6,20 @@ cimport cython
 import time
 import numpy as np
 cimport numpy as np
-from libc.math cimport fabs, exp
+from libc.math cimport fabs
 
 DTYPE = np.float64
 ctypedef np.float64_t DTYPE_t
+CDTYPE = np.complex128
+ctypedef np.complex128_t CDTYPE_t
+
+cdef extern from "complex":
+    double complex exp(double complex)
 
 cdef extern from "GRP.hpp":
 
     cdef cppclass GRP:
-        GRP(int N, int m, double* alpha, double* beta, double* t, double* d)
+        GRP(int N, int m, double complex* alpha, double complex* beta, double* t, double* d)
         void assemble_Extended_Matrix()
         void factorize_Extended_Matrix()
         void obtain_Solution(double* rhs, double* solution)
@@ -32,12 +37,16 @@ cdef class GRPSolver:
     cdef np.ndarray diagonal
 
     def __cinit__(self,
-                  np.ndarray[DTYPE_t, ndim=1] alpha,
-                  np.ndarray[DTYPE_t, ndim=1] beta,
+                  np.ndarray[CDTYPE_t, ndim=1] alpha,
+                  np.ndarray[CDTYPE_t, ndim=1] beta,
                   np.ndarray[DTYPE_t, ndim=1] t,
                   d=1e-10):
         if alpha.shape[0] != beta.shape[0]:
             raise ValueError("dimension mismatch")
+        if not np.allclose(0.0, np.sum(alpha).imag):
+            raise ValueError("invalid alpha")
+        if not np.allclose(0.0, np.sum(beta).imag):
+            raise ValueError("invalid beta")
         self.m = alpha.shape[0]
         self.N = t.shape[0]
         self.alpha = alpha
@@ -52,12 +61,12 @@ cdef class GRPSolver:
                 raise ValueError("diagonal dimension mismatch")
         else:
             d = d + np.zeros_like(self.t)
-        self.diagonal = d + np.sum(alpha)
+        self.diagonal = d + np.sum(alpha).real
 
         self.solver = new GRP(
             self.N, self.m,
-            <double*>(self.alpha.data),
-            <double*>(self.beta.data),
+            <double complex*>(self.alpha.data),
+            <double complex*>(self.beta.data),
             <double*>(self.t.data),
             <double*>(self.diagonal.data)
         )
@@ -84,7 +93,8 @@ cdef class GRPSolver:
         return alpha
 
     def get_matrix(self):
-        cdef double value, delta
+        cdef double delta
+        cdef double complex value
         cdef int i, j, p
         cdef np.ndarray[DTYPE_t, ndim=2] A = np.empty((self.N, self.N),
                                                       dtype=DTYPE)
@@ -92,9 +102,9 @@ cdef class GRPSolver:
             A[i, i] = self.diagonal[i]
             for j in range(i + 1, self.N):
                 delta = fabs(self.t[i] - self.t[j])
-                value = 0.0
+                value = 0.0j
                 for p in range(self.m):
                     value += self.alpha[p] * exp(-self.beta[p] * delta)
-                A[i, j] = value
-                A[j, i] = value
+                A[i, j] = value.real
+                A[j, i] = value.real
         return A
