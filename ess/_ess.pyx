@@ -41,17 +41,29 @@ cdef class GRPSolver:
                   np.ndarray[CDTYPE_t, ndim=1] beta,
                   np.ndarray[DTYPE_t, ndim=1] t,
                   d=1e-10):
+
+        # Check the shape and roots:
         if alpha.shape[0] != beta.shape[0]:
             raise ValueError("dimension mismatch")
         if not np.allclose(0.0, np.sum(alpha).imag):
             raise ValueError("invalid alpha")
         if not np.allclose(0.0, np.sum(beta).imag):
             raise ValueError("invalid beta")
+
+        # Save the parameters
         self.m = alpha.shape[0]
         self.N = t.shape[0]
         self.alpha = alpha
         self.beta = beta
         self.t = t
+
+        # Check that the roots give a real covariance.
+        cdef int p
+        value = 0.0j
+        for p in range(self.m):
+            value += self.alpha[p] * np.exp(-self.beta[p])
+        if not np.allclose(0.0, np.imag(value)):
+            raise ValueError("invalid roots")
 
         try:
             d = float(d)
