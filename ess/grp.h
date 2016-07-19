@@ -1,8 +1,6 @@
 #ifndef _GEORGE_GRP_
 #define _GEORGE_GRP_
 
-#include <iostream>
-
 #include <cmath>
 #include <vector>
 #include <complex>
