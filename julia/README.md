@@ -1,4 +1,5 @@
 6/17/2016
+
 Herein I implement the Extended SemiSeparable Solver in Julia:
 
 https://github.com/sivaramambikasaran/ESS
@@ -9,6 +10,8 @@ A couple of modifications:
 complex conjugate as well).
 
 2). I'm going to try heterscedastic noise.
+
+3). I'm going to make the extended matrix Hermitian.
 
 6/18/2016
 
