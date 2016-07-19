@@ -7,7 +7,7 @@
 #include <Eigen/Dense>
 #include <Eigen/Sparse>
 
-namespace george {
+namespace genrp {
 
 #define GRP_DIMENSION_MISMATCH 1
 

@@ -16,7 +16,7 @@ ctypedef np.complex128_t CDTYPE_t
 cdef extern from "complex":
     double complex exp(double complex)
 
-cdef extern from "grp.h" namespace "george":
+cdef extern from "grp.h" namespace "genrp":
 
     cdef cppclass GRPSolver:
         GRPSolver (size_t m, const double* alpha, const double complex* beta)
