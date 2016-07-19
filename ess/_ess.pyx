@@ -16,18 +16,17 @@ ctypedef np.complex128_t CDTYPE_t
 cdef extern from "complex":
     double complex exp(double complex)
 
-cdef extern from "GRP.hpp":
+cdef extern from "grp.h" namespace "george":
 
-    cdef cppclass GRP:
-        GRP (int m, double* alpha, double complex* beta)
-        void compute (int N, double* t, double* d)
-        void solve (double* rhs, double* solution)
-        double get_log_determinant ()
-
+    cdef cppclass GRPSolver:
+        GRPSolver (size_t m, const double* alpha, const double complex* beta)
+        void compute (size_t N, const double* t, const double* d)
+        void solve (const double* b, double* x) const
+        double get_log_determinant () const
 
 cdef class CythonGRPSolver:
 
-    cdef GRP* solver
+    cdef GRPSolver* solver
     cdef unsigned int m
     cdef unsigned int N
     cdef np.ndarray alpha
@@ -76,7 +75,7 @@ cdef class CythonGRPSolver:
             d = d + np.zeros_like(self.t)
         self.diagonal = d + np.sum(alpha).real
 
-        self.solver = new GRP(
+        self.solver = new GRPSolver(
             self.m,
             <double*>(self.alpha.data),
             <double complex*>(self.beta.data),

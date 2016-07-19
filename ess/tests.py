@@ -41,7 +41,7 @@ def test_invalid_parameters(seed=42):
 
 def test_log_determinant(seed=42):
     np.random.seed(seed)
-    t = np.sort(np.random.rand(500))
+    t = np.sort(np.random.rand(10))
     diag = np.random.uniform(0.1, 0.5, len(t))
     alpha = np.array([1.0, 10.0, 10.0])
     beta = np.array([0.5, 1.0 + 1j, 1.0 - 1j])
