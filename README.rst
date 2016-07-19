@@ -1,9 +1,11 @@
-Python bindings to the
-`sivaramambikasaran/ESS <https://github.com/sivaramambikasaran/ESS>`_
-implementation of the generalized Rybicki Press algorithm for solving
-matrices of the form::
+Python and C++ implementation of the generalized Rybicki Press algorithm
+for solving matrices of the form::
 
     K_{ij} = sum_p a_p exp(-b_p |t_i - t_j|)
+    
+The method was developed by `Sivaram Ambikasaran
+<https://github.com/sivaramambikasaran>`_ and you must cite `his paper 
+<http://arxiv.org/abs/1409.7852>`_ if you use this code in your work.
 
 This interface allows complex bs and the parameters are specified as
 log-amplitudes, log-Q-factors, and frequencies. A frequency can be set to
