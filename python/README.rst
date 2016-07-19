@@ -2,9 +2,9 @@ Python and C++ implementation of the generalized Rybicki Press algorithm
 for solving matrices of the form::
 
     K_{ij} = sum_p a_p exp(-b_p |t_i - t_j|)
-    
+
 The method was developed by `Sivaram Ambikasaran
-<https://github.com/sivaramambikasaran>`_ and you must cite `his paper 
+<https://github.com/sivaramambikasaran>`_ and you must cite `his paper
 <http://arxiv.org/abs/1409.7852>`_ if you use this code in your work.
 
 This interface allows complex bs and the parameters are specified as
@@ -47,4 +47,4 @@ A simple benchmark shows that this scales as O(N):
         solver.apply_inverse(b[:n])
         times[i, 2] = time.time() - strt
 
-.. image:: https://raw.github.com/dfm/ess/master/demo.png
+.. image:: https://raw.github.com/dfm/ess/master/python/demo.png
