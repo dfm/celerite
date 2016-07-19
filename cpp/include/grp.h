@@ -1,5 +1,5 @@
-#ifndef _GEORGE_GRP_
-#define _GEORGE_GRP_
+#ifndef _GENRP_GRP_
+#define _GENRP_GRP_
 
 #include <cmath>
 #include <vector>
