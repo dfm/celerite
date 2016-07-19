@@ -87,14 +87,16 @@ if __name__ == "__main__":
     libraries = []
     if os.name == "posix":
         libraries.append("m")
+    dn = os.path.dirname
+    incldir = os.path.join(dn(dn(os.path.abspath(__file__))), "cpp", "include")
     include_dirs = [
-        "ess",
+        incldir,
         numpy.get_include(),
     ]
 
     # Check for the Cython source (development mode) and compile it if it
     # exists.
-    solver_fn = os.path.join("ess", "_ess")
+    solver_fn = os.path.join("genrp", "_genrp")
     if os.path.exists(solver_fn + ".pyx"):
         from Cython.Build import cythonize
         solver_fn += ".pyx"
@@ -102,7 +104,7 @@ if __name__ == "__main__":
         solver_fn += ".cpp"
         cythonize = lambda x: x
 
-    ext = Extension("ess._ess", sources=[solver_fn],
+    ext = Extension("genrp._genrp", sources=[solver_fn],
                     libraries=libraries, include_dirs=include_dirs)
     extensions = cythonize([ext])
 
@@ -112,26 +114,26 @@ if __name__ == "__main__":
         import __builtin__ as builtins
     else:
         import builtins
-    builtins.__ESS_SETUP__ = True
-    import ess
+    builtins.__GENRP_SETUP__ = True
+    import genrp
 
     setup(
-        name="ess",
-        version=ess.__version__,
+        name="genrp",
+        version=genrp.__version__,
         author="Daniel Foreman-Mackey",
         author_email="foreman.mackey@gmail.com",
-        url="https://github.com/dfm/ess",
+        url="https://github.com/dfm/genrp",
         license="MIT",
-        packages=["ess", "ess._ess"],
+        packages=["genrp"],
         ext_modules=extensions,
         description="",
         long_description=open("README.rst").read(),
-        package_data={"": ["README.rst", "LICENSE"],
-                      "ess": ["*.hpp"]},
+        package_data={"": ["README.rst", "LICENSE",
+                           os.path.join(incldir, "*.h")]},
         include_package_data=True,
         cmdclass=dict(build_ext=build_ext),
         classifiers=[
-            "Development Status :: 5 - Production/Stable",
+            # "Development Status :: 5 - Production/Stable",
             "Intended Audience :: Developers",
             "Intended Audience :: Science/Research",
             "License :: OSI Approved :: MIT License",

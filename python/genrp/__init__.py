@@ -3,11 +3,11 @@
 __version__ = "0.0.1.dev0"
 
 try:
-    __ESS_SETUP__
+    __GENRP_SETUP__
 except NameError:
-    __ESS_SETUP__ = False
+    __GENRP_SETUP__ = False
 
-if not __ESS_SETUP__:
+if not __GENRP_SETUP__:
     __all__ = ["GRPSolver"]
 
-    from .ess import GRPSolver
+    from .genrp import GRPSolver

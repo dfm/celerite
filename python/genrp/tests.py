@@ -5,8 +5,8 @@ from __future__ import division, print_function
 import pytest
 import numpy as np
 
-from .ess import GRPSolver
-from ._ess import CythonGRPSolver
+from .genrp import GRPSolver
+from ._genrp import CythonGRPSolver
 
 __all__ = ["test_invalid_parameters", "test_log_determinant", "test_solve",
            "test_order"]

@@ -3,7 +3,7 @@
 from __future__ import division, print_function
 
 import numpy as np
-from ._ess import CythonGRPSolver
+from ._genrp import CythonGRPSolver
 
 __all__ = ["GRPSolver"]
 
