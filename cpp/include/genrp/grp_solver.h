@@ -1,5 +1,5 @@
-#ifndef _GENRP_GRP_
-#define _GENRP_GRP_
+#ifndef _GENRP_GRP_SOLVER_
+#define _GENRP_GRP_SOLVER_
 
 #include <cmath>
 #include <vector>
@@ -15,10 +15,11 @@ class GRPSolver {
   typedef std::complex<double> entry_t;
 
 public:
+  GRPSolver () {};
   GRPSolver (const Eigen::VectorXd alpha, const Eigen::VectorXcd beta);
   void compute (const Eigen::VectorXd x, const Eigen::VectorXd diag);
   void solve (const Eigen::VectorXd& b, double* x) const;
-  double get_log_determinant () const;
+  double log_determinant () const;
 
   // Eigen-free interface.
   GRPSolver (size_t p, const double* alpha, const entry_t* beta);
@@ -129,7 +130,7 @@ void GRPSolver::solve (const Eigen::VectorXd& b, double* x) const {
   for (size_t i = 0; i < n_; ++i) x[i] = xex(i*block_size_).real();
 }
 
-double GRPSolver::get_log_determinant () const {
+double GRPSolver::log_determinant () const {
   return factor_.logAbsDeterminant().real();
 }
 
