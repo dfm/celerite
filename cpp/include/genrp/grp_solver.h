@@ -11,12 +11,15 @@ namespace genrp {
 
 #define GRP_DIMENSION_MISMATCH 1
 
+template <typename entry_t>
 class GRPSolver {
-  typedef std::complex<double> entry_t;
+  /* typedef std::complex<double> entry_t; */
+  typedef Eigen::Matrix<entry_t, Eigen::Dynamic, 1> vector_t;
+  typedef Eigen::Matrix<entry_t, Eigen::Dynamic, Eigen::Dynamic> matrix_t;
 
 public:
   GRPSolver () {};
-  GRPSolver (const Eigen::VectorXd alpha, const Eigen::VectorXcd beta);
+  GRPSolver (const Eigen::VectorXd alpha, const vector_t beta);
   void compute (const Eigen::VectorXd x, const Eigen::VectorXd diag);
   void solve (const Eigen::VectorXd& b, double* x) const;
   double log_determinant () const;
@@ -28,13 +31,14 @@ public:
 
 private:
   Eigen::VectorXd alpha_;
-  Eigen::VectorXcd beta_;
+  vector_t beta_;
   size_t n_, p_, block_size_, dim_ext_;
   Eigen::SparseLU<Eigen::SparseMatrix<entry_t>, Eigen::COLAMDOrdering<int> > factor_;
 
 };
 
-GRPSolver::GRPSolver (const Eigen::VectorXd alpha, const Eigen::VectorXcd beta)
+template <typename entry_t>
+GRPSolver<entry_t>::GRPSolver (const Eigen::VectorXd alpha, const Eigen::Matrix<entry_t, Eigen::Dynamic, 1> beta)
   : alpha_(alpha),
     beta_(beta),
     p_(alpha.rows())
@@ -42,7 +46,8 @@ GRPSolver::GRPSolver (const Eigen::VectorXd alpha, const Eigen::VectorXcd beta)
   if (alpha_.rows() != beta_.rows()) throw GRP_DIMENSION_MISMATCH;
 }
 
-void GRPSolver::compute (const Eigen::VectorXd x, const Eigen::VectorXd diag) {
+template <typename entry_t>
+void GRPSolver<entry_t>::compute (const Eigen::VectorXd x, const Eigen::VectorXd diag) {
   typedef Eigen::Triplet<entry_t> triplet_t;
 
   // Check dimensions.
@@ -50,12 +55,15 @@ void GRPSolver::compute (const Eigen::VectorXd x, const Eigen::VectorXd diag) {
   n_ = x.rows();
 
   // Pre-compute gamma: Equation (58)
-  Eigen::MatrixXcd gamma(p_, n_ - 1);
+  matrix_t gamma(p_, n_ - 1);
   for (size_t i = 0; i < n_ - 1; ++i) {
     double delta = fabs(x(i+1) - x(i));
     for (size_t k = 0; k < p_; ++k)
       gamma(k, i) = exp(-beta_(k) * delta);
   }
+
+  // Pre-compute sum(alpha) -- it will be added to the diagonal.
+  double sum_alpha = alpha_.sum();
 
   // Compute the block sizes: Algorithm 1
   block_size_ = 2 * p_ + 1;
@@ -66,7 +74,7 @@ void GRPSolver::compute (const Eigen::VectorXd x, const Eigen::VectorXd diag) {
   std::vector<triplet_t> triplets(nnz);
 
   for (size_t i = 0; i < n_; ++i)  // Line 3
-    triplets[count++] = triplet_t(i * block_size_, i * block_size_, diag(i));
+    triplets[count++] = triplet_t(i * block_size_, i * block_size_, diag(i)+sum_alpha);
 
   size_t a, b;
   entry_t value;
@@ -116,37 +124,42 @@ void GRPSolver::compute (const Eigen::VectorXd x, const Eigen::VectorXd diag) {
   factor_.compute(A_ex);
 }
 
-void GRPSolver::solve (const Eigen::VectorXd& b, double* x) const {
+template <typename entry_t>
+void GRPSolver<entry_t>::solve (const Eigen::VectorXd& b, double* x) const {
   if (b.rows() != n_) throw GRP_DIMENSION_MISMATCH;
 
   // Pad the input vector to the extended size.
-  Eigen::VectorXcd bex = Eigen::VectorXcd::Zero(dim_ext_);
+  vector_t bex = vector_t::Zero(dim_ext_);
   for (size_t i = 0; i < n_; ++i) bex(i*block_size_) = b(i);
 
   // Solve the extended system.
-  Eigen::VectorXcd xex = factor_.solve(bex);
+  vector_t xex = factor_.solve(bex);
 
   // Copy the output.
   for (size_t i = 0; i < n_; ++i) x[i] = xex(i*block_size_).real();
 }
 
-double GRPSolver::log_determinant () const {
+template <typename entry_t>
+double GRPSolver<entry_t>::log_determinant () const {
   return factor_.logAbsDeterminant().real();
 }
 
 // Eigen-free interface:
-GRPSolver::GRPSolver (size_t p, const double* alpha, const entry_t* beta) {
+template <typename entry_t>
+GRPSolver<entry_t>::GRPSolver (size_t p, const double* alpha, const entry_t* beta) {
   p_ = p;
   alpha_ = Eigen::Map<const Eigen::Matrix<double, Eigen::Dynamic, 1> >(alpha, p, 1);
   beta_ = Eigen::Map<const Eigen::Matrix<entry_t, Eigen::Dynamic, 1> >(beta, p, 1);
 }
 
-void GRPSolver::compute (size_t n, const double* t, const double* diag) {
+template <typename entry_t>
+void GRPSolver<entry_t>::compute (size_t n, const double* t, const double* diag) {
   typedef Eigen::Map<const Eigen::Matrix<double, Eigen::Dynamic, 1> > vector_t;
   compute(vector_t(t, n, 1), vector_t(diag, n, 1));
 }
 
-void GRPSolver::solve (const double* b, double* x) const {
+template <typename entry_t>
+void GRPSolver<entry_t>::solve (const double* b, double* x) const {
   Eigen::Map<const Eigen::Matrix<double, Eigen::Dynamic, 1> > bin(b, n_, 1);
   solve(bin, x);
 }
