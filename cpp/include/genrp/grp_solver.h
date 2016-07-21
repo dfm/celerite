@@ -50,11 +50,11 @@ void GRPSolver::compute (const Eigen::VectorXd x, const Eigen::VectorXd diag) {
   n_ = x.rows();
 
   // Pre-compute gamma: Equation (58)
-  Eigen::MatrixXcd gamma(n_ - 1, p_);
+  Eigen::MatrixXcd gamma(p_, n_ - 1);
   for (size_t i = 0; i < n_ - 1; ++i) {
     double delta = fabs(x(i+1) - x(i));
     for (size_t k = 0; k < p_; ++k)
-      gamma(i, k) = exp(-beta_(k) * delta);
+      gamma(k, i) = exp(-beta_(k) * delta);
   }
 
   // Compute the block sizes: Algorithm 1
@@ -77,7 +77,7 @@ void GRPSolver::compute (const Eigen::VectorXd x, const Eigen::VectorXd diag) {
       // Lines 6-7:
       a = im1n;
       b = im1n+k+1;
-      value = gamma(i, k);
+      value = gamma(k, i);
       triplets[count++] = triplet_t(a, b, value);
       triplets[count++] = triplet_t(b, a, value);
 
@@ -104,7 +104,7 @@ void GRPSolver::compute (const Eigen::VectorXd x, const Eigen::VectorXd diag) {
       // Lines 14-15:
       a = im1n+p_+k+1;
       b = in+k+1;
-      value = gamma(i+1, k);
+      value = gamma(k, i+1);
       triplets[count++] = triplet_t(a, b, value);
       triplets[count++] = triplet_t(b, a, value);
     }
