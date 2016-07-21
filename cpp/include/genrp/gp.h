@@ -8,6 +8,7 @@
 #include <Eigen/Sparse>
 
 #include "genrp/kernel.h"
+#include "genrp/grp_solver.h"
 
 namespace genrp {
 
@@ -22,7 +23,7 @@ public:
   GaussianProcess (Kernel kernel) : kernel_(kernel), dim_(0), computed_(false) {}
   size_t size () const { return kernel_.size(); };
   Eigen::VectorXd params () const { return kernel_.params(); };
-  void params (const Eigen::VectorXd& pars) const { kernel_.params(pars); };
+  void params (const Eigen::VectorXd& pars) { kernel_.params(pars); };
 
   void compute (const Eigen::VectorXd x, const Eigen::VectorXd& yerr);
   void compute (const Eigen::VectorXd& params, const Eigen::VectorXd& x, const Eigen::VectorXd& yerr);
@@ -89,7 +90,6 @@ double GaussianProcess::grad_log_likelihood (const Eigen::VectorXd& y, double* g
   size_t grad_size = kernel_.size(), ind1, ind2;
   Eigen::MatrixXd dKdt(grad_size, dim_*dim_);
   kernel_.grad(0.0, &(dKdt(0, 0)));
-  std::cout << dKdt.col(0) << "\n\n";
   for (size_t i = 0; i < dim_; ++i) {
     dKdt.col(i*dim_ + i) = dKdt.col(0);
     for (size_t j = i+1; j < dim_; ++j) {
