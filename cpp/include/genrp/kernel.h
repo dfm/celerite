@@ -45,7 +45,7 @@ public:
     Eigen::VectorXd alpha(terms_.size() + 2*periodic_terms_.size());
     for (size_t i = 0; i < terms_.size(); ++i) alpha(count++) = terms_[i].amp;
     for (size_t i = 0; i < periodic_terms_.size(); ++i) {
-      double value = periodic_terms_[i].amp;
+      double value = 0.5 * periodic_terms_[i].amp;
       alpha(count++) = value;
       alpha(count++) = value;
     }
@@ -126,9 +126,9 @@ public:
       k0 = t.amp*exp(-arg1);
       k = k0*cos(arg2);
       result += k;
-      grad[ind++] = 2.0 * k;
-      grad[ind++] = 2.0 * k * arg1;
-      grad[ind++] = -2.0 * k0 * arg2 * sin(arg2);
+      grad[ind++] = k;
+      grad[ind++] = k * arg1;
+      grad[ind++] = -k0 * arg2 * sin(arg2);
     }
     return result;
   };
