@@ -62,6 +62,21 @@ double GaussianProcess<SolverType>::log_likelihood (const Eigen::VectorXd& y) co
   return ll;
 }
 
+template <typename SolverType>
+double GaussianProcess<SolverType>::grad_log_likelihood (const Eigen::VectorXd& x, double* grad) const {
+  if (!computed_) throw GP_MUST_COMPUTE;
+  Eigen::VectorXd alpha(y.rows());
+  solver_.solve(y, &(alpha(0)));
+
+  // Compute the likelihood.
+  double ll = -0.5 * y.transpose() * alpha;
+  ll -= 0.5 * solver_.log_determinant() + y.rows() * GP_CONSTANT;
+
+  // Compute the gradient.
+
+  return ll;
+}
+
 };
 
 #endif

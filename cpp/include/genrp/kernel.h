@@ -27,16 +27,16 @@ public:
 
   void add_term (double log_amp, double log_q) {
     Term term;
-    term.log_amp = log_amp;
-    term.log_q = log_q;
+    term.amp = exp(log_amp);
+    term.q = exp(-log_q);
     terms_.push_back(term);
   };
 
   void add_term (double log_amp, double log_q, double log_freq) {
     PeriodicTerm term;
-    term.log_amp = log_amp;
-    term.log_q = log_q;
-    term.log_freq = log_freq;
+    term.amp = exp(log_amp);
+    term.q = exp(-log_q);
+    term.freq = 2*M_PI*exp(log_freq);
     periodic_terms_.push_back(term);
   };
 
@@ -55,10 +55,10 @@ public:
   Eigen::VectorXcd beta () const {
     size_t count = 0;
     Eigen::VectorXcd beta(terms_.size() + 2*periodic_terms_.size());
-    for (size_t i = 0; i < terms_.size(); ++i) beta(count++) = exp(-terms_[i].log_q);
+    for (size_t i = 0; i < terms_.size(); ++i) beta(count++) = terms_[i].q;
     for (size_t i = 0; i < periodic_terms_.size(); ++i) {
-      double re = exp(-periodic_terms_[i].log_q),
-             im = 2*M_PI*exp(periodic_terms_[i].log_freq);
+      double re = periodic_terms_[i].q,
+             im = periodic_terms_[i].freq;
       beta(count++) = std::complex<double>(re, im);
       beta(count++) = std::complex<double>(re, -im);
     }
@@ -69,13 +69,13 @@ public:
     size_t count = 0;
     Eigen::VectorXd pars(size());
     for (size_t i = 0; i < terms_.size(); ++i) {
-      pars(count++) = terms_[i].log_amp;
-      pars(count++) = terms_[i].log_q;
+      pars(count++) = log(terms_[i].log_amp);
+      pars(count++) = -log(terms_[i].q);
     }
     for (size_t i = 0; i < periodic_terms_.size(); ++i) {
-      pars(count++) = periodic_terms_[i].log_amp;
-      pars(count++) = periodic_terms_[i].log_q;
-      pars(count++) = periodic_terms_[i].log_freq;
+      pars(count++) = log(periodic_terms_[i].amp);
+      pars(count++) = -log(periodic_terms_[i].q);
+      pars(count++) = log(periodic_terms_[i].freq / (2*M_PI));
     }
     return pars;
   };
@@ -83,13 +83,13 @@ public:
   void params (const Eigen::VectorXd& pars) {
     size_t count = 0;
     for (size_t i = 0; i < terms_.size(); ++i) {
-      terms_[i].log_amp = pars(count++);
-      terms_[i].log_q = pars(count++);
+      terms_[i].amp = exp(pars(count++));
+      terms_[i].q = exp(-pars(count++));
     }
     for (size_t i = 0; i < periodic_terms_.size(); ++i) {
-      periodic_terms_[i].log_amp = pars(count++);
-      periodic_terms_[i].log_q = pars(count++);
-      periodic_terms_[i].log_freq =pars(count++);
+      periodic_terms_[i].amp = exp(pars(count++));
+      periodic_terms_[i].q = exp(-pars(count++));
+      periodic_terms_[i].freq = 2*M_PI*exp(pars(count++));
     }
   };
 
@@ -98,11 +98,37 @@ public:
     dt = fabs(dt);
     for (size_t i = 0; i < terms_.size(); ++i) {
       Term t = terms_[i];
-      result += exp(t.log_amp) * exp(-exp(-t.log_q)*dt);
+      result += t.amp * exp(-t.q*dt);
     }
     for (size_t i = 0; i < periodic_terms_.size(); ++i) {
       PeriodicTerm t = periodic_terms_[i];
-      result += exp(t.log_amp)*exp(-exp(-t.log_q)*dt)*cos(2*M_PI*exp(t.log_freq)*dt);
+      result += t.amp*exp(-t.q*dt)*cos(t.freq*dt);
+    }
+    return result;
+  };
+
+  double grad (double dt, double* grad) const {
+    size_t ind = 0;
+    double result = 0.0, arg1, arg2, k0, k;
+    dt = fabs(dt);
+    for (size_t i = 0; i < terms_.size(); ++i) {
+      Term t = terms_[i];
+      arg1 = t.q*dt;
+      k = t.amp * exp(-arg1);
+      result += k;
+      grad[ind++] = k;
+      grad[ind++] = k * arg1;
+    }
+    for (size_t i = 0; i < periodic_terms_.size(); ++i) {
+      PeriodicTerm t = periodic_terms_[i];
+      arg1 = t.q*dt;
+      arg2 = t.freq*dt;
+      k0 = t.amp*exp(-arg1);
+      k = k0*cos(arg2);
+      result += k;
+      grad[ind++] = k;
+      grad[ind++] = k * arg1;
+      grad[ind++] = -k0 * arg * sin(arg2);
     }
     return result;
   };
