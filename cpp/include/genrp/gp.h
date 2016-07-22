@@ -1,11 +1,8 @@
 #ifndef _GENRP_GP_
 #define _GENRP_GP_
 
-#include <cmath>
-#include <vector>
 #include <complex>
 #include <Eigen/Dense>
-#include <Eigen/Sparse>
 
 #include "genrp/kernel.h"
 #include "genrp/grp_solver.h"

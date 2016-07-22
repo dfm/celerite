@@ -24,13 +24,16 @@ public:
   void solve (const Eigen::VectorXd& b, double* x) const;
   double log_determinant () const;
 
+  double dot_solve (const Eigen::VectorXd& b) const;
+  double grad_dot_solve (const Eigen::VectorXd& b, entry_t* grad) const;
+
   // Eigen-free interface.
   GRPSolver (size_t p, const double* alpha, const entry_t* beta);
   void solve (const double* b, double* x) const;
   void compute (size_t n, const double* t, const double* diag);
 
 private:
-  Eigen::VectorXd alpha_;
+  Eigen::VectorXd alpha_, x_;
   vector_t beta_;
   size_t n_, p_, block_size_, dim_ext_;
   Eigen::SparseLU<Eigen::SparseMatrix<entry_t>, Eigen::COLAMDOrdering<int> > factor_;
@@ -52,6 +55,7 @@ void GRPSolver<entry_t>::compute (const Eigen::VectorXd x, const Eigen::VectorXd
 
   // Check dimensions.
   if (x.rows() != diag.rows()) throw GRP_DIMENSION_MISMATCH;
+  x_ = x;
   n_ = x.rows();
 
   // Pre-compute gamma: Equation (58)
@@ -142,6 +146,89 @@ void GRPSolver<entry_t>::solve (const Eigen::VectorXd& b, double* x) const {
 template <typename entry_t>
 double GRPSolver<entry_t>::log_determinant () const {
   return factor_.logAbsDeterminant().real();
+}
+
+template <typename entry_t>
+double GRPSolver<entry_t>::dot_solve (const Eigen::VectorXd& b) const {
+  Eigen::VectorXd out(n_);
+  solve(b, &(out(0)));
+  return b.transpose() * out;
+}
+
+template <typename entry_t>
+double GRPSolver<entry_t>::grad_dot_solve (const Eigen::VectorXd& b, entry_t* grad) const {
+  typedef Eigen::Triplet<entry_t> triplet_t;
+
+  if (b.rows() != n_) throw GRP_DIMENSION_MISMATCH;
+
+  // This is the same as in "solve":
+  vector_t bex = vector_t::Zero(dim_ext_);
+  for (size_t i = 0; i < n_; ++i) bex(i*block_size_) = b(i);
+  vector_t xex = factor_.solve(bex);
+
+  // The following lines construct the extended gradient matrix.
+  matrix_t gamma(p_, n_ - 1);
+  for (size_t i = 0; i < n_ - 1; ++i) {
+    double delta = fabs(x_(i+1) - x_(i));
+    for (size_t k = 0; k < p_; ++k)
+      gamma(k, i) = -delta * exp(-beta_(k) * delta);
+  }
+
+  for (size_t k = 0; k < p_; ++k) {
+    std::vector<triplet_t> alpha_triplets,
+                           beta_triplets;
+
+    for (size_t i = 0; i < n_; ++i)  // Line 3
+      alpha_triplets.push_back(triplet_t(i * block_size_, i * block_size_, 1.0));
+
+    size_t a, b;
+    entry_t value;
+    for (size_t i = 0; i < n_ - 1; ++i) {  // Line 5
+      size_t im1n = i * block_size_,        // (i - 1) * n
+             in = (i + 1) * block_size_;    // i * n
+      // Lines 6-7:
+      a = im1n;
+      b = im1n+k+1;
+      value = gamma(k, i);
+      beta_triplets.push_back(triplet_t(a, b, value));
+      beta_triplets.push_back(triplet_t(b, a, value));
+
+      // Lines 8-9:
+      a = in;
+      b = im1n+p_+k+1;
+      value = 1.0;
+      alpha_triplets.push_back(triplet_t(a, b, value));
+      alpha_triplets.push_back(triplet_t(b, a, value));
+    }
+
+    for (size_t i = 0; i < n_ - 2; ++i) {  // Line 13
+      size_t im1n = i * block_size_,        // (i - 1) * n
+            in = (i + 1) * block_size_;    // i * n
+      // Lines 14-15:
+      a = im1n+p_+k+1;
+      b = in+k+1;
+      value = gamma(k, i+1);
+      beta_triplets.push_back(triplet_t(a, b, value));
+      beta_triplets.push_back(triplet_t(b, a, value));
+    }
+
+    Eigen::SparseMatrix<entry_t> alpha_ex(dim_ext_, dim_ext_);
+    alpha_ex.setFromTriplets(alpha_triplets.begin(), alpha_triplets.end());
+    vector_t blah = alpha_ex * xex;
+    grad[2*k] = 0.0;
+    for (size_t i = 0; i < n_; ++i) grad[2*k] += -xex(i*block_size_) * blah(i*block_size_);
+
+    Eigen::SparseMatrix<entry_t> beta_ex(dim_ext_, dim_ext_);
+    beta_ex.setFromTriplets(beta_triplets.begin(), beta_triplets.end());
+    blah = beta_ex * xex;
+    grad[2*k+1] = 0.0;
+    for (size_t i = 0; i < n_; ++i) grad[2*k+1] += -xex(i*block_size_) * blah(i*block_size_);
+  }
+
+  // Copy the output.
+  double output = 0.0;
+  for (size_t i = 0; i < n_; ++i) output += b(i) * xex(i*block_size_).real();
+  return output;
 }
 
 // Eigen-free interface:
