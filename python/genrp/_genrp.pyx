@@ -16,17 +16,33 @@ ctypedef np.complex128_t CDTYPE_t
 cdef extern from "complex":
     double complex exp(double complex)
 
-cdef extern from "grp.h" namespace "genrp":
+cdef extern from "genrp/genrp.h" namespace "genrp":
 
-    cdef cppclass GRPSolver:
-        GRPSolver (size_t m, const double* alpha, const double complex* beta)
+    cdef cppclass Kernel:
+        Kernel()
+        void add_term (double log_amp, double log_q)
+        void add_term (double log_amp, double log_q, double log_freq)
+        double value (double dt) const
+
+    cdef cppclass GenRPSolver[T]:
+        GenRPSolver (size_t m, const double* alpha, const T* beta)
         void compute (size_t N, const double* t, const double* d)
         void solve (const double* b, double* x) const
-        double get_log_determinant () const
+        double solve_dot (const double* b) const
+        double log_determinant () const
 
-cdef class CythonGRPSolver:
+    cdef cppclass GaussianProcess:
+        GaussianProcess (Kernel kernel)
+        size_t size () const
+        void compute (const double* params, size_t N, const double* x, const double* yerr)
+        double log_likelihood (const double* y) const
+        double kernel_value (double dt) const
+        void get_params (double* pars) const
+        void set_params (const double* pars)
 
-    cdef GRPSolver* solver
+cdef class CythonGenRPSolver:
+
+    cdef GenRPSolver[double complex]* solver
     cdef unsigned int m
     cdef unsigned int N
     cdef np.ndarray alpha
@@ -73,9 +89,9 @@ cdef class CythonGRPSolver:
                 raise ValueError("diagonal dimension mismatch")
         else:
             d = d + np.zeros_like(self.t)
-        self.diagonal = d + np.sum(alpha).real
+        self.diagonal = d
 
-        self.solver = new GRPSolver(
+        self.solver = new GenRPSolver[double complex](
             self.m,
             <double*>(self.alpha.data),
             <double complex*>(self.beta.data),
@@ -91,7 +107,7 @@ cdef class CythonGRPSolver:
 
     property log_determinant:
         def __get__(self):
-            return self.solver.get_log_determinant()
+            return self.solver.log_determinant()
 
     def apply_inverse(self, np.ndarray[DTYPE_t, ndim=1] y, in_place=False):
         if y.shape[0] != self.N:
@@ -112,7 +128,7 @@ cdef class CythonGRPSolver:
         cdef np.ndarray[DTYPE_t, ndim=2] A = np.empty((self.N, self.N),
                                                       dtype=DTYPE)
         for i in range(self.N):
-            A[i, i] = self.diagonal[i]
+            A[i, i] = self.diagonal[i] + self.alpha.sum().real
             for j in range(i + 1, self.N):
                 delta = fabs(self.t[i] - self.t[j])
                 value = 0.0j

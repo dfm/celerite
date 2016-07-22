@@ -1,19 +1,19 @@
-#ifndef _GENRP_GP_
-#define _GENRP_GP_
+#ifndef _GENRP_GAUSSIAN_PROCESS_
+#define _GENRP_GAUSSIAN_PROCESS_
 
 #include <complex>
 #include <Eigen/Dense>
 
 #include "genrp/kernel.h"
-#include "genrp/grp_solver.h"
+#include "genrp/genrp_solver.h"
 
 namespace genrp {
 
-#define GP_MUST_COMPUTE       -1
-#define GP_DIMENSION_MISMATCH -2
+#define GAUSSIAN_PROCESS_MUST_COMPUTE       -1
+#define GAUSSIAN_PROCESS_DIMENSION_MISMATCH -2
 
 // 0.5 * log(2 * pi)
-#define GP_CONSTANT 0.91893853320467267
+#define GAUSSIAN_PROCESS_CONSTANT 0.91893853320467267
 
 class GaussianProcess {
 public:
@@ -27,9 +27,16 @@ public:
   double log_likelihood (const Eigen::VectorXd& y) const;
   double grad_log_likelihood (const Eigen::VectorXd& y, double* grad) const;
 
+  // Eigen-free interface.
+  void compute (const double* params, size_t n, const double* x, const double* yerr);
+  double log_likelihood (const double* y) const;
+  double kernel_value (double dt) const;
+  void get_params (double* pars) const;
+  void set_params (const double* pars);
+
 private:
   Kernel kernel_;
-  GRPSolver<std::complex<double> > solver_;
+  GenRPSolver<std::complex<double> > solver_;
   size_t dim_;
   bool computed_;
   Eigen::VectorXd x_;
@@ -46,45 +53,37 @@ void GaussianProcess::compute (
     const Eigen::VectorXd x, const Eigen::VectorXd& yerr) {
   x_ = x;
   dim_ = x.rows();
-  solver_ = GRPSolver<std::complex<double> >(kernel_.alpha(), kernel_.beta());
+  solver_.alpha_and_beta(kernel_.alpha(), kernel_.beta());
   solver_.compute(x, yerr.array() * yerr.array());
   computed_ = true;
 }
 
 double GaussianProcess::log_likelihood (const Eigen::VectorXd& y) const {
-  if (!computed_) throw GP_MUST_COMPUTE;
-  if (y.rows() != dim_) throw GP_DIMENSION_MISMATCH;
+  if (!computed_) throw GAUSSIAN_PROCESS_MUST_COMPUTE;
+  if (y.rows() != dim_) throw GAUSSIAN_PROCESS_DIMENSION_MISMATCH;
   Eigen::VectorXd alpha(dim_);
-  solver_.solve(y, &(alpha(0)));
-  double ll = -0.5 * y.transpose() * alpha;
-  ll -= 0.5 * solver_.log_determinant() + y.rows() * GP_CONSTANT;
-  return ll;
+  double nll = 0.5 * solver_.dot_solve(y);
+  nll += 0.5 * solver_.log_determinant() + y.rows() * GAUSSIAN_PROCESS_CONSTANT;
+  return -nll;
 }
 
 double GaussianProcess::grad_log_likelihood (const Eigen::VectorXd& y, double* grad) const {
-  if (!computed_) throw GP_MUST_COMPUTE;
-  if (y.rows() != dim_) throw GP_DIMENSION_MISMATCH;
+  if (!computed_) throw GAUSSIAN_PROCESS_MUST_COMPUTE;
+  if (y.rows() != dim_) throw GAUSSIAN_PROCESS_DIMENSION_MISMATCH;
   Eigen::VectorXd alpha(dim_);
   solver_.solve(y, &(alpha(0)));
 
   // Compute the likelihood.
-  double ll = -0.5 * y.transpose() * alpha;
-  ll -= 0.5 * solver_.log_determinant() + y.rows() * GP_CONSTANT;
+  double nll = 0.5 * solver_.dot_solve(y);
+  nll += 0.5 * solver_.log_determinant() + y.rows() * GAUSSIAN_PROCESS_CONSTANT;
 
   // Compute 'alpha.alpha^T - K^-1' matrix.
-  Eigen::MatrixXd Kinv(dim_, dim_);
-  Eigen::VectorXd ident = Eigen::VectorXd::Zero(dim_);
-  for (size_t i = 0; i < dim_; ++i) {
-    ident(i) = 1.0;
-    solver_.solve(ident, &(Kinv(0, i)));
-    ident(i) = 0.0;
-
-    Kinv.col(i) -= alpha * alpha(i);
-  }
+  Eigen::MatrixXd Kinv = solver_.get_inverse();
+  Kinv -= alpha * alpha.transpose();
   Kinv.array() *= -1.0;
 
   // Compute the gradient matrix.
-  size_t grad_size = kernel_.size(), ind1, ind2;
+  size_t grad_size = kernel_.size();
   Eigen::MatrixXd dKdt(grad_size, dim_*dim_);
   kernel_.grad(0.0, &(dKdt(0, 0)));
   for (size_t i = 0; i < dim_; ++i) {
@@ -102,7 +101,32 @@ double GaussianProcess::grad_log_likelihood (const Eigen::VectorXd& y, double* g
     grad_map += Kinv.row(i) * dKdt.block(0, i*dim_, grad_size, dim_).transpose();
   grad_map.array() *= 0.5;
 
-  return ll;
+  return -nll;
+}
+
+// Eigen-free interface.
+void GaussianProcess::compute (const double* params, size_t n, const double* x, const double* yerr) {
+  typedef Eigen::Map<const Eigen::Matrix<double, Eigen::Dynamic, 1> > vector_t;
+  compute(vector_t(params, kernel_.size()), vector_t(x, n), vector_t(yerr, n));
+}
+
+double GaussianProcess::log_likelihood (const double* y) const {
+  typedef Eigen::Map<const Eigen::Matrix<double, Eigen::Dynamic, 1> > vector_t;
+  return log_likelihood(vector_t(y, dim_));
+}
+
+double GaussianProcess::kernel_value (double dt) const {
+  return kernel_.value(dt);
+}
+
+void GaussianProcess::get_params (double* pars) const {
+  Eigen::VectorXd p = kernel_.params();
+  for (size_t i = 0; i < p.rows(); ++i) pars[i] = p(i);
+}
+
+void GaussianProcess::set_params (const double* pars) {
+  typedef Eigen::Map<const Eigen::Matrix<double, Eigen::Dynamic, 1> > vector_t;
+  kernel_.params(vector_t(pars, kernel_.size()));
 }
 
 };
