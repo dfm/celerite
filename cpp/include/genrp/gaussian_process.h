@@ -19,6 +19,7 @@ class GaussianProcess {
 public:
   GaussianProcess (Kernel kernel) : kernel_(kernel), dim_(0), computed_(false) {}
   size_t size () const { return kernel_.size(); };
+  size_t num_terms () const { return kernel_.num_terms(); };
   Eigen::VectorXd params () const { return kernel_.params(); };
   void params (const Eigen::VectorXd& pars) { kernel_.params(pars); };
 
@@ -33,6 +34,9 @@ public:
   double kernel_value (double dt) const;
   void get_params (double* pars) const;
   void set_params (const double* pars);
+
+  void get_alpha (double* alpha) const;
+  void get_beta (std::complex<double>* beta) const;
 
 private:
   Kernel kernel_;
@@ -127,6 +131,16 @@ void GaussianProcess::get_params (double* pars) const {
 void GaussianProcess::set_params (const double* pars) {
   typedef Eigen::Map<const Eigen::Matrix<double, Eigen::Dynamic, 1> > vector_t;
   kernel_.params(vector_t(pars, kernel_.size()));
+}
+
+void GaussianProcess::get_alpha (double* alpha) const {
+  Eigen::VectorXd a = kernel_.alpha();
+  for (size_t i = 0; i < a.rows(); ++i) alpha[i] = a(i);
+}
+
+void GaussianProcess::get_beta (std::complex<double>* beta) const {
+  Eigen::VectorXcd b = kernel_.beta();
+  for (size_t i = 0; i < b.rows(); ++i) beta[i] = b(i);
 }
 
 };

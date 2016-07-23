@@ -34,11 +34,14 @@ cdef extern from "genrp/genrp.h" namespace "genrp":
     cdef cppclass GaussianProcess:
         GaussianProcess (Kernel kernel)
         size_t size () const
+        size_t num_terms () const
         void compute (size_t N, const double* x, const double* yerr)
         double log_likelihood (const double* y) const
         double kernel_value (double dt) const
         void get_params (double* pars) const
         void set_params (const double* pars)
+        void get_alpha (double* alpha) const
+        void get_beta (double complex* beta) const
 
 
 cdef class GP:
@@ -65,6 +68,18 @@ cdef class GP:
         def __get__(self):
             return bool(self._computed)
 
+    property alpha:
+        def __get__(self):
+            cdef np.ndarray[DTYPE_t] a = np.empty(self.gp.num_terms(), dtype=DTYPE)
+            self.gp.get_alpha(<double*>a.data)
+            return a
+
+    property beta:
+        def __get__(self):
+            cdef np.ndarray[CDTYPE_t] b = np.empty(self.gp.num_terms(), dtype=CDTYPE)
+            self.gp.get_beta(<double complex*>b.data)
+            return b
+
     property params:
         def __get__(self):
             cdef np.ndarray[DTYPE_t] p = np.empty(self.gp.size(), dtype=DTYPE)
@@ -87,9 +102,23 @@ cdef class GP:
         self.gp = new GaussianProcess(self.kernel)
         self._computed = 0
 
+    def get_matrix(self, np.ndarray[DTYPE_t, ndim=1] x1, x2=None):
+        if x2 is None:
+            x2 = x1
+        cdef np.ndarray[DTYPE_t, ndim=2] K = x1[:, None] - x2[None, :]
+        cdef int i, j
+        for i in range(x1.shape[0]):
+            for j in range(x2.shape[0]):
+                K[i, j] = self.gp.kernel_value(K[i, j])
+        return K
+
     def compute(self, np.ndarray[DTYPE_t, ndim=1] x, np.ndarray[DTYPE_t, ndim=1] yerr):
         if x.shape[0] != yerr.shape[0]:
             raise ValueError("dimension mismatch")
+        cdef int i
+        for i in range(x.shape[0] - 1):
+            if x[i+1] <= x[i]:
+                raise ValueError("the time series must be ordered")
         self.gp.compute(x.shape[0], <double*>x.data, <double*>yerr.data)
         self.x = x
         self.yerr = yerr
@@ -103,6 +132,10 @@ cdef class GP:
         if self._computed == 0:
             if self._has_x == 0:
                 raise RuntimeError("must call 'compute' first")
+            self.gp.compute(self.x.shape[0], <double*>self.x.data,
+                            <double*>self.yerr.data)
+            self._computed = 1
+        return self.gp.log_likelihood(<double*>y.data)
 
 
 cdef class Solver:
