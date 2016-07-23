@@ -34,13 +34,78 @@ cdef extern from "genrp/genrp.h" namespace "genrp":
     cdef cppclass GaussianProcess:
         GaussianProcess (Kernel kernel)
         size_t size () const
-        void compute (const double* params, size_t N, const double* x, const double* yerr)
+        void compute (size_t N, const double* x, const double* yerr)
         double log_likelihood (const double* y) const
         double kernel_value (double dt) const
         void get_params (double* pars) const
         void set_params (const double* pars)
 
-cdef class CythonGenRPSolver:
+
+cdef class GP:
+
+    cdef GaussianProcess* gp
+    cdef Kernel kernel
+    cdef np.ndarray x
+    cdef np.ndarray yerr
+    cdef int _computed
+    cdef int _has_x
+
+    def __cinit__(self):
+        self.gp = new GaussianProcess(self.kernel)
+        self._computed = 0
+        self._has_x = 0
+
+    def __dealloc__(self):
+        del self.gp
+
+    def __len__(self):
+        return self.gp.size()
+
+    property computed:
+        def __get__(self):
+            return bool(self._computed)
+
+    property params:
+        def __get__(self):
+            cdef np.ndarray[DTYPE_t] p = np.empty(self.gp.size(), dtype=DTYPE)
+            self.gp.get_params(<double*>p.data)
+            return p
+
+        def __set__(self, params):
+            cdef np.ndarray[DTYPE_t, ndim=1] p = \
+                np.atleast_1d(params).astype(DTYPE)
+            if p.shape[0] != self.gp.size():
+                raise ValueError("dimension mismatch")
+            self.gp.set_params(<double*>p.data)
+
+    def add_term(self, double log_amp, double log_q, log_freq=None):
+        if log_freq is None:
+            self.kernel.add_term(log_amp, log_q)
+        else:
+            self.kernel.add_term(log_amp, log_q, log_freq)
+        del self.gp
+        self.gp = new GaussianProcess(self.kernel)
+        self._computed = 0
+
+    def compute(self, np.ndarray[DTYPE_t, ndim=1] x, np.ndarray[DTYPE_t, ndim=1] yerr):
+        if x.shape[0] != yerr.shape[0]:
+            raise ValueError("dimension mismatch")
+        self.gp.compute(x.shape[0], <double*>x.data, <double*>yerr.data)
+        self.x = x
+        self.yerr = yerr
+        self._computed = 1
+        self._has_x = 1
+
+    def log_likelihood(self, np.ndarray[DTYPE_t, ndim=1] y):
+        if self._has_x:
+            if y.shape[0] != self.x.shape[0]:
+                raise ValueError("dimension mismatch")
+        if self._computed == 0:
+            if self._has_x == 0:
+                raise RuntimeError("must call 'compute' first")
+
+
+cdef class Solver:
 
     cdef GenRPSolver[double complex]* solver
     cdef unsigned int m

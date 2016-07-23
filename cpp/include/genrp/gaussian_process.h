@@ -28,7 +28,7 @@ public:
   double grad_log_likelihood (const Eigen::VectorXd& y, double* grad) const;
 
   // Eigen-free interface.
-  void compute (const double* params, size_t n, const double* x, const double* yerr);
+  void compute (size_t n, const double* x, const double* yerr);
   double log_likelihood (const double* y) const;
   double kernel_value (double dt) const;
   void get_params (double* pars) const;
@@ -105,9 +105,9 @@ double GaussianProcess::grad_log_likelihood (const Eigen::VectorXd& y, double* g
 }
 
 // Eigen-free interface.
-void GaussianProcess::compute (const double* params, size_t n, const double* x, const double* yerr) {
+void GaussianProcess::compute (size_t n, const double* x, const double* yerr) {
   typedef Eigen::Map<const Eigen::Matrix<double, Eigen::Dynamic, 1> > vector_t;
-  compute(vector_t(params, kernel_.size()), vector_t(x, n), vector_t(yerr, n));
+  compute(vector_t(x, n), vector_t(yerr, n));
 }
 
 double GaussianProcess::log_likelihood (const double* y) const {
