@@ -31,6 +31,8 @@ for i, n in enumerate(N):
     gp.log_likelihood(y[:n])
     times[i, 1] = time.time() - strt
 
+    print(n, times[i, 0], times[i, 1])
+
 pl.plot(N, N / N[0] * 1e-3, "k", label="$\mathcal{O}(N)$")
 pl.plot(N, times[:, 0], ".-", label="compute")
 pl.plot(N, times[:, 1], ".-", label="log likelihood")

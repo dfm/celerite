@@ -23,10 +23,9 @@ public:
   Eigen::VectorXd params () const { return kernel_.params(); };
   void params (const Eigen::VectorXd& pars) { kernel_.params(pars); };
 
-  void compute (const Eigen::VectorXd x, const Eigen::VectorXd& yerr);
+  void compute (const Eigen::VectorXd& x, const Eigen::VectorXd& yerr);
   void compute (const Eigen::VectorXd& params, const Eigen::VectorXd& x, const Eigen::VectorXd& yerr);
   double log_likelihood (const Eigen::VectorXd& y) const;
-  double grad_log_likelihood (const Eigen::VectorXd& y, double* grad) const;
 
   // Eigen-free interface.
   void compute (size_t n, const double* x, const double* yerr);
@@ -43,7 +42,6 @@ private:
   GenRPSolver<std::complex<double> > solver_;
   size_t dim_;
   bool computed_;
-  Eigen::VectorXd x_;
 
 };
 
@@ -54,8 +52,7 @@ void GaussianProcess::compute (
 }
 
 void GaussianProcess::compute (
-    const Eigen::VectorXd x, const Eigen::VectorXd& yerr) {
-  x_ = x;
+    const Eigen::VectorXd& x, const Eigen::VectorXd& yerr) {
   dim_ = x.rows();
   solver_.alpha_and_beta(kernel_.alpha(), kernel_.beta());
   solver_.compute(x, yerr.array() * yerr.array());
@@ -68,43 +65,6 @@ double GaussianProcess::log_likelihood (const Eigen::VectorXd& y) const {
   Eigen::VectorXd alpha(dim_);
   double nll = 0.5 * solver_.dot_solve(y);
   nll += 0.5 * solver_.log_determinant() + y.rows() * GAUSSIAN_PROCESS_CONSTANT;
-  return -nll;
-}
-
-double GaussianProcess::grad_log_likelihood (const Eigen::VectorXd& y, double* grad) const {
-  if (!computed_) throw GAUSSIAN_PROCESS_MUST_COMPUTE;
-  if (y.rows() != dim_) throw GAUSSIAN_PROCESS_DIMENSION_MISMATCH;
-  Eigen::VectorXd alpha(dim_);
-  solver_.solve(y, &(alpha(0)));
-
-  // Compute the likelihood.
-  double nll = 0.5 * solver_.dot_solve(y);
-  nll += 0.5 * solver_.log_determinant() + y.rows() * GAUSSIAN_PROCESS_CONSTANT;
-
-  // Compute 'alpha.alpha^T - K^-1' matrix.
-  Eigen::MatrixXd Kinv = solver_.get_inverse();
-  Kinv -= alpha * alpha.transpose();
-  Kinv.array() *= -1.0;
-
-  // Compute the gradient matrix.
-  size_t grad_size = kernel_.size();
-  Eigen::MatrixXd dKdt(grad_size, dim_*dim_);
-  kernel_.grad(0.0, &(dKdt(0, 0)));
-  for (size_t i = 0; i < dim_; ++i) {
-    dKdt.col(i*dim_ + i) = dKdt.col(0);
-    for (size_t j = i+1; j < dim_; ++j) {
-      kernel_.grad(x_(j) - x_(i), &(dKdt(0, i*dim_ + j)));
-      dKdt.col(j*dim_ + i) = dKdt.col(i*dim_ + j);
-    }
-  }
-
-  // Compute the gradient.
-  Eigen::Map<Eigen::VectorXd> grad_map(grad, grad_size);
-  grad_map.array() = Eigen::VectorXd::Zero(grad_size);
-  for (size_t i = 0; i < dim_; ++i)
-    grad_map += Kinv.row(i) * dKdt.block(0, i*dim_, grad_size, dim_).transpose();
-  grad_map.array() *= 0.5;
-
   return -nll;
 }
 
