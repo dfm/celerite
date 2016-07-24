@@ -1,0 +1,5 @@
+```
+cmake .
+make
+make test
+```
