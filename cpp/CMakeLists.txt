@@ -32,6 +32,8 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 include(ReadGenRPVersionFromSource)
 read_genrp_version_from_source(${CMAKE_SOURCE_DIR})
 
+enable_testing()
+
 # Find eigen:
 find_package(Eigen REQUIRED)
 if (EIGEN_FOUND)
