@@ -1,0 +1,55 @@
+sudo: false
+
+addons:
+    apt:
+        packages:
+            - libeigen3-dev
+
+env:
+    matrix:
+        - PYTHON_VERSION=2.7
+          NUMPY_VERSION=1.8
+        - PYTHON_VERSION=2.7
+          NUMPY_VERSION=1.9
+        - PYTHON_VERSION=2.7
+          NUMPY_VERSION=1.10
+        - PYTHON_VERSION=2.7
+          NUMPY_VERSION=1.11
+
+        - PYTHON_VERSION=3.4
+          NUMPY_VERSION=1.8
+        - PYTHON_VERSION=3.4
+          NUMPY_VERSION=1.9
+        - PYTHON_VERSION=3.4
+          NUMPY_VERSION=1.10
+        - PYTHON_VERSION=3.4
+          NUMPY_VERSION=1.11
+
+        - PYTHON_VERSION=3.5
+          NUMPY_VERSION=1.9
+        - PYTHON_VERSION=3.5
+          NUMPY_VERSION=1.10
+        - PYTHON_VERSION=3.5
+          NUMPY_VERSION=1.11
+
+install:
+    - wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
+    - bash miniconda.sh -b -p $HOME/miniconda
+    - export PATH=$HOME/miniconda/bin:$PATH
+    - hash -r
+    - conda config --set always_yes yes --set changeps1 no
+    - conda update -q conda
+    - conda info -a
+
+    - conda create --yes -n test python=$PYTHON_VERSION numpy=$NUMPY_VERSION Cython setuptools pytest
+    - source activate test
+    # - pip install coveralls
+
+    - cd python
+    - CXX=g++ python setup.py build_ext --inplace
+
+script:
+    - py.test -v genrp/tests.py
+
+# after_success:
+#     - coveralls
