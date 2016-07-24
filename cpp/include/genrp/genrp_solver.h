@@ -36,7 +36,7 @@ private:
   Eigen::VectorXd alpha_, x_;
   vector_t beta_;
   size_t n_, p_, block_size_, dim_ext_;
-  Eigen::SparseLU<Eigen::SparseMatrix<entry_t>, Eigen::COLAMDOrdering<int> > factor_;
+  Eigen::SparseLU<Eigen::SparseMatrix<entry_t> > factor_;
 
 };
 
