@@ -7,7 +7,8 @@ import numpy as np
 
 from ._genrp import Solver, GP
 
-__all__ = ["test_invalid_parameters", "test_log_determinant", "test_solve"]
+__all__ = ["test_invalid_parameters", "test_log_determinant", "test_solve",
+           "test_kernel", "test_build_gp", "test_log_likelihood"]
 
 
 def test_invalid_parameters(seed=42):
@@ -78,6 +79,25 @@ def test_kernel(seed=42):
     assert np.allclose(gp.beta, [np.exp(-0.1), np.exp(-1.0), re+1j*im,
                                  re-1j*im])
 
+    gp = GP()
+    gp.add_term(-0.5, 0.1)
+    gp.add_term(-0.6, 0.7, 1.0)
+
+    np.random.seed(seed)
+    x1 = np.sort(np.random.rand(10))
+    K0 = gp.get_matrix(x1)
+    dt = np.abs(x1[:, None] - x1[None, :])
+    K = np.exp(-0.5)*np.exp(-np.exp(-0.1)*dt)
+    K += np.exp(-0.6)*np.exp(-np.exp(-0.7)*dt)*np.cos(2*np.pi*np.exp(1.0)*dt)
+    assert np.allclose(K, K0)
+
+    x2 = np.sort(np.random.rand(5))
+    K0 = gp.get_matrix(x1, x2)
+    dt = np.abs(x1[:, None] - x2[None, :])
+    K = np.exp(-0.5)*np.exp(-np.exp(-0.1)*dt)
+    K += np.exp(-0.6)*np.exp(-np.exp(-0.7)*dt)*np.cos(2*np.pi*np.exp(1.0)*dt)
+    assert np.allclose(K, K0)
+
 
 def test_build_gp(seed=42):
     gp = GP()
@@ -123,28 +143,3 @@ def test_log_likelihood(seed=42):
         ll0 -= 0.5 * np.linalg.slogdet(K)[1]
         ll0 -= 0.5 * len(x) * np.log(2*np.pi)
         assert np.allclose(ll, ll0)
-
-
-# def test_order(seed=42):
-#     np.random.seed(seed)
-#     t = np.random.rand(500)
-#     yerr = np.random.uniform(0.1, 0.5, len(t))
-#     b = np.random.randn(len(t))
-#     inds = np.argsort(t)
-
-#     solver = GenRPSolver(np.random.randn(3), np.random.randn(3),
-#                          np.random.rand(3))
-
-#     solver.compute(t, yerr)
-#     K = solver.solver.get_matrix()
-#     x1 = solver.apply_inverse(b)
-#     x2 = np.empty_like(x1)
-#     x2[inds] = np.linalg.solve(K, b[inds])
-#     assert np.allclose(x1, x2)
-
-#     t = np.sort(t)
-#     solver.compute(t, yerr)
-#     K = solver.solver.get_matrix()
-#     x1 = solver.apply_inverse(b)
-#     x2 = np.linalg.solve(K, b)
-#     assert np.allclose(x1, x2)

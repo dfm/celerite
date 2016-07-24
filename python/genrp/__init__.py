@@ -8,7 +8,6 @@ except NameError:
     __GENRP_SETUP__ = False
 
 if not __GENRP_SETUP__:
-    pass
-    # __all__ = ["GRPSolver"]
+    __all__ = ["Solver", "GP"]
 
-    # from .genrp import GenRPSolver
+    from ._genrp import Solver, GP
