@@ -1,11 +1,10 @@
 sudo: false
 
-addons:
-    apt:
-        packages:
-            - libeigen3-dev
-
 env:
+    global:
+        - EIGEN_VERSION=3.2.9
+          EIGEN_HASH=dc6cfdf9bcec
+
     matrix:
         - PYTHON_VERSION=2.7
           NUMPY_VERSION=1.8
@@ -45,8 +44,11 @@ install:
     - source activate test
     # - pip install coveralls
 
+    - wget --quiet "http://bitbucket.org/eigen/eigen/get/${EIGEN_VERSION}.tar.gz"
+    - tar -xzf ${EIGEN_VERSION}.tar.gz
+
     - cd python
-    - CXX=g++ python setup.py build_ext --inplace
+    - CXX=g++ python setup.py build_ext -I../eigen-eigen-$EIGEN_HASH --inplace
 
 script:
     - py.test -v genrp/tests.py
