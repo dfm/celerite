@@ -108,28 +108,16 @@ public:
     return result;
   };
 
-  double grad (double dt, double* grad) const {
-    size_t ind = 0;
-    double result = 0.0, arg1, arg2, k0, k;
-    dt = fabs(dt);
+  double psd (double w) const {
+    double result = 0.0;
     for (size_t i = 0; i < terms_.size(); ++i) {
       Term t = terms_[i];
-      arg1 = t.q*dt;
-      k = t.amp * exp(-arg1);
-      result += k;
-      grad[ind++] = k;
-      grad[ind++] = k * arg1;
+      result += t.amp * t.q / (M_PI * (t.q*t.q + w*w));
     }
     for (size_t i = 0; i < periodic_terms_.size(); ++i) {
       PeriodicTerm t = periodic_terms_[i];
-      arg1 = t.q*dt;
-      arg2 = t.freq*dt;
-      k0 = t.amp*exp(-arg1);
-      k = k0*cos(arg2);
-      result += k;
-      grad[ind++] = k;
-      grad[ind++] = k * arg1;
-      grad[ind++] = -k0 * arg2 * sin(arg2);
+      double dw = w - t.freq;
+      result += t.amp * t.q / (M_PI * (t.q*t.q + dw*dw));
     }
     return result;
   };
