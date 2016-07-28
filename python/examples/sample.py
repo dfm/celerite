@@ -17,11 +17,12 @@ true_gp = GP()
 true_gp.add_term(np.log(1.0), np.log(10.0))
 true_gp.add_term(np.log(0.5), np.log(40.0), -np.log(3.0))
 
+# t = np.linspace(0, 200, 150)
 t = np.linspace(0, 200, 1000)
 y = true_gp.sample(t, tiny=1e-12)
 yerr = np.random.uniform(0.25, 0.5, len(t))
 y += yerr * np.random.randn(len(t))
-# t, y, yerr = t[:500], y[:500], yerr[:500]
+t, y, yerr = t[:100], y[:100], yerr[:100]
 omega = np.fft.rfftfreq(len(t), t[1] - t[0])
 
 fit_gp = GP()
@@ -80,7 +81,21 @@ for i, p in enumerate(log_f):
 
 params[-1] = log_f[np.argmax(log_like)]
 fit_gp.params = params
-fit_gp.compute(t, yerr)
+
+def nll(theta):
+    params[:-1] = theta
+    fit_gp.params = params
+    fit_gp.compute(t, yerr)
+    ll = fit_gp.log_likelihood(y)
+    if not np.isfinite(ll):
+        return 1e10
+    return -ll
+
+result = minimize(nll, fit_gp.params[:-1], method="L-BFGS-B",
+                  bounds=[(-5, 5) for _ in range(len(fit_gp.params)-1)])
+print(result)
+params[:-1] = result.x
+fit_gp.params = params
 
 ax = axes[1, 0]
 ax.plot(np.exp(log_f), log_like, "k")
