@@ -65,15 +65,18 @@ def test_kernel(seed=42):
     gp = GP()
     gp.add_term(-0.5, 0.1)
     gp.add_term(-0.6, 0.7, 1.0)
-    assert np.allclose(gp.alpha, [np.exp(-0.5-0.1), 0.5*np.exp(-0.6-0.7),
-                                  0.5*np.exp(-0.6-0.7)])
+    assert np.allclose(gp.alpha, [2.0*np.pi*np.exp(-0.5-0.1),
+                                  np.pi*np.exp(-0.6-0.7),
+                                  np.pi*np.exp(-0.6-0.7)])
     re = np.exp(-0.7)
     im = 2*np.pi*np.exp(1.0)
     assert np.allclose(gp.beta, [np.exp(-0.1), re+1j*im, re-1j*im])
 
     gp.add_term(-0.8, 1.0)
-    assert np.allclose(gp.alpha, [np.exp(-0.5-0.1), np.exp(-0.8-1.0),
-                                  0.5*np.exp(-0.6-0.7), 0.5*np.exp(-0.6-0.7)])
+    assert np.allclose(gp.alpha, [2.0*np.pi*np.exp(-0.5-0.1),
+                                  2.0*np.pi*np.exp(-0.8-1.0),
+                                  np.pi*np.exp(-0.6-0.7),
+                                  np.pi*np.exp(-0.6-0.7)])
     re = np.exp(-0.7)
     im = 2*np.pi*np.exp(1.0)
     assert np.allclose(gp.beta, [np.exp(-0.1), np.exp(-1.0), re+1j*im,
@@ -87,16 +90,16 @@ def test_kernel(seed=42):
     x1 = np.sort(np.random.rand(10))
     K0 = gp.get_matrix(x1)
     dt = np.abs(x1[:, None] - x1[None, :])
-    K = np.exp(-0.5-0.1)*np.exp(-np.exp(-0.1)*dt)
-    K += np.exp(-0.6-0.7)*np.exp(-np.exp(-0.7)*dt) \
+    K = 2.0*np.pi*np.exp(-0.5-0.1)*np.exp(-np.exp(-0.1)*dt)
+    K += 2.0*np.pi*np.exp(-0.6-0.7)*np.exp(-np.exp(-0.7)*dt) \
         * np.cos(2*np.pi*np.exp(1.0)*dt)
     assert np.allclose(K, K0)
 
     x2 = np.sort(np.random.rand(5))
     K0 = gp.get_matrix(x1, x2)
     dt = np.abs(x1[:, None] - x2[None, :])
-    K = np.exp(-0.5-0.1)*np.exp(-np.exp(-0.1)*dt)
-    K += np.exp(-0.6-0.7)*np.exp(-np.exp(-0.7)*dt) \
+    K = 2.0*np.pi*np.exp(-0.5-0.1)*np.exp(-np.exp(-0.1)*dt)
+    K += 2.0*np.pi*np.exp(-0.6-0.7)*np.exp(-np.exp(-0.7)*dt) \
         * np.cos(2*np.pi*np.exp(1.0)*dt)
     assert np.allclose(K, K0)
 

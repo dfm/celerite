@@ -146,6 +146,11 @@ cdef class GP:
             self._computed = 1
         return self.gp.log_likelihood(<double*>y.data)
 
+    def sample(self, np.ndarray[DTYPE_t, ndim=1] x, double tiny=1e-10):
+        cdef np.ndarray[DTYPE_t, ndim=2] K = self.get_matrix(x)
+        K[np.diag_indices_from(K)] += tiny
+        return np.random.multivariate_normal(np.zeros_like(x), K)
+
 
 cdef class Solver:
 
