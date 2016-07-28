@@ -4,7 +4,6 @@ from __future__ import division, print_function
 
 import pytest
 import numpy as np
-from collections import defaultdict
 
 from ._genrp import Solver, GP
 
