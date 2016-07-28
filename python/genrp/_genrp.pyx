@@ -23,6 +23,7 @@ cdef extern from "genrp/genrp.h" namespace "genrp":
         void add_term (double log_amp, double log_q)
         void add_term (double log_amp, double log_q, double log_freq)
         double value (double dt) const
+        double psd (double w) const
 
     cdef cppclass GenRPSolver[T]:
         GenRPSolver (size_t m, const double* alpha, const T* beta)
@@ -38,6 +39,7 @@ cdef extern from "genrp/genrp.h" namespace "genrp":
         void compute (size_t N, const double* x, const double* yerr)
         double log_likelihood (const double* y) const
         double kernel_value (double dt) const
+        double kernel_psd (double w) const
         void get_params (double* pars) const
         void set_params (const double* pars)
         void get_alpha (double* alpha) const
@@ -111,6 +113,13 @@ cdef class GP:
             for j in range(x2.shape[0]):
                 K[i, j] = self.gp.kernel_value(K[i, j])
         return K
+
+    def get_psd(self, np.ndarray[DTYPE_t, ndim=1] w):
+        cdef np.ndarray[DTYPE_t, ndim=1] psd = np.empty_like(w, dtype=DTYPE)
+        cdef int i
+        for i in range(w.shape[0]):
+            psd[i] = self.gp.kernel_psd(w[i])
+        return psd
 
     def compute(self, np.ndarray[DTYPE_t, ndim=1] x, np.ndarray[DTYPE_t, ndim=1] yerr):
         if x.shape[0] != yerr.shape[0]:

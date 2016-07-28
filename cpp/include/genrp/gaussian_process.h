@@ -31,6 +31,7 @@ public:
   void compute (size_t n, const double* x, const double* yerr);
   double log_likelihood (const double* y) const;
   double kernel_value (double dt) const;
+  double kernel_psd (double w) const;
   void get_params (double* pars) const;
   void set_params (const double* pars);
 
@@ -81,6 +82,10 @@ double GaussianProcess::log_likelihood (const double* y) const {
 
 double GaussianProcess::kernel_value (double dt) const {
   return kernel_.value(dt);
+}
+
+double GaussianProcess::kernel_psd (double w) const {
+  return kernel_.psd(w);
 }
 
 void GaussianProcess::get_params (double* pars) const {

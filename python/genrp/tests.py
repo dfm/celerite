@@ -4,11 +4,12 @@ from __future__ import division, print_function
 
 import pytest
 import numpy as np
+from collections import defaultdict
 
 from ._genrp import Solver, GP
 
 __all__ = ["test_invalid_parameters", "test_log_determinant", "test_solve",
-           "test_kernel", "test_build_gp", "test_log_likelihood"]
+           "test_kernel", "test_build_gp", "test_log_likelihood", "test_psd"]
 
 
 def test_invalid_parameters(seed=42):
@@ -65,15 +66,15 @@ def test_kernel(seed=42):
     gp = GP()
     gp.add_term(-0.5, 0.1)
     gp.add_term(-0.6, 0.7, 1.0)
-    assert np.allclose(gp.alpha, [np.exp(-0.5), 0.5*np.exp(-0.6),
-                                  0.5*np.exp(-0.6)])
+    assert np.allclose(gp.alpha, [np.exp(-0.5-0.1), 0.5*np.exp(-0.6-0.7),
+                                  0.5*np.exp(-0.6-0.7)])
     re = np.exp(-0.7)
     im = 2*np.pi*np.exp(1.0)
     assert np.allclose(gp.beta, [np.exp(-0.1), re+1j*im, re-1j*im])
 
     gp.add_term(-0.8, 1.0)
-    assert np.allclose(gp.alpha, [np.exp(-0.5), np.exp(-0.8), 0.5*np.exp(-0.6),
-                                  0.5*np.exp(-0.6)])
+    assert np.allclose(gp.alpha, [np.exp(-0.5-0.1), np.exp(-0.8-1.0),
+                                  0.5*np.exp(-0.6-0.7), 0.5*np.exp(-0.6-0.7)])
     re = np.exp(-0.7)
     im = 2*np.pi*np.exp(1.0)
     assert np.allclose(gp.beta, [np.exp(-0.1), np.exp(-1.0), re+1j*im,
@@ -87,15 +88,17 @@ def test_kernel(seed=42):
     x1 = np.sort(np.random.rand(10))
     K0 = gp.get_matrix(x1)
     dt = np.abs(x1[:, None] - x1[None, :])
-    K = np.exp(-0.5)*np.exp(-np.exp(-0.1)*dt)
-    K += np.exp(-0.6)*np.exp(-np.exp(-0.7)*dt)*np.cos(2*np.pi*np.exp(1.0)*dt)
+    K = np.exp(-0.5-0.1)*np.exp(-np.exp(-0.1)*dt)
+    K += np.exp(-0.6-0.7)*np.exp(-np.exp(-0.7)*dt) \
+        * np.cos(2*np.pi*np.exp(1.0)*dt)
     assert np.allclose(K, K0)
 
     x2 = np.sort(np.random.rand(5))
     K0 = gp.get_matrix(x1, x2)
     dt = np.abs(x1[:, None] - x2[None, :])
-    K = np.exp(-0.5)*np.exp(-np.exp(-0.1)*dt)
-    K += np.exp(-0.6)*np.exp(-np.exp(-0.7)*dt)*np.cos(2*np.pi*np.exp(1.0)*dt)
+    K = np.exp(-0.5-0.1)*np.exp(-np.exp(-0.1)*dt)
+    K += np.exp(-0.6-0.7)*np.exp(-np.exp(-0.7)*dt) \
+        * np.cos(2*np.pi*np.exp(1.0)*dt)
     assert np.allclose(K, K0)
 
 
@@ -143,3 +146,21 @@ def test_log_likelihood(seed=42):
         ll0 -= 0.5 * np.linalg.slogdet(K)[1]
         ll0 -= 0.5 * len(x) * np.log(2*np.pi)
         assert np.allclose(ll, ll0)
+
+
+def test_psd():
+    gp = GP()
+    terms = [(-0.5, 0.1), (-0.6, 0.7, 1.0)]
+    for term in terms:
+        gp.add_term(*term)
+
+    # Check that there is a maximum in the PSD at each term.
+    w = np.linspace(-10.0, 10.0, 5001)
+    psd = gp.get_psd(w)
+    w = w[1:-1]
+    for term in terms:
+        w0 = 0.0
+        if len(term) == 3:
+            w0 = np.exp(term[2])
+        i = np.argmin(np.abs(w-w0))
+        assert (psd[i+1] > psd[i]) and (psd[i+1] > psd[i+2])
