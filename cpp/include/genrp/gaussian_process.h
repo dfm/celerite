@@ -20,6 +20,7 @@ public:
   GaussianProcess (Kernel kernel) : kernel_(kernel), dim_(0), computed_(false) {}
   size_t size () const { return kernel_.size(); };
   size_t num_terms () const { return kernel_.num_terms(); };
+  size_t num_coeffs () const { return kernel_.num_coeffs(); };
   Eigen::VectorXd params () const { return kernel_.params(); };
   void params (const Eigen::VectorXd& pars) { kernel_.params(pars); };
 

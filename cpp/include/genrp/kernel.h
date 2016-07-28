@@ -26,7 +26,8 @@ public:
   Kernel () {};
 
   size_t size () const { return 2 * terms_.size() + 3 * periodic_terms_.size(); };
-  size_t num_terms () const { return terms_.size() + 2 * periodic_terms_.size(); };
+  size_t num_terms () const { return terms_.size() + periodic_terms_.size(); };
+  size_t num_coeffs () const { return terms_.size() + 2 * periodic_terms_.size(); };
 
   void add_term (double log_amp, double log_q) {
     Term term;

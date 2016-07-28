@@ -17,13 +17,19 @@ true_gp = GP()
 true_gp.add_term(np.log(1.0), np.log(10.0))
 true_gp.add_term(np.log(0.5), np.log(40.0), -np.log(3.0))
 
-# t = np.linspace(0, 200, 150)
-t = np.linspace(0, 200, 1000)
+t = np.linspace(0, 200, 150)
+# omega = np.fft.rfftfreq(len(t), t[1] - t[0])
+omega = np.linspace(1e-2, 1.0, 500)
+t += 0.5 * (t[1] - t[0]) * (np.random.rand(len(t)) - 0.5)
+t = np.sort(t)
+# t = np.linspace(0, 200, 1000)
 y = true_gp.sample(t, tiny=1e-12)
 yerr = np.random.uniform(0.25, 0.5, len(t))
 y += yerr * np.random.randn(len(t))
-t, y, yerr = t[:100], y[:100], yerr[:100]
-omega = np.fft.rfftfreq(len(t), t[1] - t[0])
+# t, y, yerr = t[:100], y[:100], yerr[:100]
+
+# inds = np.sort(np.random.choice(np.arange(len(t)), size=100, replace=False))
+# t, y, yerr = t[inds], y[inds], yerr[inds]
 
 fit_gp = GP()
 amp = 1.0
@@ -45,8 +51,8 @@ ax.set_title("simulated data")
 
 # FFT
 ax = axes[0, 1]
-fft = np.fft.rfft(y)
-ax.plot(omega, np.abs(fft) / len(t), "k", label="fft")
+# fft = np.fft.rfft(y)
+# ax.plot(omega, np.abs(fft) / len(t), "k", label="fft")
 ax.plot(omega, true_gp.get_psd(omega), "g", label="truth")
 ax.set_xlim(omega[1], omega[-1])
 ax.set_xscale("log")

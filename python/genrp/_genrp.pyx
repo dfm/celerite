@@ -36,6 +36,7 @@ cdef extern from "genrp/genrp.h" namespace "genrp":
         GaussianProcess (Kernel kernel)
         size_t size () const
         size_t num_terms () const
+        size_t num_coeffs () const
         void compute (size_t N, const double* x, const double* yerr)
         double log_likelihood (const double* y) const
         double kernel_value (double dt) const
@@ -50,15 +51,11 @@ cdef class GP:
 
     cdef GaussianProcess* gp
     cdef Kernel kernel
-    cdef np.ndarray x
-    cdef np.ndarray yerr
-    cdef int _computed
-    cdef int _has_x
+    cdef int _data_size
 
     def __cinit__(self):
         self.gp = new GaussianProcess(self.kernel)
-        self._computed = 0
-        self._has_x = 0
+        self._data_size = -1
 
     def __dealloc__(self):
         del self.gp
@@ -66,19 +63,30 @@ cdef class GP:
     def __len__(self):
         return self.gp.size()
 
+    property terms:
+        def __get__(self):
+            cdef int n = self.gp.num_terms()
+            cdef int m = self.gp.size()
+            cdef int i
+            p = self.params
+            return (
+                [(p[i], p[i+1]) for i in range(0, 6*n-2*m, 2)]
+                + [(p[i], p[i+1], p[i+2]) for i in range(6*n-2*m, len(p), 3)]
+            )
+
     property computed:
         def __get__(self):
-            return bool(self._computed)
+            return self._data_size >= 0
 
     property alpha:
         def __get__(self):
-            cdef np.ndarray[DTYPE_t] a = np.empty(self.gp.num_terms(), dtype=DTYPE)
+            cdef np.ndarray[DTYPE_t] a = np.empty(self.gp.num_coeffs(), dtype=DTYPE)
             self.gp.get_alpha(<double*>a.data)
             return a
 
     property beta:
         def __get__(self):
-            cdef np.ndarray[CDTYPE_t] b = np.empty(self.gp.num_terms(), dtype=CDTYPE)
+            cdef np.ndarray[CDTYPE_t] b = np.empty(self.gp.num_coeffs(), dtype=CDTYPE)
             self.gp.get_beta(<double complex*>b.data)
             return b
 
@@ -94,6 +102,15 @@ cdef class GP:
             if p.shape[0] != self.gp.size():
                 raise ValueError("dimension mismatch")
             self.gp.set_params(<double*>p.data)
+            self._data_size = -1
+
+    def __getitem__(self, i):
+        return self.params[i]
+
+    def __setitem__(self, i, value):
+        params = self.params
+        params[i] = value
+        self.params = params
 
     def add_term(self, double log_amp, double log_q, log_freq=None):
         if log_freq is None:
@@ -102,7 +119,7 @@ cdef class GP:
             self.kernel.add_term(log_amp, log_q, log_freq)
         del self.gp
         self.gp = new GaussianProcess(self.kernel)
-        self._computed = 0
+        self._data_size = -1
 
     def get_matrix(self, np.ndarray[DTYPE_t, ndim=1] x1, x2=None):
         if x2 is None:
@@ -128,22 +145,14 @@ cdef class GP:
         for i in range(x.shape[0] - 1):
             if x[i+1] <= x[i]:
                 raise ValueError("the time series must be ordered")
-        self.gp.compute(x.shape[0], <double*>x.data, <double*>yerr.data)
-        self.x = x
-        self.yerr = yerr
-        self._computed = 1
-        self._has_x = 1
+        self._data_size = x.shape[0]
+        self.gp.compute(self._data_size, <double*>x.data, <double*>yerr.data)
 
     def log_likelihood(self, np.ndarray[DTYPE_t, ndim=1] y):
-        if self._has_x:
-            if y.shape[0] != self.x.shape[0]:
-                raise ValueError("dimension mismatch")
-        if self._computed == 0:
-            if self._has_x == 0:
-                raise RuntimeError("must call 'compute' first")
-            self.gp.compute(self.x.shape[0], <double*>self.x.data,
-                            <double*>self.yerr.data)
-            self._computed = 1
+        if not self.computed:
+            raise RuntimeError("you must call 'compute' first")
+        if y.shape[0] != self._data_size:
+            raise ValueError("dimension mismatch")
         return self.gp.log_likelihood(<double*>y.data)
 
     def sample(self, np.ndarray[DTYPE_t, ndim=1] x, double tiny=1e-10):

@@ -106,9 +106,12 @@ def test_kernel(seed=42):
 
 def test_build_gp(seed=42):
     gp = GP()
-    for term in [(-0.5, 0.1), (-0.6, 0.7, 1.0)]:
+    terms = [(-0.5, 0.1), (-0.6, 0.7, 1.0)]
+    for term in terms:
         gp.add_term(*term)
 
+    assert len(gp.terms) == len(terms)
+    assert all(np.allclose(t1, t2) for t1, t2 in zip(gp.terms, terms))
     assert len(gp) == 5
     assert np.allclose(gp.params, [-0.5, 0.1, -0.6, 0.7, 1.0])
 
@@ -148,6 +151,26 @@ def test_log_likelihood(seed=42):
         ll0 -= 0.5 * np.linalg.slogdet(K)[1]
         ll0 -= 0.5 * len(x) * np.log(2*np.pi)
         assert np.allclose(ll, ll0)
+
+    # Check that changing the parameters "un-computes" the likelihood.
+    gp.params = gp.params
+    with pytest.raises(RuntimeError):
+        gp.log_likelihood(y)
+
+    # Check that changing the parameters changes the likelihood.
+    gp.compute(x, yerr)
+    ll1 = gp.log_likelihood(y)
+    params = gp.params
+    params[0] += 0.1
+    gp.params = params
+    gp.compute(x, yerr)
+    ll2 = gp.log_likelihood(y)
+    assert not np.allclose(ll1, ll2)
+
+    gp[1] += 0.1
+    gp.compute(x, yerr)
+    ll3 = gp.log_likelihood(y)
+    assert not np.allclose(ll2, ll3)
 
 
 def test_psd():
