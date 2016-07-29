@@ -36,15 +36,12 @@ enable_testing()
 
 # Find eigen:
 find_package(Eigen REQUIRED)
-if (EIGEN_FOUND)
-  if (EIGEN_VERSION VERSION_LESS 3.1.0)
-    message(FATAL_ERROR "-- GenRP requires Eigen version >= 3.1.0 in order "
-      "that Eigen/SparseCore be available, detected version of Eigen is: "
-      "${EIGEN_VERSION}")
-  endif (EIGEN_VERSION VERSION_LESS 3.1.0)
-
-  message("-- Found Eigen version ${EIGEN_VERSION}: ${EIGEN_INCLUDE_DIRS}")
-endif (EIGEN_FOUND)
+if (EIGEN_VERSION VERSION_LESS 3.1.0)
+message(FATAL_ERROR "-- GenRP requires Eigen version >= 3.1.0 in order "
+    "that Eigen/SparseCore be available, detected version of Eigen is: "
+    "${EIGEN_VERSION}")
+endif (EIGEN_VERSION VERSION_LESS 3.1.0)
+message("-- Found Eigen ${EIGEN_VERSION}: ${EIGEN_INCLUDE_DIRS}")
 
 include_directories(include)
 include_directories(SYSTEM ${EIGEN_INCLUDE_DIRS})
@@ -98,6 +95,9 @@ if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-return-type-c-linkage")
   endif(HAVE_RETURN_TYPE_C_LINKAGE)
 endif ()
+
+# Disable asserts for efficiency.
+add_definitions(-DNDEBUG)
 
 # Build the examples.
 add_subdirectory(examples)

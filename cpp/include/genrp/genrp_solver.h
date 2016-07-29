@@ -44,6 +44,9 @@ private:
 inline double get_real (double value) { return value; }
 inline double get_real (std::complex<double> value) { return value.real(); }
 
+inline double get_conj (double value) { return value; }
+inline std::complex<double> get_conj (std::complex<double> value) { return std::conj(value); }
+
 template <typename entry_t>
 GenRPSolver<entry_t>::GenRPSolver (const Eigen::VectorXd alpha, const Eigen::Matrix<entry_t, Eigen::Dynamic, 1> beta)
   : alpha_(alpha),
@@ -102,7 +105,7 @@ void GenRPSolver<entry_t>::compute (const Eigen::VectorXd x, const Eigen::Vector
       b = im1n+k+1;
       value = gamma(k, i);
       triplets[count++] = triplet_t(a, b, value);
-      triplets[count++] = triplet_t(b, a, value);
+      triplets[count++] = triplet_t(b, a, get_conj(value));
 
       // Lines 8-9:
       a = in;
@@ -129,7 +132,7 @@ void GenRPSolver<entry_t>::compute (const Eigen::VectorXd x, const Eigen::Vector
       b = in+k+1;
       value = gamma(k, i+1);
       triplets[count++] = triplet_t(a, b, value);
-      triplets[count++] = triplet_t(b, a, value);
+      triplets[count++] = triplet_t(b, a, get_conj(value));
     }
   }
 

@@ -15,6 +15,7 @@ gp = GP()
 gp.add_term(1.0, 0.1)
 gp.add_term(0.1, 2.0, 1.6)
 
+K = 3
 N = 2**np.arange(5, 20)
 times = np.empty((len(N), 2))
 
@@ -24,12 +25,14 @@ y = np.sin(t)
 
 for i, n in enumerate(N):
     strt = time.time()
-    gp.compute(t[:n], yerr[:n])
-    times[i, 0] = time.time() - strt
+    for k in range(K):
+        gp.compute(t[:n], yerr[:n])
+    times[i, 0] = (time.time() - strt) / K
 
     strt = time.time()
-    gp.log_likelihood(y[:n])
-    times[i, 1] = time.time() - strt
+    for k in range(K):
+        gp.log_likelihood(y[:n])
+    times[i, 1] = (time.time() - strt) / K
 
     print(n, times[i, 0], times[i, 1])
 
