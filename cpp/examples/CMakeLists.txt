@@ -1,6 +1,7 @@
 macro (GENRP_TEST NAME)
-    add_executable(demo demo.cpp)
-    add_test(NAME ${NAME}
+    add_executable(${NAME} ${NAME}.cpp)
+    target_link_libraries(${NAME} ${GENRP_LIBRARIES})
+    add_test(${NAME} ${NAME}
              COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${NAME})
 endmacro (GENRP_TEST)
 

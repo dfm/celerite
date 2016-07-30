@@ -24,6 +24,8 @@ double get_timestamp ()
 
 int main (int argc, char* argv[])
 {
+  srand(42);
+
   size_t N = 1024;
   if (argc >= 2) N = atoi(argv[1]);
   size_t niter = 10;
@@ -46,21 +48,21 @@ int main (int argc, char* argv[])
 
   // Set up the kernel.
   genrp::Kernel kernel;
-  kernel.add_term(1.0, 0.1);
+  kernel.add_term(0.0, 0.1);
   kernel.add_term(0.1, 2.0, 1.6);
 
   // Set up the GP solver.
   genrp::GaussianProcess gp(kernel);
 
   // Benchmark the solver.
-  double strt, compute_time = 0.0, log_like_time = 0.0;
+  double strt, compute_time = 0.0, log_like_time = 0.0, log_like;
   for (size_t i = 0; i < niter; ++i) {
     strt = get_timestamp();
     gp.compute(x, yerr);
     compute_time += get_timestamp() - strt;
 
     strt = get_timestamp();
-    gp.log_likelihood(y);
+    log_like = gp.log_likelihood(y);
     log_like_time += get_timestamp() - strt;
   }
 
@@ -68,6 +70,7 @@ int main (int argc, char* argv[])
   std::cout << "N = " << N << " [averaging " << niter << "]\n";
   std::cout << "compute cost = " << compute_time / niter << " sec\n";
   std::cout << "log likelihood cost = " << log_like_time / niter << " sec\n";
+  std::cout << "log likelihood = " << log_like << "\n";
 
   return 0;
 }

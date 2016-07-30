@@ -34,6 +34,16 @@ read_genrp_version_from_source(${CMAKE_SOURCE_DIR})
 
 enable_testing()
 
+find_package(BLAS REQUIRED)
+if (BLAS_FOUND)
+    message("-- Found BLAS library: ${BLAS_LIBRARIES}")
+endif (BLAS_FOUND)
+
+find_package(LAPACK REQUIRED)
+if (LAPACK_FOUND)
+    message("-- Found LAPACK library: ${LAPACK_LIBRARIES}")
+endif (LAPACK_FOUND)
+
 # Find eigen:
 find_package(Eigen REQUIRED)
 if (EIGEN_VERSION VERSION_LESS 3.1.0)
@@ -43,8 +53,14 @@ message(FATAL_ERROR "-- GenRP requires Eigen version >= 3.1.0 in order "
 endif (EIGEN_VERSION VERSION_LESS 3.1.0)
 message("-- Found Eigen ${EIGEN_VERSION}: ${EIGEN_INCLUDE_DIRS}")
 
+# Includes.
 include_directories(include)
 include_directories(SYSTEM ${EIGEN_INCLUDE_DIRS})
+
+# Links.
+list(APPEND GENRP_LIBRARIES
+     ${LAPACK_LIBRARIES}
+     ${BLAS_LIBRARIES})
 
 # Set the default flags to an empty string.
 set (GENRP_CXX_FLAGS)
@@ -70,7 +86,7 @@ if (CMAKE_COMPILER_IS_GNUCXX)
     endif (CMAKE_SYSTEM_NAME MATCHES "Darwin")
 endif (CMAKE_COMPILER_IS_GNUCXX)
 
-set (CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} ${GENRP_CXX_FLAGS}")
+set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${GENRP_CXX_FLAGS}")
 
 if (UNIX)
   # GCC is not strict enough by default, so enable most of the warnings.
@@ -84,7 +100,7 @@ endif (UNIX)
 # threshold to the linker and clang complains about it and dies.
 if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
   set(CMAKE_CXX_FLAGS
-    "${CMAKE_CXX_FLAGS} -Qunused-arguments -mllvm -inline-threshold=600")
+    "${CMAKE_CXX_FLAGS} -Qunused-arguments -mllvm -inline-threshold=600 -O3")
 
   # Older versions of Clang (<= 2.9) do not support the 'return-type-c-linkage'
   # option, so check for its presence before adding it to the default flags set.

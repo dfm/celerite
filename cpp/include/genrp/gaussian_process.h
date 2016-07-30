@@ -5,7 +5,7 @@
 #include <Eigen/Dense>
 
 #include "genrp/kernel.h"
-#include "genrp/genrp_solver.h"
+#include "genrp/band_solver.h"
 
 namespace genrp {
 
@@ -41,7 +41,8 @@ public:
 
 private:
   Kernel kernel_;
-  GenRPSolver<std::complex<double> > solver_;
+  /* GenRPSolver<std::complex<double> > solver_; */
+  BandSolver<std::complex<double> > solver_;
   size_t dim_;
   bool computed_;
 
