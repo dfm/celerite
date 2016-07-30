@@ -84,6 +84,8 @@ if __name__ == "__main__":
         os.system("python setup.py sdist upload")
         sys.exit()
 
+    npconf.show()
+
     # Default compile arguments.
     compile_args = dict(libraries=[], define_macros=[("NDEBUG", None)])
     if os.name == "posix":
