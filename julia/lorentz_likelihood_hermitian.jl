@@ -1,5 +1,5 @@
 function lorentz_likelihood_hermitian(alpha::Vector{Float64},beta::Vector{Complex{Float64}},
-                            w::Vector{Float64},t::Vector{Float64},y::Vector{Float64})
+                            w::Float64,t::Vector{Float64},y::Vector{Float64})
 # Computes the likelihood of a sum of Exponential/Cosine kernels (which have a
 # Lorentzian power spectrum) utilizing the approach of Ambikasaran (2015)
 #   Numer. Linear Algebra Appl. 2015; 22:1102-1114 DOI: 10.1002/nla
@@ -16,7 +16,7 @@ function lorentz_likelihood_hermitian(alpha::Vector{Float64},beta::Vector{Comple
 p = length(alpha)
 n = length(t)
 atot = sum(alpha)
-@assert(length(w) == n)
+#@assert(length(w) == n)
 @assert(length(y) == n)
 @assert(length(beta) == p)
 #aex = Array(Complex{Float64},(2p+1)*n-2p,2*p+3)
@@ -29,7 +29,7 @@ for i=1:n
   irow =(i-1)*(1+2p)+1
   bex[irow] = y[i]
 # Diagonal noise:
-  aex[irow,irow] = w[i] + atot
+  aex[irow,irow] = w + atot
   for j=1:p
     if i < n
       bex[irow+  j] = 0.0
