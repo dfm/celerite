@@ -77,22 +77,29 @@ class build_ext(_build_ext):
 if __name__ == "__main__":
     import sys
     import numpy
+    import numpy.__config__ as npconf
 
     # Publish the library to PyPI.
     if "publish" in sys.argv[-1]:
         os.system("python setup.py sdist upload")
         sys.exit()
 
-    # Set up the C++-extension.
-    libraries = []
+    # Default compile arguments.
+    compile_args = dict(libraries=[], define_macros=[("NDEBUG", None)])
     if os.name == "posix":
-        libraries.append("m")
+        compile_args["libraries"].append("m")
     dn = os.path.dirname
     incldir = os.path.join(dn(dn(os.path.abspath(__file__))), "cpp", "include")
-    include_dirs = [
+    compile_args["include_dirs"] = [
         incldir,
         numpy.get_include(),
     ]
+
+    # Figure out numpy's LAPACK configuration.
+    # for info in (npconf.get_info(k) for k in dir(npconf) if "lapack" in k):
+    info = npconf.get_info("mkl")
+    for k, v in info.items():
+        compile_args[k] = compile_args.get(k, []) + v
 
     # Check for the Cython source (development mode) and compile it if it
     # exists.
@@ -104,8 +111,9 @@ if __name__ == "__main__":
         solver_fn += ".cpp"
         cythonize = lambda x: x
 
-    ext = Extension("genrp._genrp", sources=[solver_fn],
-                    libraries=libraries, include_dirs=include_dirs)
+    ext = Extension("genrp._genrp",
+                    sources=[solver_fn],
+                    **compile_args)
     extensions = cythonize([ext])
 
     # Hackishly inject a constant into builtins to enable importing of the

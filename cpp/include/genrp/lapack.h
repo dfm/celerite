@@ -63,8 +63,7 @@ int band_solve (int kl, int ku,
                 const Eigen::VectorXi& ipiv,
                 Eigen::MatrixXcd& x) {
   char trans = 'N';
-  int m = ab.rows(),
-      n = ab.cols(),
+  int n = ab.cols(),
       ldab = ab.outerStride(),
       nrhs = x.cols(),
       info;

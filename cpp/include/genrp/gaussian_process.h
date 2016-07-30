@@ -41,7 +41,6 @@ public:
 
 private:
   Kernel kernel_;
-  /* GenRPSolver<std::complex<double> > solver_; */
   BandSolver<std::complex<double> > solver_;
   size_t dim_;
   bool computed_;

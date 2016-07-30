@@ -87,15 +87,10 @@ void BandSolver<entry_t>::compute (const Eigen::VectorXd& x, const Eigen::Vector
   ipiv_.resize(dim_ext_);
 
   // Initialize to zero.
-  ab.diagonal().setConstant(0.0);
-  for (size_t i = 1; i < p_; ++i) {
-    ab.diagonal(i).setConstant(0.0);
-    ab.diagonal(-i).setConstant(0.0);
-  }
+  ab.coeffs().setConstant(0.0);
 
   for (size_t i = 0; i < n_; ++i)  // Line 3
     ab.diagonal()(i*block_size_) = diag(i) + sum_alpha;
-    /* triplets[count++] = triplet_t(i * block_size_, i * block_size_, diag(i)+sum_alpha); */
 
   int a, b;
   entry_t value;
@@ -109,8 +104,6 @@ void BandSolver<entry_t>::compute (const Eigen::VectorXd& x, const Eigen::Vector
       value = gamma(k, i);
       ab.diagonal(b-a)(a) = value;
       ab.diagonal(a-b)(a) = get_conj(value);
-      /* triplets[count++] = triplet_t(a, b, value); */
-      /* triplets[count++] = triplet_t(b, a, get_conj(value)); */
 
       // Lines 8-9:
       a = im1n+p_+k+1;
@@ -118,8 +111,6 @@ void BandSolver<entry_t>::compute (const Eigen::VectorXd& x, const Eigen::Vector
       value = alpha_(k);
       ab.diagonal(b-a)(a) = value;
       ab.diagonal(a-b)(a) = value;
-      /* triplets[count++] = triplet_t(a, b, value); */
-      /* triplets[count++] = triplet_t(b, a, value); */
 
       // Lines 10-11:
       a = im1n+k+1;
@@ -127,8 +118,6 @@ void BandSolver<entry_t>::compute (const Eigen::VectorXd& x, const Eigen::Vector
       value = -1.0;
       ab.diagonal(b-a)(a) = value;
       ab.diagonal(a-b)(a) = value;
-      /* triplets[count++] = triplet_t(a, b, value); */
-      /* triplets[count++] = triplet_t(b, a, value); */
     }
   }
 
@@ -142,8 +131,6 @@ void BandSolver<entry_t>::compute (const Eigen::VectorXd& x, const Eigen::Vector
       value = gamma(k, i+1);
       ab.diagonal(b-a)(a) = value;
       ab.diagonal(a-b)(a) = get_conj(value);
-      /* triplets[count++] = triplet_t(a, b, value); */
-      /* triplets[count++] = triplet_t(b, a, get_conj(value)); */
     }
   }
 
