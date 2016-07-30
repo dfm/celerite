@@ -98,10 +98,11 @@ if __name__ == "__main__":
     ]
 
     # Figure out numpy's LAPACK configuration.
-    # for info in (npconf.get_info(k) for k in dir(npconf) if "lapack" in k):
-    info = npconf.get_info("mkl")
+    info = npconf.get_info("blas_opt_info")
+    print(info)
     for k, v in info.items():
         compile_args[k] = compile_args.get(k, []) + v
+    print(compile_args)
 
     # Check for the Cython source (development mode) and compile it if it
     # exists.
