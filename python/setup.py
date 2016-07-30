@@ -99,10 +99,11 @@ if __name__ == "__main__":
 
     # Figure out numpy's LAPACK configuration.
     info = npconf.get_info("blas_opt_info")
-    print(info)
     for k, v in info.items():
-        compile_args[k] = compile_args.get(k, []) + v
-    print(compile_args)
+        try:
+            compile_args[k] = compile_args.get(k, []) + v
+        except TypeError:
+            continue
 
     # Check for the Cython source (development mode) and compile it if it
     # exists.
