@@ -47,6 +47,33 @@ extern "C" void zgbtrs_(char* trans,
 
 namespace genrp {
 
+// Real band solver:
+int band_factorize (Eigen::internal::BandMatrix<double >& ab, Eigen::VectorXi& ipiv) {
+  int m = ab.rows(),
+      n = ab.cols(),
+      kl = ab.subs(),
+      ku = ab.supers() - kl,
+      ldab = ab.coeffs().outerStride(),
+      info;
+  dgbtrf_(&m, &n, &kl, &ku, ab.coeffs().data(), &ldab, ipiv.data(), &info);
+  return info;
+}
+
+int band_solve (int kl, int ku,
+                const Eigen::MatrixXd& ab,
+                const Eigen::VectorXi& ipiv,
+                Eigen::MatrixXd& x) {
+  char trans = 'N';
+  int n = ab.cols(),
+      ldab = ab.outerStride(),
+      nrhs = x.cols(),
+      info;
+  dgbtrs_(&trans, &n, &kl, &ku, &nrhs, const_cast<double* >(ab.data()), &ldab, const_cast<int*>(ipiv.data()), x.data(), &n, &info);
+  return info;
+}
+
+
+// Complex band solver:
 int band_factorize (Eigen::internal::BandMatrix<std::complex<double> >& ab, Eigen::VectorXi& ipiv) {
   int m = ab.rows(),
       n = ab.cols(),
