@@ -3,60 +3,35 @@
 
 #include <cmath>
 #include <vector>
-#include <complex>
 #include <Eigen/Dense>
 #include <Eigen/Sparse>
 
 #include "genrp/utils.h"
+#include "genrp/direct_solver.h"
 
 namespace genrp {
 
-#define GENRP_DIMENSION_MISMATCH 1
-
 template <typename entry_t>
-class SparseSolver {
+class SparseSolver : public DirectSolver<entry_t> {
   typedef Eigen::Matrix<entry_t, Eigen::Dynamic, 1> vector_t;
   typedef Eigen::Matrix<entry_t, Eigen::Dynamic, Eigen::Dynamic> matrix_t;
 
 public:
-  SparseSolver () {};
-  SparseSolver (const Eigen::VectorXd alpha, const vector_t beta);
-  void alpha_and_beta (const Eigen::VectorXd alpha, const vector_t beta);
+  SparseSolver () : DirectSolver<entry_t>() {};
+  SparseSolver (const Eigen::VectorXd alpha, const vector_t beta) : DirectSolver<entry_t>(alpha, beta) {};
+  SparseSolver (size_t p, const double* alpha, const entry_t* beta) : DirectSolver<entry_t>(p, alpha, beta) {};
+
   void compute (const Eigen::VectorXd& x, const Eigen::VectorXd& diag);
   void solve (const Eigen::MatrixXd& b, double* x) const;
-  double dot_solve (const Eigen::VectorXd& b) const;
-  Eigen::MatrixXd get_inverse () const;
-  double log_determinant () const;
 
-  // Eigen-free interface.
-  SparseSolver (size_t p, const double* alpha, const entry_t* beta);
-  void compute (size_t n, const double* t, const double* diag);
-  void solve (const double* b, double* x) const;
-  double dot_solve (const double* b) const;
+  using DirectSolver<entry_t>::compute;
+  using DirectSolver<entry_t>::solve;
 
 private:
-  Eigen::VectorXd alpha_;
-  vector_t beta_;
-  size_t n_, p_, block_size_, dim_ext_;
+  size_t block_size_, dim_ext_;
   Eigen::SparseLU<Eigen::SparseMatrix<entry_t> > factor_;
 
 };
-
-template <typename entry_t>
-SparseSolver<entry_t>::SparseSolver (const Eigen::VectorXd alpha, const Eigen::Matrix<entry_t, Eigen::Dynamic, 1> beta)
-  : alpha_(alpha),
-    beta_(beta),
-    p_(alpha.rows())
-{
-  if (alpha_.rows() != beta_.rows()) throw GENRP_DIMENSION_MISMATCH;
-}
-
-template <typename entry_t>
-void SparseSolver<entry_t>::alpha_and_beta (const Eigen::VectorXd alpha, const Eigen::Matrix<entry_t, Eigen::Dynamic, 1> beta) {
-  p_ = alpha.rows();
-  alpha_ = alpha;
-  beta_ = beta;
-}
 
 template <typename entry_t>
 void SparseSolver<entry_t>::compute (const Eigen::VectorXd& x, const Eigen::VectorXd& diag) {
@@ -64,18 +39,22 @@ void SparseSolver<entry_t>::compute (const Eigen::VectorXd& x, const Eigen::Vect
 
   // Check dimensions.
   if (x.rows() != diag.rows()) throw GENRP_DIMENSION_MISMATCH;
-  n_ = x.rows();
+  this->n_ = x.rows();
+
+  // Dimensions from superclass.
+  size_t p_ = this->p_,
+         n_ = this->n_;
 
   // Pre-compute gamma: Equation (58)
   matrix_t gamma(p_, n_ - 1);
   for (size_t i = 0; i < n_ - 1; ++i) {
     double delta = fabs(x(i+1) - x(i));
     for (size_t k = 0; k < p_; ++k)
-      gamma(k, i) = exp(-beta_(k) * delta);
+      gamma(k, i) = exp(-this->beta_(k) * delta);
   }
 
   // Pre-compute sum(alpha) -- it will be added to the diagonal.
-  double sum_alpha = alpha_.sum();
+  double sum_alpha = this->alpha_.sum();
 
   // Compute the block sizes: Algorithm 1
   block_size_ = 2 * p_ + 1;
@@ -104,7 +83,7 @@ void SparseSolver<entry_t>::compute (const Eigen::VectorXd& x, const Eigen::Vect
       // Lines 8-9:
       a = in;
       b = im1n+p_+k+1;
-      value = alpha_(k);
+      value = this->alpha_(k);
       triplets[count++] = triplet_t(a, b, value);
       triplets[count++] = triplet_t(b, a, value);
 
@@ -134,17 +113,18 @@ void SparseSolver<entry_t>::compute (const Eigen::VectorXd& x, const Eigen::Vect
   Eigen::SparseMatrix<entry_t> A_ex(dim_ext_, dim_ext_);
   A_ex.setFromTriplets(triplets.begin(), triplets.end());
   factor_.compute(A_ex);
+  this->log_det_ = get_real(factor_.logAbsDeterminant());
 }
 
 template <typename entry_t>
 void SparseSolver<entry_t>::solve (const Eigen::MatrixXd& b, double* x) const {
-  if (b.rows() != n_) throw GENRP_DIMENSION_MISMATCH;
+  if (b.rows() != this->n_) throw GENRP_DIMENSION_MISMATCH;
   size_t nrhs = b.cols();
 
   // Pad the input vector to the extended size.
   matrix_t bex = matrix_t::Zero(dim_ext_, nrhs);
   for (size_t j = 0; j < nrhs; ++j)
-    for (size_t i = 0; i < n_; ++i)
+    for (size_t i = 0; i < this->n_; ++i)
       bex(i*block_size_, j) = b(i, j);
 
   // Solve the extended system.
@@ -152,69 +132,8 @@ void SparseSolver<entry_t>::solve (const Eigen::MatrixXd& b, double* x) const {
 
   // Copy the output.
   for (size_t j = 0; j < nrhs; ++j)
-    for (size_t i = 0; i < n_; ++i)
+    for (size_t i = 0; i < this->n_; ++i)
       x[i+j*nrhs] = get_real(xex(i*block_size_, j));
-}
-
-template <typename entry_t>
-Eigen::MatrixXd SparseSolver<entry_t>::get_inverse () const {
-  typedef Eigen::Triplet<entry_t> triplet_t;
-  std::vector<triplet_t> triplets(n_);
-
-  for (size_t i = 0; i < n_; ++i)
-    triplets[i] = triplet_t(i * block_size_, i * block_size_, 1.0);
-
-  // Solve the extended system.
-  Eigen::SparseMatrix<entry_t> bex(dim_ext_, dim_ext_);
-  bex.setFromTriplets(triplets.begin(), triplets.end());
-  Eigen::SparseMatrix<entry_t> xex = factor_.solve(bex);
-
-  // Copy the output.
-  Eigen::MatrixXd inv = Eigen::MatrixXd::Zero(n_, n_);
-  for (size_t  k = 0; k < xex.outerSize(); ++k)
-    for (typename Eigen::SparseMatrix<entry_t>::InnerIterator it(xex, k); it; ++it)
-      if (it.row() % block_size_ == 0 && it.col() % block_size_ == 0)
-        inv(it.row() / block_size_, it.col() / block_size_) = get_real(it.value());
-
-  return inv;
-}
-
-template <typename entry_t>
-double SparseSolver<entry_t>::dot_solve (const Eigen::VectorXd& b) const {
-  Eigen::VectorXd out(n_);
-  solve(b, &(out(0)));
-  return b.transpose() * out;
-}
-
-template <typename entry_t>
-double SparseSolver<entry_t>::log_determinant () const {
-  return get_real(factor_.logAbsDeterminant());
-}
-
-// Eigen-free interface:
-template <typename entry_t>
-SparseSolver<entry_t>::SparseSolver (size_t p, const double* alpha, const entry_t* beta) {
-  p_ = p;
-  alpha_ = Eigen::Map<const Eigen::Matrix<double, Eigen::Dynamic, 1> >(alpha, p, 1);
-  beta_ = Eigen::Map<const Eigen::Matrix<entry_t, Eigen::Dynamic, 1> >(beta, p, 1);
-}
-
-template <typename entry_t>
-void SparseSolver<entry_t>::compute (size_t n, const double* t, const double* diag) {
-  typedef Eigen::Map<const Eigen::Matrix<double, Eigen::Dynamic, 1> > vector_t;
-  compute(vector_t(t, n, 1), vector_t(diag, n, 1));
-}
-
-template <typename entry_t>
-void SparseSolver<entry_t>::solve (const double* b, double* x) const {
-  Eigen::Map<const Eigen::Matrix<double, Eigen::Dynamic, 1> > bin(b, n_, 1);
-  solve(bin, x);
-}
-
-template <typename entry_t>
-double SparseSolver<entry_t>::dot_solve (const double* b) const {
-  Eigen::Map<const Eigen::Matrix<double, Eigen::Dynamic, 1> > bin(b, n_, 1);
-  return dot_solve(bin);
 }
 
 };

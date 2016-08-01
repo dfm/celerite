@@ -76,6 +76,7 @@ class build_ext(_build_ext):
 
 if __name__ == "__main__":
     import sys
+    import pprint
     import numpy
     import numpy.__config__ as npconf
 
@@ -83,8 +84,6 @@ if __name__ == "__main__":
     if "publish" in sys.argv[-1]:
         os.system("python setup.py sdist upload")
         sys.exit()
-
-    npconf.show()
 
     # Default compile arguments.
     compile_args = dict(libraries=[], define_macros=[("NDEBUG", None)])
@@ -99,6 +98,8 @@ if __name__ == "__main__":
 
     # Figure out numpy's LAPACK configuration.
     info = npconf.get_info("blas_opt_info")
+    print("Found LAPACK linking info:")
+    pprint.pprint(info)
     for k, v in info.items():
         try:
             compile_args[k] = compile_args.get(k, []) + v

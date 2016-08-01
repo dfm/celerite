@@ -20,8 +20,15 @@ class DirectSolver {
   typedef Eigen::Matrix<entry_t, Eigen::Dynamic, Eigen::Dynamic> matrix_t;
 
 public:
+  Eigen::VectorXd alpha_;
+  vector_t beta_;
+  size_t n_, p_;
+  double log_det_;
+
+public:
   DirectSolver () {};
   DirectSolver (const Eigen::VectorXd alpha, const vector_t beta);
+  virtual ~DirectSolver () {};
   void alpha_and_beta (const Eigen::VectorXd alpha, const vector_t beta);
   virtual void compute (const Eigen::VectorXd& x, const Eigen::VectorXd& diag);
   virtual void solve (const Eigen::MatrixXd& b, double* x) const;
@@ -33,12 +40,6 @@ public:
   void compute (size_t n, const double* t, const double* diag);
   void solve (const double* b, double* x) const;
   double dot_solve (const double* b) const;
-
-protected:
-  Eigen::VectorXd alpha_;
-  vector_t beta_;
-  size_t n_, p_;
-  double log_det_;
 
 private:
   Eigen::LDLT<matrix_t> factor_;

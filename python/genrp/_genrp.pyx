@@ -25,13 +25,6 @@ cdef extern from "genrp/genrp.h" namespace "genrp":
         double value (double dt) const
         double psd (double w) const
 
-    cdef cppclass DirectSolver[T]:
-        DirectSolver (size_t m, const double* alpha, const T* beta)
-        void compute (size_t N, const double* t, const double* d)
-        void solve (const double* b, double* x) const
-        double solve_dot (const double* b) const
-        double log_determinant () const
-
     cdef cppclass BandSolver[T]:
         BandSolver (size_t m, const double* alpha, const T* beta)
         void compute (size_t N, const double* t, const double* d)
@@ -162,7 +155,7 @@ cdef class GP:
             raise ValueError("dimension mismatch")
         return self.gp.log_likelihood(<double*>y.data)
 
-    def sample(self, np.ndarray[DTYPE_t, ndim=1] x, double tiny=1e-10):
+    def sample(self, np.ndarray[DTYPE_t, ndim=1] x, double tiny=1e-12):
         cdef np.ndarray[DTYPE_t, ndim=2] K = self.get_matrix(x)
         K[np.diag_indices_from(K)] += tiny
         return np.random.multivariate_normal(np.zeros_like(x), K)
