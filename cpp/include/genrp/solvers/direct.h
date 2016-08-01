@@ -1,5 +1,5 @@
-#ifndef _GENRP_DIRECT_SOLVER_
-#define _GENRP_DIRECT_SOLVER_
+#ifndef _GENRP_SOLVER_DIRECT_
+#define _GENRP_SOLVER_DIRECT_
 
 #include <cmath>
 #include <vector>

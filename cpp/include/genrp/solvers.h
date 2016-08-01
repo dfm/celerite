@@ -1,0 +1,8 @@
+#ifndef _GENRP_SOLVERS_
+#define _GENRP_SOLVERS_
+
+#include "genrp/solvers/direct.h"
+#include "genrp/solvers/band.h"
+#include "genrp/solvers/sparse.h"
+
+#endif

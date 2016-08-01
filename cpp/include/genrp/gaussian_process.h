@@ -5,7 +5,6 @@
 #include <Eigen/Dense>
 
 #include "genrp/kernel.h"
-#include "genrp/band_solver.h"
 
 namespace genrp {
 
