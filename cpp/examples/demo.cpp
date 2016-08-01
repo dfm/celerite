@@ -38,31 +38,31 @@ int main (int argc, char* argv[])
 
   // Set the scale of the uncertainties.
   yerr.array() *= 0.1;
-  yerr.array() += 0.2;
+  yerr.array() += 0.3;
 
   // The times need to be sorted.
-  std::sort(&(x(0)), &(x(N-1)));
+  std::sort(x.data(), x.data() + x.size());
 
   // Compute the y values.
   y = sin(x.array());
 
   // Set up the kernel.
   genrp::Kernel kernel;
-  kernel.add_term(0.0, 0.1);
-  kernel.add_term(0.1, 2.0, 1.6);
+  kernel.add_term(-0.5, 0.1);
+  kernel.add_term(-0.6, 0.7, 1.0);
 
   // Set up the GP solver.
-  genrp::GaussianProcess gp(kernel);
+  genrp::GaussianProcess<genrp::BandSolver<std::complex<double> > > gp_band(kernel);
 
   // Benchmark the solver.
   double strt, compute_time = 0.0, log_like_time = 0.0, log_like;
   for (size_t i = 0; i < niter; ++i) {
     strt = get_timestamp();
-    gp.compute(x, yerr);
+    gp_band.compute(x, yerr);
     compute_time += get_timestamp() - strt;
 
     strt = get_timestamp();
-    log_like = gp.log_likelihood(y);
+    log_like = gp_band.log_likelihood(y);
     log_like_time += get_timestamp() - strt;
   }
 

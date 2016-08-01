@@ -25,14 +25,21 @@ cdef extern from "genrp/genrp.h" namespace "genrp":
         double value (double dt) const
         double psd (double w) const
 
-    cdef cppclass GenRPSolver[T]:
-        GenRPSolver (size_t m, const double* alpha, const T* beta)
+    cdef cppclass DirectSolver[T]:
+        DirectSolver (size_t m, const double* alpha, const T* beta)
         void compute (size_t N, const double* t, const double* d)
         void solve (const double* b, double* x) const
         double solve_dot (const double* b) const
         double log_determinant () const
 
-    cdef cppclass GaussianProcess:
+    cdef cppclass BandSolver[T]:
+        BandSolver (size_t m, const double* alpha, const T* beta)
+        void compute (size_t N, const double* t, const double* d)
+        void solve (const double* b, double* x) const
+        double solve_dot (const double* b) const
+        double log_determinant () const
+
+    cdef cppclass GaussianProcess[SolverType]:
         GaussianProcess (Kernel kernel)
         size_t size () const
         size_t num_terms () const
@@ -49,12 +56,12 @@ cdef extern from "genrp/genrp.h" namespace "genrp":
 
 cdef class GP:
 
-    cdef GaussianProcess* gp
+    cdef GaussianProcess[BandSolver[CDTYPE_t] ]* gp
     cdef Kernel kernel
     cdef int _data_size
 
     def __cinit__(self):
-        self.gp = new GaussianProcess(self.kernel)
+        self.gp = new GaussianProcess[BandSolver[CDTYPE_t] ](self.kernel)
         self._data_size = -1
 
     def __dealloc__(self):
@@ -118,7 +125,7 @@ cdef class GP:
         else:
             self.kernel.add_term(log_amp, log_q, log_freq)
         del self.gp
-        self.gp = new GaussianProcess(self.kernel)
+        self.gp = new GaussianProcess[BandSolver[CDTYPE_t] ](self.kernel)
         self._data_size = -1
 
     def get_matrix(self, np.ndarray[DTYPE_t, ndim=1] x1, x2=None):
@@ -163,7 +170,7 @@ cdef class GP:
 
 cdef class Solver:
 
-    cdef GenRPSolver[double complex]* solver
+    cdef BandSolver[double complex]* solver
     cdef unsigned int m
     cdef unsigned int N
     cdef np.ndarray alpha
@@ -212,7 +219,7 @@ cdef class Solver:
             d = d + np.zeros_like(self.t)
         self.diagonal = d
 
-        self.solver = new GenRPSolver[double complex](
+        self.solver = new BandSolver[double complex](
             self.m,
             <double*>(self.alpha.data),
             <double complex*>(self.beta.data),

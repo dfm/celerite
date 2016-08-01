@@ -1,5 +1,5 @@
-#ifndef _GENRP_GENRP_SOLVER_
-#define _GENRP_GENRP_SOLVER_
+#ifndef _GENRP_SPARSE_SOLVER_
+#define _GENRP_SPARSE_SOLVER_
 
 #include <cmath>
 #include <vector>
@@ -14,13 +14,13 @@ namespace genrp {
 #define GENRP_DIMENSION_MISMATCH 1
 
 template <typename entry_t>
-class GenRPSolver {
+class SparseSolver {
   typedef Eigen::Matrix<entry_t, Eigen::Dynamic, 1> vector_t;
   typedef Eigen::Matrix<entry_t, Eigen::Dynamic, Eigen::Dynamic> matrix_t;
 
 public:
-  GenRPSolver () {};
-  GenRPSolver (const Eigen::VectorXd alpha, const vector_t beta);
+  SparseSolver () {};
+  SparseSolver (const Eigen::VectorXd alpha, const vector_t beta);
   void alpha_and_beta (const Eigen::VectorXd alpha, const vector_t beta);
   void compute (const Eigen::VectorXd& x, const Eigen::VectorXd& diag);
   void solve (const Eigen::MatrixXd& b, double* x) const;
@@ -29,7 +29,7 @@ public:
   double log_determinant () const;
 
   // Eigen-free interface.
-  GenRPSolver (size_t p, const double* alpha, const entry_t* beta);
+  SparseSolver (size_t p, const double* alpha, const entry_t* beta);
   void compute (size_t n, const double* t, const double* diag);
   void solve (const double* b, double* x) const;
   double dot_solve (const double* b) const;
@@ -43,7 +43,7 @@ private:
 };
 
 template <typename entry_t>
-GenRPSolver<entry_t>::GenRPSolver (const Eigen::VectorXd alpha, const Eigen::Matrix<entry_t, Eigen::Dynamic, 1> beta)
+SparseSolver<entry_t>::SparseSolver (const Eigen::VectorXd alpha, const Eigen::Matrix<entry_t, Eigen::Dynamic, 1> beta)
   : alpha_(alpha),
     beta_(beta),
     p_(alpha.rows())
@@ -52,14 +52,14 @@ GenRPSolver<entry_t>::GenRPSolver (const Eigen::VectorXd alpha, const Eigen::Mat
 }
 
 template <typename entry_t>
-void GenRPSolver<entry_t>::alpha_and_beta (const Eigen::VectorXd alpha, const Eigen::Matrix<entry_t, Eigen::Dynamic, 1> beta) {
+void SparseSolver<entry_t>::alpha_and_beta (const Eigen::VectorXd alpha, const Eigen::Matrix<entry_t, Eigen::Dynamic, 1> beta) {
   p_ = alpha.rows();
   alpha_ = alpha;
   beta_ = beta;
 }
 
 template <typename entry_t>
-void GenRPSolver<entry_t>::compute (const Eigen::VectorXd& x, const Eigen::VectorXd& diag) {
+void SparseSolver<entry_t>::compute (const Eigen::VectorXd& x, const Eigen::VectorXd& diag) {
   typedef Eigen::Triplet<entry_t> triplet_t;
 
   // Check dimensions.
@@ -137,7 +137,7 @@ void GenRPSolver<entry_t>::compute (const Eigen::VectorXd& x, const Eigen::Vecto
 }
 
 template <typename entry_t>
-void GenRPSolver<entry_t>::solve (const Eigen::MatrixXd& b, double* x) const {
+void SparseSolver<entry_t>::solve (const Eigen::MatrixXd& b, double* x) const {
   if (b.rows() != n_) throw GENRP_DIMENSION_MISMATCH;
   size_t nrhs = b.cols();
 
@@ -157,7 +157,7 @@ void GenRPSolver<entry_t>::solve (const Eigen::MatrixXd& b, double* x) const {
 }
 
 template <typename entry_t>
-Eigen::MatrixXd GenRPSolver<entry_t>::get_inverse () const {
+Eigen::MatrixXd SparseSolver<entry_t>::get_inverse () const {
   typedef Eigen::Triplet<entry_t> triplet_t;
   std::vector<triplet_t> triplets(n_);
 
@@ -180,39 +180,39 @@ Eigen::MatrixXd GenRPSolver<entry_t>::get_inverse () const {
 }
 
 template <typename entry_t>
-double GenRPSolver<entry_t>::dot_solve (const Eigen::VectorXd& b) const {
+double SparseSolver<entry_t>::dot_solve (const Eigen::VectorXd& b) const {
   Eigen::VectorXd out(n_);
   solve(b, &(out(0)));
   return b.transpose() * out;
 }
 
 template <typename entry_t>
-double GenRPSolver<entry_t>::log_determinant () const {
+double SparseSolver<entry_t>::log_determinant () const {
   return get_real(factor_.logAbsDeterminant());
 }
 
 // Eigen-free interface:
 template <typename entry_t>
-GenRPSolver<entry_t>::GenRPSolver (size_t p, const double* alpha, const entry_t* beta) {
+SparseSolver<entry_t>::SparseSolver (size_t p, const double* alpha, const entry_t* beta) {
   p_ = p;
   alpha_ = Eigen::Map<const Eigen::Matrix<double, Eigen::Dynamic, 1> >(alpha, p, 1);
   beta_ = Eigen::Map<const Eigen::Matrix<entry_t, Eigen::Dynamic, 1> >(beta, p, 1);
 }
 
 template <typename entry_t>
-void GenRPSolver<entry_t>::compute (size_t n, const double* t, const double* diag) {
+void SparseSolver<entry_t>::compute (size_t n, const double* t, const double* diag) {
   typedef Eigen::Map<const Eigen::Matrix<double, Eigen::Dynamic, 1> > vector_t;
   compute(vector_t(t, n, 1), vector_t(diag, n, 1));
 }
 
 template <typename entry_t>
-void GenRPSolver<entry_t>::solve (const double* b, double* x) const {
+void SparseSolver<entry_t>::solve (const double* b, double* x) const {
   Eigen::Map<const Eigen::Matrix<double, Eigen::Dynamic, 1> > bin(b, n_, 1);
   solve(bin, x);
 }
 
 template <typename entry_t>
-double GenRPSolver<entry_t>::dot_solve (const double* b) const {
+double SparseSolver<entry_t>::dot_solve (const double* b) const {
   Eigen::Map<const Eigen::Matrix<double, Eigen::Dynamic, 1> > bin(b, n_, 1);
   return dot_solve(bin);
 }
