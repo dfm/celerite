@@ -76,6 +76,7 @@ class build_ext(_build_ext):
 
 if __name__ == "__main__":
     import sys
+    import glob
     import pprint
     import numpy
     import numpy.__config__ as npconf
@@ -89,10 +90,10 @@ if __name__ == "__main__":
     compile_args = dict(libraries=[], define_macros=[("NDEBUG", None)])
     if os.name == "posix":
         compile_args["libraries"].append("m")
-    dn = os.path.dirname
-    incldir = os.path.join(dn(dn(os.path.abspath(__file__))), "cpp", "include")
+
+    localincl = os.path.join("genrp", "include")
     compile_args["include_dirs"] = [
-        incldir,
+        localincl,
         numpy.get_include(),
     ]
 
@@ -110,8 +111,28 @@ if __name__ == "__main__":
     # exists.
     solver_fn = os.path.join("genrp", "_genrp")
     if os.path.exists(solver_fn + ".pyx"):
+        import shutil
         from Cython.Build import cythonize
+        print("In dev mode...")
+
         solver_fn += ".pyx"
+
+        # Copy the header files to this directory.
+        dn = os.path.dirname
+        incldir = os.path.join(dn(dn(os.path.abspath(__file__))), "cpp",
+                               "include")
+        headers = (
+            glob.glob(os.path.join(incldir, "*", "*.h")) +
+            glob.glob(os.path.join(incldir, "*", "*", "*.h"))
+        )
+        for fn in headers:
+            dst = os.path.join(localincl, fn[len(incldir)+1:])
+            try:
+                os.makedirs(os.path.split(dst)[0])
+            except os.error:
+                pass
+            shutil.copyfile(fn, dst)
+
     else:
         solver_fn += ".cpp"
         cythonize = lambda x: x
@@ -130,6 +151,8 @@ if __name__ == "__main__":
     builtins.__GENRP_SETUP__ = True
     import genrp
 
+    print(glob.glob("genrp/include/genrp/*.h"))
+
     setup(
         name="genrp",
         version=genrp.__version__,
@@ -141,9 +164,6 @@ if __name__ == "__main__":
         ext_modules=extensions,
         description="",
         long_description=open("README.rst").read(),
-        package_data={"": ["README.rst", "LICENSE",
-                           os.path.join(incldir, "*.h")]},
-        include_package_data=True,
         cmdclass=dict(build_ext=build_ext),
         classifiers=[
             # "Development Status :: 5 - Production/Stable",

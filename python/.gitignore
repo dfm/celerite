@@ -1,2 +1,4 @@
 *.cpp
 *.egg-info
+genrp/include
+dist
