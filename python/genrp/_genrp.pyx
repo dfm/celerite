@@ -16,6 +16,19 @@ ctypedef np.complex128_t CDTYPE_t
 cdef extern from "complex":
     double complex exp(double complex)
 
+cdef extern from "genrp/version.h":
+    cdef int GENRP_VERSION_MAJOR
+    cdef int GENRP_VERSION_MINOR
+    cdef int GENRP_VERSION_REVISION
+
+def get_library_version():
+    return "{0}.{1}.{2}".format(
+        GENRP_VERSION_MAJOR,
+        GENRP_VERSION_MINOR,
+        GENRP_VERSION_REVISION
+    )
+
+
 cdef extern from "genrp/genrp.h" namespace "genrp":
 
     cdef cppclass Kernel:
