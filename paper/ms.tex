@@ -36,8 +36,7 @@
 \vspace*{-\headsep}\vspace*{\headheight}
 \noindent\footnotesize
 {\noindent\footnotesize\textsc{\@journalinfo}}\par
-{\noindent\scriptsize Preprint typeset using \LaTeX\ style AASTeX6\\
-With modifications by David W. Hogg and Daniel Foreman-Mackey
+{\noindent\scriptsize Preprint typeset using \LaTeX\ style AASTeX6 with modifications
 }\par\vspace*{-\baselineskip}\vspace*{0.625in}
 }%
 \makeatother
@@ -129,15 +128,17 @@ Fast and scalable Gaussian process modeling of stellar variability
 \altaffiltext{\sagan}{Sagan Fellow}
 
 \author{%
-    Eric~Agol\altaffilmark{\uw} and
-    Daniel~Foreman-Mackey\altaffilmark{\uw,\sagan}
+    Daniel~Foreman-Mackey\altaffilmark{\uw,\sagan} and
+    Eric~Agol\altaffilmark{\uw}
 }
 
 
 
 \begin{abstract}
 
-Our Gaussian Processes are fast.
+We derive a fast, $O(N)$, Gaussian Process approach that involves Lorentzian
+kernels.  This basis set can approximate commonly used kernels, and is a good
+description of stellar variability.
 
 \end{abstract}
 
@@ -155,7 +156,103 @@ Our Gaussian Processes are fast.
 
 \section{Introduction}
 
-This is the literature \citep{Ambikasaran:2015}.
+\section{Outline}
+
+\begin{enumerate}
+\item Non-parametric modeling of time series with correlated noise using Gaussian processes
+\item Assumptions:\\
+  a). Stationary noise (although this can be broken).\\
+  b). Gaussian
+\item Problem: can't handle large datasets - e.g. entire Kepler long-cadence; Spitzer light
+   curves; Solar curves; short-cadence.
+\item Solution(s):\\
+  a). HODLR \citep{Ambikasaran2013,Ambikasaran2016}\\
+  b). CARMA (Lorentzian power spectra, but with limitations) \citep{Kelly2014}\\
+  c). Tri-diagonal (Press \& Rybicki) \citep{1995PhRvL..74.1060R}
+\item Problem: HODLR is tricky to use; CARMA requires certain relations between
+  coefficients of Lorentzians (right?); P\&R only works for up to 2 components + white noise
+\item Solution: Ambikasaran \citep{Ambikasaran2015} shows how sum of exponential kernels can be solved in order
+   $O(N*p^2)$, where p is number of Lorentzians.
+\item Generalized Ambikasarn for complex coefficients (Hermitian).
+\item Performance:\\
+  a). Show $O(N*p^2)$ scaling\\
+  b). Show comparison to HODLR.\\
+  c). Show comparison to wavelet (ala Carter \& Winn).\\
+  d). Compare with CARMA Kallman filter(?).
+\item Various methods/formulae:\\
+  a). Likelihood computation.\\
+  b). Generating GP with particular covariance [yet to solve]. [ ]\\
+  c). Inferring particular components.\\
+  d). Computing derivatives of GPs (as used in RV methods).\\
+  e). Forecasting/interpolating.\\
+  f). Inferring confidence intervals.\\
+  g). Derivative of likelihood function with respect to kernel parameters.\\
+  h). Non-stationary GP (can the coefficients vary with time?).\\
+  i). Multi-band (each element of extended matrix becomes a matrix).
+
+\item Generalization to non-stationary noise.
+\item Example application: TYC 3559\\
+  a). Entire long-cadence 17-quarter Kepler dataset (~65k data points).\\
+  b). Analysis of solar data.
+
+\item Possible future applications:\\
+  a). Inference of asteroseismic variability - ala Andrew Gordon Wilson \citep{2013arXiv1302.4245W}, but
+      with Lorentzians, not Gaussians.\\
+  b). Multi-waveband GPs.\\
+  c). RV interpolation.\\
+  d). Non-parametric phase functions.
+
+\item Appendix:
+  a). Description/summary of mathematics.\\
+  b). Description of code.
+\end{enumerate}
+
+\subsection{Derivative of likelihood with respect to Kernel parameters}
+
+The derivative of the likelihood can be computed in $O(N)$ operations as follows.
+
+The derivative of the log likelihood with respect to model parameters ${\bf x}$ is given by:
+\begin{equation}
+    \frac{\partial \ln{\cal L}}{\partial x_i} = (\ln{\cal L})^\prime = -\frac{1}{2}\sum_i \frac{K_{ii}^\prime}{K_{ii}}
+    - \frac{1}{2} {\bf y}^T {\bf K}^{-1} {\bf K}^\prime {\bf K}^{-1} {\bf y},
+\end{equation}
+where $^\prime$ means the derivative wrt $x_i$.
+The kernel may be written as:
+\begin{equation}
+    K_{ij}({\bf \alpha},{\bf \beta}) = \left\{
+    \begin{array}{cc}
+       w_i + \sum_{l=1}^p \alpha_l & j = i \\
+       \sum_{l=1}^p \alpha_l \exp{(-\beta_l |t_i-t_j|)}  & j \ne i
+    \end{array}
+    \right.
+\end{equation}
+Since this equation is the sum of $p$ semi-separable matrices, then applying the product rule to compute the derivative will give a single semi-separable matrix for the derivative with respect to each kernel parameter.
+
+Now, letting ${\bf x} = (w,{\bf \alpha},{\bf \beta})$, then the derivative may be written as:
+\begin{eqnarray}
+    \frac{\partial K_{ii}}{\partial w} &=& \delta_{ij}\\
+    \frac{\partial K_{ij}}{\partial \alpha_k} &=&
+     \left\{
+    \begin{array}{cc}
+       1 & j = i \\
+        \exp{(-\beta_k |t_i-t_j|)}  & j \ne i
+    \end{array}
+    \right.\\
+    \frac{\partial K_{ij}}{\partial \beta_k} &=&
+     \left\{
+    \begin{array}{cc}
+       0  & j = i \\
+        -\alpha_k|t_i-t_j|\exp{(-\beta_k |t_i-t_j|)}  & j \ne i
+    \end{array}
+    \right.
+\end{eqnarray}
+The first term in the derivative of the likelihood can be computed in $O(N)$
+evaluations, while the second term can be computed in three steps:
+\begin{itemize}
+\item First, solve ${\bf z_1} = {\bf K}^{-1}{\bf y}$ with the GRP solver.
+\item Next, create an e
+\end{itemize}
+Writing this term out:
 
 \section{Summary}
 
@@ -172,6 +269,10 @@ with git commit \texttt{\githash} (\gitdate).
 It is a pleasure to thank
 ...
 for helpful contributions to the ideas and code presented here.
+
+EA acknowledges support from NASA grants NNX13AF20G, NNX13AF62G, and
+NASA Astrobiology Institute’s Virtual Planetary Laboratory, supported
+by NASA under cooperative agreement NNH05ZDA001C.
 
 This research made use of the NASA \project{Astrophysics Data System} and the
 NASA Exoplanet Archive.
