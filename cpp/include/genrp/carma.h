@@ -31,10 +31,10 @@ public:
   CARMA_1_0 (double sigma2, std::complex<double> alpha)
     : sigma2_(sigma2)
     , alpha_(alpha)
-    , b_(0.0)
     , lambda_base_(exp(-alpha))
   {
     V_ = sigma2_ / (alpha_ + std::conj(alpha_));
+    std::cout << "V = " << V_ << std::endl;
   };
 
   void reset (double t) {
@@ -47,10 +47,8 @@ public:
   Prediction predict (double yerr) const {
     // Steps 3 and 9 from Kelly et al.
     Prediction pred;
-    std::complex<double> tmp = state_.x;
-    pred.expectation = tmp.real();
-    tmp = state_.P;
-    pred.variance = yerr * yerr + tmp.real();
+    pred.expectation = state_.x.real();
+    pred.variance = yerr * yerr + state_.P.real();
 
     // Check the variance value for instability.
     if (pred.variance < 0.0) throw CARMA_SOLVER_UNSTABLE;
@@ -69,7 +67,7 @@ public:
     std::complex<double> lam = pow(lambda_base_, dt);
     state_.time += dt;
     state_.x *= lam;
-    state_.P = lam * (state_.P - V_) * lam + V_;
+    state_.P = lam * (state_.P - V_) * std::conj(lam) + V_;
   };
 
   double log_likelihood (Eigen::VectorXd t, Eigen::VectorXd y, Eigen::VectorXd yerr) {
@@ -96,27 +94,6 @@ public:
     std::complex<double> w(0.0, 2.0 * M_PI * f);
     return sigma2_ / std::norm(alpha_ + w);
   };
-
-  /* double covariance (double tau) const { */
-  /*   std::complex<double> n1, n2, norm, value = 0.0; */
-
-  /*   for (unsigned k = 0; k < p_; ++k) { */
-  /*     n1 = 0.0; */
-  /*     n2 = 0.0; */
-  /*     for (unsigned l = 0; l < q_+1; ++l) { */
-  /*       n1 += beta_(l) * pow(arroots_(k), l); */
-  /*       n2 += beta_(l) * pow(-arroots_(k), l); */
-  /*     } */
-  /*     norm = n1 * n2 / arroots_(k).real(); */
-  /*     for (unsigned l = 0; l < p_; ++l) { */
-  /*       if (l != k) */
-  /*         norm /= (arroots_(l) - arroots_(k)) * (std::conj(arroots_(l)) + arroots_(k)); */
-  /*     } */
-  /*     value += norm * exp(arroots_(k) * tau); */
-  /*   } */
-
-  /*   return -0.5 * sigma_*sigma_ * value.real(); */
-  /* }; */
 
 private:
 

@@ -52,10 +52,12 @@ int main (int argc, char* argv[])
   kernel.add_term(1.0, 0.1);
   /* kernel.add_term(-0.6, 0.7, 1.0); */
 
-  std::cout << kernel.carma_sigma2s().transpose() << std::endl;
-  std::cout << kernel.carma_alphas().transpose() << std::endl;
+  /* std::cout << kernel.carma_sigma2s().transpose() << std::endl; */
+  /* std::cout << kernel.carma_alphas().transpose() << std::endl; */
 
   genrp::carma::CARMA_1_0 carma(kernel.carma_sigma2s()(0), kernel.carma_alphas()(0));
+  std::cout << "val = " << kernel.value(0.0) << std::endl;
+
   std::cout << carma.psd(1.0) << " " << kernel.psd(1.0) << std::endl;
   std::cout << carma.log_likelihood(x, y, yerr) << std::endl;
 

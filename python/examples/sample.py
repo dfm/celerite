@@ -13,14 +13,14 @@ from astropy.stats import LombScargle
 
 from genrp import GP
 
-np.random.seed(42)
+np.random.seed(123)
 
 
 true_gp = GP()
-true_gp.add_term(np.log(1.0), np.log(10.0))
-# true_gp.add_term(np.log(0.5), np.log(50.0), -np.log(5.0)-1.0)
-true_gp.add_term(np.log(5.0), np.log(50.0), -np.log(5.0))
-true_gp.add_term(np.log(2.5), np.log(50.0), -np.log(5.0)+1.0)
+true_gp.add_term(np.log(10.0), np.log(0.5))
+true_gp.add_term(np.log(10.0), np.log(0.1), np.log(1.0)-1.0)
+true_gp.add_term(np.log(10.0), np.log(0.1), np.log(1.0))
+# true_gp.add_term(np.log(2.5), np.log(50.0), -np.log(5.0)+1.0)
 
 if "uniform" in sys.argv:
     t = np.linspace(0, 200, 1000)
@@ -31,7 +31,7 @@ else:
     freqs = np.exp(np.linspace(-np.log(t.max() - t.min()),
                                -np.log(2*np.mean(np.diff(t))), 1000))
 y = true_gp.sample(t, tiny=1e-12)
-yerr = np.random.uniform(0.05, 0.1, len(t))
+yerr = np.random.uniform(0.005, 0.01, len(t))
 y += yerr * np.random.randn(len(t))
 
 fit_gp = GP()
@@ -39,30 +39,33 @@ amp = 1.0
 rng = t.max() - t.min()
 fit_gp.add_term(np.log(amp), np.log(rng))
 fit_gp.add_term(np.log(amp), np.log(0.1*rng), -np.log(1.0))
-fit_gp.add_term(np.log(amp), np.log(0.1*rng), -np.log(1.0))
-fit_gp.add_term(np.log(amp), np.log(0.1*rng), -np.log(1.0))
 
 fig, axes = pl.subplots(2, 2, figsize=(10, 10))
 
 # Data
 ax = axes[0, 0]
-ax.plot(t, y, "k")
+ax.plot(t, y, ".k")
 ax.set_xlabel("t")
 ax.set_ylabel("y")
 mx, mn = y.max(), y.min()
 rng = 1.1 * max(mx, -mn)
 ax.set_ylim(-rng, rng)
-ax.set_xlim(t.min(), t.max())
+# ax.set_xlim(t.min(), t.max())
 ax.set_title("simulated data")
+
+# k = true_gp.get_matrix(t)[0]
+# print(k)
+# ax.plot(t - t[0], k)
+# ax.set_xlim(0, 50)
 
 # Lomb-scargle.
 ax = axes[0, 1]
 
 if "uniform" in sys.argv:
-    fft = np.abs(np.fft.rfft(y)) / len(t)
+    fft = np.abs(2*np.pi*np.fft.rfft(y) / len(t))**2
     ax.plot(freqs, fft[1:-1], "b", label="fft")
 
-power = np.sqrt(LombScargle(t, y).power(freqs, normalization="psd") / len(t))
+power = (2*np.pi)**2*LombScargle(t, y).power(freqs, normalization="psd")/len(t)
 ax.plot(freqs, power, "k", label="lomb-scargle")
 
 ax.plot(freqs, true_gp.get_psd(freqs), "--g", label="truth")
