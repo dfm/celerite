@@ -57,11 +57,11 @@ public:
 
   void carma_sigma2 (double* sigma2) const {
     if (periodic) {
-      sigma2[0] = a * tpq * tpq;
-      sigma2[1] = a * tpq * tpq;
+      sigma2[0] = 2*M_PI*a * tpq * tpq;
+      sigma2[1] = 2*M_PI*a * tpq * tpq;
       return;
     }
-    sigma2[0] = 2.0 * a * tpq * tpq;
+    sigma2[0] = 2.0 * 2*M_PI*a * tpq * tpq;
   };
 
   void carma_alpha (std::complex<double>* alpha) const {
