@@ -13,6 +13,7 @@
 #include <Eigen/Dense>
 
 #include "genrp/genrp.h"
+#include "genrp/carma.h"
 
 // Timer for the benchmark.
 double get_timestamp ()
@@ -48,11 +49,22 @@ int main (int argc, char* argv[])
 
   // Set up the kernel.
   genrp::Kernel kernel;
-  kernel.add_term(-0.5, 0.1);
-  kernel.add_term(-0.6, 0.7, 1.0);
+  kernel.add_term(1.0, 0.1);
+  /* kernel.add_term(-0.6, 0.7, 1.0); */
+
+  std::cout << kernel.carma_sigma2s().transpose() << std::endl;
+  std::cout << kernel.carma_alphas().transpose() << std::endl;
+
+  genrp::carma::CARMA_1_0 carma(kernel.carma_sigma2s()(0), kernel.carma_alphas()(0));
+  std::cout << carma.psd(1.0) << " " << kernel.psd(1.0) << std::endl;
+  std::cout << carma.log_likelihood(x, y, yerr) << std::endl;
 
   // Set up the GP solver.
   genrp::GaussianProcess<genrp::BandSolver<std::complex<double> > > gp_band(kernel);
+  gp_band.compute(x, yerr);
+  std::cout << gp_band.log_likelihood(y) << std::endl;
+
+  return 0;
 
   // Benchmark the solver.
   double strt, compute_time = 0.0, log_like_time = 0.0, log_like;

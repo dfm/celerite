@@ -6,3 +6,4 @@ macro (GENRP_TEST NAME)
 endmacro (GENRP_TEST)
 
 genrp_test(demo)
+genrp_test(benchmark)

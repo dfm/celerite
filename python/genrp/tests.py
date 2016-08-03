@@ -61,46 +61,62 @@ def test_solve(seed=42):
     assert np.allclose(solver.apply_inverse(b), np.linalg.solve(K, b))
 
 
-def test_kernel(seed=42):
+def test_kernel_params():
     gp = GP()
-    gp.add_term(-0.5, 0.1)
-    gp.add_term(-0.6, 0.7, 1.0)
-    assert np.allclose(gp.alpha, [2.0*np.pi*np.exp(-0.5-0.1),
-                                  np.pi*np.exp(-0.6-0.7),
-                                  np.pi*np.exp(-0.6-0.7)])
-    re = np.exp(-0.7)
-    im = 2*np.pi*np.exp(1.0)
-    assert np.allclose(gp.beta, [np.exp(-0.1), re+1j*im, re-1j*im])
+    terms = [(-0.5, 0.1), (-0.6, 0.7, 1.0)]
+    for term in terms:
+        gp.add_term(*term)
 
-    gp.add_term(-0.8, 1.0)
-    assert np.allclose(gp.alpha, [2.0*np.pi*np.exp(-0.5-0.1),
-                                  2.0*np.pi*np.exp(-0.8-1.0),
-                                  np.pi*np.exp(-0.6-0.7),
-                                  np.pi*np.exp(-0.6-0.7)])
-    re = np.exp(-0.7)
-    im = 2*np.pi*np.exp(1.0)
-    assert np.allclose(gp.beta, [np.exp(-0.1), np.exp(-1.0), re+1j*im,
-                                 re-1j*im])
+    alpha = []
+    beta = []
+    for term in terms:
+        if len(term) == 2:
+            a, q = np.exp(term)
+            alpha.append(4 * np.pi**2 * a * q)
+            beta.append(2 * np.pi * q)
+            continue
+        a, q, f = np.exp(term)
+        alpha.append(2 * np.pi**2 * a * q)
+        alpha.append(2 * np.pi**2 * a * q)
+        beta.append(2 * np.pi * q + 2.0j * np.pi * f)
+        beta.append(2 * np.pi * q - 2.0j * np.pi * f)
 
+    assert np.allclose(gp.alpha, alpha)
+    assert np.allclose(gp.beta, beta)
+
+
+def test_kernel_value(seed=42):
     gp = GP()
-    gp.add_term(-0.5, 0.1)
-    gp.add_term(-0.6, 0.7, 1.0)
+    terms = [(-0.3, 0.1), (-0.6, 0.7, 1.0)]
+    for term in terms:
+        gp.add_term(*term)
 
     np.random.seed(seed)
-    x1 = np.sort(np.random.rand(10))
+    x1 = np.sort(np.random.rand(1000))
     K0 = gp.get_matrix(x1)
     dt = np.abs(x1[:, None] - x1[None, :])
-    K = 2.0*np.pi*np.exp(-0.5-0.1)*np.exp(-np.exp(-0.1)*dt)
-    K += 2.0*np.pi*np.exp(-0.6-0.7)*np.exp(-np.exp(-0.7)*dt) \
-        * np.cos(2*np.pi*np.exp(1.0)*dt)
+    K = np.zeros_like(K0)
+    for term in terms:
+        if len(term) == 2:
+            amp, q = np.exp(term[:2])
+            K += 4*amp*np.pi**2*q*np.exp(-2*np.pi*q*dt)
+            continue
+        amp, q, f = np.exp(term)
+        K += 4*amp*np.pi**2*q*np.exp(-2*np.pi*q*dt)*np.cos(2*np.pi*f*dt)
+
     assert np.allclose(K, K0)
 
     x2 = np.sort(np.random.rand(5))
     K0 = gp.get_matrix(x1, x2)
     dt = np.abs(x1[:, None] - x2[None, :])
-    K = 2.0*np.pi*np.exp(-0.5-0.1)*np.exp(-np.exp(-0.1)*dt)
-    K += 2.0*np.pi*np.exp(-0.6-0.7)*np.exp(-np.exp(-0.7)*dt) \
-        * np.cos(2*np.pi*np.exp(1.0)*dt)
+    K = np.zeros_like(K0)
+    for term in terms:
+        if len(term) == 2:
+            amp, q = np.exp(term[:2])
+            K += 4*amp*np.pi**2*q*np.exp(-2*np.pi*q*dt)
+            continue
+        amp, q, f = np.exp(term)
+        K += 4*amp*np.pi**2*q*np.exp(-2*np.pi*q*dt)*np.cos(2*np.pi*f*dt)
     assert np.allclose(K, K0)
 
 
@@ -179,13 +195,15 @@ def test_psd():
     for term in terms:
         gp.add_term(*term)
 
-    # Check that there is a maximum in the PSD at each term.
-    w = np.linspace(-10.0, 10.0, 5001)
-    psd = gp.get_psd(w)
-    w = w[1:-1]
+    freqs = np.exp(np.linspace(np.log(0.1), np.log(10), 1000))
+    psd0 = np.zeros_like(freqs)
     for term in terms:
-        w0 = 0.0
-        if len(term) == 3:
-            w0 = np.exp(term[2])
-        i = np.argmin(np.abs(w-w0))
-        assert (psd[i+1] > psd[i]) and (psd[i+1] > psd[i+2])
+        if len(term) == 2:
+            amp, q = np.exp(term)
+            psd0 += 2.0 * amp / (1 + (freqs/q)**2)
+            continue
+        amp, q, f = np.exp(term)
+        psd0 += amp / (1 + ((freqs - f)/q)**2)
+        psd0 += amp / (1 + ((freqs + f)/q)**2)
+
+    assert np.allclose(psd0, gp.get_psd(freqs))
