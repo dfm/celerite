@@ -18,15 +18,22 @@ template <typename SolverType>
 class GaussianProcess {
 public:
   GaussianProcess (Kernel kernel) : kernel_(kernel), dim_(0), computed_(false) {}
+
   size_t size () const { return kernel_.size(); };
   size_t num_terms () const { return kernel_.num_terms(); };
   size_t num_coeffs () const { return kernel_.num_coeffs(); };
+
   Eigen::VectorXd params () const { return kernel_.params(); };
   void params (const Eigen::VectorXd& pars) { kernel_.params(pars); };
 
   void compute (const Eigen::VectorXd& x, const Eigen::VectorXd& yerr);
   void compute (const Eigen::VectorXd& params, const Eigen::VectorXd& x, const Eigen::VectorXd& yerr);
   double log_likelihood (const Eigen::VectorXd& y) const;
+
+  const SolverType& solver () const {
+    check_computed();
+    return solver_;
+  };
 
   // Eigen-free interface.
   void compute (size_t n, const double* x, const double* yerr);
@@ -45,6 +52,9 @@ private:
   size_t dim_;
   bool computed_;
 
+  void check_computed () const {
+    assert(computed_ && "YOU MUST COMPUTE THE GAUSSIAN_PROCESS");
+  };
 };
 
 template <typename SolverType>

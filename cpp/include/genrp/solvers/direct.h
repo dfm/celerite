@@ -39,6 +39,7 @@ public:
   DirectSolver (size_t p, const double* alpha, const entry_t* beta);
   void compute (size_t n, const double* t, const double* diag);
   void solve (const double* b, double* x) const;
+  void solve (size_t nrhs, const double* b, double* x) const;
   double dot_solve (const double* b) const;
 
 private:
@@ -52,7 +53,7 @@ DirectSolver<entry_t>::DirectSolver (const Eigen::VectorXd alpha, const Eigen::M
     beta_(beta),
     p_(alpha.rows())
 {
-  if (alpha_.rows() != beta_.rows()) throw GENRP_DIMENSION_MISMATCH;
+  assert ((alpha_.rows() == beta_.rows()) && "DIMENSION_MISMATCH");
 }
 
 template <typename entry_t>
@@ -64,8 +65,7 @@ void DirectSolver<entry_t>::alpha_and_beta (const Eigen::VectorXd alpha, const E
 
 template <typename entry_t>
 void DirectSolver<entry_t>::compute (const Eigen::VectorXd& x, const Eigen::VectorXd& diag) {
-  // Check dimensions.
-  if (x.rows() != diag.rows()) throw GENRP_DIMENSION_MISMATCH;
+  assert ((x.rows() == diag.rows()) && "DIMENSION_MISMATCH");
   n_ = x.rows();
 
   // Build the matrix.
@@ -91,7 +91,7 @@ void DirectSolver<entry_t>::compute (const Eigen::VectorXd& x, const Eigen::Vect
 
 template <typename entry_t>
 void DirectSolver<entry_t>::solve (const Eigen::MatrixXd& b, double* x) const {
-  if (b.rows() != n_) throw GENRP_DIMENSION_MISMATCH;
+  assert ((b.rows() != n_) && "DIMENSION_MISMATCH");
   size_t nrhs = b.cols();
 
   matrix_t result = factor_.solve(b.cast<entry_t>());
@@ -131,6 +131,12 @@ void DirectSolver<entry_t>::compute (size_t n, const double* t, const double* di
 template <typename entry_t>
 void DirectSolver<entry_t>::solve (const double* b, double* x) const {
   Eigen::Map<const Eigen::Matrix<double, Eigen::Dynamic, 1> > bin(b, n_, 1);
+  solve(bin, x);
+}
+
+template <typename entry_t>
+void DirectSolver<entry_t>::solve (size_t nrhs, const double* b, double* x) const {
+  Eigen::Map<const Eigen::Matrix<double, Eigen::Dynamic, 1> > bin(b, n_, nrhs);
   solve(bin, x);
 }
 

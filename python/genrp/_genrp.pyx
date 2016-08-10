@@ -44,6 +44,7 @@ cdef extern from "genrp/genrp.h" namespace "genrp":
         BandSolver (size_t m, const double* alpha, const T* beta)
         void compute (size_t N, const double* t, const double* d)
         void solve (const double* b, double* x) const
+        void solve (size_t nrhs, const double* b, double* x) const
         double solve_dot (const double* b) const
         double log_determinant () const
 
@@ -52,6 +53,7 @@ cdef extern from "genrp/genrp.h" namespace "genrp":
         size_t size () const
         size_t num_terms () const
         size_t num_coeffs () const
+        SolverType solver () const
         void compute (size_t N, const double* x, const double* yerr)
         double log_likelihood (const double* y) const
         double kernel_value (double dt) const
@@ -174,6 +176,19 @@ cdef class GP:
         cdef np.ndarray[DTYPE_t, ndim=2] K = self.get_matrix(x)
         K[np.diag_indices_from(K)] += tiny
         return np.random.multivariate_normal(np.zeros_like(x), K)
+
+    def apply_inverse(self, y0, in_place=False):
+        cdef np.ndarray[DTYPE_t, ndim=2, mode='fortran'] y = np.atleast_2d(y0).astype(order="F")
+        if y.shape[0] != self._data_size:
+            raise ValueError("dimension mismatch")
+
+        if in_place:
+            self.gp.solver().solve(y.shape[1], <double*>y.data, <double*>y.data)
+            return y
+
+        cdef np.ndarray[DTYPE_t, ndim=1] alpha = np.empty_like(y, dtype=DTYPE)
+        self.gp.solver().solve(y.shape[1], <double*>y.data, <double*>alpha.data)
+        return alpha
 
 
 cdef class Solver:
