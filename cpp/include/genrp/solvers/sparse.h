@@ -38,7 +38,7 @@ void SparseSolver<entry_t>::compute (const Eigen::VectorXd& x, const Eigen::Vect
   typedef Eigen::Triplet<entry_t> triplet_t;
 
   // Check dimensions.
-  if (x.rows() != diag.rows()) throw GENRP_DIMENSION_MISMATCH;
+  assert ((x.rows() == diag.rows()) && "DIMENSION_MISMATCH");
   this->n_ = x.rows();
 
   // Dimensions from superclass.
@@ -118,7 +118,7 @@ void SparseSolver<entry_t>::compute (const Eigen::VectorXd& x, const Eigen::Vect
 
 template <typename entry_t>
 void SparseSolver<entry_t>::solve (const Eigen::MatrixXd& b, double* x) const {
-  if (b.rows() != this->n_) throw GENRP_DIMENSION_MISMATCH;
+  assert ((b.rows() == this->n_) && "DIMENSION_MISMATCH");
   size_t nrhs = b.cols();
 
   // Pad the input vector to the extended size.

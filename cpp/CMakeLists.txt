@@ -32,26 +32,15 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 include(ReadGenRPVersionFromSource)
 read_genrp_version_from_source(${CMAKE_SOURCE_DIR})
 
-enable_testing()
-
 find_package(BLAS REQUIRED)
-if (BLAS_FOUND)
-    message("-- Found BLAS library: ${BLAS_LIBRARIES}")
-endif (BLAS_FOUND)
-
 find_package(LAPACK REQUIRED)
-if (LAPACK_FOUND)
-    message("-- Found LAPACK library: ${LAPACK_LIBRARIES}")
-endif (LAPACK_FOUND)
-
-# Find eigen:
 find_package(Eigen REQUIRED)
 if (EIGEN_VERSION VERSION_LESS 3.1.0)
 message(FATAL_ERROR "-- GenRP requires Eigen version >= 3.1.0 in order "
     "that Eigen/SparseCore be available, detected version of Eigen is: "
     "${EIGEN_VERSION}")
 endif (EIGEN_VERSION VERSION_LESS 3.1.0)
-message("-- Found Eigen ${EIGEN_VERSION}: ${EIGEN_INCLUDE_DIRS}")
+enable_testing()
 
 # Includes.
 include_directories(include)
@@ -116,7 +105,7 @@ endif ()
 add_definitions(-DNDEBUG)
 
 # Build the examples.
-add_subdirectory(examples)
+add_subdirectory(src)
 
 # Setup installation of public headers.
 file(GLOB GENRP_HDRS ${CMAKE_SOURCE_DIR}/include/genrp/*.h)

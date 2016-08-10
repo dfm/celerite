@@ -12,8 +12,6 @@
 
 namespace genrp {
 
-#define GENRP_DIMENSION_MISMATCH 1
-
 template <typename entry_t>
 class DirectSolver {
   typedef Eigen::Matrix<entry_t, Eigen::Dynamic, 1> vector_t;
@@ -33,6 +31,7 @@ public:
   virtual void compute (const Eigen::VectorXd& x, const Eigen::VectorXd& diag);
   virtual void solve (const Eigen::MatrixXd& b, double* x) const;
   double dot_solve (const Eigen::VectorXd& b) const;
+  double grad_dot_solve (const Eigen::VectorXd& b, Eigen::VectorXd& grad) const;
   double log_determinant () const;
 
   // Eigen-free interface.
@@ -72,7 +71,6 @@ void DirectSolver<entry_t>::compute (const Eigen::VectorXd& x, const Eigen::Vect
   entry_t v, asum = alpha_.sum();
   matrix_t K(n_, n_);
   for (size_t i = 0; i < n_; ++i) {
-    v = entry_t(0.0);
     K(i, i) = asum + diag(i);
 
     for (size_t j = i+1; j < n_; ++j) {
@@ -80,7 +78,7 @@ void DirectSolver<entry_t>::compute (const Eigen::VectorXd& x, const Eigen::Vect
       for (size_t p = 0; p < p_; ++p)
         v += alpha_(p) * exp(-beta_(p) * fabs(x(j) - x(i)));
       K(i, j) = v;
-      K(j, i) = v;
+      K(j, i) = get_conj(v);
     }
   }
 
@@ -91,7 +89,7 @@ void DirectSolver<entry_t>::compute (const Eigen::VectorXd& x, const Eigen::Vect
 
 template <typename entry_t>
 void DirectSolver<entry_t>::solve (const Eigen::MatrixXd& b, double* x) const {
-  assert ((b.rows() != n_) && "DIMENSION_MISMATCH");
+  assert ((b.rows() == n_) && "DIMENSION_MISMATCH");
   size_t nrhs = b.cols();
 
   matrix_t result = factor_.solve(b.cast<entry_t>());
