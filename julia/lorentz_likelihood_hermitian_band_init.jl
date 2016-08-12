@@ -1,5 +1,6 @@
 function lorentz_likelihood_hermitian_band_init(alpha::Vector{Float64},beta::Vector{Complex{Float64}},
-                            w::Float64,t::Vector{Float64})
+                            w::Float64,t::Vector{Float64},
+       nex::Int64,aex::Array{Complex{Float64},2},al_small::Array{Complex{Float64},2},indx::Vector{Int64})
 # Initializes the likelihood of a sum of Exponential/Cosine kernels (which have a
 # Lorentzian power spectrum) utilizing the approach of Ambikasaran (2015)
 #   Numer. Linear Algebra Appl. 2015; 22:1102-1114 DOI: 10.1002/nla
@@ -17,30 +18,32 @@ function lorentz_likelihood_hermitian_band_init(alpha::Vector{Float64},beta::Vec
 # [x_i,{r_{i,1},...,r_{i,p}},{l_{i,1},...,l_{i,p}}]
 
 #tic()
-p = length(alpha)
-n = length(t)
-atot = sum(alpha)
+p::Int64 = length(alpha)
+width = 2*p+3
+n::Int64 = length(t)
+atot::Float64 = sum(alpha)
 #@assert(length(w) == n)
 #@assert(length(y) == n)
 @assert(length(beta) == p)
+@assert(length(indx) == nex)
+@assert(size(aex) == (nex,width))
 # There are p+1 sub-diagonals, p+1 super-diagonals + diagonal
 # for a total of 2*p+3 non-zero diagonals:
-nex = (2p+1)*n-2p
-aex = zeros(Complex{Float64},nex,2*p+3)
+#nex::Int64 = (2p+1)*n-2p
+#aex = zeros(Complex{Float64},nex,2*p+3)
 #bex = zeros(Complex{Float64},nex)
 gamma = zeros(Complex{Float64},p)
+irow::Int64 = 1
+jcol::Int64 = 1
+phi = 0.0
 for i=1:n
 # Compute actual indices:
   irow =(i-1)*(1+2p)+1
 #  bex[irow] = y[i]
 # Diagonal noise:
   jcol = p+2
-  aex[irow,jcol] = w + atot
+  aex[irow,jcol] = complex(w + atot,0.0)
   for j=1:p
-    if i < n
-#      bex[irow+  j] = 0.0
-#      bex[irow+p+j] = 0.0
-    end
 # Equation (61):
     if i > 1
       jcol = 1+j
@@ -48,7 +51,8 @@ for i=1:n
     end
     if i < n
       phi = imag(beta[j])*(t[i+1]-t[i])
-      gamma[j] = exp(-real(beta[j])*(t[i+1]-t[i]))*complex(cos(phi),-sin(phi))
+      ebt = exp(-real(beta[j])*(t[i+1]-t[i]))
+      gamma[j] = complex(ebt*cos(phi),-ebt*sin(phi))
 #      println(gamma[j])
       jcol = j+p+2
       aex[irow,jcol] = gamma[j]
@@ -68,8 +72,9 @@ for i=1:n
       aex[irow+p+j,jcol] = alpha[j]
       if i < n-1
         phi = imag(beta[j])*(t[i+2]-t[i+1])
+        ebt = exp(-real(beta[j])*(t[i+2]-t[i+1]))
         jcol = 2p+3
-        aex[irow+p+j,jcol] = exp(-real(beta[j])*(t[i+2]-t[i+1]))*complex(cos(phi),-sin(phi))
+        aex[irow+p+j,jcol] = complex(ebt*cos(phi),-ebt*sin(phi))
       end
     end
   end
@@ -79,10 +84,11 @@ end
 m1 = p+1
 m2 = p+1
 # Set up matrix & vector needed for band-diagonal solver:
-al_small = zeros(Complex{Float64},nex,m1)
-indx = collect(1:nex)
+#al_small = zeros(Complex{Float64},nex,m1)
+#indx::Vector{Int64} = collect(1:nex)
 # Do the band-diagonal LU decomposition (indx is a permutation vector for
 # pivoting; d gives the sign of the determinant based on the number of pivots): 
+#@code_warntype bandec(aex,nex,m1,m2,al_small,indx)
 d=bandec(aex,nex,m1,m2,al_small,indx)
 # Solve the equation A^{-1} y = b using band-diagonal LU back-substitution on
 # the extended equations: A_{ex}^{-1} y_{ex} = b_{ex}:
@@ -99,7 +105,7 @@ d=bandec(aex,nex,m1,m2,al_small,indx)
 # Convert this to log likelihood:
 #log_like = -0.5*log_like
 # Next compute the determinant of A_{ex}:
-logdeta = 0.0
+logdeta::Float64 = 0.0
 for i=1:nex
   logdeta += log(abs(aex[i,1]))
 end
@@ -109,5 +115,6 @@ end
 #toc()
 # Return the log likelihood:
 #return log_like,logdeta
-return aex,al_small,indx,logdeta
+#return aex,al_small,indx,logdeta
+return logdeta
 end
