@@ -1,4 +1,4 @@
-function lorentz_likelihood_hermitian_band_save(p,y::Vector{Float64},aex,al_small,indx,logdeta)
+function lorentz_likelihood_real_band_save(p,y::Vector,aex::Array,al_small::Array,indx::Vector,logdeta)
 # Computes the likelihood of a sum of Exponential/Cosine kernels (which have a
 # Lorentzian power spectrum) utilizing the approach of Ambikasaran (2015)
 #   Numer. Linear Algebra Appl. 2015; 22:1102-1114 DOI: 10.1002/nla
@@ -19,26 +19,24 @@ function lorentz_likelihood_hermitian_band_save(p,y::Vector{Float64},aex,al_smal
 n = length(y)
 # There are p+1 sub-diagonals, p+1 super-diagonals + diagonal
 # for a total of 2*p+3 non-zero diagonals:
-nex = (2p+1)*n-2p
-bex = zeros(Complex{Float64},nex)
+nex = 2*((2p+1)*n-2p)
+#bex = zeros(Float64,nex)
+bex = zeros(eltype(aex),nex)
+irow = 1
 for i=1:n
 # Compute actual indices:
-  irow =(i-1)*(1+2p)+1
+  irow =2*(i-1)*(1+2p)+1
   bex[irow] = y[i]
-# Diagonal noise:
-  for j=1:p
-    if i < n
-      bex[irow+  j] = 0.0
-      bex[irow+p+j] = 0.0
-    end
-  end
 end
 
 # Specify the number of bands below & above the diagonal:
-m1 = p+1
-m2 = p+1
+m1 = 2p+3
+m2 = 2p+3
 # Solve the equation A^{-1} y = b using band-diagonal LU back-substitution on
 # the extended equations: A_{ex}^{-1} y_{ex} = b_{ex}:
+#println("Type of aex: ",typeof(aex))
+#println("Type of bex: ",typeof(bex))
+#println("Type of al_small: ",typeof(al_small))
 banbks(aex,nex,m1,m2,al_small,indx,bex)
 # Now select solution to compute the log likelihood:
 # The equation A^{-1} y = b has been solved in bex (the extended vector).
@@ -47,7 +45,7 @@ banbks(aex,nex,m1,m2,al_small,indx,bex)
 # noise that we are modeling with the multi-Lorentzian covariance function):
 log_like = 0.0
 for i=1:n
-  log_like += real(bex[(i-1)*(2p+1)+1])*y[i]
+  log_like += bex[2*(i-1)*(2p+1)+1]*y[i]
 end
 # Convert this to log likelihood:
 #log_like = -0.5*(log_like+logdeta)

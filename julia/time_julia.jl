@@ -18,6 +18,7 @@ p = length(alpha)
 beta = [complex(0.1229159,0.0),complex(0.09086397,omega),complex(0.09086397,-omega)]
 w0 =  0.03027 * 1.6467e-7
 nt = [16,32,64,128,256,512,1024,2048,4096,8192,16384,32768,65536,131072,262144,524288]
+#nt = [16]
 nnt = length(nt)
 time_compute = zeros(nnt)
 time_likelihood = zeros(nnt)
@@ -29,8 +30,16 @@ for it=1:nnt
 # Use white noise for doing the timing test:
   y=randn(n)*sqrt(w0)
 # Now use Ambikarasan O(N) method:
+  nex = (2p+1)*n-2p
+  width = 2p+3
+  m1 = p+1
+  aex::Array{Complex{Float64},2} = zeros(Complex{Float64},nex,width)
+  al_small::Array{Complex{Float64},2} = zeros(Complex{Float64},nex,m1)
+  indx::Vector{Int64} = collect(1:nex)
   tic()
-  aex,al_small,indx,logdeta = lorentz_likelihood_hermitian_band_init(alpha,beta,w0,t)
+# See if I can look into types of this routine.
+#  @code_warntype logdeta = lorentz_likelihood_hermitian_band_init(alpha,beta,w0,t,nex,aex,al_small,indx)
+  logdeta = lorentz_likelihood_hermitian_band_init(alpha,beta,w0,t,nex,aex,al_small,indx)
   time_compute[it] = toq();
   tic()
   log_like = lorentz_likelihood_hermitian_band_save(p,y,aex,al_small,indx,logdeta)

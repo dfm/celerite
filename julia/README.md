@@ -71,3 +71,31 @@ The Asteroseismology book indicates that lines have a Lorentzian
 shape when viewed for an infinite amount of time:
 
 https://books.google.com/books?id=N8pswDrdSyUC&lpg=PR3&pg=PR3#v=onepage&q&f=false
+
+8/9/2016
+
+I'm stuck on computing the derivative of the determinant:
+1). There is no analytic expression for determinants of sums (although Minkowski determinant
+  gives a tight lower limit).
+2). ForwardDiff doesn't work with complex numbers.
+3). ReverseDiffSource doesn't work with functions that have loops.
+
+8/11/2016
+I implemented autodiff with ForwardDiff.jl.  This only works with Real numbers,
+so I had to rewrite the extended kernel computation in Real numbers.  This is
+done in lorentz_likelihood_real_band_init.jl and lorentz_likelihood_real_band_save.jl.
+The extended matrices are twice the size, and so take more operations to compute.
+However, they use real numbers, so I expected a speedup in not having to use
+complex arithmetic.  Unfortunately, the net result is that the code is ~5-10 times
+slower than the Complex version (*hermitian*.jl).
+
+Nevertheless, the ForwardDiff seems to be working, and the gradients take ~20-25
+times longer to compute than the Complex version of the calculation;  which may
+not be too bad since finite diff should take ~10x longer, while autodiff should
+be more accurate.
+
+To Do:
+
+1). Implement a test for this ForwardDiff code to see that it is giving the correct
+derivatives.
+2). See if there are any other speed gains to be had.
