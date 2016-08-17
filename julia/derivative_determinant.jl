@@ -1,6 +1,7 @@
 # Compute the derivative of the determinant with AutoDiff.
 
 using ForwardDiff
+using ReverseDiffSource
 
 function derivative_determinant(x,n)
 # Closure for computing the determinant:
@@ -48,5 +49,9 @@ function derivative_determinant(x,n)
   logdet_grad[2] = (n-1)/(1.0-exp(-2.0*x[2]))*(2.0*exp(-2.0*x[2]))
   println("Analytic det:  ",logdet_ana)
   println("Analytic grad: ",logdet_grad)
+# Now see if I can use ReverseDiff:
+#  diff_code = rdiff(compute_determinant)
+
+#  println(typeof(diff_code))
   return result
 end 

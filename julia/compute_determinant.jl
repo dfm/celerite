@@ -40,6 +40,7 @@ end
 
 #println(logdetC_num," ",lower," ",upper)
 #println(logdetC_num," ",nt*log(lower)," ",nt*log(upper))
+# Minkowski approximation to the gradient:
 println(logdetC_num/nt," ",log(exp(logdetC_ana[1]/nt)+exp(logdetC_ana[2]/nt)+exp(logdetC_ana[3])))
 
 # But, the general case is more complicated since there is not a simple formula for det(A+B).
@@ -47,7 +48,7 @@ println(logdetC_num/nt," ",log(exp(logdetC_ana[1]/nt)+exp(logdetC_ana[2]/nt)+exp
 # Look here: http://mathoverflow.net/questions/65424/determinant-of-sum-of-positive-definite-matrices
 
 # The Minkowski determinant theorem may be used to place a bound on the determinant that becomes
-# tigher as the it gets larger!  I'm not sure if this applies to derivative as well, but I suspect
+# tighter as the it gets larger!  I'm not sure if this applies to derivative as well, but I suspect
 # it does:
 # http://mathoverflow.net/questions/65424/determinant-of-sum-of-positive-definite-matrices?rq=1
 

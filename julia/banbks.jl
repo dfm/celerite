@@ -110,3 +110,56 @@ return
 end
 
 # (C) Copr. 1986-92 Numerical Recipes Software
+
+function banbks(a1::Array,a2::Array,n::Int64,m1::Int64,m2::Int64,al1::Array,al2::Array,indx::Vector{Int64},b1::Vector)
+# This does complex back substitution, but with real arrays to be compatible with ForwardDiff
+mm=m1+m2+1
+#@assert(size(a1)  == (n,mm))
+#@assert(size(a2)  == (n,mm))
+#@assert(size(al1) == (n,m1))
+#@assert(size(al2) == (n,m1))
+#@assert(length(indx) == n)
+#@assert(length(b1) == n)
+l=m1
+# Define 'dummy' for number swaps:
+dum1 = zero(eltype(a1))
+dum2 = zero(eltype(a1))
+# Denominator for complex division:
+den = zero(eltype(a1))
+# b1 is real, so we need to create the complex vector
+b2 = zeros(eltype(a1),n)
+for k=1:n
+  i=indx[k]
+  if (i != k)
+    dum1  = b1[k]
+    b1[k] = b1[i]
+    b1[i] = dum1
+    dum2  = b2[k]
+    b2[k] = b2[i]
+    b2[i] = dum2
+  end
+  if (l < n)
+    l += 1
+  end
+  for i=k+1:l
+    b1[i] -= al1[k,i-k]*b1[k] - al2[k,i-k]*b2[k]
+    b2[i] -= al1[k,i-k]*b2[k] + al2[k,i-k]*b1[k]
+  end
+end
+l=1
+for i in n:-1:1
+  dum1=b1[i]
+  dum2=b2[i]
+  for k=2:l
+    dum1 -= a1[i,k]*b1[k+i-1] - a2[i,k]*b2[k+i-1]
+    dum2 -= a1[i,k]*b2[k+i-1] + a2[i,k]*b1[k+i-1]
+  end
+  den = a1[i,1]*a1[i,1]+a2[i,1]*a2[i,1]
+  b1[i]=(dum1*a1[i,1]+dum2*a2[i,1])/den
+  b2[i]=(dum2*a1[i,1]-dum1*a2[i,1])/den
+  if (l < mm)
+    l += 1
+  end
+end
+return
+end
