@@ -177,18 +177,18 @@ cdef class GP:
         K[np.diag_indices_from(K)] += tiny
         return np.random.multivariate_normal(np.zeros_like(x), K)
 
-    def apply_inverse(self, y0, in_place=False):
-        cdef np.ndarray[DTYPE_t, ndim=2, mode='fortran'] y = np.atleast_2d(y0).astype(order="F")
-        if y.shape[0] != self._data_size:
-            raise ValueError("dimension mismatch")
+    # def apply_inverse(self, y0, in_place=False):
+    #     cdef np.ndarray[DTYPE_t, ndim=2, mode='fortran'] y = np.asfortranarray(y0)
+    #     if y.shape[0] != self._data_size:
+    #         raise ValueError("dimension mismatch")
 
-        if in_place:
-            self.gp.solver().solve(y.shape[1], <double*>y.data, <double*>y.data)
-            return y
+    #     if in_place:
+    #         self.gp.solver().solve(y.shape[1], <double*>y.data, <double*>y.data)
+    #         return y
 
-        cdef np.ndarray[DTYPE_t, ndim=1] alpha = np.empty_like(y, dtype=DTYPE)
-        self.gp.solver().solve(y.shape[1], <double*>y.data, <double*>alpha.data)
-        return alpha
+    #     cdef np.ndarray[DTYPE_t, ndim=1] alpha = np.empty_like(y0, dtype=DTYPE, order="F")
+    #     self.gp.solver().solve(y.shape[1], <double*>y.data, <double*>alpha.data)
+    #     return alpha
 
 
 cdef class Solver:
