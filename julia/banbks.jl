@@ -122,10 +122,14 @@ mm=m1+m2+1
 #@assert(length(b1) == n)
 l=m1
 # Define 'dummy' for number swaps:
-dum1 = zero(eltype(a1))
-dum2 = zero(eltype(a1))
+czero = zero(eltype(a1))
+dum1 = czero
+dum2 = czero
 # Denominator for complex division:
-den = zero(eltype(a1))
+den = czero
+rat = czero
+ac = czero
+bd = czero
 # b1 is real, so we need to create the complex vector
 b2 = zeros(eltype(a1),n)
 for k=1:n
@@ -151,12 +155,22 @@ for i in n:-1:1
   dum1=b1[i]
   dum2=b2[i]
   for k=2:l
-    dum1 -= a1[i,k]*b1[k+i-1] - a2[i,k]*b2[k+i-1]
-    dum2 -= a1[i,k]*b2[k+i-1] + a2[i,k]*b1[k+i-1]
+    ac = a1[i,k]*b1[k+i-1]
+    bd = a2[i,k]*b2[k+i-1]
+    dum1 -= ac - bd
+    dum2 -= (a1[i,k]+a2[i,k])*(b1[k+i-1] + b2[k+i-1]) - ac - bd
   end
-  den = a1[i,1]*a1[i,1]+a2[i,1]*a2[i,1]
-  b1[i]=(dum1*a1[i,1]+dum2*a2[i,1])/den
-  b2[i]=(dum2*a1[i,1]-dum1*a2[i,1])/den
+  if (abs(a1[i,1]) >= abs(a2[i,1]))
+    rat = a2[i,1]/a1[i,1]
+    den = a1[i,1]+a2[i,1]*rat
+    b1[i]=(dum1+dum2*rat)/den
+    b2[i]=(dum2-dum1*rat)/den
+  else
+    rat = a1[i,1]/a2[i,1]
+    den = a1[i,1]*rat+a2[i,1]
+    b1[i]=(dum1*rat+dum2)/den
+    b2[i]=(dum2*rat-dum1)/den
+  end
   if (l < mm)
     l += 1
   end

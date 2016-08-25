@@ -209,6 +209,9 @@ czero = zero(eltype(a1))
 dum1 = czero
 dum2 = czero
 den = czero
+rat = czero
+ac = czero
+bd = czero
 for i=1:m1
   for j=m1+2-i:mm
     a1[i,j-l]=a1[i,j]
@@ -254,14 +257,30 @@ for k=1:n
   end
   for i=k+1:l
 # Denominator for complex division:
-    den = a1[k,1]*a1[k,1]+a2[k,1]*a2[k,1]
-    dum1=(a1[i,1]*a1[k,1]+a2[i,1]*a2[k,1])/den
-    dum2=(a2[i,1]*a1[k,1]-a1[i,1]*a2[k,1])/den
+# Use complex division from Numerical Recipes (5.4.5):
+    if (abs(a1[k,1]) >= abs(a2[k,1]))
+      rat = a2[k,1]/a1[k,1]
+      den = a1[k,1]+a2[k,1]*rat
+      dum1=(a1[i,1]+a2[i,1]*rat)/den
+      dum2=(a2[i,1]-a1[i,1]*rat)/den
+    else
+      rat = a1[k,1]/a2[k,1]
+      den = a1[k,1]*rat + a2[k,1]
+      dum1=(a1[i,1]*rat+a2[i,1])/den
+      dum2=(a2[i,1]*rat-a1[i,1])/den
+    end
     al1[k,i-k]=dum1
     al2[k,i-k]=dum2
     for j=2:mm
-      a1[i,j-1] = a1[i,j] - (dum1*a1[k,j]-dum2*a2[k,j])
-      a2[i,j-1] = a2[i,j] - (dum1*a2[k,j]+dum2*a1[k,j])
+      ac = dum1*a1[k,j]
+      bd = dum2*a2[k,j]
+      a1[i,j-1] = a1[i,j]
+      a1[i,j-1] -= ac
+      a1[i,j-1] += bd
+      a2[i,j-1] = a2[i,j]
+      a2[i,j-1] -= (dum1+dum2)*(a1[k,j]+a2[k,j])
+      a2[i,j-1] += ac
+      a2[i,j-1] += bd
     end
     a1[i,mm]=czero
     a2[i,mm]=czero
