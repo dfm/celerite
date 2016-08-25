@@ -1,7 +1,7 @@
 using PyPlot
 include("lorentz_likelihood_hermitian_band_init.jl")
 include("lorentz_likelihood_hermitian_band_save.jl")
-include("lorentz_likelihood_hermitian.jl")
+#include("lorentz_likelihood_hermitian.jl")
 include("bandec.jl")
 include("banbks.jl")
 
@@ -40,11 +40,16 @@ for it=1:nnt
 # See if I can look into types of this routine.
 #  @code_warntype logdeta = lorentz_likelihood_hermitian_band_init(alpha,beta,w0,t,nex,aex,al_small,indx)
   logdeta = lorentz_likelihood_hermitian_band_init(alpha,beta,w0,t,nex,aex,al_small,indx)
+#  aex_full,bex_full  = lorentz_likelihood_hermitian(alpha,beta,w0,t,y)
+#  eigval_aex = eigvals(aex_full)
+  
   time_compute[it] = toq();
   tic()
   log_like = lorentz_likelihood_hermitian_band_save(p,y,aex,al_small,indx,logdeta)
   time_likelihood[it] = toq();
   println(n," ",time_compute[it]," ",time_likelihood[it])
+#  println("Eigenvalues: ",eigval_aex)
+#  read(STDIN,Char)
 end
 return
 end
