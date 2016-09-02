@@ -1,2 +1,9 @@
 *.so
 .cache
+paper/references/
+paper/ms.pdf
+paper/ms.log
+paper/ms.aux
+paper/ms.bbl
+paper/ms.blg
+paper/images/

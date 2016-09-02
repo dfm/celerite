@@ -44,7 +44,7 @@ beta = [complex(0.05,0.0),complex(0.1,0.0),complex(0.4,omega1),complex(0.4,-omeg
 #alpha = [1.0]
 #beta = [complex(0.4,omega1)]
 
-nt = 4
+nt = 10
 w0 = 0.0
 # For now, no white noise; just two Lorentzians:
 w = ones(nt)*w0
