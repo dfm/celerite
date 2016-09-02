@@ -306,6 +306,101 @@ NNX13AC07G and by other grants and contracts.
 
 \appendix
 
+Here we adapt the generalized Rybicki-Press (GRP) algorithm to handle periodic kernels.  We
+follow closely the notation and equations given in \citet{Ambikasaran2015}.  We start
+with the observation that a Lorentzian correlation function may be decomposed into the sum of two
+exponential functions:
+\begin{eqnarray}
+K(\tau) &=& \alpha e^{-\beta_R \tau} \cos{(\omega \tau)}\\
+ &=& \frac{1}{2}\alpha \left[e^{-\beta \tau}+e^{-\beta^* \tau}\right],
+\end{eqnarray}
+where $\beta = \beta_R + i\beta_I$ is the 
+complex kernel parameter (i.e.\ $\beta_R = Re(\beta)$, $\beta_I = Im(\beta)$), $\omega = -\beta_I = 2\pi/P$
+is the frequency of oscillation of the kernel with period $P$, and $x^*$ is the complex conjugate of $x$.
+
+Now, the Lorentzian kernal may be included in the GRP algorithm 
+using the two exponential kernels with $\beta_1 = \beta$ and $\beta_2 = \beta^*$.  This 
+requires the algorithm to use complex arithmetic, which has several disadvantages:
+1).\ complex arithmetic is more expensive by a factor of 2-3; 2).\ the complex conjugate equation
+is redundant as it turns out that $l_2 = l_1^*$, $r_2 = r_1^*$, and $x_i = x_i^*$ (i.e.\ $x_i$ is
+real), meaning that the same equations are being solved twice for the real and complex components; 
+and 3).\ if the derivative of the likelihood is computed with automatic
+differentiation (AD), most AD algorithms require real variables.
+
+Given these drawbacks, we instead modify the GRP algorithm to use a combination of two real
+components rather than two complex components;  this addresses all three of these drawbacks
+simultaneously.  The one cost is that the banded extended matrix has a bandwidth which is
+larger by one, both above and below the diagonal.
+
+Rather than using $\beta$ and its complex conjugate as components of the kernel, we instead
+find the real and imaginary components of the complex equationi for $\beta$, and 
+discard the $\beta^*$ equation, which is redundant.  This gives four additional equations for
+each $\beta_j$ with non-zero imaginary component, while the kernel components with real
+$\beta_j$ still only have two additional components in the extended matrix.  We will enumerate
+the number of real $\beta$'s as $p_0$, while the total number of $\beta$'s is still $p$.
+This gives a total number of equations to be solved with the extended matrix of $N_{ex}= 
+(4(p-p_0)+2p_0+1)\times(N-1)+1$, where $n$ is the number of data points.  
+
+For the complex values of $\beta$, the equations are modified as follows.  We introduce complex
+auxiliary vectors $l_k = l_{k}^R - i l_{k}^I$, with $k \in \{1,2,...,N\}$ and $l_1 = 0$; $r_k =
+r_k^R - i r_k^I$, with $k \in \{2,...,N\}$ and $r_{N+1} = 0$.  Note that we have defined the
+imaginary component as being negative for aesthetic reasons:  this yields a symmetric extended
+matrix (unfortunately the extended matrix has negative eigenvalues, making it non positive-definite,
+so that Cholesky decomposition cannot be applied; nevertheless we prefer to use a symmetric 
+set of equations, and since the values of these variables are discarded in the end, their sign
+is irrelevant).  The length of the vectors $l_k$ and $r_k$
+is the number of kernel components, $p$;  we denote the individual elements of these vectors
+as $l_{k,j}$ and $r_{k,j}$, $j \in \{1,...,p\}$.  Note that the first $p_0$ elements we take
+to be the real values of $\beta$, and for these we do not include the imaginary component
+equations, which are unnecessary and only add extra computation time.  We allow each vector $\gamma_k$ to have real and imaginary
+components as well:  $\gamma_k = \left[\exp{(-\beta_1 t_{k,k+1})} ... \exp{(-\beta_p t_{k,k+1})}\right]^T
+ = \gamma_k^R + i \gamma_k^I.$  These elements are given by $\gamma_{k,j}^R = e^{-\beta_j t_{k,k+1}}
+\cos{(\beta_j^I t_{k,k+1})}$ and $\gamma_{k,j}^I = -e^{-\beta_j t_{k,k+1}}\sin{(\beta_j^I t_{k,k+1})}$.
+Equation (61) becomes:
+\begin{equation}
+% See 9/2/2016 notes
+\sum_{j=1}^p \frac{\alpha_i}{2} l_{k,j}^R + \frac{d}{2} x_k + \sum_{j=1}^p \left[
+\gamma_{k,j}^R r_{k+1,j}^R + \gamma_{k,j}^I r_{k+1,j}^I\right] = \frac{b_k}{2},
+\end{equation}
+for $j \in \{1,...,p\}$ and $k \in \{1,...,N\}$.  There is no imaginary component to equation (61).
+
+Equation (60) has real and imaginary components:
+\begin{eqnarray}
+\gamma_{k,j}^R l_{k,j}^R +\gamma_{k,j}^I l_{k,j}^I + \gamma_{k,j}^R x_k - l_{k+1,j}^R &=& 0,\\
+\gamma_{k,j}^I l_{k,j}^R -\gamma_{k,j}^R l_{k,j}^I + \gamma_{k,j}^I x_k + l_{k+1,j}^I &=& 0,
+\end{eqnarray}
+with $j \in \{1,...,p\}$ and $k \in \{1,...,N-1\}$
+\citep[note that we have shifted the indices of this equation by one from the indexing using in][]{Ambikasaran2015}.
+
+Finally, equation (59) has real and imaginary components:
+\begin{align}
+-&r_{k,j}^R + \frac{\alpha_j}{2} x_k &+ \gamma_{k,j}^R r_{k+1,j}^R + \gamma_{k,j}^I r_{k+1,j}^I &&=0,\\
+ &r_{k,j}^I &+ \gamma_{k,j}^I r_{k+1,j}^R - \gamma_{k,j}^R r_{k+1,j}^I &&=0,
+\end{align}
+with $j \in \{1,...,p\}$ and $k \in \{2,...,N\}$.  Note that for the $p_0$ real components
+we can drop the variables $r_{k,j}^I$ and $l_{k,j}^I$ as these are zero, and we can drop the
+imaginary components of equations (59) and (60) as well for these, which reduces the total number
+of equations to solve.
+
+With these additional equations, we can solve for the likelihood of sums of full Lorentzian kernels 
+in $O(N)$ operations, but with slightly more computational expense due to having 4 extra variables 
+for each Lorentzian with non-zero $\omega$, and due to having a slightly larger bandwidth due to the 
+cross terms between the real and imaginary variables.  The off-diagonal components are $2(p+1)$ above 
+and below the diagonal, for a total bandwidth of $4p+5$; in the case in which $p_0=p$ so that the
+imaginary components of $\beta$ are zero, the off-diagonal components revert to $p+1$, giving
+a bandwidth of $2p+3$.
+
+As with the GRP method, we can buid an extended matrix which is real and symmetric, and which may be 
+solved with a banded solver, as in \citet{NumericalRecipes}.  The determinant of this extended matrix 
+may be computed from the LU decomposition, and it is related to the determinant of the kernel by a 
+factor of $2^N$ (this is due to dividing each equation by $2$ to yield a symmetric matrix).
+We arrange the auxiliary variables with real values of 
+$\beta$ first, followed by the complex variables, yielding the vector
+$x_{ex} = [x_1, \{r_{2,j}^R,l_{2,j}^R;j=1,...,p_0\}, \{r_{2,j}^R,r_{2,j}^I,l_{2,j}^R,l_{2,j}^I;j=p_0+1,...,p\},
+x_2, ..., x_N]$.
+
+{\bf Should I give some examples of this?  Some pseudocode? Some colored matrices like Figures 1-2?}
+
 \bibliography{genrp}
 
 \end{document}

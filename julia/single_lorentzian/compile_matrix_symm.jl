@@ -295,7 +295,7 @@ for k=2:n
     jcol0 = (k-2)*(4(p-p0)+2p0+1) + 1 + 2p-p0 + j
     jcol = jcol0-irow + m1+1
     aex[jcol,irow] =  alpha[j]/2.0
-    aex_factor[jcol,irow] = string(" +alpha_{",j,"} ")
+    aex_factor[jcol,irow] = string(" +alpha_{",j,"}/2 ")
     equations[irow] = string(equations[irow],aex_factor[jcol,irow],variables[jcol0])
     if k < n
 # Factor multiplying r^R_{k+1,j}:
@@ -311,7 +311,7 @@ for k=2:n
     jcol0 = (k-2)*(4(p-p0)+2p0+1) + 1 + 2p-p0 + p0+ (j-p0-1)*2 + 1
     jcol = jcol0-irow + m1+1
     aex[jcol,irow] =  alpha[j]/2.0
-    aex_factor[jcol,irow] = string(" +alpha_{",j,"} ")
+    aex_factor[jcol,irow] = string(" +alpha_{",j,"}/2 ")
     equations[irow] = string(equations[irow],aex_factor[jcol,irow],variables[jcol0])
     if k < n
 # Factor multiplying r^R_{k+1,j}:
