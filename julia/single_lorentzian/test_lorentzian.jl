@@ -70,8 +70,8 @@ beta_imag = [omega1,omega2] #,omega3,omega4]
 #beta = [complex(0.4,omega1)]
 #aex_full,bex_full,equations_full,variables_full = compile_matrix_full(alpha,beta_real,beta_imag,w0,t,y)
 #aex_symm01,bex_symm01,equations_symm01,variables_symm01 = compile_matrix_symm01(alpha,beta_real,beta_imag,w0,t,y)
-aex_symm_full,bex_symm_full,equations_symm_full,variables_symm_full = compile_matrix_symm_full(alpha,beta_real,beta_imag,w0,t,y)
-aex_symm,bex_symm,equations_symm,variables_symm = compile_matrix_symm(alpha,beta_real,beta_imag,w0,t,y)
+aex_symm_full,bex_symm_full,equations_symm_full,variables_symm_full,aex_factor_symm_full,aex_color_symm_full = compile_matrix_symm_full(alpha,beta_real,beta_imag,w0,t,y)
+aex_symm,bex_symm,equations_symm,variables_symm,aex_factor_symm = compile_matrix_symm(alpha,beta_real,beta_imag,w0,t,y)
 #aex_real,bex_real,al_small_real,indx_real,log_like,logdetofa = compile_matrix(alpha,beta_real,beta_imag,w0,t,y)
 
 p = length(alpha)
@@ -159,3 +159,23 @@ println("Expected : ",p0+2(p-p0+1))
 #println("Agreement: ",agreement)
 #return
 #end
+
+# Print out the color matrix tex code:
+
+f = open("twoterm.tex", "w")
+println(f,"\\documentclass{standalone}")
+println(f,"\\usepackage{tikz}")
+println(f,"\\begin{document}")
+println(f,"\\begin{tikzpicture}")
+
+for i=1:nex0
+  for j=1:nex0
+    if aex_color_symm_full[i,j] != ""
+       println(f,"\\draw [fill = ",aex_color_symm_full[i,j],"](",i,",",nex0+1-j,") rectangle (",i+1,",",nex0+1-(j+1),");")
+    end
+  end
+end
+println(f,"\\end{tikzpicture}")
+println(f,"\\end{document}")
+close(f)
+
