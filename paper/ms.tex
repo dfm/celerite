@@ -333,13 +333,19 @@ simultaneously.  The one cost is that the banded extended matrix has a bandwidth
 larger by one, both above and below the diagonal.
 
 Rather than using $\beta$ and its complex conjugate as components of the kernel, we instead
-find the real and imaginary components of the complex equationi for $\beta$, and 
-discard the $\beta^*$ equation, which is redundant.  This gives four additional equations for
-each $\beta_j$ with non-zero imaginary component, while the kernel components with real
-$\beta_j$ still only have two additional components in the extended matrix.  We will enumerate
-the number of real $\beta$'s as $p_0$, while the total number of $\beta$'s is still $p$.
-This gives a total number of equations to be solved with the extended matrix of $N_{ex}= 
-(4(p-p_0)+2p_0+1)\times(N-1)+1$, where $n$ is the number of data points.  
+find the real and imaginary components of the complex equation for $\beta$ by taking the
+sum and difference of the $\beta$ and $\beta^*$ equations (divided by 2 and $2i$, respectively), 
+and then discard the $\beta^*$ equation, which is redundant.  This keeps the same number of
+additional equations for each $\beta_j$ with non-zero imaginary component (four additional
+equations in the extended matrix), but converts the complex equations to real, thus avoiding
+complex arithmetic, while the kernel components with real $\beta_j$ still only have two 
+additional components in the extended matrix.  The extended matrix adds an extra band above
+and below the diagonal when the $\beta$ and $\beta^*$ equations are combined since this
+mixes the components of the original equations which are shifted by one column from one
+another.  We will enumerate the number of real $\beta$'s as $p_0$, while the total number 
+of $\beta$'s is still $p$.  This gives a total number of equations to be solved with the 
+extended matrix of $N_{ex}= (4(p-p_0)+2p_0+1)\times(N-1)+1$, where $n$ is the number of data 
+points.  
 
 For the complex values of $\beta$, the equations are modified as follows.  We introduce complex
 auxiliary vectors $l_k = l_{k}^R - i l_{k}^I$, with $k \in \{1,2,...,N\}$ and $l_1 = 0$; $r_k =
@@ -410,7 +416,7 @@ that there is an extra band above and below the diagonal \citep[compare with Fig
 \begin{center}
 \includegraphics[scale=0.175]{./twoterm.eps}
 \hspace{0.2in}
-\includegraphics[scale=1.0]{./images/colorcode.eps}
+\includegraphics[scale=1.0]{./colorcode.eps}
 \end{center}
 \caption{Pictorial description of the extended sparse matrix where $N=10$, $p_0=0$, and $p=2$, following
 the example shown in \citet{Ambikasaran2015}.}
