@@ -336,5 +336,5 @@ for k=2:n
     gamma_imag_km1[j]=gamma_imag[j]
   end
 end
-return aex,bex,equations,variables
+return aex,bex,equations,variables,aex_factor
 end
