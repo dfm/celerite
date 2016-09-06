@@ -1,4 +1,4 @@
-function compute_likelihood(p::Int64,p0::Int64,y::Vector,aex::Array,al_small::Array,indx::Vector{Int64},logdeta::Real)
+function compute_likelihood(p::Int64,p0::Int64,y::Vector,aex::Array,al_small::Array,indx::Vector{Int64},logdeta::Real,bex::Vector)
 # Computes the likelihood of a sum of Exponential/Cosine kernels (which have a
 # Lorentzian power spectrum) utilizing the approach of Ambikasaran (2015)
 #   Numer. Linear Algebra Appl. 2015; 22:1102-1114 DOI: 10.1002/nla
@@ -21,7 +21,7 @@ nex = (n-1)*(4(p-p0)+2p0+1)+1
 
 # There are 2(p+1) sub-diagonals, 2(p+1) super-diagonals + diagonal
 # for a total of 4*p+5 non-zero diagonals:
-bex = zeros(eltype(aex),nex)
+#bex = zeros(eltype(aex),nex)
 czero = zero(eltype(aex))
 for i=1:n
 # Compute actual indices:
