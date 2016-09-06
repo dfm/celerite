@@ -35,6 +35,7 @@ for k=2:n
   end
   for j=1:(p-p0)
     variables[(k-2)*(4(p-p0)+2p+1)+1+p0+(j-1)*2+1] = string(" r^R_{",k,",",j,"}")
+    println((k-2)*(4(p-p0)+2p+1)+1+p0+(j-1)*2+2)
     variables[(k-2)*(4(p-p0)+2p+1)+1+p0+(j-1)*2+2] = string(" r^I_{",k,",",j,"}")
   end
   for j=1:p0

@@ -344,7 +344,7 @@ and below the diagonal when the $\beta$ and $\beta^*$ equations are combined sin
 mixes the components of the original equations which are shifted by one column from one
 another.  We will enumerate the number of real $\beta$'s as $p_0$, while the total number 
 of $\beta$'s is still $p$.  This gives a total number of equations to be solved with the 
-extended matrix of $N_{ex}= (4(p-p_0)+2p_0+1)\times(N-1)+1$, where $n$ is the number of data 
+extended matrix of $N_{ex}= (4(p-p_0)+2p_0+1)\times(N-1)+1$, where $N$ is the number of data 
 points.  
 
 For the complex values of $\beta$, the equations are modified as follows.  We introduce complex
@@ -363,47 +363,52 @@ components as well:  $\gamma_k = \left[\exp{(-\beta_1 t_{k,k+1})} ... \exp{(-\be
  = \gamma_k^R + i \gamma_k^I.$  These elements are given by $\gamma_{k,j}^R = e^{-\beta_j t_{k,k+1}}
 \cos{(\beta_j^I t_{k,k+1})}$ and $\gamma_{k,j}^I = -e^{-\beta_j t_{k,k+1}}\sin{(\beta_j^I t_{k,k+1})}$.
 Equation (61) becomes:
-\begin{equation}
+\begin{equation} \label{Amb61}
 % See 9/2/2016 notes
 \sum_{j=1}^p \frac{\alpha_i}{2} l_{k,j}^R + \frac{d}{2} x_k + \sum_{j=1}^p \left[
 \gamma_{k,j}^R r_{k+1,j}^R + \gamma_{k,j}^I r_{k+1,j}^I\right] = \frac{b_k}{2},
 \end{equation}
-for $j \in \{1,...,p\}$ and $k \in \{1,...,N\}$.  There is no imaginary component to equation (61).
+for $j \in \{1,...,p\}$ and $k \in \{1,...,N\}$.  There is no imaginary component to equation (61)
+in \citet{Ambikasaran2015}.
 
-Equation (60) has real and imaginary components:
-\begin{eqnarray}
+Equation (60) in \citet{Ambikasaran2015} has real and imaginary components:
+\begin{eqnarray} \label{Amb60}
 \gamma_{k,j}^R l_{k,j}^R +\gamma_{k,j}^I l_{k,j}^I + \gamma_{k,j}^R x_k - l_{k+1,j}^R &=& 0,\\
 \gamma_{k,j}^I l_{k,j}^R -\gamma_{k,j}^R l_{k,j}^I + \gamma_{k,j}^I x_k + l_{k+1,j}^I &=& 0,
 \end{eqnarray}
 with $j \in \{1,...,p\}$ and $k \in \{1,...,N-1\}$
 \citep[note that we have shifted the indices of this equation by one from the indexing using in][]{Ambikasaran2015}.
 
-Finally, equation (59) has real and imaginary components:
-\begin{align}
+Finally, equation (59) in \citet{Ambikasaran2015} has real and imaginary components:
+\begin{align} \label{Amb59}
 -&r_{k,j}^R + \frac{\alpha_j}{2} x_k &+ \gamma_{k,j}^R r_{k+1,j}^R + \gamma_{k,j}^I r_{k+1,j}^I &&=0,\\
  &r_{k,j}^I &+ \gamma_{k,j}^I r_{k+1,j}^R - \gamma_{k,j}^R r_{k+1,j}^I &&=0,
 \end{align}
 with $j \in \{1,...,p\}$ and $k \in \{2,...,N\}$.  Note that for the $p_0$ real components
 we can drop the variables $r_{k,j}^I$ and $l_{k,j}^I$ as these are zero, and we can drop the
-imaginary components of equations (59) and (60) as well for these, which reduces the total number
+imaginary components of equations (59) and (60) in \citet{Ambikasaran2015} as well for these, which reduces the total number
 of equations to solve.
 
 With these additional equations, we can solve for the likelihood of sums of full Lorentzian kernels 
 in $O(N)$ operations, but with slightly more computational expense due to having 4 extra variables 
 for each Lorentzian with non-zero $\omega$, and due to having a slightly larger bandwidth due to the 
-cross terms between the real and imaginary variables.  The off-diagonal components are $2(p+1)$ above 
-and below the diagonal, for a total bandwidth of $4p+5$; in the case in which $p_0=p$ so that the
-imaginary components of $\beta$ are zero, the off-diagonal components revert to $p+1$, giving
-a bandwidth of $2p+3$.
+cross terms between the real and imaginary variables.  The off-diagonal components are $p_0+2(p-p_0)+2$ above 
+and below the diagonal, for a total bandwidth of $2p_0+4(p-p_0)+5$. In the case in which $p_0=p$, so 
+that the imaginary components of each $\beta$ are zero, the off-diagonal components revert to $p+1$ 
+above and below the diagonal, giving a bandwidth of $2p+3$ (the same as the GRP algorithm).
 
-As with the GRP method, we can buid an extended matrix which is real and symmetric, and which may be 
+As with the GRP method, we can build an extended matrix which is real and symmetric, and which may be 
 solved with a banded solver, as in \citet{NumericalRecipes}.  The determinant of this extended matrix 
 may be computed from the LU decomposition, and it is related to the determinant of the kernel by a 
 factor of $2^N$ (this is due to dividing each equation by $2$ to yield a symmetric matrix).
 We arrange the auxiliary variables with real values of 
 $\beta$ first, followed by the complex variables, yielding the vector
 $x_{ex} = [x_1, \{r_{2,j}^R,l_{2,j}^R;j=1,...,p_0\}, \{r_{2,j}^R,r_{2,j}^I,l_{2,j}^R,l_{2,j}^I;j=p_0+1,...,p\},
-x_2, ..., x_N]$.
+x_2, ..., x_N]$.  The right hand side is given by: $y_{ex} = [b_1/2, \{0; j=1,...,p_0+2(p-p_0)\}, b_2/2, ..., b_N/2]$.
+The extended matrix, $A_{ex}$, is constructed by inserting the coefficients of equations \ref{Amb61},
+\ref{Amb60}, and \ref{Amb59} into a matrix of dimensions $(2p_0+4(p-p_0)+5) \times N_{ex}$.
+The solution is found by solving $A_{ex} x_{ex} = y_{ex}$ with LU decomposition and back-substitution
+with a banded algorithm.
 
 The matrix has a similar structure as the real case constructed by \citep{Ambikasaran2015}, but the
 imaginary and real components mix (this is due to the representation of imaginary numbers as

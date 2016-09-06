@@ -60,8 +60,9 @@ for it=1:nnt
   logdeta_final= compile_matrix_symm(alpha_final,beta_real_final,beta_imag_final,w0,t,nex_final,aex_final,al_small_final,indx_final)
   time_compute_final[it] = toq();
   tic()
-#  @code_warntype   compute_likelihood(p_final,y,aex_final,al_small_final,indx_final,logdeta_final)
-  log_like_final= compute_likelihood(p_final,p0_final,y,aex_final,al_small_final,indx_final,logdeta_final)
+  bex = zeros(Float64,nex_final)
+#  @code_warntype compute_likelihood(p_final,y,aex_final,al_small_final,indx_final,logdeta_final,bex)
+  log_like_final= compute_likelihood(p_final,p0_final,y,aex_final,al_small_final,indx_final,logdeta_final,bex)
   time_likelihood_final[it] = toq();
   println(n," final:   ",time_compute_final[it]," ",time_likelihood_final[it])
 

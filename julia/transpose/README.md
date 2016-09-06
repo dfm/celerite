@@ -7,3 +7,7 @@ This also causes a speed up of the complex version of the code.
 
 8/25/2016
 
+Okay, I've implemented the new real solver, and it seems to work well!
+
+The speed-up is a factor of ~2, and it is now completely real, so hopefully
+we shouldn't have a problem using autodiff.  
