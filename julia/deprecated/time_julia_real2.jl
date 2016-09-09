@@ -122,14 +122,14 @@ for it=1:nnt
   log_like_real = lorentz_likelihood_real2_band_save(p_real,y,aex_real1,aex_real2,al_small_real1,al_small_real2,indx_real,logdeta_real)
   time_likelihood_real[it] = toq();
 ## Now, try to compute the derivative:
-#  tic()
-#  x = [w0;alpha;beta_real;beta_imag]
-##  log_like_hessian = HessianResult(x)
-##  @code_warntype log_like_derivative_wrapper(p_real,x,t,y)
-##  @time log_like_hessian = log_like_derivative_wrapper(p_real,x,t,y)
-#  log_like_hessian = log_like_derivative_wrapper(p_real,x,t,y)
-#  time_derivative[it] = toq();
-#  println(n," ",time_compute_real[it]," ",time_likelihood_real[it]," ",time_derivative[it])
+  tic()
+  x = [w0;alpha;beta_real;beta_imag]
+#  log_like_hessian = HessianResult(x)
+#  @code_warntype log_like_derivative_wrapper(p_real,x,t,y)
+#  @time log_like_hessian = log_like_derivative_wrapper(p_real,x,t,y)
+  log_like_hessian = log_like_derivative_wrapper(p_real,x,t,y)
+  time_derivative[it] = toq();
+  println(n," ",time_compute_real[it]," ",time_likelihood_real[it]," ",time_derivative[it])
   println(n," ",time_compute_real[it]," ",time_likelihood_real[it])
   tic()
   nex = (2p+1)*n-2p

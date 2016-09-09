@@ -6,10 +6,10 @@ include("banbks_trans.jl")
 
 
 omega = 2pi/12.203317
-alpha = [1.0428542, -0.38361831, 0.30345984/2, 0.30345984/2]
-beta = [complex(0.1229159,0.0),complex(0.48922908,0.0),complex(0.09086397,omega),complex(0.09086397,-omega)]
-#alpha = [1.0428542, 0.38361831]
-#beta = [complex(0.1229159,0.0),complex(0.48922908,0.0)]
+#alpha = [1.0428542, -0.38361831, 0.30345984/2, 0.30345984/2]
+#beta = [complex(0.1229159,0.0),complex(0.48922908,0.0),complex(0.09086397,omega),complex(0.09086397,-omega)]
+alpha = [1.0428542, 0.38361831]
+beta = [complex(0.1229159,0.0),complex(0.48922908,0.0)]
 nt = 512
 #nt = 4
 t = collect(linspace(0,nt-1,nt))
@@ -61,14 +61,14 @@ plot(x2)
 
 y = corrnoise
 n = nt
-alpha_final = [1.0428542, -0.38361831, 0.30345984]
-beta_real_final = [0.1229159,0.48922908,0.09086397]
-beta_imag_final = [0.0,0.0,omega]
-#alpha_final = [1.0428542, 0.38361831]
-#beta_real_final = [0.1229159,0.48922908]
-#beta_imag_final = [0.0,0.0]
+#alpha_final = [1.0428542, -0.38361831, 0.30345984]
+#beta_real_final = [0.1229159,0.48922908,0.09086397]
+#beta_imag_final = [0.0,0.0,omega]
+alpha_final = [1.0428542, 0.38361831]
+beta_real_final = [0.1229159,0.48922908]
+beta_imag_final = [0.0,0.0]
 w0 = 0.03027
-p_final = 3
+p_final = 2
 p0_final = 2
 nex_final = (4(p_final-p0_final)+2p0_final+1)*(n-1)+1
 m1_final = 2(p_final-p0_final)+p0_final+2

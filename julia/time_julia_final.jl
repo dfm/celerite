@@ -1,7 +1,6 @@
 using PyPlot
 include("compile_matrix_symm.jl")
 include("compute_likelihood.jl")
-#include("lorentz_likelihood_hermitian.jl")
 include("bandec_trans.jl")
 include("banbks_trans.jl")
 
@@ -11,7 +10,7 @@ include("banbks_trans.jl")
 
 function time_julia_final()
 omega = 2pi/12.203317
-alpha_final = [1.0428542, 0.30345984]*1.6467e-7
+alpha_final = [1.0428542, 0.30345984]
 beta_real_final = [0.1229159,0.09086397]
 beta_imag_final = [0.0,omega]
 #beta_imag_final = [0.0,0.0]
@@ -23,7 +22,7 @@ for i=1:p_final
   end
 end
 
-w0 =  0.03027 * 1.6467e-7
+w0 =  0.03027
 nt = [16,16,32,64,128,256,512,1024,2048,4096,8192,16384,32768,65536,131072,262144,524288]
 #nt = [16]
 nnt = length(nt)
