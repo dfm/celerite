@@ -1,4 +1,4 @@
-function compute_likelihood(p::Int64,p0::Int64,y::Vector,aex::Array,al_small::Array,indx::Vector{Int64},logdeta::Real,bex::Vector)
+function compute_likelihood(p::Int64,p0::Int64,y::Vector,aex::Array,al_small::Array,indx::Vector{Int64},logdeta,bex::Vector)
 # Computes the likelihood of a sum of Exponential/Cosine kernels (which have a
 # Lorentzian power spectrum) utilizing the approach of Ambikasaran (2015)
 #   Numer. Linear Algebra Appl. 2015; 22:1102-1114 DOI: 10.1002/nla
@@ -57,7 +57,7 @@ for i=1:n
   log_like += bex[(i-1)*(4(p-p0)+2p0+1)+1]*y[i]
 end
 # Convert this to log likelihood:
-log_like = -0.5*(log_like+logdeta)
+log_like = -0.5*(log_like+logdeta+n*log(2pi))
 #log_like = -0.5*log_like
 return log_like
 end

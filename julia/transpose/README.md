@@ -11,3 +11,8 @@ Okay, I've implemented the new real solver, and it seems to work well!
 
 The speed-up is a factor of ~2, and it is now completely real, so hopefully
 we shouldn't have a problem using autodiff.  
+
+test_matrix.jl:  Runs a test of the generalized R-P solver against a standard
+linear-algebra inversion of the covariance kernel.
+
+time_julia_final.jl:  Tests scaling of code with size of dataset.

@@ -267,6 +267,76 @@ This code (plus some dependencies) can be run to re-generate all of the
 figures and results in this paper; this version of the paper was generated
 with git commit \texttt{\githash} (\gitdate).
 
+\section{Solving for log likelihood with extended matrix}
+
+Here we summarize \citet{Ambikasaran2015}, and then point to appendix
+for how to do this with oscillating kernels.
+
+\section{Training}
+
+May use derivative of likelihood + BFGS-B to optimize kernel parameters.
+
+Q: How do we determine how many kernels to use?
+
+\section{Prediction/interpolation}
+
+Precition/interpolation involves constructing a matrix of covariances
+between the (noisy) training set and the times at which we wish to
+predict or interpolate data points.   If our training times are given by
+${\bf t}$, while the predicted times are given by ${\bf t}_*$, then
+mean values at the predicted times are given by (RW 2.23):
+\begin{eqnarray}
+\bar f_{*,k} &=& \sum_j K(t_{*,k},t_j) b_j,\\
+&=& \sum_j \sum_p \alpha_p e^{-\beta_p \vert t_{*,k}-t_j\vert} b_j,\\
+&=& \sum_p \alpha_p \sum_j e^{-\beta_p \vert t_{*,k}-t_j\vert} b_j,\\
+y_k &=& \sum_j K(t_j,t_k) b_j,
+\end{eqnarray}
+where the latter equation may be solved for ${\bf b}$ using the extended
+matrix formalism.  Let the length of ${\bf t}_*$ be $M$; then, the
+matrix $K({\bf t}_*,{\bf t})$ has a size $M \times N$, and so a total
+of $MN$ multiplications is required to obtain the predicted values.
+If $M$ is large, this can become quickly prohibitive.  It turns out
+that the structure of the sum of exponential kernels may be exploited
+to obtain the predicted mean in of order $p(M+N)+p^2N$ multiplications,
+i.e.\ a linear scaling with the total number of data points, which can 
+be much fewer if $M$ is large.
+
+The procedure works as follows:
+\begin{itemize}
+\item Sort ${\bf t}$ and ${\bf t}_*$ in time order.
+\item Starting with the smallest value of ${\bf t}_*$, $t_{*,1}$,
+compute:
+\begin{eqnarray} \label{prediction}
+\bar f_{*,k} &=& \sum_p \alpha_p \left[\epsilon^+_{p,k} + \epsilon^-_{p,k}\right]\\
+\epsilon^+_{p,k} &=& \sum_{j \forall t_{*,k} > t_j} e^{-\beta_p (t_{*,k}-t_j)} b_j\\
+\epsilon^-_{p,k} &=& \sum_{j \forall t_{*,k} \le t_j} e^{-\beta_p (t_j-t_{*,k})} b_j,
+\end{eqnarray}
+where we have separated out the training times before and after the predicted time $t_{*,k}$.
+
+\item Next, we update the coefficients recursively:
+\begin{eqnarray}
+\epsilon^+_{p,k} &=& e^{-\beta_p (t_{*,k}-t_{*,k-1})} \left[\epsilon^+_{p,k-1} + \sum_{j \forall t_{*,k} > t_j \ge t_{*,k-1}} e^{-\beta_p (t_{*,k}-t_j)} b_j\right]\\
+\epsilon^-_{p,k} &=& e^{-\beta_p (t_{*,k}-t_{*,k-1})} \left[\epsilon^-_{p,k-1} - \sum_{j \forall t_{*,k} > t_j \ge t_{*,k-1}} e^{-\beta_p (t_j-t_{*,k})} b_j\right].
+\end{eqnarray}
+With these updates, we can then use equation \ref{prediction} to compute the expected
+mean at $t_{*,k}$ with an additional $p$ operations.  Since there are $N$ values of
+$t_k$, the number of operations needed to update $\epsilon$ is of order $p(N+M)$, and
+so this procedure avoids a heavy computational burden.
+
+The variance may be handled in a similar manner, but with $p^2$ coefficients
+to recursively update. For example, if $t_{*,k} > t_j \forall j,k$ then:
+\begin{eqnarray}
+cov(f_{*,k}) &=&  K(t_{*,k},t_{*,k}) - \sum_p \sum_q \alpha_p \alpha_q e^{-\beta_p(t_{*,k}-{\bf t}^T)} K({\bf t},{\bf t})^{-1} e^{-\beta_q (t_{*,k}-{\bf t})},\\
+&=& K(0) - \sum_p \sum_q \alpha_p \alpha_q \zeta_{p,q,k},\\
+\zeta_{p,q,k} &=&   e^{-\beta_p(t_{*,k}-{\bf t}^T)} K({\bf t},{\bf t})^{-1} e^{-\beta_q (t_{*,k}-{\bf t})},\\
+&=&  e^{-(\beta_p+\beta_q)(t_{*,k}-t_{*,k-1})} \zeta_{p,q,k-1}.
+\end{eqnarray}
+The recursive updates to the $\zeta_{p,q,k}$ parameters can be made at each step.
+\end{itemize}
+
+Problem:  if we have the case that the datapoints are interspersed, and if the sign changes,
+then we need to resolve $K^{-1} e^{-\beta_q \vert t_{*,k}-{\bf t}\vert}$.  However, maybe we can
+just solve for the difference in fewer operations? {\bf TBD}
 
 \acknowledgments
 It is a pleasure to thank
@@ -274,7 +344,7 @@ It is a pleasure to thank
 for helpful contributions to the ideas and code presented here.
 
 EA acknowledges support from NASA grants NNX13AF20G, NNX13AF62G, and
-NASA Astrobiology Institute’s Virtual Planetary Laboratory, supported
+NASA Astrobiology Institute's Virtual Planetary Laboratory, supported
 by NASA under cooperative agreement NNH05ZDA001C.
 
 This research made use of the NASA \project{Astrophysics Data System} and the

@@ -1,7 +1,7 @@
 # This is the real version of the calculation based on 8/18/16 notes.
 
 #function compile_matrix_symm(alpha,beta_real,beta_imag,w,t,y)
-function compile_matrix_symm(alpha::Vector,beta_real::Vector,beta_imag::Vector, w::Real,t::Vector,
+function compile_matrix_symm(alpha::Vector,beta_real::Vector,beta_imag::Vector, w ,t::Vector,
        nex::Int64,aex::Array,al_small::Array,indx::Vector{Int64})
 
 # The vectors are arranged as:
@@ -42,7 +42,7 @@ d = sum(alpha)+w
 jcol0 = 1
 # Factor multiplying x_1:
 jcol = jcol0-irow + m1+1
-aex[jcol,irow]= d/2.0
+aex[jcol,irow] = d/2.0
 one_type = one(eltype(alpha))
 gamma_real = zeros(eltype(alpha),p)
 gamma_imag = zeros(eltype(alpha),p)
