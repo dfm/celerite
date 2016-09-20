@@ -8,7 +8,8 @@ import numpy as np
 from ._genrp import Solver, GP
 
 __all__ = ["test_invalid_parameters", "test_log_determinant", "test_solve",
-           "test_kernel", "test_build_gp", "test_log_likelihood", "test_psd"]
+           "test_kernel", "test_build_gp", "test_log_likelihood", "test_psd",
+           "test_nyquist_singularity"]
 
 
 def test_invalid_parameters(seed=42):
@@ -207,3 +208,32 @@ def test_psd():
         psd0 += amp / (1 + ((freqs + f)/q)**2)
 
     assert np.allclose(psd0, gp.get_psd(freqs))
+
+# Test whether the GP can properly handle the case where the Lorentzian has a
+# very large quality factor and the time samples are almost exactly at Nyquist
+# sampling.  This can frustrate Green's-function-based CARMA solvers.
+def test_nyquist_singularity(seed=4220):
+    np.random.seed(seed)
+
+    gp = GP()
+    amp, q, freq = 1.0, 1e-6, 1.0
+    gp.add_term(np.log(amp), np.log(q), np.log(freq))
+
+    # Samples are very close to Nyquist with f = 1.0
+    ts = np.array([0.0, 0.5, 1.0, 1.5])
+    ts[1] = ts[1]+1e-9*np.random.randn()
+    ts[2] = ts[2]+1e-8*np.random.randn()
+    ts[3] = ts[3]+1e-7*np.random.randn()
+
+    yerr = np.random.uniform(low=0.1, high=0.2, size=4)
+    y = np.random.randn(4)
+
+    gp.compute(ts, yerr)
+    llgp = gp.log_likelihood(y)
+
+    K = gp.get_matrix(ts)
+    K[np.diag_indices_from(K)] += yerr**2.0
+
+    ll = -0.5*np.dot(y, np.linalg.solve(K, y)) - 0.5*np.linalg.slogdet(K)[1] - 0.5*len(y)*np.log(2.0*np.pi)
+
+    assert np.allclose(ll, llgp)
