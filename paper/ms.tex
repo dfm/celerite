@@ -156,6 +156,27 @@ description of stellar variability.
 
 \section{Introduction}
 
+Stars are variable, for better or worse:  their variability provides information about the properties
+of stars, but also results in noise that must be overcome in detecting and characterizing their
+planetary systems.  When analyzing astronomical times series of stars, then, there are generally two 
+goals:  1). to analyze the frequency spectrum of stellar variability to beter understand stellar
+properties and evolution, and/or 2). to account for correlated noise when modeling the stellar
+flux variability and spectral variations.
+
+A promising technique for addressing both of these goals is the Gaussian Process formalism 
+\citep{Rasmussen, Gibson}.  The basis of this method is to assume that stellar variability
+is random, but that the random variability is correlated in time, and the nature of the
+correlations is completely specified by a correlation matrix.  In its simplest form, the 
+correlation matrix is modeled with a time-independent autocorrelation function (although 
+the time-independence can be relaxed), including a white-noise component that may vary
+with time, and the autocorrelation function is described by a functional form that may be 
+simply parameterized by a relatively small number of parameters, sometimes referred to as 
+`hyper-parameters.'  The goal of spectral analysis is to measure the parameters which
+describe the autocorrelation function, thus inferring properties of the stellar variabilty
+which may be used to characterize properties of the star, such as the rotation period,
+the asteroseismic frequencies, or the `flicker' \citep{Aerts2010,Noyes1984,Bastien2013}.
+
+
 \section{Outline}
 
 \begin{enumerate}
@@ -169,10 +190,16 @@ description of stellar variability.
   a). HODLR \citep{Ambikasaran2013,Ambikasaran2016}\\
   b). CARMA (Lorentzian power spectra, but with limitations) \citep{Kelly2014}\\
   c). Tri-diagonal (Press \& Rybicki) \citep{1995PhRvL..74.1060R}
+  d). KISS-GP \citep{WilsonNickisch2015} %Kernel Interpolation for Scalable Structured Gaussian Processes (KISS-GP) Andrew Wilson, Hannes Nickisch Proceedings of The 32nd International Conference on Machine Learning, pp. 1775-1784, 2015
 \item Problem: HODLR is tricky to use; CARMA requires certain relations between
   coefficients of Lorentzians (right?); P\&R only works for up to 2 components + white noise
 \item Solution: Ambikasaran \citep{Ambikasaran2015} shows how sum of exponential kernels can be solved in order
    $O(N*p^2)$, where p is number of Lorentzians.
+  - Sum of Lorentzians is a good description of stellar variability:
+     - granulation has expoential (or sums of exponential) noise
+     - asteroseismic obeys sums of Lorentzians
+     - periodic variability due to spots/plages/etc. can also be
+       approximated by Lorentzian(s)
 \item Generalized Ambikasarn for complex coefficients (Hermitian).
 \item Performance:\\
   a). Show $O(N*p^2)$ scaling\\
@@ -189,12 +216,12 @@ description of stellar variability.
   g). Derivative of likelihood function with respect to kernel parameters.\\
   h). Non-stationary GP (can the coefficients vary with time?).\\
   i). Multi-band (each element of extended matrix becomes a matrix).
-
+  j). Approximating various kernels: Matern, exp(sin^2), Gaussian, etc.
 \item Generalization to non-stationary noise.
 \item Example application: TYC 3559\\
   a). Entire long-cadence 17-quarter Kepler dataset (~65k data points).\\
   b). Analysis of solar data.
-
+  c). CO2 Mauna Kea
 \item Possible future applications:\\
   a). Inference of asteroseismic variability - ala Andrew Gordon Wilson \citep{2013arXiv1302.4245W}, but
       with Lorentzians, not Gaussians.\\
