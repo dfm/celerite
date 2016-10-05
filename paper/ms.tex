@@ -159,13 +159,13 @@ description of stellar variability.
 Stars are variable, for better or worse:  their variability provides information about the properties
 of stars, but also results in noise that must be overcome in detecting and characterizing their
 planetary systems.  When analyzing astronomical times series of stars, then, there are generally two 
-goals:  1). to analyze the frequency spectrum of stellar variability to beter understand stellar
+goals:  1). to analyze the frequency spectrum and amplitude of stellar variability to beter understand stellar
 properties and evolution, and/or 2). to account for correlated noise when modeling the stellar
 flux variability and spectral variations.
 
 A promising technique for addressing both of these goals is the Gaussian Process formalism 
-\citep{Rasmussen, Gibson}.  The basis of this method is to assume that stellar variability
-is random, but that the random variability is correlated in time, and the nature of the
+\citep{Rasmussen2006,Gibson2012}.  The basis of this method is to assume that stellar variability
+is random, Gaussian noise, but that the random variability is correlated in time, and the nature of the
 correlations is completely specified by a correlation matrix.  In its simplest form, the 
 correlation matrix is modeled with a time-independent autocorrelation function (although 
 the time-independence can be relaxed), including a white-noise component that may vary
@@ -175,7 +175,10 @@ simply parameterized by a relatively small number of parameters, sometimes refer
 describe the autocorrelation function, thus inferring properties of the stellar variabilty
 which may be used to characterize properties of the star, such as the rotation period,
 the asteroseismic frequencies, or the `flicker' \citep{Aerts2010,Noyes1984,Bastien2013}.
-
+The goal of planet detection includes measuring the Doppler shift of the star, or measuring
+the decrement of flux as a planet transits a star.  To properly account for the impact of 
+stellar variability on the planet parameters requires treating correlations in the data, and 
+to do so also requires evaluating the correlation matrix.  
 
 \section{Outline}
 
@@ -217,7 +220,7 @@ the asteroseismic frequencies, or the `flicker' \citep{Aerts2010,Noyes1984,Basti
   g). Derivative of likelihood function with respect to kernel parameters.\\
   h). Non-stationary GP (can the coefficients vary with time?).\\
   i). Multi-band (each element of extended matrix becomes a matrix).
-  j). Approximating various kernels: Matern, exp(sin^2), Gaussian, etc.
+  j). Approximating various kernels: Matern, exp(sin$^2$), Gaussian, etc.
 \item Generalization to non-stationary noise.
 \item Example application: TYC 3559\\
   a). Entire long-cadence 17-quarter Kepler dataset (~65k data points).\\
