@@ -323,52 +323,76 @@ The plan of the paper is...
   b). Description of code.
 \end{enumerate}
 
-\subsection{Derivative of likelihood with respect to Kernel parameters}
+\section{Generalized Press-Rybicki}
 
-The derivative of the likelihood can be computed in $O(N)$ operations as follows.
-
-The derivative of the log likelihood with respect to model parameters ${\bf x}$ is given by:
+The general problem to be solved for Gaussian Process analysis of stellar time series is to evaluate
+the likelihood function,
 \begin{equation}
-    \frac{\partial \ln{\cal L}}{\partial x_i} = (\ln{\cal L})^\prime = -\frac{1}{2}\sum_i \frac{K_{ii}^\prime}{K_{ii}}
-    - \frac{1}{2} {\bf y}^T {\bf K}^{-1} {\bf K}^\prime {\bf K}^{-1} {\bf y},
+{\cal{L}} = \ln{p(\mathbf{y}\vert {\mathbf{t},\bvec{\theta}},\bvec{\alpha})} = -\frac{1}{2}\ln{\vert \mathbf{K}(\bvec{\alpha}) \vert}
+- \frac{N_{time}}{2} \ln{(2\pi)}
+    - \frac{1}{2} {\mathbf r} (\bvec{\theta} ) ^T \mathbf{K}(\bvec{\alpha})^{-1} \mathbf{r}(\bvec{\theta}),
 \end{equation}
-where $^\prime$ means the derivative wrt $x_i$.
-The kernel may be written as:
-\begin{equation}
-    K_{ij}({\bf \alpha},{\bf \beta}) = \left\{
-    \begin{array}{cc}
-       w_i + \sum_{l=1}^p \alpha_l & j = i \\
-       \sum_{l=1}^p \alpha_l \exp{(-\beta_l |t_i-t_j|)}  & j \ne i
-    \end{array}
-    \right.
-\end{equation}
-Since this equation is the sum of $p$ semi-separable matrices, then applying the product rule to compute the derivative will give a single semi-separable matrix for the derivative with respect to each kernel parameter.
+where $\mathbf{y}$ are the measured time series (for example fluxes or radial velocities) at times
+$\mathbf{t}$, while the data are modeled with a function $m(\mathbf{t};\bvec{\theta})$ (for example,
+a transit model or Keplerian orbital model) which leaves residuals $\mathbf{r}(\bvec{\theta}) =
+\mathbf{y} - m(\mathbf{t};\bvec{\theta})$. % Note: I'm using the same notation as the peerless project. -EA
+The vector $\bvec{\alpha}$ specifies the parameters of the kernel, while the vector $\bvec{\theta}$
+specifies the parameters of the physical model.  In addition to this likelihood, a prior may be placed on 
+the values of these model parameters (either the physical or kernel); the log of this prior may be
+added to this log likelihood function.  Note that the kernel
+parameters may also have a physical meaning, but they describe a noisy process, and thus affect
+the correlated variability of stellar noise rather than a deterministic model as encapsulated in
+$m(\mathbf{t};\bvec{\theta})$.
 
-Now, letting ${\bf x} = (w,{\bf \alpha},{\bf \beta})$, then the derivative may be written as:
-\begin{eqnarray}
-    \frac{\partial K_{ii}}{\partial w} &=& \delta_{ij}\\
-    \frac{\partial K_{ij}}{\partial \alpha_k} &=&
-     \left\{
-    \begin{array}{cc}
-       1 & j = i \\
-        \exp{(-\beta_k |t_i-t_j|)}  & j \ne i
-    \end{array}
-    \right.\\
-    \frac{\partial K_{ij}}{\partial \beta_k} &=&
-     \left\{
-    \begin{array}{cc}
-       0  & j = i \\
-        -\alpha_k|t_i-t_j|\exp{(-\beta_k |t_i-t_j|)}  & j \ne i
-    \end{array}
-    \right.
-\end{eqnarray}
-The first term in the derivative of the likelihood can be computed in $O(N)$
-evaluations, while the second term can be computed in three steps:
-\begin{itemize}
-\item First, solve ${\bf z_1} = {\bf K}^{-1}{\bf y}$ with the GRP solver.
-\item Next, create an e
-\end{itemize}
-Writing this term out:
+We express the kernel as the sum of exponential functions...
+
+
+%\subsection{Derivative of likelihood with respect to Kernel parameters}
+%
+%The derivative of the likelihood can be computed in $O(N)$ operations as follows.
+%
+%The derivative of the log likelihood with respect to model parameters ${\bf x}$ is given by:
+%\begin{equation}
+%    \frac{\partial \ln{\cal L}}{\partial x_i} = (\ln{\cal L})^\prime = -\frac{1}{2}\sum_i \frac{K_{ii}^\prime}{K_{ii}}
+%    - \frac{1}{2} {\bf y}^T {\bf K}^{-1} {\bf K}^\prime {\bf K}^{-1} {\bf y},
+%\end{equation}
+%where $^\prime$ means the derivative wrt $x_i$.
+%The kernel may be written as:
+%\begin{equation}
+%    K_{ij}({\bf \alpha},{\bf \beta}) = \left\{
+%    \begin{array}{cc}
+%       w_i + \sum_{l=1}^p \alpha_l & j = i \\
+%       \sum_{l=1}^p \alpha_l \exp{(-\beta_l |t_i-t_j|)}  & j \ne i
+%    \end{array}
+%    \right.
+%\end{equation}
+%Since this equation is the sum of $p$ semi-separable matrices, then applying the product rule to compute the derivative will give a single semi-separable matrix for the derivative with respect to each kernel parameter.
+%
+%Now, letting ${\bf x} = (w,{\bf \alpha},{\bf \beta})$, then the derivative may be written as:
+%\begin{eqnarray}
+%    \frac{\partial K_{ii}}{\partial w} &=& \delta_{ij}\\
+%    \frac{\partial K_{ij}}{\partial \alpha_k} &=&
+%     \left\{
+%    \begin{array}{cc}
+%       1 & j = i \\
+%        \exp{(-\beta_k |t_i-t_j|)}  & j \ne i
+%    \end{array}
+%    \right.\\
+%    \frac{\partial K_{ij}}{\partial \beta_k} &=&
+%     \left\{
+%    \begin{array}{cc}
+%       0  & j = i \\
+%        -\alpha_k|t_i-t_j|\exp{(-\beta_k |t_i-t_j|)}  & j \ne i
+%    \end{array}
+%    \right.
+%\end{eqnarray}
+%The first term in the derivative of the likelihood can be computed in $O(N)$
+%evaluations, while the second term can be computed in three steps:
+%\begin{itemize}
+%\item First, solve ${\bf z_1} = {\bf K}^{-1}{\bf y}$ with the GRP solver.
+%\item Next, create an e
+%\end{itemize}
+%Writing this term out:
 
 \section{Summary}
 
