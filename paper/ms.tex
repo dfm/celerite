@@ -180,30 +180,101 @@ the decrement of flux as a planet transits a star.  To properly account for the 
 stellar variability on the planet parameters requires treating correlations in the data, and 
 to do so also requires evaluating the correlation matrix.  
 
+The size of the correlation matrix, $N_{elements}$ scales as the square of the length of the time-series,
+$N_{element}=N_{time}^2$, so as time series grow in size, say $N_{time} =10^{5-6}$, the storage may become 
+prohibitive, $N_{element} = 10^{10-12}$.  In addition, this matrix must be inverted and have
+its determinant evaluated to compute the likelihood function, which takes of order $N_{operations}
+= N_{time}^3 = 10^{15-18}$.  This becomes an impossible computational problem, which prohibits
+using long time series datsets, such as the \texttt{Kepler} dataset $N_{time} \approx 10^{5-6}$,
+\texttt{Spitzer} time series with $N_{time} \approx 10^5$, and solar time series with
+$N_{time} \approx 10^7$.  So faster means of solving for the likelihood is required in these
+cases.
+
+One promising solution is to use approximate techiques based upon the fact that correlation
+matrices display a great deal of symmetry.  This `hierarchical off-diagonal low-rank' (\texttt{HODLR})
+algorithm can make the storage and operations both scale in proportion to $N_{time}$, although the 
+solver is only approximate \citep{Ambikasaran2013,Ambikasaran2016}.  In addition, the
+solver is complex and can be challenging to use with general choices of kernel.  Another
+promising approximate technique is to use a uniform resampling of the dataset, and then
+rely on the structure of Toeplitz matrices, which require uniformly space time series,
+to obtain approximate solutions of the likelihood function \citep{WilsonNickisch2015},
+the `Kernel Interpolation for Scalable Structured Gaussian Processes' (\texttt{KISS-GP});
+this approach has the drawback of being approximate.  A third approach is to use a kernel
+based upon stochastic differential equations:  the `continuous auto-regressive moving-average'
+model \citep[aka \texttt{CARMA};][]{Kelly2014}.  This approach can model a stationary power-spectrum that
+is the combination of a number of Lorentzians, but has the disadvantage that the amplitudes
+of the Lorentzians are required to have a specific relation.  In addition, these
+techniques require a stationary kernel. {\color{red} Is this true for GEORGE?}
+
+The approach we explore in this paper is based upon a method developed by Press \&
+Rybicki twenty years ago \citep{1995PhRvL..74.1060R}.  They observed that a correlation
+matrix consisting of a single exponential kernel has an inverse that is tri-diagonal.
+The coefficients and solution of a tri-diagonal matrix scale in proportion to $O(N_{time})$.
+They observed how a combination of two exponential kernels would have a simliar scaling,
+but they did not demonstrate how to extend this to more than two kernel components.
+
+A significant advance was made by generalizing the Press-Rybicki method to an
+arbitrary number of exponential kernels by utilizing the fact that the elements of
+such matrices can be written in terms of the products of components of two vectors,
+which are so-called semi-separable matrices \citep{Ambikasaran2015}.  This `Generalized
+Rybicki-Press' (\texttt{GenRP}) approach
+has many advantages:  the computation time and storage both scale as $O(N_{time})$,
+the coefficients of the kernels need not be stationary, the computation of the
+likelihood is exact, and the algorithm is simple to implement, and thus is robust.
+Unlike the \texttt{CARMA} model, there is no restriction on the relation between
+the coefficients (except that the kernel needs to be positive definite).  Unlike
+\texttt{HODLR} and \texttt{KISS-GP} the method is exact.  The main drawback of
+this approach is that the sum of exponential kernels (with real coefficients) can 
+only represent a simplified range power spectra of auto-correlated time series
+that can be expressed the sum of Lorentzians that peak at zero frequency.
+
+However, this drawback turns out to not be significant:  the exponential kernel
+can have a complex exponential coefficients (plus their complex-conjugates), and 
+thus approximate an arbitrary autocorrelation function with enough terms, including
+quasi-periodic kernels.  It turns out that the sum of Lorentzian components is
+a {\it very} good approximation of stellar variability spectra:  the granulation
+noise due to stellar convection may be expressed in terms of zero-frequency
+Lorentzians, the asteroseismic oscillations may be expressed as non-zero frequency
+Lorentizians, as can stellar rotation.  In this paper we extend the \texttt{GenRP} 
+approach to kernels of the form:
+\begin{equation}
+K(\tau) = a_0 \delta(\tau) + \sum_j a_{j=1}^{N_{kernel}} e^{-\beta_R \tau} \cos{(\beta_I \tau)},
+\end{equation}
+where $\tau > 0$ is a time-offset between data points, $\beta_R$ represents the decay 
+in correlation with time and $\beta_I$ represents oscillations of period $P = 2\pi/\beta_I$, and
+$a_0$ is a white-noise component with $\delta(\tau) = 1$ for $\tau=0$,
+and zero otherwise.  We show that
+the extended matrix that embeds this multi-component kernel can be written
+in real notation, which speeds up the evaluation of the likelihood function,
+and allows optimization software to use automatic differential in computing
+derivatives of the likelihood function.
+
+The plan of the paper is...
+
 \section{Outline}
 
 \begin{enumerate}
-\item Non-parametric modeling of time series with correlated noise using Gaussian processes
-\item Assumptions:\\
-  a). Stationary noise (although this can be broken).\\
-  b). Gaussian
-\item Problem: can't handle large datasets - e.g. entire Kepler long-cadence; Spitzer light
-   curves; Solar curves; short-cadence.
-\item Solution(s):\\
-  a). HODLR \citep{Ambikasaran2013,Ambikasaran2016}\\
-  b). CARMA (Lorentzian power spectra, but with limitations) \citep{Kelly2014}\\
-  c). Tri-diagonal (Press \& Rybicki) \citep{1995PhRvL..74.1060R}
-  d). KISS-GP \citep{WilsonNickisch2015} %Kernel Interpolation for Scalable Structured Gaussian Processes (KISS-GP) Andrew Wilson, Hannes Nickisch Proceedings of The 32nd International Conference on Machine Learning, pp. 1775-1784, 2015
-\item Problem: HODLR is tricky to use; CARMA requires certain relations between
-  coefficients of Lorentzians (right?); P\&R only works for up to 2 components + white noise
-\item Solution: Ambikasaran \citep{Ambikasaran2015} shows how sum of exponential kernels can be solved in order
-   $O(N*p^2)$, where p is number of Lorentzians.
-  - Sum of Lorentzians is a good description of stellar variability:
-     - granulation has expoential (or sums of exponential) noise
-     - asteroseismic obeys sums of Lorentzians
-     - periodic variability due to spots/plages/etc. can also be
-       approximated by Lorentzian(s)
-\item Generalized Ambikasarn for complex coefficients (Hermitian).
+%\item Non-parametric modeling of time series with correlated noise using Gaussian processes
+%\item Assumptions:\\
+%  a). Stationary noise (although this can be broken).\\
+%  b). Gaussian
+%\item Problem: can't handle large datasets - e.g. entire Kepler long-cadence; Spitzer light
+%   curves; Solar curves; short-cadence.
+%\item Solution(s):\\
+%  a). HODLR \citep{Ambikasaran2013,Ambikasaran2016}\\
+%  b). CARMA (Lorentzian power spectra, but with limitations) \citep{Kelly2014}\\
+%  c). Tri-diagonal (Press \& Rybicki) \citep{1995PhRvL..74.1060R}
+%  d). KISS-GP \citep{WilsonNickisch2015} %Kernel Interpolation for Scalable Structured Gaussian Processes (KISS-GP) Andrew Wilson, Hannes Nickisch Proceedings of The 32nd International Conference on Machine Learning, pp. 1775-1784, 2015
+%\item Problem: HODLR is tricky to use; CARMA requires certain relations between
+%  coefficients of Lorentzians (right?); P\&R only works for up to 2 components + white noise
+%\item Solution: Ambikasaran \citep{Ambikasaran2015} shows how sum of exponential kernels can be solved in order
+%   $O(N*p^2)$, where p is number of Lorentzians.
+%  - Sum of Lorentzians is a good description of stellar variability:
+%     - granulation has expoential (or sums of exponential) noise
+%     - asteroseismic obeys sums of Lorentzians
+%     - periodic variability due to spots/plages/etc. can also be
+%       approximated by Lorentzian(s)
+%\item Generalized Ambikasarn for complex coefficients (Hermitian).
 \item Performance:\\
   a). Show $O(N*p^2)$ scaling\\
   b). Show comparison to HODLR.\\
@@ -213,7 +284,6 @@ to do so also requires evaluating the correlation matrix.
   a). Likelihood computation.\\
   b). Generating GP with particular covariance [yet to solve]. [ ]\\
   c). Inferring particular components.\\
-<<<<<<< HEAD
   d). Computing derivatives of GPs (as used in RV methods).\\
   e). Forecasting/interpolating.\\
   f). Inferring confidence intervals.\\
@@ -226,7 +296,6 @@ to do so also requires evaluating the correlation matrix.
   a). Entire long-cadence 17-quarter Kepler dataset (~65k data points).\\
   b). Analysis of solar data.
   c). CO2 Mauna Kea
-=======
   d). TBD Computing derivatives of GPs (as used in RV methods).\\
   e). TBD Forecasting/interpolating.\\
   f). TBD Inferring confidence intervals.\\
@@ -239,7 +308,6 @@ to do so also requires evaluating the correlation matrix.
   b). Simulated datasets - hyperparameter/PSD inference.\\
   c). Analysis of solar data?
 
->>>>>>> upstream/master
 \item Possible future applications:\\
   a). Inference of asteroseismic variability - ala Andrew Gordon Wilson \citep{2013arXiv1302.4245W}, but
       with Lorentzians, not Gaussians.\\
