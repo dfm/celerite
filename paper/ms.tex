@@ -236,20 +236,19 @@ a {\it very} good approximation of stellar variability spectra:  the granulation
 noise due to stellar convection may be expressed in terms of zero-frequency
 Lorentzians, the asteroseismic oscillations may be expressed as non-zero frequency
 Lorentizians, as can stellar rotation.  In this paper we extend the \texttt{GenRP} 
-approach to kernels of the form:
-\begin{equation}
-K(\tau) = a_0 \delta(\tau) + \sum_j a_{j=1}^{N_{kernel}} e^{-\beta_R \tau} \cos{(\beta_I \tau)},
-\end{equation}
-where $\tau > 0$ is a time-offset between data points, $\beta_R$ represents the decay 
-in correlation with time and $\beta_I$ represents oscillations of period $P = 2\pi/\beta_I$, and
-$a_0$ is a white-noise component with $\delta(\tau) = 1$ for $\tau=0$,
-and zero otherwise.  We show that
+approach to kernels with complex exponentials, which when combined with the
+complex conjugate leads to damped harmonic auto-correlation functions which
+are flexible enough to describe a wide range of variability, and may still
+be solved in $O(N_{time}$ operations.
+
+We show that
 the extended matrix that embeds this multi-component kernel can be written
 in real notation, which speeds up the evaluation of the likelihood function,
 and allows optimization software to use automatic differential in computing
 derivatives of the likelihood function.
 
 The plan of the paper is...
+
 
 \section{Outline}
 
@@ -344,8 +343,134 @@ parameters may also have a physical meaning, but they describe a noisy process, 
 the correlated variability of stellar noise rather than a deterministic model as encapsulated in
 $m(\mathbf{t};\bvec{\theta})$.
 
-We express the kernel as the sum of exponential functions...
+The kernel is modeled as a sum of damped harmonics,
+\begin{equation}
+K(\tau) = a_0 \delta(\tau) + \sum_{j=1}^{N_{kernel}} a_j e^{-\beta_R \tau} \cos{(\beta_I \tau)},
+\end{equation}
+where $\tau > 0$ is a time-offset between data points, $\beta_R$ represents the decay 
+in correlation with time and $\beta_I$ represents oscillations of period $P = 2\pi/\beta_I$, and
+$a_0 = \sigma^2$ is a white-noise component with $\delta(0) = 1$ and zero otherwise.  Formally
+the $\delta(\tau)$ function is a Kronecker delta function for which $\tau$ is the midpoint in
+time measured over a finite duration exposure time, and $\sigma$ is the standard deviation
+of the measured times if the correlated components are zero.
 
+Now, the damped harmonic kernel components may be rewritten as:
+\begin{equation}
+ a_j e^{-\beta_R \tau} \cos{(\beta_I \tau)} = a_j \frac{1}{2}\left( e^{-(\beta_R + i \beta_I) \tau} +  e^{-(\beta_R + i \beta_I) \tau}\right),
+\end{equation}
+where $i^2 = -1$, which has the advantage of utilizing precisely the same form as the Rybicki-Press covariance
+matrix, and thus the Generalized Rybicki-Press algorithm may be applied as in \citet{Ambikasaran2015}.
+The only difference is that the $\beta$ coefficients are now complex, $\beta = \beta_R + i \beta_I$,
+but otherwise the mathematical form of the extended matrix is identical, but with twice as many
+exponential kernel components as the real case.
+
+Although this is a straightforward extension to the \texttt{GenRP} formalism, there is a disadvantage
+in computational speed:  complex arithmetic requires $\approx 3$ times as many operations as real
+arithmetic.  In addition, it turns out that the complex conjugate component, $\beta^* = \beta_R - i\beta_I$, in 
+the extended matrix gives a solution which, not surprisingly, is the complex conjugate of the
+component $\beta = \beta_R + i \beta_I$;  thus the computation is redundant.  Finally, complex
+arithmetic has the disadvantage that it is not included in automatic-differentiation packages,
+which is what we would like to use to compute the derivative of the likelihood (as it is very difficult
+to compute this explicitly!).
+
+Consequently, we use the fact that $\exp{(i\beta_I \tau)} =  \cos{(\beta_I \tau)} + i \sin{(\beta_I \tau)}$ to
+rewrite the extended matrix in terms of real arithmetic using the fact that the imaginary number $i$
+may be replaced by a $2\times 2$ anti-symmetric matrix,
+\begin{equation}
+\left(\begin{tabular}{ll}
+0 & 1 \\
+-1 & 0
+\end{tabular}\right),
+\end{equation}
+while real numbers use the $2\times 2$ identity matrix, $\mathbf{I}$, 
+so that $\cos{(\beta_I \tau)} + i \sin{(\beta_I \tau)}$ may be rewritten as the rotation matrix
+\begin{equation}
+\left(\begin{tabular}{ll} 
+$\cos{(\beta_I \tau)}$ & $\sin{(\beta_I \tau)}$ \\ 
+$-\sin{(\beta_I \tau)}$ & $\cos{(\beta_I \tau)}$ 
+\end{tabular}\right).
+\end{equation}
+The algebraic properties of these matrices are identical to the complex numbers, but only involve
+real components.
+We accomplish this transformation in Appendix \ref{appendixa} by taking sums and differences of the complex 
+equations, resulting in a real extended matrix that is the same size as the complex matrix.
+This transformation leads to about a factor of two in computational savings, but has the
+additional advantage of allowing the automatic differentiation due to the use of real arithmetic.
+
+\section{Kernel components}
+
+A stationary, smooth kernel may generally be expressed as a Taylor series for the $\tau \ne 0$ component,
+plus the white noise component:
+\begin{equation}
+K(\tau) = a_0 \delta(\tau) +  \sum_{j=0}^\infty c_j \vert\tau\vert^j.
+\end{equation}
+Note that this encompasses all smooth, time-staionary kernels, and generally $c_1 \le 0$ as
+correlated noise initially decreases with separation in time.  We wish to approximate this
+as the sum of damped cosine kernels, and since this general kernel is symmetric in $\tau$, we
+can carry out the approximation in terms of sums of $K_j(\tau,a_j,\beta_{R,j},\beta_{I,j}) = a_j \exp{(\beta_{R,j} \tau)}\cos{(\beta_{I,j} \tau)}$,
+which has a Taylor series expansion:
+\begin{equation}
+\exp{(\beta_R \tau)}\cos{(\beta_I \tau)} = 1 - \beta_R \tau + \frac{1}{2}\left(\beta_R^2 - \beta_I^2\right)\tau^2 -
+\frac{1}{6} \left(\beta_R^3-3\beta_R\beta_I^2\right)\tau^3 + \frac{1}{24} \left(\beta_R^4+\beta_I^4-6\beta_R^2\beta_I^2\right) \tau^4+ O(\tau^5),
+\end{equation}
+which may be continued to any order in $\tau$ as necessary.
+If an approximation to $K(\tau)$ is desired in a Taylor series to some high order $N$, this
+requires combining $N/2$ components of $K_j(\tau,a_j,\beta_{R,j},\beta_{I,j})$ with $\beta_{R,j}$ and $\beta_{I,j}$
+chosen to match the coefficients $c_j$.  Not that for $N=1$ we only require a damped exponential
+kernel with $\beta_I = 0$.
+
+Another way to view this is in the power spectrum of the Gaussian Process, which is the
+Fourier Transform of the autocorrelation function.  The power spectrum of the $K_j$ kernel
+is a Lorentzian, for which the frequency is given by $\omega = \beta_{I,j}$, while the
+width of the Lorentzian is determined by $\beta_{R,j}$.  The functional form of this
+power spectrum is: {\color{red} Check that this is true.}
+\begin{equation}
+P(\vert f\vert) = a_j \beta_{R,j} \frac{1}{\beta_{R,j}^2 + (2\pi f - \beta_{I,j})^2},
+\end{equation}
+where $f$ is the frequency in Hz.  The counterpart to the Taylor series is the observation
+that a smooth distribution may be approximated arbitrarily precisely by summing together
+Lorentzians with various values of $(a_j,\beta_{R,j},\beta_{I,j})$.  In the case that
+a peak in the power spectrum is narrow at a specific frequency, then a small value of 
+$\beta_{R,j}$ gives a narrow Lorentzian that may approximate that peak.  If the wings
+of the distribution decay faster than $f^{-2}$, then differences between Lorentzians
+can be arranged to cancel in the wings, giving features in the power spectrum that are
+narrower in frequency.
+
+The functional form of $K_j$ may be used to approximate some commonly used Kernel components: radial
+kernels can be approximated with $\beta_I=0$, while periodic kernels can be approximated by
+$\beta_I \ne 0$.  The squared exponential (Gaussian) kernel and the Mat\'ern kernels are commonly
+used radial kernels, while the cosine kernel and the exponential-sine-squared kernels are
+commonly used periodic kernels.  Linear combinations of our basis of damped cosine kernels may be 
+used to approximate each of these kernels, with various degrees of success:
+\begin{itemize}
+\item Constant kernel
+\item The squared exponential kernel has the behavior of declining exponentially at large
+separation, and has $c_1$ = 0.  An infinite number of exponential kernels may be used to
+approximate a Gaussian kernel.  For example, to 
+\item {\bf Mat\'ern 3/2 kernel.}  The Mat\'ern $3/2$ kernel is given by: 
+\begin{equation}
+K_{3/2}(\tau,\tau_0)
+= (1+x)e^{-x},
+\end{equation} 
+where $x = \sqrt{3}\vert \tau/\tau_0\vert$.  This may be
+well approximated by the sum of two exponential kernels: 
+\begin{equation}
+K_{3/2}(\tau,\tau_0) \approx (1-b)e^{-x}+be^{-x\frac{b-1}{b}},
+\end{equation} 
+where $b \gg 1$ is a dimensionless parameter; this approximation is exact in the limit $b \rightarrow \infty$.  For
+large values of $b$, the error on this scales as $2/(e^2b) \approx 0.27/b$; for
+$b=10$, the error in this approximation is $<3$\%.  Note that the two exponential terms
+have opposite signs, which may lead to numerical instability for values of $b$ that
+are too large.  One advantage of the Mat\'ern 3/2 kernel is that it is smooth across
+$\tau=0$ since its derivative is zero at $\tau=0$.  The exponential kernel {\it does not}
+have this property, which leads to qualitatively different noise properties on small
+timescales due to the sharpness of the kernel at $\tau=0$.  The Mat\'ern 3/2 kernel
+turns out to be an excellent description of stellar granulation, and thus the approximate
+formula is simultaneously physically relevant and computationally convenient.
+\item Matern 5/2 kernel.
+\item Cosine kernel
+\item exp-sin-sq kernel
+\end{itemize}
 
 %\subsection{Derivative of likelihood with respect to Kernel parameters}
 %
@@ -511,7 +636,7 @@ NNX13AC07G and by other grants and contracts.
 	% \project{scipy} \citep{Jones:2001}.
 }
 
-\appendix
+\appendix \label{appendixa}
 
 Here we adapt the generalized Rybicki-Press (GRP) algorithm to handle periodic kernels.  We
 follow closely the notation and equations given in \citet{Ambikasaran2015}.  We start
