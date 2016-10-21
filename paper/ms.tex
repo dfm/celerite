@@ -444,9 +444,12 @@ used radial kernels, while the cosine kernel and the exponential-sine-squared ke
 commonly used periodic kernels.  Linear combinations of our basis of damped cosine kernels may be 
 used to approximate each of these kernels, with various degrees of success:
 \begin{itemize}
-\item Constant kernel
-\item The squared exponential kernel has the behavior of declining exponentially at large
-separation, and has $c_1$ = 0.  An infinite number of exponential kernels may be used to
+\item {\bf Constant kernel} A constant kernel component can be used to capture long-timescale
+correlations in data, and can be represented with $\beta =  0$.
+\item {\bf Exponential kernel.} This is also known as a Mat\'ern 1/2 kernel, and is exactly
+represented with $\beta_I=0$.
+\item The squared exponential kernel has the behavior of declining steeply at large
+time separation, and has $c_1$ = 0.  An infinite number of exponential kernels may be used to
 approximate a Gaussian kernel.  For example, to 
 
 \item {\bf Mat\'ern 3/2 kernel.}  The Mat\'ern $3/2$ kernel is given by: 
@@ -478,7 +481,7 @@ The power spectrum of a single exponential scales as $f^{-2}$ at high frequency,
 while the Mat\'ern kernel scales as $f^{-4}$ which more closely matches the power
 spectrum due to activity and granulation in the Sun \citep{2004A&A...414.1139A,2009A&A...495..979M}.
 %\item Matern 5/2 kernel.
-\item Cosine kernel
+\item {\bf Cosine kernel.} The cosine kernel may be represented exactly with $\beta_R=0$.
 \item exp-sin-square kernel
 \end{itemize}
 
