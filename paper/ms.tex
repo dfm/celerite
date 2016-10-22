@@ -448,10 +448,24 @@ used to approximate each of these kernels, with various degrees of success:
 correlations in data, and can be represented with $\beta =  0$.
 \item {\bf Exponential kernel.} This is also known as a Mat\'ern 1/2 kernel, and is exactly
 represented with $\beta_I=0$.
-\item The squared exponential kernel has the behavior of declining steeply at large
-time separation, and has $c_1$ = 0.  An infinite number of exponential kernels may be used to
-approximate a Gaussian kernel.  For example, to 
-
+\item {\bf Cosine kernel.} The cosine kernel may be represented exactly with $\beta_R=0$.
+\item exp-sin-square kernel
+\item {\bf Squared exponential.} The squared exponential or Gaussian kernel, $e^{-(\tau/\tau_0)^2/2}$, 
+has the behavior of declining steeply at large time separation, is an even function, and has $c_1$ = 0.  
+An infinite number of cosine kernels may be used to approximate a Gaussian kernel, but any
+finite combination of cosine kernels leads to a negative amplitude at finite $\tau$.  Thus,
+in general it is difficult to model a squared exponential with sums of damped cosine terms due
+to the heavier tail.  However, the Mat\'ern kernel may be used to approximate it on short
+timescales.
+\item {\bf Mat\'ern $p+1/2$ kernel.}  The Mat\'ern kernel is given by:
+\begin{equation}
+C_{p+1/2}(x) = \sigma^2 e^{-\sqrt{(2p+1)}x} \frac{\Gamma(p+1)}{\Gamma(2p+1)}
+\sum_{i=0}^p \frac{(p+i)!}{i!(p-i)!} ({\sqrt{(8p+4)}x)^{p-i},
+\end{equation} 
+where $p$ is a positive integer.  In the limit $p\rightarrow \infty, this becomes the
+squared exponential kernel: $C_\infty(x) = \sigma^2 e^{-x^2/2}$.  But, for small
+values of $p$, the Mat\'ern kernel may be approximated well by the sums of
+exponential kernels, described next.
 \item {\bf Mat\'ern 3/2 kernel.}  The Mat\'ern $3/2$ kernel is given by: 
 \begin{equation}
 K_{3/2}(\tau,\tau_0) = (1+x)e^{-x},
@@ -480,9 +494,18 @@ formula is simultaneously physically relevant and computationally convenient.
 The power spectrum of a single exponential scales as $f^{-2}$ at high frequency,
 while the Mat\'ern kernel scales as $f^{-4}$ which more closely matches the power
 spectrum due to activity and granulation in the Sun \citep{2004A&A...414.1139A,2009A&A...495..979M}.
-%\item Matern 5/2 kernel.
-\item {\bf Cosine kernel.} The cosine kernel may be represented exactly with $\beta_R=0$.
-\item exp-sin-square kernel
+\item {\bf Mat\'ern 5/2 kernel.}  The Mat\'ern 5/2 kernel is given
+by
+\begin{equation}
+C_{5/2}(x) = \sigma^2 (1+y+y^2/3)e^{-y},
+\end{equation}
+where $y = \sqrt{5}x$.  The Fourier transform is:
+\begin{equation}
+\hat K_{5/2}(\omega) = \frac{2\tau_0 10^{5/2}}{3\pi^{1/2}} (5+\tau_0^2\omega^2)^{-3}.
+\end{equation}
+This kernel may be approximated by the sum of three exponential
+kernels, and has a steeper dependence at large frequencies, $f^{-6}$.  We aren't aware of a stellar
+power spectrum that requires such a steep spectrum, and thus we forgo implementation of this kernel.
 \end{itemize}
 
 %\subsection{Derivative of likelihood with respect to Kernel parameters}
