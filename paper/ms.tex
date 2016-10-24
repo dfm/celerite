@@ -449,7 +449,6 @@ correlations in data, and can be represented with $\beta =  0$.
 \item {\bf Exponential kernel.} This is exactly
 represented with $\beta_I=0$.
 \item {\bf Cosine kernel.} The cosine kernel may be represented exactly with $\beta_R=0$.
-\item exp-sin-square kernel
 \item {\bf Squared exponential.} The squared exponential or Gaussian kernel, $G(z)=e^{-z^2/2}$,
 has the behavior of declining steeply at large time separation, is an even function, and has $c_1$ = 0.
 Nevertheless, it may be well approximated by the sum of three exponential kernels:
@@ -514,7 +513,22 @@ K_{5/2}(y) &\approx& -147.6965573 e^{-1.0097610 y} + 85.8875034 e^{-1.0621734 y}
 which is accurate to $<4\times 10^{-6}$ for $y \le 10$.
 The Fourier transform has a steeper dependence at large frequencies, $f^{-6}$, and as we are not aware of a stellar
 power spectrum that requires a steeper spectrum than this, we forgo approximating further Mat\'ern kernels.
+\item {\bf Exponential-sine-square kernel.}  This kernel is a periodic, positive valued kernel
+which has been used to model quasi-periodic stellar variability due to star spots.   It is
+given by $E(w,\Gamma) = e^{-\Gamma \sin^2{w}}$, which may be expanded as a series in $\cos{(2kw)}$,
+with $k \in \mathbb{N}$.  We have expanded this to $k=4$, and fit for the coefficients, giving:  
+\begin{equation}
+E(w,\Gamma) \approx \sum_{k=0}^4 \left(c_{k,1}+c_{k,2} e^{-c_{k,4}\Gamma^{c_{k,3}}}\right) \cos{(2kw)},
+\end{equation}
+with $c_{0,1}=0.24999, c_{0,2}=0.752803, c_{0,3}=0.960477, c_{0,4}=0.643393$ for $k=0$,
+$c_{1,1}=0.450851, c_{1,2}=-0.445338, c_{1,3}=0.960477, c_{1,4}= 1.18102$ for $k=1$,
+$c_{2,1}=0.206593, c_{2,2}=-0.207361, c_{2,3}=1.65902, c_{2,4}= 0.210641$ for $k=2$,
+$c_{3,1}=0.0728449, c_{3,2}=-0.0729381, c_{3,3}=2.43149, c_{3,4}= 0.0471224$ for $k=3$, and
+$c_{4,1}=0.019204, c_{4,2}=-0.0192129, c_{4,3}=3.27977, c_{4,4}= 0.0114198$ for $k=4$.
+This approximation is accurate to better than 0.5\% for $\Gamma < 3$.
 \end{itemize}
+
+{\color{red} Should we include some plots of these kernels, with the approximations?}
 
 A standard practice in constructing kernels for solving problems with Gaussian Process
 is to add or multiply the preceding standard kernel components.  In the case of damped cosine
@@ -526,6 +540,23 @@ K_j(\tau)K_k(\tau) &=&
 \end{eqnarray}
 which is the sum of two damped cosine kernels.  Thus, only addition is necessary to
 construct new kernels from damped cosine kernels.
+
+The upshot is that the damped cosine is an expressive basis kernel that may be used
+to represent a wide range of autocorrelation functions relevant for stellar variability.
+We recommend using a series of sums of damped cosines (in which some parameters may be 
+fixed to specified values to represent particular kernels) to model different amplitudes
+and timescales of variability.  If an initial estimate of the power spectrum or
+autocorrelation function is available, then these may be fit with this series to
+initialize the coefficients of the damped cosine kernel components.
+Since a Gaussian Process
+must be positive definite, we recommend modeling the logarithm of $a_j$,
+$\beta_{R,j}$, and $\beta_{I,j}$ to enforce this to be the case.  One caveat is
+that to produce certain kernels, a negative value of $a_j$ is needed (such
+as the Mat\'ern 3/2 kernel).  In this case, the value of the sum of
+two coefficients may be sampled from a logarithm, which the individual
+values are allowed to be negative;  this will enforce the positive definite
+constraint, but may allow for other constraints, such as an autocorrelation
+function which has a derivative of zero at $\tau = 0$.
 
 %\subsection{Derivative of likelihood with respect to Kernel parameters}
 %
