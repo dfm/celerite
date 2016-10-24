@@ -1,8 +1,20 @@
 # Try to approximate squared-exponential kernel:
 using PyPlot
+using Optim
+
+function expsine_approx()
 
 ntime = 1000
 time = collect(linspace(0,10,ntime))
+
+function compute_chi(x)
+model = zeros(ntime)
+for k=1:nexp
+  model += x[1+(k-1)*2].*exp(-x[2+(k-1)*2].*time)
+end
+return sum(((1.0+time+time.^2./3.).*exp(-time)-model).^2)
+end  
+
 
 # If we want to approximate Gaussian, then we just get a cosine... that doesn't work well!
 
@@ -45,14 +57,31 @@ for k=1:nexp
   model += atrial[1+(k-1)*2].*exp(-atrial[2+(k-1)*2].*time)
 end
 clf()
-plot(time,exp(-time.^2./2))
+plot(time,(1+time+time.^2/3).*exp(-time))
 plot(time,model)
 #chibest=sum(((1.0+time+time.^2./3.0).*exp(-time)-model).^2)
-chibest=sum((exp(-time.^2/2)-model).^2)
+chibest=compute_chi(atrial)
+
 println("Initial chi-square: ",chibest)
 read(STDIN,Char)
+
+result = optimize(compute_chi, atrial, BFGS(), OptimizationOptions(autodiff = true))
+
+println(Optim.minimizer(result),Optim.minimum(result))
+atrial = Optim.minimizer(result)
+plot(time,(1+time+time.^2/3).*exp(-time))
+plot(time,model)
+plot(time,((1+time+time.^2/3).*exp(-time)-model)*1e3)
+model = zeros(ntime)
+for k=1:nexp
+  model += atrial[1+(k-1)*2].*exp(-atrial[2+(k-1)*2].*time)
+end
+chi=sum(((1.0+time+time.^2./3.0).*exp(-time)-model).^2)
+println("New minimum: ",chi," ",atrial)
+read(STDIN,Char)
+
 atrial = zeros(npar)
-for i=1:1000000
+for i=1:1000
   for j=1:npar-2
     atrial[j] = abest[j] + 0.01*randn()
     atrial[7]= 1.0-atrial[1]-atrial[3]-atrial[5]
@@ -63,7 +92,7 @@ for i=1:1000000
     for k=1:nexp
       model += atrial[1+(k-1)*2].*exp(-atrial[2+(k-1)*2].*time)
     end
-    chi=sum((exp(-time.^2/2)-model).^2)
+    chi=sum(((1.0+time+time.^2./3.0).*exp(-time)-model).^2)
     if chi < chibest
       chibest = chi
       for k=1:npar
@@ -71,9 +100,11 @@ for i=1:1000000
       end
       println("New minimum: ",i," ",chibest," ",abest)
       clf()
-      plot(time,exp(-time.^2/2))
+      plot(time,(1+time+time.^2/3).*exp(-time))
       plot(time,model)
-      plot(time,exp(-time.^2/2)-model)
+      plot(time,(1+time+time.^2/3).*exp(-time)-model)
     end
   end
+end
+
 end
