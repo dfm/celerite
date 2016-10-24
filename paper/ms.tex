@@ -446,12 +446,30 @@ used to approximate each of these kernels, with various degrees of success:
 \begin{itemize}
 \item {\bf Constant kernel} A constant kernel component can be used to capture long-timescale
 correlations in data, and can be represented with $\beta =  0$.
-\item {\bf Exponential kernel.} This is also known as a Mat\'ern 1/2 kernel, and is exactly
+\item {\bf Exponential kernel.} This is exactly
 represented with $\beta_I=0$.
-\item The squared exponential kernel has the behavior of declining steeply at large
-time separation, and has $c_1$ = 0.  An infinite number of exponential kernels may be used to
-approximate a Gaussian kernel.  For example, to 
-
+\item {\bf Cosine kernel.} The cosine kernel may be represented exactly with $\beta_R=0$.
+\item exp-sin-square kernel
+\item {\bf Squared exponential.} The squared exponential or Gaussian kernel, $G(z)=e^{-z^2/2}$,
+has the behavior of declining steeply at large time separation, is an even function, and has $c_1$ = 0.
+Nevertheless, it may be well approximated by the sum of three exponential kernels:
+\begin{eqnarray}
+G(z) &\approx& 2.751807 e^{-1.531250 z} \cos{(0.341489 z)} \\
+ &-& 0.354626 e^{-4.753504 z} \cos{(2.042572 z)}\\
+ &-& 1.396834 e^{-1.796743 z} \cos{(1.764168 z)},
+\end{eqnarray}
+which has an accuracy of better than $<4\times 10^{-4}$ for all z.
+%[2.751807496353032,1.5312499408182438,-0.34148888180984543,-0.35462563655835033,4.753504292338051,2.0425716395901157,-1.3968344706423566,1.7967431129750422,-1.7641684073374964
+\item {\bf Mat\'ern $p+1/2$ kernel.}  The Mat\'ern kernel is given by:
+\begin{equation}
+C_{p+1/2}(x) = \sigma^2 e^{-\sqrt{(2p+1)}x} \frac{\Gamma(p+1)}{\Gamma(2p+1)}
+\sum_{i=0}^p \frac{(p+i)!}{i!(p-i)!} (\sqrt{(8p+4)}x)^{p-i},
+\end{equation} 
+where $p$ is a positive integer.  In the limit $p\rightarrow \infty$, this becomes the
+squared exponential kernel: $C_\infty(x) = \sigma^2 e^{-x^2/2}$.  But, for small
+values of $p$, the Mat\'ern kernel may be approximated well by the sum of
+$2p$ exponential kernels.  The exponential kernel is the Mat\'ern 1/2 kernel, while
+$p=1$ is relevant to stellar variability, which we describe next.
 \item {\bf Mat\'ern 3/2 kernel.}  The Mat\'ern $3/2$ kernel is given by: 
 \begin{equation}
 K_{3/2}(\tau,\tau_0) = (1+x)e^{-x},
@@ -475,15 +493,39 @@ One advantage of the Mat\'ern 3/2 kernel is that it is smooth across
 $\tau=0$ since its derivative is zero at $\tau=0$.  The exponential kernel {\it does not}
 have this property, which leads to qualitatively different noise properties on small
 timescales due to the sharpness of the exponential kernel at $\tau=0$.  The Mat\'ern 3/2 kernel
-turns out to be an excellent description of stellar activity and granulation, and thus the approximate
+turns out to be similar to the observed properties of stellar activity and granulation, and thus the approximate
 formula is simultaneously physically relevant and computationally convenient.  
 The power spectrum of a single exponential scales as $f^{-2}$ at high frequency,
 while the Mat\'ern kernel scales as $f^{-4}$ which more closely matches the power
 spectrum due to activity and granulation in the Sun \citep{2004A&A...414.1139A,2009A&A...495..979M}.
-%\item Matern 5/2 kernel.
-\item {\bf Cosine kernel.} The cosine kernel may be represented exactly with $\beta_R=0$.
-\item exp-sin-square kernel
+\item {\bf Mat\'ern 5/2 kernel.}  The Mat\'ern 5/2 kernel is given by
+\begin{equation}
+C_{5/2}(y) = \sigma^2 (1+y+y^2/3)e^{-y},
+\end{equation}
+where $y = \sqrt{5}x$.  The Fourier transform is:
+\begin{equation}
+\hat K_{5/2}(\omega) = \frac{2\tau_0 10^{5/2}}{3\pi^{1/2}} (5+\tau_0^2\omega^2)^{-3}.
+\end{equation}
+This kernel may be approximated well by the sum of four exponential kernels
+\begin{eqnarray}
+K_{5/2}(y) &\approx& -147.6965573 e^{-1.0097610 y} + 85.8875034 e^{-1.0621734 y}\\
+ &-&4.6540017 e^{-0.8353745 y} + 67.4630744 e^{-0.9160394 y},
+\end{eqnarray}
+which is accurate to $<4\times 10^{-6}$ for $y \le 10$.
+The Fourier transform has a steeper dependence at large frequencies, $f^{-6}$, and as we are not aware of a stellar
+power spectrum that requires a steeper spectrum than this, we forgo approximating further Mat\'ern kernels.
 \end{itemize}
+
+A standard practice in constructing kernels for solving problems with Gaussian Process
+is to add or multiply the preceding standard kernel components.  In the case of damped cosine
+kernels, the product of two kernels is: 
+\begin{eqnarray}
+K_j(\tau)K_k(\tau) &=&
+\frac{1}{2} a_k a_j e^{-(\beta_{R,j}+\beta_{R,k}) \tau} \left(\cos{(\beta_{I,j}-\beta_{I,k})\tau}+\cos{(\beta_{I,j}+\beta_{I,k})\tau}\right)\\
+&=& \frac{1}{2} \left(K_j(\tau,a_ja_k,\beta_{R,j}+\beta_{R,k},\beta_{I,j}-\beta_{I,k}) +K_j(\tau,a_ja_k,\beta_{R,j}+\beta_{R,k},\beta_{I,j}+\beta_{I,k})\right).
+\end{eqnarray}
+which is the sum of two damped cosine kernels.  Thus, only addition is necessary to
+construct new kernels from damped cosine kernels.
 
 %\subsection{Derivative of likelihood with respect to Kernel parameters}
 %
