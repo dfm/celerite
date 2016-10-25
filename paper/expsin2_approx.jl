@@ -154,7 +154,7 @@ println("Fit to fifth coefficient")
 read(STDIN,Char)
 
 # Now test with random numbers:
-ntest = 100
+ntest = 10000
 dev = zeros(ntest)
 for i=1:ntest
   time = rand()*2pi
