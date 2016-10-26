@@ -1,7 +1,7 @@
 using PyPlot
 # Set up a time grid for the plot:
-ntime = 1000
-time = collect(linspace(0,2pi,ntime))
+ntime = 10000
+time = collect(linspace(0,4pi,ntime))
 
 # exp-sine-squared:
 x1 = [0.24998970200450718,0.7528029456942368,0.9604772168743339,0.6433934213976025]
@@ -52,14 +52,14 @@ fix,axes = subplots(2,2)
 
 ax = axes[1]
 ax[:set_title]("(a). Simple, exact kernels")
-ax[:plot](time,exp(-time),alpha=0.5,label=L"$e^{-t}$",linewidth=4,color="silver")
 ax[:plot](time,1.+0.*time,alpha=0.5,label=L"$1$",linewidth=4,color="black")
-ax[:plot](time,cos(time),alpha=1.0,alpha=0.5,label=L"$\cos{t}$",color="grey",linewidth=4)
-ax[:plot](time,exp(-time).*cos(time),alpha=1.0,alpha=0.5,label=L"$e^{-t}\cos{t}$",color="coral",linewidth=4)
-ax[:legend](loc="lower left")
+ax[:plot](time,exp(-time/3),alpha=0.5,label=L"$e^{-t/3}$",linewidth=4,color="c")
+ax[:plot](time,cos(time),alpha=1.0,alpha=0.5,label=L"$\cos{(t)}$",color="olive",linewidth=4)
+ax[:plot](time,exp(-time./3).*cos(time),alpha=1.0,alpha=0.5,label=L"$e^{-t/3}\cos{(t)}$",color="coral",linewidth=4)
+ax[:legend](loc="lower center",fontsize=10)
 ax[:set_xlabel]("Time")
 ax[:set_ylabel]("Dimensional ACF")
-ax[:axis]([0,2pi,-1.1,1.1])
+ax[:axis]([0,4pi,-1.1,1.1])
 
 ax = axes[3]
 ax[:set_title]("(b). Gaussian")
@@ -76,7 +76,7 @@ ax[:plot](time,model_expsin2_g1,alpha=1.0,label=L"$E(w,1)$, approx",ls="dashed",
 ax[:plot](time,expsin2_g3,alpha=0.25,label=L"$E(w,3)$, exact",linewidth=4,color="g")
 ax[:plot](time,model_expsin2_g3,alpha=1.0,label=L"$E(w,3)$, approx",ls="dashed",alpha=0.5,color="g",linewidth=4)
 ax[:set_title]("(c). Exp-sine-squared")
-ax[:legend](loc="upper center")
+ax[:legend](loc="upper center",fontsize=10)
 ax[:set_xlabel]("Time")
 ax[:set_ylabel]("Dimensional ACF")
 ax[:axis]([0,pi,0,1.1])
