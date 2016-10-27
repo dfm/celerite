@@ -8,46 +8,47 @@
 #include <Eigen/Sparse>
 
 #include "genrp/utils.h"
-#include "genrp/lapack.h"
 
 namespace genrp {
 
-template <typename entry_t>
 class DirectSolver {
-  typedef Eigen::Matrix<entry_t, Eigen::Dynamic, 1> vector_t;
-  typedef Eigen::Matrix<entry_t, Eigen::Dynamic, Eigen::Dynamic> matrix_t;
+  typedef Eigen::Matrix<double, Eigen::Dynamic, 1> real_vector_t;
+  typedef Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> real_matrix_t;
+  typedef Eigen::Matrix<std::complex<double>, Eigen::Dynamic, 1> complex_vector_t;
+  typedef Eigen::Matrix<std::complex<double>, Eigen::Dynamic, Eigen::Dynamic> complex_matrix_t;
 
-public:
-  Eigen::VectorXd alpha_;
-  vector_t beta_;
+protected:
+  real_vector_t alpha_real_, alpha_complex_, beta_real_;
+  complex_vector_t beta_complex_;
   size_t n_, p_;
   double log_det_;
 
 public:
   DirectSolver () {};
-  DirectSolver (const Eigen::VectorXd alpha, const vector_t beta);
+  DirectSolver (const real_vector_t alpha, const real_vector_t beta);
+  DirectSolver (const real_vector_t alpha_real, const real_vector_t beta_real,
+                const real_vector_t alpha_complex, const complex_vector_t beta_complex);
+
   virtual ~DirectSolver () {};
-  void alpha_and_beta (const Eigen::VectorXd alpha, const vector_t beta);
-  virtual void compute (const Eigen::VectorXd& x, const Eigen::VectorXd& diag);
-  virtual void solve (const Eigen::MatrixXd& b, double* x) const;
-  double dot_solve (const Eigen::VectorXd& b) const;
-  double grad_dot_solve (const Eigen::VectorXd& b, Eigen::VectorXd& grad) const;
+  // void alpha_and_beta (const Eigen::VectorXd alpha, const vector_t beta);
+  virtual void compute (const real_vector_t& x, const real_vector_t& diag);
+  virtual void solve (const real_matrix_t& b, double* x) const;
+  double dot_solve (const real_vector_t& b) const;
   double log_determinant () const;
 
   // Eigen-free interface.
-  DirectSolver (size_t p, const double* alpha, const entry_t* beta);
-  void compute (size_t n, const double* t, const double* diag);
-  void solve (const double* b, double* x) const;
-  void solve (size_t nrhs, const double* b, double* x) const;
-  double dot_solve (const double* b) const;
+  // DirectSolver (size_t p, const double* alpha, const entry_t* beta);
+  // void compute (size_t n, const double* t, const double* diag);
+  // void solve (const double* b, double* x) const;
+  // void solve (size_t nrhs, const double* b, double* x) const;
+  // double dot_solve (const double* b) const;
 
 private:
-  Eigen::LDLT<matrix_t> factor_;
+  Eigen::LDLT<complex_matrix_t> factor_;
 
 };
 
-template <typename entry_t>
-DirectSolver<entry_t>::DirectSolver (const Eigen::VectorXd alpha, const Eigen::Matrix<entry_t, Eigen::Dynamic, 1> beta)
+DirectSolver::DirectSolver (const Eigen::VectorXd alpha, const Eigen::VectorXd beta)
   : alpha_(alpha),
     beta_(beta),
     p_(alpha.rows())
