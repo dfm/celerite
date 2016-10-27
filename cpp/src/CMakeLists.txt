@@ -5,6 +5,4 @@ macro (GENRP_TEST NAME)
              COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${NAME})
 endmacro (GENRP_TEST)
 
-genrp_test(demo)
-genrp_test(benchmark)
-genrp_test(params)
+genrp_test(test_solvers)

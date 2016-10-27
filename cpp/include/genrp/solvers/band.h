@@ -114,7 +114,11 @@ void BandSolver<entry_t>::compute (const Eigen::VectorXd& x, const Eigen::Vector
   // Build and factorize the sparse matrix.
   band_factorize(ab, ipiv_);
   factor_ = ab.coeffs();
-  this->log_det_ = get_real(log(ab.diagonal().array()).sum());
+
+  // Deal with negative values in the diagonal.
+  Eigen::VectorXcd d = ab.diagonal().template cast<std::complex<double> >();
+
+  this->log_det_ = get_real(log(d.array()).sum());
 }
 
 template <typename entry_t>
