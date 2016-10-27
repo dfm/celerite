@@ -29,7 +29,8 @@ model_expsin2_g3 += (x5[1]+x5[2].*exp(-gamma.^x5[3].*x5[4])).*cos(8.*time)
 expsin2_g3 = exp(-gamma.*sin(time).^2)
 
 # Gaussian (squared-exponential):
-abest=[2.7518074963750734,1.5312499407621147,-0.34148888178746056,-0.3546256365636662,4.753504292338284,2.042571639590954,-1.3968344706386124,1.7967431129812566,-1.7641684073510928]
+#abest=[2.7518074963750734,1.5312499407621147,-0.34148888178746056,-0.3546256365636662,4.753504292338284,2.042571639590954,-1.3968344706386124,1.7967431129812566,-1.7641684073510928]
+abest=[2.670143,1.500258, 0.346731,-0.458705,4.125588, 1.390912, -1.211438,1.744602, 1.798436]
 gaussian=exp(-time.^2/2.)
 nexp = 3
 
@@ -54,10 +55,10 @@ ax = axes[1]
 ax[:set_title]("(a). Simple, exact kernels")
 ax[:plot](time,1.+0.*time,alpha=0.5,label=L"$1$",linewidth=4,color="black")
 ax[:plot](time,exp(-time/3),alpha=0.5,label=L"$e^{-t/3}$",linewidth=4,color="c")
-ax[:plot](time,cos(time),alpha=1.0,alpha=0.5,label=L"$\cos{(t)}$",color="olive",linewidth=4)
-ax[:plot](time,exp(-time./3).*cos(time),alpha=1.0,alpha=0.5,label=L"$e^{-t/3}\cos{(t)}$",color="coral",linewidth=4)
+ax[:plot](time,cos(time),alpha=1.0,alpha=0.5,label=L"$\cos{(\tau)}$",color="olive",linewidth=4)
+ax[:plot](time,exp(-time./3).*cos(time),alpha=1.0,alpha=0.5,label=L"$e^{-t/3}\cos{(\tau)}$",color="coral",linewidth=4)
 ax[:legend](loc="lower center",fontsize=10)
-ax[:set_xlabel]("Time")
+ax[:set_xlabel](L"$\tau/\tau_0$")
 ax[:set_ylabel]("Dimensional ACF")
 ax[:axis]([0,4pi,-1.1,1.1])
 
@@ -66,7 +67,7 @@ ax[:set_title]("(b). Gaussian")
 ax[:plot](time,gaussian,alpha=0.25,label=L"$G(z)$, exact",linewidth=4,color="fuchsia")
 ax[:plot](time,model_gaussian,alpha=1.0,ls="dashed",alpha=0.5,label=L"$G(z)$, approx",color="r",linewidth=4)
 ax[:legend](loc="upper right")
-ax[:set_xlabel]("Time")
+ax[:set_xlabel](L"$\tau/\tau_0$")
 ax[:set_ylabel]("Dimensional ACF")
 ax[:axis]([0,pi,0,1.1])
 
@@ -77,7 +78,7 @@ ax[:plot](time,expsin2_g3,alpha=0.25,label=L"$E(w,3)$, exact",linewidth=4,color=
 ax[:plot](time,model_expsin2_g3,alpha=1.0,label=L"$E(w,3)$, approx",ls="dashed",alpha=0.5,color="g",linewidth=4)
 ax[:set_title]("(c). Exp-sine-squared")
 ax[:legend](loc="upper center",fontsize=10)
-ax[:set_xlabel]("Time")
+ax[:set_xlabel](L"$\tau/\tau_0$")
 ax[:set_ylabel]("Dimensional ACF")
 ax[:axis]([0,pi,0,1.1])
 
@@ -85,12 +86,12 @@ ax = axes[4]
 matern32 = (1.+sqrt(3.).*time).*exp(-sqrt(3.).*time)
 b = 100.
 model_32 = (1-b)*exp(-sqrt(3.).*time)+b*exp(-(b-1)/b.*sqrt(3.).*time)
-ax[:plot](time,matern32,alpha=0.25,label=L"$K_{3/2}(t)$, exact",linewidth=4,color="goldenrod")
-ax[:plot](time,model_32,alpha=1.0, label=L"$K_{3/2}(t)$, approx",ls="dashed",alpha=0.5,color="saddlebrown",linewidth=4)
-ax[:plot](time,matern52,alpha=0.25,label=L"$K_{5/2}(t)$, exact",linewidth=4,color="m")
-ax[:plot](time,model_52,alpha=1.0, label=L"$K_{5/2}(t)$, approx",ls="dashed",alpha=0.5,color="indigo",linewidth=4)
+ax[:plot](time,matern32,alpha=0.25,label=L"$K_{3/2}(\tau)$, exact",linewidth=4,color="goldenrod")
+ax[:plot](time,model_32,alpha=1.0, label=L"$K_{3/2}(\tau)$, approx",ls="dashed",alpha=0.5,color="saddlebrown",linewidth=4)
+ax[:plot](time,matern52,alpha=0.25,label=L"$K_{5/2}(\tau)$, exact",linewidth=4,color="m")
+ax[:plot](time,model_52,alpha=1.0, label=L"$K_{5/2}(\tau)$, approx",ls="dashed",alpha=0.5,color="indigo",linewidth=4)
 ax[:set_title]("(d). Matern")
 ax[:legend](loc="upper right")
-ax[:set_xlabel]("Time")
+ax[:set_xlabel](L"$\tau/\tau_0$")
 ax[:set_ylabel]("Dimensional ACF")
 ax[:axis]([0,pi,0,1.1])
