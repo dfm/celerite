@@ -79,7 +79,6 @@ double GaussianProcess<SolverType>::log_likelihood (const Eigen::VectorXd& y) co
   if (y.rows() != dim_) throw GAUSSIAN_PROCESS_DIMENSION_MISMATCH;
   Eigen::VectorXd alpha(dim_);
   double nll = 0.5 * solver_.dot_solve(y);
-  std::cout << "logdet " << solver_.log_determinant() << std::endl;
   nll += 0.5 * solver_.log_determinant() + y.rows() * GAUSSIAN_PROCESS_CONSTANT;
   return -nll;
 }
