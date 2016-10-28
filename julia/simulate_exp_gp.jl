@@ -16,14 +16,12 @@ function simulate_exp_gp(t,alpha,beta,ndev)
 #
 nt = length(t)
 data = zeros(eltype(beta),nt)
-gamma = zeros(eltype(beta),nt)
-for i=1:nt-1
-  gamma[i] = exp(-beta*(t[i+1]-t[i]))
-  data[i] = sqrt(1.0-gamma[i]^2)*sqrt(alpha)*ndev[i]
-end
 data[nt] = sqrt(alpha)*ndev[nt]
+gamma = zero(eltype(beta))
 for i=nt-1:-1:1
-  data[i] += gamma[i]*data[i+1]
+  gamma = exp(-beta*(t[i+1]-t[i]))
+  println(i," ",abs(sqrt(1.0-gamma^2)))
+  data[i] = sqrt(1.0-gamma^2)*sqrt(alpha)*ndev[i]+gamma*data[i+1]
 end
 return data
 end
