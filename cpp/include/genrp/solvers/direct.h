@@ -20,12 +20,13 @@ class DirectSolver {
 protected:
   real_vector_t alpha_real_, alpha_complex_, beta_real_;
   complex_vector_t beta_complex_;
-  size_t n_, p_;
+  size_t n_, p_real_, p_complex_;
   double log_det_;
 
 public:
   DirectSolver () {};
   DirectSolver (const real_vector_t alpha, const real_vector_t beta);
+  DirectSolver (const real_vector_t alpha, const complex_vector_t beta);
   DirectSolver (const real_vector_t alpha_real, const real_vector_t beta_real,
                 const real_vector_t alpha_complex, const complex_vector_t beta_complex);
 
@@ -44,106 +45,126 @@ public:
   // double dot_solve (const double* b) const;
 
 private:
-  Eigen::LDLT<complex_matrix_t> factor_;
+  Eigen::LDLT<real_matrix_t> factor_;
 
 };
 
 DirectSolver::DirectSolver (const Eigen::VectorXd alpha, const Eigen::VectorXd beta)
-  : alpha_(alpha),
-    beta_(beta),
-    p_(alpha.rows())
+  : alpha_real_(alpha),
+    beta_real_(beta),
+    p_real_(alpha.rows()),
+    p_complex_(0)
 {
-  assert ((alpha_.rows() == beta_.rows()) && "DIMENSION_MISMATCH");
+  assert ((alpha_real_.rows() == beta_real_.rows()) && "DIMENSION_MISMATCH");
 }
 
-template <typename entry_t>
-void DirectSolver<entry_t>::alpha_and_beta (const Eigen::VectorXd alpha, const Eigen::Matrix<entry_t, Eigen::Dynamic, 1> beta) {
-  p_ = alpha.rows();
-  alpha_ = alpha;
-  beta_ = beta;
+DirectSolver::DirectSolver (const Eigen::VectorXd alpha, const Eigen::VectorXcd beta)
+  : alpha_complex_(alpha),
+    beta_complex_(beta),
+    p_real_(0),
+    p_complex_(alpha.rows())
+{
+  assert ((alpha_complex_.rows() == beta_complex_.rows()) && "DIMENSION_MISMATCH");
 }
 
-template <typename entry_t>
-void DirectSolver<entry_t>::compute (const Eigen::VectorXd& x, const Eigen::VectorXd& diag) {
+DirectSolver::DirectSolver (const Eigen::VectorXd alpha_real, const Eigen::VectorXd beta_real,
+                            const Eigen::VectorXd alpha_complex, const Eigen::VectorXcd beta_complex)
+  : alpha_real_(alpha_real),
+    beta_real_(beta_real),
+    alpha_complex_(alpha_complex),
+    beta_complex_(beta_complex),
+    p_real_(alpha_real.rows()),
+    p_complex_(alpha_complex.rows())
+{
+  assert ((alpha_real_.rows() == beta_real_.rows()) && "DIMENSION_MISMATCH");
+  assert ((alpha_complex_.rows() == beta_complex_.rows()) && "DIMENSION_MISMATCH");
+}
+
+// template <typename entry_t>
+// void DirectSolver<entry_t>::alpha_and_beta (const Eigen::VectorXd alpha, const Eigen::Matrix<entry_t, Eigen::Dynamic, 1> beta) {
+//   p_ = alpha.rows();
+//   alpha_ = alpha;
+//   beta_ = beta;
+// }
+
+void DirectSolver::compute (const Eigen::VectorXd& x, const Eigen::VectorXd& diag) {
   assert ((x.rows() == diag.rows()) && "DIMENSION_MISMATCH");
   n_ = x.rows();
 
   // Build the matrix.
-  entry_t v, asum = alpha_.sum();
-  matrix_t K(n_, n_);
+  double v, dx, asum = alpha_real_.sum() + 2.0 * alpha_complex_.sum();
+  real_matrix_t K(n_, n_);
   for (size_t i = 0; i < n_; ++i) {
     K(i, i) = asum + diag(i);
 
     for (size_t j = i+1; j < n_; ++j) {
-      v = entry_t(0.0);
-      for (size_t p = 0; p < p_; ++p)
-        v += alpha_(p) * exp(-beta_(p) * fabs(x(j) - x(i)));
+      v = 0.0;
+      dx = fabs(x(j) - x(i));
+      v += (alpha_real_.array() * exp(-beta_real_.array() * dx)).sum();
+      v += 2.0 * (alpha_complex_.array() * exp(-beta_complex_.real().array() * dx) * cos(beta_complex_.imag().array() * dx)).sum();
       K(i, j) = v;
-      K(j, i) = get_conj(v);
+      K(j, i) = v;
     }
   }
 
   // Factorize the matrix.
   factor_ = K.ldlt();
-  log_det_ = get_real(log(factor_.vectorD().array()).sum());
+  log_det_ = log(factor_.vectorD().array()).sum();
 }
 
-template <typename entry_t>
-void DirectSolver<entry_t>::solve (const Eigen::MatrixXd& b, double* x) const {
+void DirectSolver::solve (const Eigen::MatrixXd& b, double* x) const {
   assert ((b.rows() == n_) && "DIMENSION_MISMATCH");
   size_t nrhs = b.cols();
 
-  matrix_t result = factor_.solve(b.cast<entry_t>());
+  real_matrix_t result = factor_.solve(b);
 
   // Copy the output.
   for (size_t j = 0; j < nrhs; ++j)
     for (size_t i = 0; i < n_; ++i)
-      x[i+j*nrhs] = get_real(result(i, j));
+      x[i+j*nrhs] = result(i, j);
 }
 
-template <typename entry_t>
-double DirectSolver<entry_t>::dot_solve (const Eigen::VectorXd& b) const {
-  Eigen::VectorXd out(n_);
+double DirectSolver::dot_solve (const Eigen::VectorXd& b) const {
+  real_vector_t out(n_);
   solve(b, &(out(0)));
   return b.transpose() * out;
 }
 
-template <typename entry_t>
-double DirectSolver<entry_t>::log_determinant () const {
+double DirectSolver::log_determinant () const {
   return log_det_;
 }
 
-// Eigen-free interface:
-template <typename entry_t>
-DirectSolver<entry_t>::DirectSolver (size_t p, const double* alpha, const entry_t* beta) {
-  p_ = p;
-  alpha_ = Eigen::Map<const Eigen::Matrix<double, Eigen::Dynamic, 1> >(alpha, p, 1);
-  beta_ = Eigen::Map<const Eigen::Matrix<entry_t, Eigen::Dynamic, 1> >(beta, p, 1);
-}
-
-template <typename entry_t>
-void DirectSolver<entry_t>::compute (size_t n, const double* t, const double* diag) {
-  typedef Eigen::Map<const Eigen::Matrix<double, Eigen::Dynamic, 1> > vector_t;
-  compute(vector_t(t, n, 1), vector_t(diag, n, 1));
-}
-
-template <typename entry_t>
-void DirectSolver<entry_t>::solve (const double* b, double* x) const {
-  Eigen::Map<const Eigen::Matrix<double, Eigen::Dynamic, 1> > bin(b, n_, 1);
-  solve(bin, x);
-}
-
-template <typename entry_t>
-void DirectSolver<entry_t>::solve (size_t nrhs, const double* b, double* x) const {
-  Eigen::Map<const Eigen::Matrix<double, Eigen::Dynamic, 1> > bin(b, n_, nrhs);
-  solve(bin, x);
-}
-
-template <typename entry_t>
-double DirectSolver<entry_t>::dot_solve (const double* b) const {
-  Eigen::Map<const Eigen::Matrix<double, Eigen::Dynamic, 1> > bin(b, n_, 1);
-  return dot_solve(bin);
-}
+// // Eigen-free interface:
+// template <typename entry_t>
+// DirectSolver<entry_t>::DirectSolver (size_t p, const double* alpha, const entry_t* beta) {
+//   p_ = p;
+//   alpha_ = Eigen::Map<const Eigen::Matrix<double, Eigen::Dynamic, 1> >(alpha, p, 1);
+//   beta_ = Eigen::Map<const Eigen::Matrix<entry_t, Eigen::Dynamic, 1> >(beta, p, 1);
+// }
+//
+// template <typename entry_t>
+// void DirectSolver<entry_t>::compute (size_t n, const double* t, const double* diag) {
+//   typedef Eigen::Map<const Eigen::Matrix<double, Eigen::Dynamic, 1> > vector_t;
+//   compute(vector_t(t, n, 1), vector_t(diag, n, 1));
+// }
+//
+// template <typename entry_t>
+// void DirectSolver<entry_t>::solve (const double* b, double* x) const {
+//   Eigen::Map<const Eigen::Matrix<double, Eigen::Dynamic, 1> > bin(b, n_, 1);
+//   solve(bin, x);
+// }
+//
+// template <typename entry_t>
+// void DirectSolver<entry_t>::solve (size_t nrhs, const double* b, double* x) const {
+//   Eigen::Map<const Eigen::Matrix<double, Eigen::Dynamic, 1> > bin(b, n_, nrhs);
+//   solve(bin, x);
+// }
+//
+// template <typename entry_t>
+// double DirectSolver<entry_t>::dot_solve (const double* b) const {
+//   Eigen::Map<const Eigen::Matrix<double, Eigen::Dynamic, 1> > bin(b, n_, 1);
+//   return dot_solve(bin);
+// }
 
 };
 

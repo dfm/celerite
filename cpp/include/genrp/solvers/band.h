@@ -10,58 +10,83 @@
 
 namespace genrp {
 
-template <typename entry_t>
 class BandSolver : public DirectSolver<entry_t> {
-  typedef Eigen::Matrix<entry_t, Eigen::Dynamic, 1> vector_t;
-  typedef Eigen::Matrix<entry_t, Eigen::Dynamic, Eigen::Dynamic> matrix_t;
+  typedef Eigen::Matrix<double, Eigen::Dynamic, 1> real_vector_t;
+  typedef Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> real_matrix_t;
+  typedef Eigen::Matrix<std::complex<double>, Eigen::Dynamic, 1> complex_vector_t;
+  typedef Eigen::Matrix<std::complex<double>, Eigen::Dynamic, Eigen::Dynamic> complex_matrix_t;
 
 public:
-  BandSolver () : DirectSolver<entry_t>() {};
-  BandSolver (const Eigen::VectorXd alpha, const vector_t beta) : DirectSolver<entry_t>(alpha, beta) {};
-  BandSolver (size_t p, const double* alpha, const entry_t* beta) : DirectSolver<entry_t>(p, alpha, beta) {};
+  BandSolver () : DirectSolver() {};
+  BandSolver (const real_vector_t alpha, const real_vector_t beta)
+    : DirectSolver(alpha, beta) {};
+  BandSolver (const real_vector_t alpha, const complex_vector_t beta)
+    : DirectSolver(alpha, beta) {};
+  BandSolver (const real_vector_t alpha_real, const real_vector_t beta_real,
+              const real_vector_t alpha_complex, const complex_vector_t beta_complex)
+    : DirectSolver(alpha_real, beta_real, alpha_complex, beta_complex) {};
+  // BandSolver (size_t p, const double* alpha, const entry_t* beta) : DirectSolver<entry_t>(p, alpha, beta) {};
 
-  void compute (const Eigen::VectorXd& x, const Eigen::VectorXd& diag);
-  void solve (const Eigen::MatrixXd& b, double* x) const;
+  void compute (const real_vector_t& x, const real_vector_t& diag);
+  void solve (const real_matrix_t& b, double* x) const;
 
-  // Needed for the Eigen-free interface.
-  using DirectSolver<entry_t>::compute;
-  using DirectSolver<entry_t>::solve;
+  // // Needed for the Eigen-free interface.
+  // using DirectSolver<entry_t>::compute;
+  // using DirectSolver<entry_t>::solve;
 
 private:
   size_t block_size_, dim_ext_;
-  matrix_t factor_;
+  real_matrix_t factor_;
   Eigen::VectorXi ipiv_;
 
 };
 
-template <typename entry_t>
-void BandSolver<entry_t>::compute (const Eigen::VectorXd& x, const Eigen::VectorXd& diag) {
+void BandSolver::compute (const Eigen::VectorXd& x, const Eigen::VectorXd& diag) {
   // Check dimensions.
   assert ((x.rows() != diag.rows()) && "DIMENSION_MISMATCH");
   this->n_ = x.rows();
 
-  // Dimensions from superclass.
-  size_t p_ = this->p_,
-         n_ = this->n_;
+  // Dimensions.
+  size_t p_real = this->p_real_,
+         p_complex = this->p_complex_,
+         p = p_real + p_complex,
+         n = this->n_,
+         m1 = p_real + 2*(p - p_real + 1);
 
-  // Pre-compute gamma: Equation (58)
-  matrix_t gamma(p_, n_ - 1);
-  for (size_t i = 0; i < n_ - 1; ++i) {
-    double delta = fabs(x(i+1) - x(i));
-    for (size_t k = 0; k < p_; ++k)
-      gamma(k, i) = exp(-this->beta_(k) * delta);
-  }
-
-  // Pre-compute sum(alpha) -- it will be added to the diagonal.
-  double sum_alpha = this->alpha_.sum();
+  if (p_complex == 0) m1 = p_real + 1;
 
   // Compute the block sizes: Algorithm 1
-  block_size_ = 2 * p_ + 1;
-  dim_ext_ = block_size_ * n_ - 2 * p_;
+  block_size_ = 2 * m1 + 1;
+  dim_ext_ = (4 * p_complex_ + 2 * p_real_ + 1) * (n - 1) + 1;
 
   // Set up the extended matrix.
   Eigen::internal::BandMatrix<entry_t> ab(dim_ext_, dim_ext_, 2*(p_+1), p_+1);
   ipiv_.resize(dim_ext_);
+
+  double ebt, phi;
+  real_vector_t gamma_real(p), gamma_imag = real_vector_t::Zero(p);
+
+  // Special case for the first row. Eq 61 and l_1 = 0.
+  aex
+  for ()
+
+
+  real_matrix_t gamma_real(p, n_ - 1),
+                gamma_imag = real_matrix_t::Zero(p, n_ - 1);
+  for (size_t i = 0; i < n_ - 1; ++i) {
+    double delta = fabs(x(i+1) - x(i));
+    for (size_t k = 0; k < p_real; ++k)
+      gamma_real_(k, i) = exp(-this->beta_real_(k) * delta);
+    for (size_t k = 0; k < p_real; ++k) {
+      ebt = exp(-this->beta_complex_(k).real() * delta);
+      phi = this->beta_complex_(k).imag() * delta;
+      gamma_real(p_real + k, i) = ebt * cos(phi);
+      gamma_imag(p_real + k, i) = -ebt * sin(phi);
+    }
+  }
+
+  // Pre-compute sum(alpha) -- it will be added to the diagonal.
+  double sum_alpha = this->alpha_real_.sum();
 
   // Initialize to zero.
   ab.coeffs().setConstant(0.0);

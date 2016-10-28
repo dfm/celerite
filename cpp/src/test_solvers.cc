@@ -14,6 +14,7 @@
 
 #include "genrp/solvers/basic.h"
 #include "genrp/solvers/direct.h"
+#include "genrp/solvers/band.h"
 
 // Timer for the benchmark.
 double get_timestamp ()
@@ -36,11 +37,15 @@ int main (int argc, char* argv[])
 
   // Set up the coefficients.
   Eigen::VectorXd alpha = Eigen::VectorXd::Random(nterms),
-                  beta_real = Eigen::VectorXd::Random(nterms);
-  Eigen::VectorXcd beta_complex = Eigen::VectorXcd::Random(nterms);
+                  beta_real = Eigen::VectorXd::Random(nterms),
+                  alpha_all(3*nterms);
+  Eigen::VectorXcd beta_complex = Eigen::VectorXcd::Random(nterms),
+                   beta_all(3*nterms);
   alpha.array() += 1.0;
   beta_real.array() += 1.0;
-  beta_complex.array() += 1.0;
+  beta_complex.array() += std::complex<double>(1.0, 1.0);
+  alpha_all << alpha, alpha, alpha;
+  beta_all << beta_real.cast<std::complex<double> >(), beta_complex, beta_complex.conjugate();
 
   // Generate some fake data.
   Eigen::VectorXd x = Eigen::VectorXd::Random(N),
@@ -49,7 +54,7 @@ int main (int argc, char* argv[])
 
   // Set the scale of the uncertainties.
   yerr2.array() *= 0.1;
-  yerr2.array() += 0.8;
+  yerr2.array() += 1.0;
 
   // The times need to be sorted.
   std::sort(x.data(), x.data() + x.size());
@@ -59,24 +64,36 @@ int main (int argc, char* argv[])
 
   genrp::BasicSolver<double> basic_real(alpha, beta_real);
   basic_real.compute(x, yerr2);
+  genrp::BasicSolver<std::complex<double> > basic_complex(alpha_all, beta_all);
+  basic_complex.compute(x, yerr2);
 
-  genrp::DirectSolver<double> direct_real(alpha, beta_real);
+  genrp::DirectSolver direct_real(alpha, beta_real);
   direct_real.compute(x, yerr2);
+  genrp::DirectSolver direct_complex(alpha, beta_real, alpha, beta_complex);
+  direct_complex.compute(x, yerr2);
 
-  // genrp::DirectSolver<std::complex<double> > direct_complex(alpha, beta_complex);
-  // direct_complex.compute(x, yerr2);
+  genrp::BandSolver band_real(alpha, beta_real);
+  band_real.compute(x, yerr2);
+  genrp::BandSolver band_complex(alpha, beta_real, alphe, beta_complex);
+  band_complex.compute(x, yerr2);
 
   std::cout << basic_real.dot_solve(y) << " ";
   std::cout << direct_real.dot_solve(y) << " " ;
-  stc::cout << std::endl;
+  std::cout << band_real.dot_solve(y) << " " ;
+  std::cout << std::endl;
   std::cout << basic_real.log_determinant() << " ";
   std::cout << direct_real.log_determinant() << " " ;
-  stc::cout << std::endl;
+  std::cout << band_real.log_determinant() << " " ;
+  std::cout << std::endl;
 
-  // genrp::BandSolver<double> band_real(alpha, beta_real);
-  // band_real.compute(x, yerr2);
-  // genrp::BandSolver<std::complex<double> > band_complex(alpha, beta_complex);
-  // band_complex.compute(x, yerr2);
+  std::cout << basic_complex.dot_solve(y) << " ";
+  std::cout << direct_complex.dot_solve(y) << " " ;
+  std::cout << band_complex.dot_solve(y) << " " ;
+  std::cout << std::endl;
+  std::cout << basic_complex.log_determinant() << " ";
+  std::cout << direct_complex.log_determinant() << " ";
+  std::cout << band_complex.log_determinant() << " ";
+  std::cout << std::endl;
 
   // genrp::SparseSolver<double> sparse_real(alpha, beta_real);
   // sparse_real.compute(x, yerr2);
