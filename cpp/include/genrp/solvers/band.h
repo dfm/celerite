@@ -35,7 +35,7 @@ public:
   // using DirectSolver<entry_t>::solve;
 
 private:
-  size_t block_size_, dim_ext_;
+  size_t width_, block_size_, dim_ext_;
   real_matrix_t factor_;
   Eigen::VectorXi ipiv_;
 
@@ -54,11 +54,13 @@ void BandSolver::compute (const Eigen::VectorXd& x, const Eigen::VectorXd& diag)
          j, k;
 
   // Compute the block sizes.
+  width_ = p_real + 2 * p_complex + 2;
+  if (p_complex == 0) width_ = p_real + 1;
   block_size_ = 2 * p_real + 4 * p_complex + 1;
   dim_ext_ = block_size_ * (n - 1) + 1;
 
   // Set up the extended matrix.
-  Eigen::internal::BandMatrix<double> ab(dim_ext_, dim_ext_, 2*block_size_, block_size_);
+  Eigen::internal::BandMatrix<double> ab(dim_ext_, dim_ext_, 2*width_, width_);
   ab.coeffs().setConstant(0.0);
   ipiv_.resize(dim_ext_);
 
@@ -76,7 +78,7 @@ void BandSolver::compute (const Eigen::VectorXd& x, const Eigen::VectorXd& diag)
                                           gamma_complex_imag(p_complex);
   for (k = 0; k < n_ - 1; ++k) {
     // Pre-compute the gammas.
-    dt = std::abs(x(k+1) - x(k));
+    dt = x(k+1) - x(k);
     gamma_real = exp(-this->beta_real_.array() * dt);
     ebt = exp(-this->beta_complex_.real().array() * dt);
     phi = this->beta_complex_.imag().array() * dt;
@@ -184,8 +186,6 @@ void BandSolver::compute (const Eigen::VectorXd& x, const Eigen::VectorXd& diag)
     }
   }
 
-  /* std::cout << ab.toDenseMatrix() << std::endl; */
-
   // Build and factorize the sparse matrix.
   band_factorize(ab, ipiv_);
   factor_ = ab.coeffs();
@@ -207,7 +207,7 @@ void BandSolver::solve (const Eigen::MatrixXd& b, double* x) const {
       bex(i*block_size_, j) = b(i, j);
 
   // Solve the extended system.
-  band_solve(block_size_, block_size_, factor_, ipiv_, bex);
+  band_solve(width_, width_, factor_, ipiv_, bex);
 
   // Copy the output.
   for (size_t j = 0; j < nrhs; ++j)
