@@ -1,27 +1,22 @@
-//
-// To build this example, run something like:
-//
-//  g++ -o demo demo.cpp -Iinclude -I/usr/local/include/eigen3 -O3
-//  ./demo 1024 10
-//
-// This will benchmark the solver with 1024 data points by averaging the
-// compute time over 10 iterations.
-//
-
 #include <iostream>
 #include <sys/time.h>
-#include <Eigen/Dense>
+#include <Eigen/Core>
 
 #include "genrp/solvers/basic.h"
 #include "genrp/solvers/direct.h"
 #include "genrp/solvers/band.h"
 
-// Timer for the benchmark.
-double get_timestamp ()
-{
-  struct timeval now;
-  gettimeofday (&now, NULL);
-  return double(now.tv_usec) * 1.0e-6 + double(now.tv_sec);
+#define DO_TEST(NAME, VAR1, VAR2)                            \
+{                                                            \
+  double base, comp, delta;                                  \
+  base = VAR1;                                               \
+  comp = VAR2;                                               \
+  delta = std::abs(base - comp);                             \
+  if (delta > 1e-10) {                                       \
+    std::cerr << "Test failed: '" << #NAME << "' - error: " << delta << std::endl; \
+    return 1;                                                \
+  } else                                                     \
+    std::cerr << "Test passed: '" << #NAME << "' - error: " << delta << std::endl; \
 }
 
 int main (int argc, char* argv[])
@@ -77,33 +72,15 @@ int main (int argc, char* argv[])
   genrp::BandSolver band_complex(alpha, beta_real, alpha, beta_complex);
   band_complex.compute(x, yerr2);
 
-  std::cout << basic_real.dot_solve(y) << " ";
-  std::cout << direct_real.dot_solve(y) << " " ;
-  std::cout << band_real.dot_solve(y) << " " ;
-  std::cout << std::endl;
-  std::cout << basic_real.log_determinant() << " ";
-  std::cout << direct_real.log_determinant() << " " ;
-  std::cout << band_real.log_determinant() << " " ;
-  std::cout << std::endl;
+  DO_TEST(direct_real_dot_solve, basic_real.dot_solve(y), direct_real.dot_solve(y))
+  DO_TEST(direct_real_log_det, basic_real.log_determinant(), direct_real.log_determinant())
+  DO_TEST(band_real_dot_solve, direct_real.dot_solve(y), band_real.dot_solve(y))
+  DO_TEST(band_real_log_det, basic_real.log_determinant(), band_real.log_determinant())
 
-  std::cout << basic_complex.dot_solve(y) << " ";
-  std::cout << direct_complex.dot_solve(y) << " " ;
-  std::cout << band_complex.dot_solve(y) << " " ;
-  std::cout << std::endl;
-  std::cout << basic_complex.log_determinant() << " ";
-  std::cout << direct_complex.log_determinant() << " ";
-  std::cout << band_complex.log_determinant() << " ";
-  std::cout << std::endl;
-
-  // genrp::SparseSolver<double> sparse_real(alpha, beta_real);
-  // sparse_real.compute(x, yerr2);
-  // genrp::SparseSolver<std::complex<double> > sparse_complex(alpha, beta_complex);
-  // sparse_complex.compute(x, yerr2);
-
-  // std::cout << band_real.dot_solve(y) << " " << direct_real.dot_solve(y) << " " << sparse_real.dot_solve(y) << std::endl;
-  // std::cout << band_real.log_determinant() << " " << direct_real.log_determinant() << " " << sparse_real.log_determinant() << std::endl;
-  // std::cout << band_complex.dot_solve(y) << " " << direct_complex.dot_solve(y) << " " << sparse_complex.dot_solve(y) << std::endl;
-  // std::cout << band_complex.log_determinant() << " " << direct_complex.log_determinant() << " " << sparse_complex.log_determinant() << std::endl;
+  DO_TEST(direct_complex_dot_solve, basic_complex.dot_solve(y), direct_complex.dot_solve(y))
+  DO_TEST(direct_complex_log_det, basic_complex.log_determinant(), direct_complex.log_determinant())
+  DO_TEST(band_complex_dot_solve, direct_complex.dot_solve(y), band_complex.dot_solve(y))
+  DO_TEST(band_complex_log_det, basic_complex.log_determinant(), band_complex.log_determinant())
 
   return 0;
 }
