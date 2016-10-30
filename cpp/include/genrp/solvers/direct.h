@@ -92,7 +92,7 @@ void DirectSolver::compute (const Eigen::VectorXd& x, const Eigen::VectorXd& dia
   n_ = x.rows();
 
   // Build the matrix.
-  double v, dx, asum = alpha_real_.sum() + 2.0 * alpha_complex_.sum();
+  double v, dx, asum = alpha_real_.sum() + alpha_complex_.sum();
   real_matrix_t K(n_, n_);
   for (size_t i = 0; i < n_; ++i) {
     K(i, i) = asum + diag(i);
@@ -101,7 +101,7 @@ void DirectSolver::compute (const Eigen::VectorXd& x, const Eigen::VectorXd& dia
       v = 0.0;
       dx = fabs(x(j) - x(i));
       v += (alpha_real_.array() * exp(-beta_real_.array() * dx)).sum();
-      v += 2.0 * (alpha_complex_.array() * exp(-beta_complex_.real().array() * dx) * cos(beta_complex_.imag().array() * dx)).sum();
+      v += (alpha_complex_.array() * exp(-beta_complex_.real().array() * dx) * cos(beta_complex_.imag().array() * dx)).sum();
       K(i, j) = v;
       K(j, i) = v;
     }

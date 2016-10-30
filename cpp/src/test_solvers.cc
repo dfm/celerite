@@ -44,7 +44,7 @@ int main (int argc, char* argv[])
   alpha.array() += 1.0;
   beta_real.array() += 1.0;
   beta_complex.array() += std::complex<double>(1.0, 1.0);
-  alpha_all << alpha, alpha, alpha;
+  alpha_all << alpha, 0.5 * alpha.array(), 0.5 * alpha.array();
   beta_all << beta_real.cast<std::complex<double> >(), beta_complex, beta_complex.conjugate();
 
   // Generate some fake data.
