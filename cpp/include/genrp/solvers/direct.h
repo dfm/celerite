@@ -1,11 +1,10 @@
-#ifndef _GENRP_SOLVER_DIRECT_
-#define _GENRP_SOLVER_DIRECT_
+#ifndef _GENRP_SOLVER_DIRECT_H_
+#define _GENRP_SOLVER_DIRECT_H_
 
 #include <cmath>
 #include <vector>
 #include <complex>
 #include <Eigen/Dense>
-#include <Eigen/Sparse>
 
 namespace genrp {
 
@@ -24,7 +23,10 @@ public:
                 const Eigen::VectorXd alpha_complex, const Eigen::VectorXcd beta_complex);
 
   virtual ~DirectSolver () {};
-  // void alpha_and_beta (const Eigen::VectorXd alpha, const vector_t beta);
+  void alpha_and_beta (const Eigen::VectorXd alpha, const Eigen::VectorXd beta);
+  void alpha_and_beta (const Eigen::VectorXd alpha, const Eigen::VectorXcd beta);
+  void alpha_and_beta (const Eigen::VectorXd alpha_real, const Eigen::VectorXd beta_real,
+                       const Eigen::VectorXd alpha_complex, const Eigen::VectorXcd beta_complex);
   virtual void compute (const Eigen::VectorXd& x, const Eigen::VectorXd& diag);
   virtual void solve (const Eigen::MatrixXd& b, double* x) const;
   double dot_solve (const Eigen::VectorXd& b) const;
@@ -77,12 +79,32 @@ DirectSolver::DirectSolver (const Eigen::VectorXd alpha_real, const Eigen::Vecto
   assert ((alpha_complex_.rows() == beta_complex_.rows()) && "DIMENSION_MISMATCH");
 }
 
-// template <typename entry_t>
-// void DirectSolver<entry_t>::alpha_and_beta (const Eigen::VectorXd alpha, const Eigen::Matrix<entry_t, Eigen::Dynamic, 1> beta) {
-//   p_ = alpha.rows();
-//   alpha_ = alpha;
-//   beta_ = beta;
-// }
+void DirectSolver::alpha_and_beta (const Eigen::VectorXd alpha, const Eigen::VectorXd beta)
+{
+  p_real_ = alpha.rows();
+  p_complex_ = 0;
+  alpha_real_ = alpha;
+  beta_real_ = beta;
+}
+
+void DirectSolver::alpha_and_beta (const Eigen::VectorXd alpha, const Eigen::VectorXcd beta)
+{
+  p_real_ = 0;
+  p_complex_ = alpha.rows();
+  alpha_complex_ = alpha;
+  beta_complex_ = beta;
+}
+
+void DirectSolver::alpha_and_beta (const Eigen::VectorXd alpha_real, const Eigen::VectorXd beta_real,
+                                   const Eigen::VectorXd alpha_complex, const Eigen::VectorXcd beta_complex)
+{
+  p_real_ = alpha_real.rows();
+  p_complex_ = alpha_complex.rows();
+  alpha_real_ = alpha_real;
+  beta_real_ = beta_real;
+  alpha_complex_ = alpha_complex;
+  beta_complex_ = beta_complex;
+}
 
 void DirectSolver::compute (const Eigen::VectorXd& x, const Eigen::VectorXd& diag) {
   assert ((x.rows() == diag.rows()) && "DIMENSION_MISMATCH");
@@ -131,37 +153,50 @@ double DirectSolver::log_determinant () const {
   return log_det_;
 }
 
-// // Eigen-free interface:
-// template <typename entry_t>
-// DirectSolver<entry_t>::DirectSolver (size_t p, const double* alpha, const entry_t* beta) {
-//   p_ = p;
-//   alpha_ = Eigen::Map<const Eigen::Matrix<double, Eigen::Dynamic, 1> >(alpha, p, 1);
-//   beta_ = Eigen::Map<const Eigen::Matrix<entry_t, Eigen::Dynamic, 1> >(beta, p, 1);
-// }
-//
-// template <typename entry_t>
-// void DirectSolver<entry_t>::compute (size_t n, const double* t, const double* diag) {
-//   typedef Eigen::Map<const Eigen::Matrix<double, Eigen::Dynamic, 1> > vector_t;
-//   compute(vector_t(t, n, 1), vector_t(diag, n, 1));
-// }
-//
-// template <typename entry_t>
-// void DirectSolver<entry_t>::solve (const double* b, double* x) const {
-//   Eigen::Map<const Eigen::Matrix<double, Eigen::Dynamic, 1> > bin(b, n_, 1);
-//   solve(bin, x);
-// }
-//
-// template <typename entry_t>
-// void DirectSolver<entry_t>::solve (size_t nrhs, const double* b, double* x) const {
-//   Eigen::Map<const Eigen::Matrix<double, Eigen::Dynamic, 1> > bin(b, n_, nrhs);
-//   solve(bin, x);
-// }
-//
-// template <typename entry_t>
-// double DirectSolver<entry_t>::dot_solve (const double* b) const {
-//   Eigen::Map<const Eigen::Matrix<double, Eigen::Dynamic, 1> > bin(b, n_, 1);
-//   return dot_solve(bin);
-// }
+// Eigen-free interface:
+DirectSolver::DirectSolver (size_t p, const double* alpha, const double* beta) {
+  p_real_ = p;
+  p_complex_ = 0;
+  alpha_real_ = Eigen::Map<const Eigen::VectorXd>(alpha, p, 1);
+  beta_real_ = Eigen::Map<const Eigen::VectorXd>(beta, p, 1);
+}
+
+DirectSolver::DirectSolver (size_t p, const double* alpha, const std::complex<double>* beta) {
+  p_real_ = 0;
+  p_complex_ = p;
+  alpha_complex_ = Eigen::Map<const Eigen::VectorXd>(alpha, p, 1);
+  beta_complex_ = Eigen::Map<const Eigen::VectorXcd>(beta, p, 1);
+}
+
+DirectSolver::DirectSolver (size_t p_real, const double* alpha_real, const double* beta_real,
+                            size_t p_complex, const double* alpha_complex, const std::complex<double>* beta_complex) {
+  p_real_ = p_real;
+  p_complex_ = p_real;
+  alpha_real_ = Eigen::Map<const Eigen::VectorXd>(alpha_real, p_real, 1);
+  beta_real_ = Eigen::Map<const Eigen::VectorXd>(beta_real, p_real, 1);
+  alpha_complex_ = Eigen::Map<const Eigen::VectorXd>(alpha_complex, p_complex, 1);
+  beta_complex_ = Eigen::Map<const Eigen::VectorXcd>(beta_complex, p_complex, 1);
+}
+
+void DirectSolver::compute (size_t n, const double* t, const double* diag) {
+  typedef Eigen::Map<const Eigen::Matrix<double, Eigen::Dynamic, 1> > vector_t;
+  compute(vector_t(t, n, 1), vector_t(diag, n, 1));
+}
+
+void DirectSolver::solve (const double* b, double* x) const {
+  Eigen::Map<const Eigen::MatrixXd> bin(b, n_, 1);
+  solve(bin, x);
+}
+
+void DirectSolver::solve (size_t nrhs, const double* b, double* x) const {
+  Eigen::Map<const Eigen::MatrixXd> bin(b, n_, nrhs);
+  solve(bin, x);
+}
+
+double DirectSolver::dot_solve (const double* b) const {
+  Eigen::Map<const Eigen::VectorXd> bin(b, n_);
+  return dot_solve(bin);
+}
 
 };
 
