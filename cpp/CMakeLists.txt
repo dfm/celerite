@@ -102,7 +102,7 @@ if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
 endif ()
 
 # Disable asserts for efficiency.
-add_definitions(-DNDEBUG)
+# add_definitions(-DNDEBUG)
 
 # Build the examples.
 add_subdirectory(src)

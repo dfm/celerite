@@ -10,7 +10,7 @@
 
 namespace genrp {
 
-class BandSolver : public DirectSolver<entry_t> {
+class BandSolver : public DirectSolver {
   typedef Eigen::Matrix<double, Eigen::Dynamic, 1> real_vector_t;
   typedef Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> real_matrix_t;
   typedef Eigen::Matrix<std::complex<double>, Eigen::Dynamic, 1> complex_vector_t;
@@ -43,7 +43,7 @@ private:
 
 void BandSolver::compute (const Eigen::VectorXd& x, const Eigen::VectorXd& diag) {
   // Check dimensions.
-  assert ((x.rows() != diag.rows()) && "DIMENSION_MISMATCH");
+  assert ((x.rows() == diag.rows()) && "DIMENSION_MISMATCH");
   this->n_ = x.rows();
 
   // Dimensions.
@@ -51,119 +51,168 @@ void BandSolver::compute (const Eigen::VectorXd& x, const Eigen::VectorXd& diag)
          p_complex = this->p_complex_,
          p = p_real + p_complex,
          n = this->n_,
-         m1 = p_real + 2*(p - p_real + 1);
+         j, k;
 
-  if (p_complex == 0) m1 = p_real + 1;
-
-  // Compute the block sizes: Algorithm 1
-  block_size_ = 2 * m1 + 1;
-  dim_ext_ = (4 * p_complex_ + 2 * p_real_ + 1) * (n - 1) + 1;
+  // Compute the block sizes.
+  block_size_ = 2 * p_real + 4 * p_complex + 1;
+  dim_ext_ = block_size_ * (n - 1) + 1;
 
   // Set up the extended matrix.
-  Eigen::internal::BandMatrix<entry_t> ab(dim_ext_, dim_ext_, 2*(p_+1), p_+1);
+  Eigen::internal::BandMatrix<double> ab(dim_ext_, dim_ext_, 2*block_size_, block_size_);
+  ab.coeffs().setConstant(0.0);
   ipiv_.resize(dim_ext_);
 
-  double ebt, phi;
-  real_vector_t gamma_real(p), gamma_imag = real_vector_t::Zero(p);
+  // Start with the diagonal.
+  double sum_alpha = this->alpha_real_.sum() + this->alpha_complex_.sum();
+  for (k = 0; k < n_; ++k)
+    ab.diagonal()(k*block_size_) = diag(k) + sum_alpha;
 
-  // Special case for the first row. Eq 61 and l_1 = 0.
-  aex
-  for ()
+  // Fill in all but the last block.
+  int block_id, start_a, start_b, a, b;
+  double dt, value;
+  Eigen::Array<double, Eigen::Dynamic, 1> ebt, phi,
+                                          gamma_real(p_real),
+                                          gamma_complex_real(p_complex),
+                                          gamma_complex_imag(p_complex);
+  for (k = 0; k < n_ - 1; ++k) {
+    // Pre-compute the gammas.
+    dt = std::abs(x(k+1) - x(k));
+    gamma_real = exp(-this->beta_real_.array() * dt);
+    ebt = exp(-this->beta_complex_.real().array() * dt);
+    phi = this->beta_complex_.imag().array() * dt;
+    gamma_complex_real = ebt * cos(phi);
+    gamma_complex_imag = -ebt * sin(phi);
 
-
-  real_matrix_t gamma_real(p, n_ - 1),
-                gamma_imag = real_matrix_t::Zero(p, n_ - 1);
-  for (size_t i = 0; i < n_ - 1; ++i) {
-    double delta = fabs(x(i+1) - x(i));
-    for (size_t k = 0; k < p_real; ++k)
-      gamma_real_(k, i) = exp(-this->beta_real_(k) * delta);
-    for (size_t k = 0; k < p_real; ++k) {
-      ebt = exp(-this->beta_complex_(k).real() * delta);
-      phi = this->beta_complex_(k).imag() * delta;
-      gamma_real(p_real + k, i) = ebt * cos(phi);
-      gamma_imag(p_real + k, i) = -ebt * sin(phi);
-    }
-  }
-
-  // Pre-compute sum(alpha) -- it will be added to the diagonal.
-  double sum_alpha = this->alpha_real_.sum();
-
-  // Initialize to zero.
-  ab.coeffs().setConstant(0.0);
-
-  for (size_t i = 0; i < n_; ++i)  // Line 3
-    ab.diagonal()(i*block_size_) = diag(i) + sum_alpha;
-
-  int a, b;
-  entry_t value;
-  for (size_t i = 0; i < n_ - 1; ++i) {  // Line 5
-    size_t im1n = i * block_size_,        // (i - 1) * n
-           in = (i + 1) * block_size_;    // i * n
-    for (size_t k = 0; k < p_; ++k) {
-      // Lines 6-7:
-      a = im1n;
-      b = im1n+k+1;
-      value = gamma(k, i);
+    // Equations for the rs:
+    block_id = block_size_ * k;
+    start_b = block_id + 1;
+    for (j = 0; j < p_real; ++j) {
+      a = block_id;
+      b = start_b + j;
+      value = gamma_real(j);
       ab.diagonal(b-a)(a) = value;
-      ab.diagonal(a-b)(a) = get_conj(value);
-
-      // Lines 8-9:
-      a = im1n+p_+k+1;
-      b = in;
-      value = this->alpha_(k);
+      ab.diagonal(a-b)(a) = value;
+    }
+    start_b += p_real;
+    for (j = 0; j < p_complex; ++j) {
+      a = block_id;
+      b = start_b + 2*j;
+      value = gamma_complex_real(j);
       ab.diagonal(b-a)(a) = value;
       ab.diagonal(a-b)(a) = value;
 
-      // Lines 10-11:
-      a = im1n+k+1;
-      b = im1n+p_+k+1;
+      b = start_b + 2*j + 1;
+      value = gamma_complex_imag(j);
+      ab.diagonal(b-a)(a) = value;
+      ab.diagonal(a-b)(a) = value;
+    }
+
+    // Equations for the ls:
+    start_a = block_id + 1;
+    start_b += 2*p_complex;
+    for (j = 0; j < p_real; ++j) {
+      a = start_a + j;
+      b = start_b + j;
       value = -1.0;
       ab.diagonal(b-a)(a) = value;
       ab.diagonal(a-b)(a) = value;
     }
-  }
-
-  for (size_t i = 0; i < n_ - 2; ++i) {  // Line 13
-    size_t im1n = i * block_size_,        // (i - 1) * n
-           in = (i + 1) * block_size_;    // i * n
-    for (size_t k = 0; k < p_; ++k) {
-      // Lines 14-15:
-      a = im1n+p_+k+1;
-      b = in+k+1;
-      value = gamma(k, i+1);
+    start_a += p_real;
+    start_b += p_real;
+    for (j = 0; j < p_complex; ++j) {
+      a = start_a + 2*j;
+      b = start_b + 2*j;
+      value = -1.0;
       ab.diagonal(b-a)(a) = value;
-      ab.diagonal(a-b)(a) = get_conj(value);
+      ab.diagonal(a-b)(a) = value;
+
+      a += 1;
+      b += 1;
+      value = 1.0;
+      ab.diagonal(b-a)(a) = value;
+      ab.diagonal(a-b)(a) = value;
+    }
+
+    // Equations for the k+1 terms:
+    start_a += 2*p_complex;
+    start_b += 2*p_complex;
+    for (j = 0; j < p_real; ++j) {
+      a = start_a + j;
+      b = start_b;
+      value = this->alpha_real_(j);
+      ab.diagonal(b-a)(a) = value;
+      ab.diagonal(a-b)(a) = value;
+
+      if (k > 0) {
+        a -= block_size_;
+        b = start_b + 1 + j - block_size_;
+        value = gamma_real(j);
+        ab.diagonal(b-a)(a) = value;
+        ab.diagonal(a-b)(a) = value;
+      }
+    }
+    start_a += p_real;
+    for (j = 0; j < p_complex; ++j) {
+      a = start_a + 2*j;
+      b = start_b;
+      value = this->alpha_complex_(j);
+      ab.diagonal(b-a)(a) = value;
+      ab.diagonal(a-b)(a) = value;
+
+      if (k > 0) {
+        a -= block_size_;
+        b = start_b + 1 + p_real + 2*j - block_size_;
+        value = gamma_complex_real(j);
+        ab.diagonal(b-a)(a) = value;
+        ab.diagonal(a-b)(a) = value;
+
+        b += 1;
+        value = gamma_complex_imag(j);
+        ab.diagonal(b-a)(a) = value;
+        ab.diagonal(a-b)(a) = value;
+
+        a += 1;
+        b -= 1;
+        ab.diagonal(b-a)(a) = value;
+        ab.diagonal(a-b)(a) = value;
+
+        b += 1;
+        value = -gamma_complex_real(j);
+        ab.diagonal(b-a)(a) = value;
+        ab.diagonal(a-b)(a) = value;
+      }
     }
   }
+
+  /* std::cout << ab.toDenseMatrix() << std::endl; */
 
   // Build and factorize the sparse matrix.
   band_factorize(ab, ipiv_);
   factor_ = ab.coeffs();
 
   // Deal with negative values in the diagonal.
-  Eigen::VectorXcd d = ab.diagonal().template cast<std::complex<double> >();
+  Eigen::VectorXcd d = ab.diagonal().cast<std::complex<double> >();
 
-  this->log_det_ = get_real(log(d.array()).sum());
+  this->log_det_ = log(d.array()).real().sum();
 }
 
-template <typename entry_t>
-void BandSolver<entry_t>::solve (const Eigen::MatrixXd& b, double* x) const {
-  assert ((b.rows() != this->n_) && "DIMENSION_MISMATCH");
+void BandSolver::solve (const Eigen::MatrixXd& b, double* x) const {
+  assert ((b.rows() == this->n_) && "DIMENSION_MISMATCH");
   size_t nrhs = b.cols();
 
   // Pad the input vector to the extended size.
-  matrix_t bex = matrix_t::Zero(dim_ext_, nrhs);
+  real_matrix_t bex = real_matrix_t::Zero(dim_ext_, nrhs);
   for (size_t j = 0; j < nrhs; ++j)
     for (size_t i = 0; i < this->n_; ++i)
       bex(i*block_size_, j) = b(i, j);
 
   // Solve the extended system.
-  band_solve(this->p_+1, this->p_+1, factor_, ipiv_, bex);
+  band_solve(block_size_, block_size_, factor_, ipiv_, bex);
 
   // Copy the output.
   for (size_t j = 0; j < nrhs; ++j)
     for (size_t i = 0; i < this->n_; ++i)
-      x[i+j*nrhs] = get_real(bex(i*block_size_, j));
+      x[i+j*nrhs] = bex(i*block_size_, j);
 }
 
 };

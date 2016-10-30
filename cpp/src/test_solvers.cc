@@ -74,7 +74,7 @@ int main (int argc, char* argv[])
 
   genrp::BandSolver band_real(alpha, beta_real);
   band_real.compute(x, yerr2);
-  genrp::BandSolver band_complex(alpha, beta_real, alphe, beta_complex);
+  genrp::BandSolver band_complex(alpha, beta_real, alpha, beta_complex);
   band_complex.compute(x, yerr2);
 
   std::cout << basic_real.dot_solve(y) << " ";
