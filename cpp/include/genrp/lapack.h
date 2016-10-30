@@ -48,14 +48,11 @@ extern "C" void zgbtrs_(char* trans,
 namespace genrp {
 
 // Real band solver:
-int band_factorize (Eigen::internal::BandMatrix<double >& ab, Eigen::VectorXi& ipiv) {
-  int m = ab.rows(),
-      n = ab.cols(),
-      kl = ab.subs(),
-      ku = ab.supers() - kl,
-      ldab = ab.coeffs().outerStride(),
+int band_factorize (int m, int kl, int ku, Eigen::MatrixXd& ab, Eigen::VectorXi& ipiv) {
+  int n = ab.cols(),
+      ldab = ab.outerStride(),
       info;
-  dgbtrf_(&m, &n, &kl, &ku, ab.coeffs().data(), &ldab, ipiv.data(), &info);
+  dgbtrf_(&m, &n, &kl, &ku, ab.data(), &ldab, ipiv.data(), &info);
   return info;
 }
 

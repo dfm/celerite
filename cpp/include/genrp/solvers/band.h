@@ -2,33 +2,27 @@
 #define _GENRP_SOLVER_BAND_
 
 #include <cmath>
-#include <Eigen/Dense>
+#include <Eigen/Core>
 
-#include "genrp/utils.h"
 #include "genrp/lapack.h"
 #include "genrp/solvers/direct.h"
 
 namespace genrp {
 
 class BandSolver : public DirectSolver {
-  typedef Eigen::Matrix<double, Eigen::Dynamic, 1> real_vector_t;
-  typedef Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> real_matrix_t;
-  typedef Eigen::Matrix<std::complex<double>, Eigen::Dynamic, 1> complex_vector_t;
-  typedef Eigen::Matrix<std::complex<double>, Eigen::Dynamic, Eigen::Dynamic> complex_matrix_t;
-
 public:
   BandSolver () : DirectSolver() {};
-  BandSolver (const real_vector_t alpha, const real_vector_t beta)
+  BandSolver (const Eigen::VectorXd alpha, const Eigen::VectorXd beta)
     : DirectSolver(alpha, beta) {};
-  BandSolver (const real_vector_t alpha, const complex_vector_t beta)
+  BandSolver (const Eigen::VectorXd alpha, const Eigen::VectorXcd beta)
     : DirectSolver(alpha, beta) {};
-  BandSolver (const real_vector_t alpha_real, const real_vector_t beta_real,
-              const real_vector_t alpha_complex, const complex_vector_t beta_complex)
+  BandSolver (const Eigen::VectorXd alpha_real, const Eigen::VectorXd beta_real,
+              const Eigen::VectorXd alpha_complex, const Eigen::VectorXcd beta_complex)
     : DirectSolver(alpha_real, beta_real, alpha_complex, beta_complex) {};
   // BandSolver (size_t p, const double* alpha, const entry_t* beta) : DirectSolver<entry_t>(p, alpha, beta) {};
 
-  void compute (const real_vector_t& x, const real_vector_t& diag);
-  void solve (const real_matrix_t& b, double* x) const;
+  void compute (const Eigen::VectorXd& x, const Eigen::VectorXd& diag);
+  void solve (const Eigen::MatrixXd& b, double* x) const;
 
   // // Needed for the Eigen-free interface.
   // using DirectSolver<entry_t>::compute;
@@ -36,10 +30,16 @@ public:
 
 private:
   size_t width_, block_size_, dim_ext_;
-  real_matrix_t factor_;
+
+  Eigen::MatrixXd factor_;
   Eigen::VectorXi ipiv_;
 
 };
+
+// Function for working with band matrices.
+inline double& get_band_element (Eigen::MatrixXd& m, int width, int i, int j) {
+  return m(2*width - i, std::max(0, i) + j);
+}
 
 void BandSolver::compute (const Eigen::VectorXd& x, const Eigen::VectorXd& diag) {
   // Check dimensions.
@@ -60,6 +60,8 @@ void BandSolver::compute (const Eigen::VectorXd& x, const Eigen::VectorXd& diag)
   dim_ext_ = block_size_ * (n - 1) + 1;
 
   // Set up the extended matrix.
+  factor_.resize(1+3*width_, dim_ext_);
+  factor_.setConstant(0.0);
   Eigen::internal::BandMatrix<double> ab(dim_ext_, dim_ext_, 2*width_, width_);
   ab.coeffs().setConstant(0.0);
   ipiv_.resize(dim_ext_);
@@ -67,15 +69,13 @@ void BandSolver::compute (const Eigen::VectorXd& x, const Eigen::VectorXd& diag)
   // Start with the diagonal.
   double sum_alpha = this->alpha_real_.sum() + this->alpha_complex_.sum();
   for (k = 0; k < n_; ++k)
-    ab.diagonal()(k*block_size_) = diag(k) + sum_alpha;
+    get_band_element(factor_, width_, 0, k*block_size_) = diag(k) + sum_alpha;
 
   // Fill in all but the last block.
   int block_id, start_a, start_b, a, b;
   double dt, value;
-  Eigen::Array<double, Eigen::Dynamic, 1> ebt, phi,
-                                          gamma_real(p_real),
-                                          gamma_complex_real(p_complex),
-                                          gamma_complex_imag(p_complex);
+  Eigen::ArrayXd ebt, phi, gamma_real(p_real), gamma_complex_real(p_complex),
+                 gamma_complex_imag(p_complex);
   for (k = 0; k < n_ - 1; ++k) {
     // Pre-compute the gammas.
     dt = x(k+1) - x(k);
@@ -92,21 +92,21 @@ void BandSolver::compute (const Eigen::VectorXd& x, const Eigen::VectorXd& diag)
       a = block_id;
       b = start_b + j;
       value = gamma_real(j);
-      ab.diagonal(b-a)(a) = value;
-      ab.diagonal(a-b)(a) = value;
+      get_band_element(factor_, width_, b-a, a) = value;
+      get_band_element(factor_, width_, a-b, a) = value;
     }
     start_b += p_real;
     for (j = 0; j < p_complex; ++j) {
       a = block_id;
       b = start_b + 2*j;
       value = 2.0 * gamma_complex_real(j);
-      ab.diagonal(b-a)(a) = value;
-      ab.diagonal(a-b)(a) = value;
+      get_band_element(factor_, width_, b-a, a) = value;
+      get_band_element(factor_, width_, a-b, a) = value;
 
       b = start_b + 2*j + 1;
       value = 2.0 * gamma_complex_imag(j);
-      ab.diagonal(b-a)(a) = value;
-      ab.diagonal(a-b)(a) = value;
+      get_band_element(factor_, width_, b-a, a) = value;
+      get_band_element(factor_, width_, a-b, a) = value;
     }
 
     // Equations for the ls:
@@ -116,8 +116,8 @@ void BandSolver::compute (const Eigen::VectorXd& x, const Eigen::VectorXd& diag)
       a = start_a + j;
       b = start_b + j;
       value = -1.0;
-      ab.diagonal(b-a)(a) = value;
-      ab.diagonal(a-b)(a) = value;
+      get_band_element(factor_, width_, b-a, a) = value;
+      get_band_element(factor_, width_, a-b, a) = value;
     }
     start_a += p_real;
     start_b += p_real;
@@ -125,14 +125,14 @@ void BandSolver::compute (const Eigen::VectorXd& x, const Eigen::VectorXd& diag)
       a = start_a + 2*j;
       b = start_b + 2*j;
       value = -1.0;
-      ab.diagonal(b-a)(a) = value;
-      ab.diagonal(a-b)(a) = value;
+      get_band_element(factor_, width_, b-a, a) = value;
+      get_band_element(factor_, width_, a-b, a) = value;
 
       a += 1;
       b += 1;
       value = 1.0;
-      ab.diagonal(b-a)(a) = value;
-      ab.diagonal(a-b)(a) = value;
+      get_band_element(factor_, width_, b-a, a) = value;
+      get_band_element(factor_, width_, a-b, a) = value;
     }
 
     // Equations for the k+1 terms:
@@ -142,15 +142,15 @@ void BandSolver::compute (const Eigen::VectorXd& x, const Eigen::VectorXd& diag)
       a = start_a + j;
       b = start_b;
       value = this->alpha_real_(j);
-      ab.diagonal(b-a)(a) = value;
-      ab.diagonal(a-b)(a) = value;
+      get_band_element(factor_, width_, b-a, a) = value;
+      get_band_element(factor_, width_, a-b, a) = value;
 
       if (k > 0) {
         a -= block_size_;
         b = start_b + 1 + j - block_size_;
         value = gamma_real(j);
-        ab.diagonal(b-a)(a) = value;
-        ab.diagonal(a-b)(a) = value;
+        get_band_element(factor_, width_, b-a, a) = value;
+        get_band_element(factor_, width_, a-b, a) = value;
       }
     }
     start_a += p_real;
@@ -158,40 +158,39 @@ void BandSolver::compute (const Eigen::VectorXd& x, const Eigen::VectorXd& diag)
       a = start_a + 2*j;
       b = start_b;
       value = 0.5 * this->alpha_complex_(j);
-      ab.diagonal(b-a)(a) = value;
-      ab.diagonal(a-b)(a) = value;
+      get_band_element(factor_, width_, b-a, a) = value;
+      get_band_element(factor_, width_, a-b, a) = value;
 
       if (k > 0) {
         a -= block_size_;
         b = start_b + 1 + p_real + 2*j - block_size_;
         value = gamma_complex_real(j);
-        ab.diagonal(b-a)(a) = value;
-        ab.diagonal(a-b)(a) = value;
+        get_band_element(factor_, width_, b-a, a) = value;
+        get_band_element(factor_, width_, a-b, a) = value;
 
         b += 1;
         value = gamma_complex_imag(j);
-        ab.diagonal(b-a)(a) = value;
-        ab.diagonal(a-b)(a) = value;
+        get_band_element(factor_, width_, b-a, a) = value;
+        get_band_element(factor_, width_, a-b, a) = value;
 
         a += 1;
         b -= 1;
-        ab.diagonal(b-a)(a) = value;
-        ab.diagonal(a-b)(a) = value;
+        get_band_element(factor_, width_, b-a, a) = value;
+        get_band_element(factor_, width_, a-b, a) = value;
 
         b += 1;
         value = -gamma_complex_real(j);
-        ab.diagonal(b-a)(a) = value;
-        ab.diagonal(a-b)(a) = value;
+        get_band_element(factor_, width_, b-a, a) = value;
+        get_band_element(factor_, width_, a-b, a) = value;
       }
     }
   }
 
   // Build and factorize the sparse matrix.
-  band_factorize(ab, ipiv_);
-  factor_ = ab.coeffs();
+  band_factorize(dim_ext_, width_, width_, factor_, ipiv_);
 
   // Deal with negative values in the diagonal.
-  Eigen::VectorXcd d = ab.diagonal().cast<std::complex<double> >();
+  Eigen::VectorXcd d = factor_.row(2*width_).cast<std::complex<double> >();
 
   this->log_det_ = log(d.array()).real().sum();
 }
@@ -201,7 +200,7 @@ void BandSolver::solve (const Eigen::MatrixXd& b, double* x) const {
   size_t nrhs = b.cols();
 
   // Pad the input vector to the extended size.
-  real_matrix_t bex = real_matrix_t::Zero(dim_ext_, nrhs);
+  Eigen::MatrixXd bex = Eigen::MatrixXd::Zero(dim_ext_, nrhs);
   for (size_t j = 0; j < nrhs; ++j)
     for (size_t i = 0; i < this->n_; ++i)
       bex(i*block_size_, j) = b(i, j);
