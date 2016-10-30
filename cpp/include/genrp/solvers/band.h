@@ -19,14 +19,20 @@ public:
   BandSolver (const Eigen::VectorXd alpha_real, const Eigen::VectorXd beta_real,
               const Eigen::VectorXd alpha_complex, const Eigen::VectorXcd beta_complex)
     : DirectSolver(alpha_real, beta_real, alpha_complex, beta_complex) {};
-  // BandSolver (size_t p, const double* alpha, const entry_t* beta) : DirectSolver<entry_t>(p, alpha, beta) {};
+  BandSolver (size_t p, const double* alpha, const double* beta)
+    : DirectSolver(p, alpha, beta) {};
+  BandSolver (size_t p, const double* alpha, const std::complex<double>* beta)
+    : DirectSolver(p, alpha, beta) {};
+  BandSolver (size_t p_real, const double* alpha_real, const double* beta_real,
+              size_t p_complex, const double* alpha_complex, const std::complex<double>* beta_complex)
+    : DirectSolver(p_real, alpha_real, beta_real, p_complex, alpha_complex, beta_complex) {};
 
   void compute (const Eigen::VectorXd& x, const Eigen::VectorXd& diag);
   void solve (const Eigen::MatrixXd& b, double* x) const;
 
-  // // Needed for the Eigen-free interface.
-  // using DirectSolver<entry_t>::compute;
-  // using DirectSolver<entry_t>::solve;
+  // Needed for the Eigen-free interface.
+  using DirectSolver::compute;
+  using DirectSolver::solve;
 
 private:
   size_t width_, block_size_, dim_ext_;

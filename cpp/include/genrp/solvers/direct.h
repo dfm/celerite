@@ -7,45 +7,42 @@
 #include <Eigen/Dense>
 #include <Eigen/Sparse>
 
-#include "genrp/utils.h"
-
 namespace genrp {
 
 class DirectSolver {
-  typedef Eigen::Matrix<double, Eigen::Dynamic, 1> real_vector_t;
-  typedef Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> real_matrix_t;
-  typedef Eigen::Matrix<std::complex<double>, Eigen::Dynamic, 1> complex_vector_t;
-  typedef Eigen::Matrix<std::complex<double>, Eigen::Dynamic, Eigen::Dynamic> complex_matrix_t;
-
 protected:
-  real_vector_t alpha_real_, alpha_complex_, beta_real_;
-  complex_vector_t beta_complex_;
+  Eigen::VectorXd alpha_real_, alpha_complex_, beta_real_;
+  Eigen::VectorXcd beta_complex_;
   size_t n_, p_real_, p_complex_;
   double log_det_;
 
 public:
   DirectSolver () {};
-  DirectSolver (const real_vector_t alpha, const real_vector_t beta);
-  DirectSolver (const real_vector_t alpha, const complex_vector_t beta);
-  DirectSolver (const real_vector_t alpha_real, const real_vector_t beta_real,
-                const real_vector_t alpha_complex, const complex_vector_t beta_complex);
+  DirectSolver (const Eigen::VectorXd alpha, const Eigen::VectorXd beta);
+  DirectSolver (const Eigen::VectorXd alpha, const Eigen::VectorXcd beta);
+  DirectSolver (const Eigen::VectorXd alpha_real, const Eigen::VectorXd beta_real,
+                const Eigen::VectorXd alpha_complex, const Eigen::VectorXcd beta_complex);
 
   virtual ~DirectSolver () {};
   // void alpha_and_beta (const Eigen::VectorXd alpha, const vector_t beta);
-  virtual void compute (const real_vector_t& x, const real_vector_t& diag);
-  virtual void solve (const real_matrix_t& b, double* x) const;
-  double dot_solve (const real_vector_t& b) const;
+  virtual void compute (const Eigen::VectorXd& x, const Eigen::VectorXd& diag);
+  virtual void solve (const Eigen::MatrixXd& b, double* x) const;
+  double dot_solve (const Eigen::VectorXd& b) const;
   double log_determinant () const;
 
   // Eigen-free interface.
-  // DirectSolver (size_t p, const double* alpha, const entry_t* beta);
-  // void compute (size_t n, const double* t, const double* diag);
-  // void solve (const double* b, double* x) const;
-  // void solve (size_t nrhs, const double* b, double* x) const;
-  // double dot_solve (const double* b) const;
+  DirectSolver (size_t p, const double* alpha, const double* beta);
+  DirectSolver (size_t p, const double* alpha, const std::complex<double>* beta);
+  DirectSolver (size_t p_real, const double* alpha_real, const double* beta_real,
+                size_t p_complex, const double* alpha_complex, const std::complex<double>* beta_complex);
+
+  void compute (size_t n, const double* t, const double* diag);
+  void solve (const double* b, double* x) const;
+  void solve (size_t nrhs, const double* b, double* x) const;
+  double dot_solve (const double* b) const;
 
 private:
-  Eigen::LDLT<real_matrix_t> factor_;
+  Eigen::LDLT<Eigen::MatrixXd> factor_;
 
 };
 
@@ -93,7 +90,7 @@ void DirectSolver::compute (const Eigen::VectorXd& x, const Eigen::VectorXd& dia
 
   // Build the matrix.
   double v, dx, asum = alpha_real_.sum() + alpha_complex_.sum();
-  real_matrix_t K(n_, n_);
+  Eigen::MatrixXd K(n_, n_);
   for (size_t i = 0; i < n_; ++i) {
     K(i, i) = asum + diag(i);
 
@@ -116,7 +113,7 @@ void DirectSolver::solve (const Eigen::MatrixXd& b, double* x) const {
   assert ((b.rows() == n_) && "DIMENSION_MISMATCH");
   size_t nrhs = b.cols();
 
-  real_matrix_t result = factor_.solve(b);
+  Eigen::MatrixXd result = factor_.solve(b);
 
   // Copy the output.
   for (size_t j = 0; j < nrhs; ++j)
@@ -125,7 +122,7 @@ void DirectSolver::solve (const Eigen::MatrixXd& b, double* x) const {
 }
 
 double DirectSolver::dot_solve (const Eigen::VectorXd& b) const {
-  real_vector_t out(n_);
+  Eigen::VectorXd out(n_);
   solve(b, &(out(0)));
   return b.transpose() * out;
 }

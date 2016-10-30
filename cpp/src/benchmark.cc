@@ -10,7 +10,7 @@
 
 #include <iostream>
 #include <sys/time.h>
-#include <Eigen/Dense>
+#include <Eigen/Core>
 
 #include "genrp/solvers.h"
 
