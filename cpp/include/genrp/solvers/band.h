@@ -63,7 +63,7 @@ void BandSolver::compute (const Eigen::VectorXd& x, const Eigen::VectorXd& diag)
   ipiv_.resize(dim_ext_);
 
   // Start with the diagonal.
-  double sum_alpha = this->alpha_real_.sum() + this->alpha_complex_.sum();
+  double sum_alpha = this->alpha_real_.sum() + 2.0 * this->alpha_complex_.sum();
   for (k = 0; k < n_; ++k)
     ab.diagonal()(k*block_size_) = diag(k) + sum_alpha;
 
@@ -97,12 +97,12 @@ void BandSolver::compute (const Eigen::VectorXd& x, const Eigen::VectorXd& diag)
     for (j = 0; j < p_complex; ++j) {
       a = block_id;
       b = start_b + 2*j;
-      value = gamma_complex_real(j);
+      value = 2.0 * gamma_complex_real(j);
       ab.diagonal(b-a)(a) = value;
       ab.diagonal(a-b)(a) = value;
 
       b = start_b + 2*j + 1;
-      value = gamma_complex_imag(j);
+      value = 2.0 * gamma_complex_imag(j);
       ab.diagonal(b-a)(a) = value;
       ab.diagonal(a-b)(a) = value;
     }
