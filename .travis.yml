@@ -45,7 +45,7 @@ install:
     - cd python
     - CXX=g++ python setup.py build_ext -I../eigen-eigen-$EIGEN_HASH --inplace
 
-script: |
+script:
     - py.test -v genrp/tests.py
 
 # after_success:

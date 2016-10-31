@@ -2,6 +2,7 @@
 #define _GENRP_SOLVER_BAND_
 
 #include <cmath>
+#include <iostream>
 #include <Eigen/Core>
 
 #include "genrp/lapack.h"

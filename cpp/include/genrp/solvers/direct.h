@@ -171,7 +171,7 @@ DirectSolver::DirectSolver (size_t p, const double* alpha, const std::complex<do
 DirectSolver::DirectSolver (size_t p_real, const double* alpha_real, const double* beta_real,
                             size_t p_complex, const double* alpha_complex, const std::complex<double>* beta_complex) {
   p_real_ = p_real;
-  p_complex_ = p_real;
+  p_complex_ = p_complex;
   alpha_real_ = Eigen::Map<const Eigen::VectorXd>(alpha_real, p_real, 1);
   beta_real_ = Eigen::Map<const Eigen::VectorXd>(beta_real, p_real, 1);
   alpha_complex_ = Eigen::Map<const Eigen::VectorXd>(alpha_complex, p_complex, 1);

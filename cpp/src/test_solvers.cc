@@ -29,15 +29,17 @@ int main (int argc, char* argv[])
   if (argc >= 4) niter = atoi(argv[3]);
 
   // Set up the coefficients.
-  Eigen::VectorXd alpha = Eigen::VectorXd::Random(nterms),
-                  beta_real = Eigen::VectorXd::Random(nterms),
-                  alpha_all(3*nterms);
+  Eigen::VectorXd alpha_real = Eigen::VectorXd::Random(nterms + 1),
+                  alpha_complex = Eigen::VectorXd::Random(nterms),
+                  beta_real = Eigen::VectorXd::Random(nterms + 1),
+                  alpha_all(3*nterms + 1);
   Eigen::VectorXcd beta_complex = Eigen::VectorXcd::Random(nterms),
-                   beta_all(3*nterms);
-  alpha.array() += 1.0;
+                   beta_all(3*nterms + 1);
+  alpha_real.array() += 1.0;
+  alpha_complex.array() += 1.0;
   beta_real.array() += 1.0;
   beta_complex.array() += std::complex<double>(1.0, 1.0);
-  alpha_all << alpha, 0.5 * alpha.array(), 0.5 * alpha.array();
+  alpha_all << alpha_real, 0.5 * alpha_complex.array(), 0.5 * alpha_complex.array();
   beta_all << beta_real.cast<std::complex<double> >(), beta_complex, beta_complex.conjugate();
 
   // Generate some fake data.
@@ -55,14 +57,14 @@ int main (int argc, char* argv[])
   // Compute the y values.
   y = sin(x.array());
 
-  genrp::DirectSolver direct_real(alpha, beta_real);
+  genrp::DirectSolver direct_real(alpha_real, beta_real);
   direct_real.compute(x, yerr2);
-  genrp::DirectSolver direct_complex(alpha, beta_real, alpha, beta_complex);
+  genrp::DirectSolver direct_complex(alpha_real, beta_real, alpha_complex, beta_complex);
   direct_complex.compute(x, yerr2);
 
-  genrp::BandSolver band_real(alpha, beta_real);
+  genrp::BandSolver band_real(alpha_real, beta_real);
   band_real.compute(x, yerr2);
-  genrp::BandSolver band_complex(alpha, beta_real, alpha, beta_complex);
+  genrp::BandSolver band_complex(alpha_real, beta_real, alpha_complex, beta_complex);
   band_complex.compute(x, yerr2);
 
   DO_TEST(band_real_dot_solve, direct_real.dot_solve(y), band_real.dot_solve(y))
