@@ -11,3 +11,4 @@ macro (GENRP_TEST NAME)
 endmacro (GENRP_TEST)
 
 genrp_test(test_solvers)
+genrp_test(test_gp)

@@ -33,7 +33,7 @@ public:
     return fp2a * q;
   };
 
-  virtual double beta () const {
+  double beta () const {
     return tpq;
   };
 
@@ -56,15 +56,13 @@ public:
     tpq = 2.0 * M_PI * q;
   };
 
-private:
+protected:
   double a, q, fp2a, tpq;
 };
 
 class PeriodicTerm : public Term {
-
-  PeriodicTerm (double log_a, double log_q, double log_f) : periodic(true) {
-    this->log_a(log_a);
-    this->log_q(log_q);
+public:
+  PeriodicTerm (double log_a, double log_q, double log_f) : Term(log_a, log_q) {
     this->log_f(log_f);
   };
 
@@ -116,6 +114,7 @@ public:
   size_t size () const {
     size_t size = 0;
     for (size_t i = 0; i < terms_.size(); ++i) size += terms_[i].size();
+    for (size_t i = 0; i < pterms_.size(); ++i) size += pterms_[i].size();
     return size;
   };
   size_t num_terms () const { return terms_.size(); };
@@ -159,18 +158,20 @@ public:
   };
 
   Eigen::VectorXd params () const {
+    size_t i, count;
     Eigen::VectorXd pars(size());
-    for (size_t i = 0, count = 0; i < terms_.size(); ++i, count += 2)
+    for (i = 0, count = 0; i < terms_.size(); ++i, count += 2)
       terms_[i].get_params(&(pars(count)));
-    for (size_t i = 0; i < pterms_.size(); ++i, count += 3)
+    for (i = 0; i < pterms_.size(); ++i, count += 3)
       pterms_[i].get_params(&(pars(count)));
     return pars;
   };
 
   void params (const Eigen::VectorXd& pars) {
-    for (size_t i = 0, count = 0; i < terms_.size(); ++i, count += 2)
+    size_t i, count;
+    for (i = 0, count = 0; i < terms_.size(); ++i, count += 2)
       terms_[i].set_params(&(pars(count)));
-    for (size_t i = 0; i < pterms_.size(); ++i, count += 3)
+    for (i = 0; i < pterms_.size(); ++i, count += 3)
       pterms_[i].set_params(&(pars(count)));
   };
 
