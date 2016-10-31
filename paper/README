@@ -1,0 +1,8 @@
+The exponential kernel is called the Abel kernel here:
+
+https://en.wikipedia.org/wiki/Positive-definite_kernel
+
+Problem:  the Gaussian approximation does not produce a positive-definite
+kernel. [ ]
+
+Q: What criteria are required to produce a positive-definite kernel?
