@@ -40,8 +40,8 @@ cdef extern from "genrp/genrp.h" namespace "genrp":
         double value (double dt) const
         double psd (double w) const
 
-    cdef cppclass BandSolver[T]:
-        BandSolver (size_t m, const double* alpha, const T* beta)
+    cdef cppclass BandSolver:
+        BandSolver (size_t m, const double* alpha, const double complex* beta)
         void compute (size_t N, const double* t, const double* d)
         void solve (const double* b, double* x) const
         void solve (size_t nrhs, const double* b, double* x) const
@@ -52,7 +52,6 @@ cdef extern from "genrp/genrp.h" namespace "genrp":
         GaussianProcess (Kernel kernel)
         size_t size () const
         size_t num_terms () const
-        size_t num_coeffs () const
         SolverType solver () const
         void compute (size_t N, const double* x, const double* yerr)
         double log_likelihood (const double* y) const
@@ -66,12 +65,12 @@ cdef extern from "genrp/genrp.h" namespace "genrp":
 
 cdef class GP:
 
-    cdef GaussianProcess[BandSolver[CDTYPE_t] ]* gp
+    cdef GaussianProcess[BandSolver]* gp
     cdef Kernel kernel
     cdef int _data_size
 
     def __cinit__(self):
-        self.gp = new GaussianProcess[BandSolver[CDTYPE_t] ](self.kernel)
+        self.gp = new GaussianProcess[BandSolver](self.kernel)
         self._data_size = -1
 
     def __dealloc__(self):
@@ -80,32 +79,32 @@ cdef class GP:
     def __len__(self):
         return self.gp.size()
 
-    property terms:
-        def __get__(self):
-            cdef int n = self.gp.num_terms()
-            cdef int m = self.gp.size()
-            cdef int i
-            p = self.params
-            return (
-                [(p[i], p[i+1]) for i in range(0, 6*n-2*m, 2)]
-                + [(p[i], p[i+1], p[i+2]) for i in range(6*n-2*m, len(p), 3)]
-            )
+    # property terms:
+    #     def __get__(self):
+    #         cdef int n = self.gp.num_terms()
+    #         cdef int m = self.gp.size()
+    #         cdef int i
+    #         p = self.params
+    #         return (
+    #             [(p[i], p[i+1]) for i in range(0, 6*n-2*m, 2)]
+    #             + [(p[i], p[i+1], p[i+2]) for i in range(6*n-2*m, len(p), 3)]
+    #         )
 
     property computed:
         def __get__(self):
             return self._data_size >= 0
 
-    property alpha:
-        def __get__(self):
-            cdef np.ndarray[DTYPE_t] a = np.empty(self.gp.num_coeffs(), dtype=DTYPE)
-            self.gp.get_alpha(<double*>a.data)
-            return a
+    # property alpha_real:
+    #     def __get__(self):
+    #         cdef np.ndarray[DTYPE_t] a = np.empty(self.gp.num_coeffs(), dtype=DTYPE)
+    #         self.gp.get_alpha(<double*>a.data)
+    #         return a
 
-    property beta:
-        def __get__(self):
-            cdef np.ndarray[CDTYPE_t] b = np.empty(self.gp.num_coeffs(), dtype=CDTYPE)
-            self.gp.get_beta(<double complex*>b.data)
-            return b
+    # property beta:
+    #     def __get__(self):
+    #         cdef np.ndarray[CDTYPE_t] b = np.empty(self.gp.num_coeffs(), dtype=CDTYPE)
+    #         self.gp.get_beta(<double complex*>b.data)
+    #         return b
 
     property params:
         def __get__(self):
@@ -135,7 +134,7 @@ cdef class GP:
         else:
             self.kernel.add_term(log_amp, log_q, log_freq)
         del self.gp
-        self.gp = new GaussianProcess[BandSolver[CDTYPE_t] ](self.kernel)
+        self.gp = new GaussianProcess[BandSolver](self.kernel)
         self._data_size = -1
 
     def get_matrix(self, np.ndarray[DTYPE_t, ndim=1] x1, x2=None):
@@ -193,7 +192,7 @@ cdef class GP:
 
 cdef class Solver:
 
-    cdef BandSolver[double complex]* solver
+    cdef BandSolver* solver
     cdef unsigned int m
     cdef unsigned int N
     cdef np.ndarray alpha
@@ -242,7 +241,7 @@ cdef class Solver:
             d = d + np.zeros_like(self.t)
         self.diagonal = d
 
-        self.solver = new BandSolver[double complex](
+        self.solver = new BandSolver(
             self.m,
             <double*>(self.alpha.data),
             <double complex*>(self.beta.data),

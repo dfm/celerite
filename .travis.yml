@@ -1,20 +1,11 @@
 sudo: false
 
-addons:
-    apt:
-        packages:
-            - cmake
-            - libblas-dev
-            - liblapack-dev
-
 env:
     global:
         - EIGEN_VERSION=3.2.9
           EIGEN_HASH=dc6cfdf9bcec
 
     matrix:
-        - PYTHON_VERSION=null
-
         - PYTHON_VERSION=2.7
           NUMPY_VERSION=1.9
         - PYTHON_VERSION=2.7
@@ -36,36 +27,26 @@ env:
         - PYTHON_VERSION=3.5
           NUMPY_VERSION=1.11
 
-install: |
-    wget --quiet "http://bitbucket.org/eigen/eigen/get/${EIGEN_VERSION}.tar.gz"
-    tar -xzf ${EIGEN_VERSION}.tar.gz
+install:
+    - wget --quiet "http://bitbucket.org/eigen/eigen/get/${EIGEN_VERSION}.tar.gz"
+    - tar -xzf ${EIGEN_VERSION}.tar.gz
 
-    if [[ "$PYTHON_VERSION" == "null" ]]; then
-      cd cpp
-      cmake . -DEIGEN_CHECK_INCLUDE_DIRS=../eigen-eigen-$EIGEN_HASH
-      make
-    else
-      wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
-      bash miniconda.sh -b -p $HOME/miniconda
-      export PATH=$HOME/miniconda/bin:$PATH
-      hash -r
-      conda config --set always_yes yes --set changeps1 no
-      conda update -q conda
-      conda info -a
+    - wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
+    - bash miniconda.sh -b -p $HOME/miniconda
+    - export PATH=$HOME/miniconda/bin:$PATH
+    - hash -r
+    - conda config --set always_yes yes --set changeps1 no
+    - conda update -q conda
+    - conda info -a
 
-      conda create --yes -n test python=$PYTHON_VERSION numpy=$NUMPY_VERSION Cython setuptools pytest
-      source activate test
+    - conda create --yes -n test python=$PYTHON_VERSION numpy=$NUMPY_VERSION Cython setuptools pytest
+    - source activate test
 
-      cd python
-      CXX=g++ python setup.py build_ext -I../eigen-eigen-$EIGEN_HASH --inplace
-    fi
+    - cd python
+    - CXX=g++ python setup.py build_ext -I../eigen-eigen-$EIGEN_HASH --inplace
 
 script: |
-    if [[ "$PYTHON_VERSION" == "null" ]]; then
-      make test
-    else
-      py.test -v genrp/tests.py
-    fi
+    - py.test -v genrp/tests.py
 
 # after_success:
 #     - coveralls

@@ -69,8 +69,8 @@ DirectSolver::DirectSolver (const Eigen::VectorXd alpha, const Eigen::VectorXcd 
 DirectSolver::DirectSolver (const Eigen::VectorXd alpha_real, const Eigen::VectorXd beta_real,
                             const Eigen::VectorXd alpha_complex, const Eigen::VectorXcd beta_complex)
   : alpha_real_(alpha_real),
-    beta_real_(beta_real),
     alpha_complex_(alpha_complex),
+    beta_real_(beta_real),
     beta_complex_(beta_complex),
     p_real_(alpha_real.rows()),
     p_complex_(alpha_complex.rows())

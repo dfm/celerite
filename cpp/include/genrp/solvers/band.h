@@ -55,7 +55,6 @@ void BandSolver::compute (const Eigen::VectorXd& x, const Eigen::VectorXd& diag)
   // Dimensions.
   size_t p_real = this->p_real_,
          p_complex = this->p_complex_,
-         p = p_real + p_complex,
          n = this->n_,
          j, k;
 
