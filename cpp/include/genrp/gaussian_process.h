@@ -21,7 +21,6 @@ public:
 
   size_t size () const { return kernel_.size(); };
   size_t num_terms () const { return kernel_.num_terms(); };
-  size_t num_coeffs () const { return kernel_.num_coeffs(); };
 
   Eigen::VectorXd params () const { return kernel_.params(); };
   void params (const Eigen::VectorXd& pars) { kernel_.params(pars); };
@@ -43,8 +42,8 @@ public:
   void get_params (double* pars) const;
   void set_params (const double* pars);
 
-  void get_alpha (double* alpha) const;
-  void get_beta (std::complex<double>* beta) const;
+  // void get_alpha (double* alpha) const;
+  // void get_beta (std::complex<double>* beta) const;
 
 private:
   Kernel kernel_;
@@ -68,7 +67,8 @@ template <typename SolverType>
 void GaussianProcess<SolverType>::compute (
     const Eigen::VectorXd& x, const Eigen::VectorXd& yerr) {
   dim_ = x.rows();
-  solver_.alpha_and_beta(kernel_.alpha(), kernel_.beta());
+  solver_.alpha_and_beta(kernel_.alpha_real(), kernel_.beta_real(),
+                         kernel_.alpha_complex(), kernel_.beta_complex());
   solver_.compute(x, yerr.array() * yerr.array());
   computed_ = true;
 }
@@ -118,17 +118,17 @@ void GaussianProcess<SolverType>::set_params (const double* pars) {
   kernel_.params(vector_t(pars, kernel_.size()));
 }
 
-template <typename SolverType>
-void GaussianProcess<SolverType>::get_alpha (double* alpha) const {
-  Eigen::VectorXd a = kernel_.alpha();
-  for (size_t i = 0; i < a.rows(); ++i) alpha[i] = a(i);
-}
-
-template <typename SolverType>
-void GaussianProcess<SolverType>::get_beta (std::complex<double>* beta) const {
-  Eigen::VectorXcd b = kernel_.beta();
-  for (size_t i = 0; i < b.rows(); ++i) beta[i] = b(i);
-}
+// template <typename SolverType>
+// void GaussianProcess<SolverType>::get_alpha (double* alpha) const {
+//   Eigen::VectorXd a = kernel_.alpha();
+//   for (size_t i = 0; i < a.rows(); ++i) alpha[i] = a(i);
+// }
+//
+// template <typename SolverType>
+// void GaussianProcess<SolverType>::get_beta (std::complex<double>* beta) const {
+//   Eigen::VectorXcd b = kernel_.beta();
+//   for (size_t i = 0; i < b.rows(); ++i) beta[i] = b(i);
+// }
 
 };
 
