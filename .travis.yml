@@ -4,6 +4,8 @@ addons:
     apt:
         packages:
             - cmake
+            - libblas-dev
+            - liblapack-dev
 
 env:
     global:
