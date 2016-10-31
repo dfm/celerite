@@ -1,8 +1,6 @@
 #include <iostream>
-#include <sys/time.h>
 #include <Eigen/Core>
 
-#include "genrp/solvers/basic.h"
 #include "genrp/solvers/direct.h"
 #include "genrp/solvers/band.h"
 
@@ -57,11 +55,6 @@ int main (int argc, char* argv[])
   // Compute the y values.
   y = sin(x.array());
 
-  genrp::BasicSolver<double> basic_real(alpha, beta_real);
-  basic_real.compute(x, yerr2);
-  genrp::BasicSolver<std::complex<double> > basic_complex(alpha_all, beta_all);
-  basic_complex.compute(x, yerr2);
-
   genrp::DirectSolver direct_real(alpha, beta_real);
   direct_real.compute(x, yerr2);
   genrp::DirectSolver direct_complex(alpha, beta_real, alpha, beta_complex);
@@ -72,15 +65,11 @@ int main (int argc, char* argv[])
   genrp::BandSolver band_complex(alpha, beta_real, alpha, beta_complex);
   band_complex.compute(x, yerr2);
 
-  DO_TEST(direct_real_dot_solve, basic_real.dot_solve(y), direct_real.dot_solve(y))
-  DO_TEST(direct_real_log_det, basic_real.log_determinant(), direct_real.log_determinant())
   DO_TEST(band_real_dot_solve, direct_real.dot_solve(y), band_real.dot_solve(y))
-  DO_TEST(band_real_log_det, basic_real.log_determinant(), band_real.log_determinant())
+  DO_TEST(band_real_log_det, direct_real.log_determinant(), band_real.log_determinant())
 
-  DO_TEST(direct_complex_dot_solve, basic_complex.dot_solve(y), direct_complex.dot_solve(y))
-  DO_TEST(direct_complex_log_det, basic_complex.log_determinant(), direct_complex.log_determinant())
   DO_TEST(band_complex_dot_solve, direct_complex.dot_solve(y), band_complex.dot_solve(y))
-  DO_TEST(band_complex_log_det, basic_complex.log_determinant(), band_complex.log_determinant())
+  DO_TEST(band_complex_log_det, direct_complex.log_determinant(), band_complex.log_determinant())
 
   return 0;
 }
