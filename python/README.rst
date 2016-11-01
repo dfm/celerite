@@ -4,8 +4,6 @@ A simple benchmark shows that this scales as O(N):
 
     import time
     import numpy as np
-    import matplotlib.pyplot as pl
-
     from genrp import GP
 
     gp = GP()
