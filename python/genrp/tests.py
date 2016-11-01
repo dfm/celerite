@@ -5,7 +5,7 @@ from __future__ import division, print_function
 import pytest
 import numpy as np
 
-from ._genrp import Solver, GP
+from . import Solver, GP
 
 __all__ = ["test_invalid_parameters", "test_log_determinant", "test_solve",
            "test_kernel_params", "test_build_gp", "test_log_likelihood",
@@ -59,29 +59,30 @@ def test_solve(seed=42):
     assert np.allclose(solver.apply_inverse(b), np.linalg.solve(K, b))
 
 
-@pytest.mark.skip(reason="alpha/beta interface in flux")
 def test_kernel_params():
     gp = GP()
     terms = [(-0.5, 0.1), (-0.6, 0.7, 1.0)]
     for term in terms:
         gp.add_term(*term)
 
-    alpha = []
-    beta = []
+    alpha_real = []
+    beta_real = []
+    alpha_complex = []
+    beta_complex = []
     for term in terms:
         if len(term) == 2:
             a, q = np.exp(term)
-            alpha.append(4 * np.pi**2 * a * q)
-            beta.append(2 * np.pi * q)
+            alpha_real.append(4 * np.pi**2 * a * q)
+            beta_real.append(2 * np.pi * q)
             continue
         a, q, f = np.exp(term)
-        alpha.append(2 * np.pi**2 * a * q)
-        alpha.append(2 * np.pi**2 * a * q)
-        beta.append(2 * np.pi * q + 2.0j * np.pi * f)
-        beta.append(2 * np.pi * q - 2.0j * np.pi * f)
+        alpha_complex.append(4 * np.pi**2 * a * q)
+        beta_complex.append(2 * np.pi * q + 2.0j * np.pi * f)
 
-    assert np.allclose(gp.alpha, alpha)
-    assert np.allclose(gp.beta, beta)
+    assert np.allclose(gp.alpha_real, alpha_real)
+    assert np.allclose(gp.beta_real, beta_real)
+    assert np.allclose(gp.alpha_complex, alpha_complex)
+    assert np.allclose(gp.beta_complex, beta_complex)
 
 
 def test_kernel_value(seed=42):

@@ -117,7 +117,10 @@ public:
     for (size_t i = 0; i < pterms_.size(); ++i) size += pterms_[i].size();
     return size;
   };
-  size_t num_terms () const { return terms_.size(); };
+
+  size_t p () const { return terms_.size() + pterms_.size(); };
+  size_t p_real () const { return terms_.size(); };
+  size_t p_complex () const { return pterms_.size(); };
 
   void add_term (double log_amp, double log_q) {
     Term term(log_amp, log_q);

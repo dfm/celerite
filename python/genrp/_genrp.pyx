@@ -36,6 +36,9 @@ cdef extern from "genrp/genrp.h" namespace "genrp":
         void add_term (double log_amp, double log_q, double log_freq)
         double value (double dt) const
         double psd (double w) const
+        size_t p () const
+        size_t p_real () const
+        size_t p_complex () const
 
     cdef cppclass DirectSolver:
         DirectSolver (size_t p_real, const double* alpha_real, const double* beta_real,
@@ -58,7 +61,7 @@ cdef extern from "genrp/genrp.h" namespace "genrp":
     cdef cppclass GaussianProcess[SolverType]:
         GaussianProcess (Kernel kernel)
         size_t size () const
-        size_t num_terms () const
+        const Kernel kernel () const
         SolverType solver () const
         void compute (size_t N, const double* x, const double* yerr)
         double log_likelihood (const double* y) const
@@ -66,8 +69,10 @@ cdef extern from "genrp/genrp.h" namespace "genrp":
         double kernel_psd (double w) const
         void get_params (double* pars) const
         void set_params (const double* pars)
-        void get_alpha (double* alpha) const
-        void get_beta (double complex* beta) const
+        void get_alpha_real (double* alpha) const
+        void get_beta_real (double* alpha) const
+        void get_alpha_complex (double* alpha) const
+        void get_beta_complex (double complex* beta) const
 
 
 cdef class GP:
@@ -86,32 +91,33 @@ cdef class GP:
     def __len__(self):
         return self.gp.size()
 
-    # property terms:
-    #     def __get__(self):
-    #         cdef int n = self.gp.num_terms()
-    #         cdef int m = self.gp.size()
-    #         cdef int i
-    #         p = self.params
-    #         return (
-    #             [(p[i], p[i+1]) for i in range(0, 6*n-2*m, 2)]
-    #             + [(p[i], p[i+1], p[i+2]) for i in range(6*n-2*m, len(p), 3)]
-    #         )
-
     property computed:
         def __get__(self):
             return self._data_size >= 0
 
-    # property alpha_real:
-    #     def __get__(self):
-    #         cdef np.ndarray[DTYPE_t] a = np.empty(self.gp.num_coeffs(), dtype=DTYPE)
-    #         self.gp.get_alpha(<double*>a.data)
-    #         return a
+    property alpha_real:
+        def __get__(self):
+            cdef np.ndarray[DTYPE_t] a = np.empty(self.gp.kernel().p_real(), dtype=DTYPE)
+            self.gp.get_alpha_real(<double*>a.data)
+            return a
 
-    # property beta:
-    #     def __get__(self):
-    #         cdef np.ndarray[CDTYPE_t] b = np.empty(self.gp.num_coeffs(), dtype=CDTYPE)
-    #         self.gp.get_beta(<double complex*>b.data)
-    #         return b
+    property beta_real:
+        def __get__(self):
+            cdef np.ndarray[DTYPE_t] a = np.empty(self.gp.kernel().p_real(), dtype=DTYPE)
+            self.gp.get_beta_real(<double*>a.data)
+            return a
+
+    property alpha_complex:
+        def __get__(self):
+            cdef np.ndarray[DTYPE_t] a = np.empty(self.gp.kernel().p_complex(), dtype=DTYPE)
+            self.gp.get_alpha_complex(<double*>a.data)
+            return a
+
+    property beta_complex:
+        def __get__(self):
+            cdef np.ndarray[CDTYPE_t] a = np.empty(self.gp.kernel().p_complex(), dtype=CDTYPE)
+            self.gp.get_beta_complex(<double complex*>a.data)
+            return a
 
     property params:
         def __get__(self):
