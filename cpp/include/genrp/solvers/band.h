@@ -31,6 +31,9 @@ public:
   void compute (const Eigen::VectorXd& x, const Eigen::VectorXd& diag);
   void solve (const Eigen::MatrixXd& b, double* x) const;
 
+  size_t dim_ext () const { return dim_ext_; };
+  void solve_extended (Eigen::MatrixXd& b) const;
+
   // Needed for the Eigen-free interface.
   using DirectSolver::compute;
   using DirectSolver::solve;
@@ -218,6 +221,11 @@ void BandSolver::solve (const Eigen::MatrixXd& b, double* x) const {
   for (size_t j = 0; j < nrhs; ++j)
     for (size_t i = 0; i < this->n_; ++i)
       x[i+j*nrhs] = bex(i*block_size_, j);
+}
+
+void BandSolver::solve_extended (Eigen::MatrixXd& b) const {
+  assert ((b.rows() == this->dim_ext_) && "DIMENSION_MISMATCH");
+  band_solve(width_, width_, factor_, ipiv_, b);
 }
 
 };

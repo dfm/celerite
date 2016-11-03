@@ -4,6 +4,7 @@ macro (GENRP_EXEC NAME)
 endmacro (GENRP_EXEC)
 
 genrp_exec(benchmark)
+genrp_exec(test_grad)
 
 macro (GENRP_TEST NAME)
     genrp_exec(${NAME})
