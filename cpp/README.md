@@ -16,7 +16,7 @@ make test
 Example usage
 -------------
 
-```
+```cpp
 #include <iostream>
 #include <Eigen/Core>
 #include "genrp/genrp.h"
