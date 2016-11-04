@@ -3,6 +3,5 @@
 
 #include "genrp/solvers/direct.h"
 #include "genrp/solvers/band.h"
-#include "genrp/solvers/sparse.h"
 
 #endif

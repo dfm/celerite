@@ -158,31 +158,31 @@ description of stellar variability.
 
 Stars are variable, for better or worse:  their variability provides information about the properties
 of stars, but also results in noise that must be accounted for in detecting and characterizing their
-planetary systems.  When analyzing astronomical times series of stars, then, there are generally two 
+planetary systems.  When analyzing astronomical times series of stars, then, there are generally two
 goals:  1). to analyze the frequency spectrum and amplitude of stellar variability to better understand stellar
 properties and evolution, and/or 2). to account for correlated noise when modeling the stellar
 flux variability and spectral variations.
 
-A promising technique for addressing both of these goals is the Gaussian Process formalism 
+A promising technique for addressing both of these goals is the Gaussian Process formalism
 \citep{Rasmussen2006,Gibson2012}.  The basis of this method is to assume that stellar variability
 is random, Gaussian noise, but that the random variability is correlated in time, and the nature of the
-correlations is completely specified by a correlation matrix.  In its simplest form, the 
-correlation matrix is modeled with a time-independent autocorrelation function (although 
+correlations is completely specified by a correlation matrix.  In its simplest form, the
+correlation matrix is modeled with a time-independent autocorrelation function (although
 the time-independence can be relaxed), including a white-noise component that may vary
-with each exposure, and the autocorrelation function is described by a functional form that may be 
-simply parameterized by a relatively small number of parameters, sometimes referred to as 
+with each exposure, and the autocorrelation function is described by a functional form that may be
+simply parameterized by a relatively small number of parameters, sometimes referred to as
 `hyper-parameters.'  The goal of spectral analysis is to measure the parameters which
 describe the autocorrelation function, thus inferring properties of the stellar variabilty
 which may be used to characterize properties of the star, such as the rotation period,
 the asteroseismic frequencies, or granulation noise known as `flicker' \citep{Aerts2010,Noyes1984,Bastien2013}.
 The goals of planet detection include measuring the Doppler shift of the star, measuring
 the decrement of flux as a planet transits a star, and/or measuring the times of transit to
-look for dynamical interactions between planets.  To properly account for the impact of 
-stellar variability on the planet parameters requires treating correlations in the data, and 
-to do so also requires evaluating the correlation matrix.  
+look for dynamical interactions between planets.  To properly account for the impact of
+stellar variability on the planet parameters requires treating correlations in the data, and
+to do so also requires evaluating the correlation matrix.
 
 The size of the correlation matrix, $N_{elements}$, scales as the square of the length of the time-series,
-$N_{element}=N_{time}^2$, so as time series grow in size, say $N_{time} =10^{5-6}$, the storage may become 
+$N_{element}=N_{time}^2$, so as time series grow in size, say $N_{time} =10^{5-6}$, the storage may become
 prohibitive, $N_{element} = 10^{10-12}$.  In addition, this matrix must be inverted and have
 its determinant evaluated to compute the likelihood function, which takes of order $N_{operations}
 = N_{time}^3 = 10^{15-18}$.  This becomes an impossible computational problem, which prohibits
@@ -193,7 +193,7 @@ cases.
 
 One promising solution is to use approximate techiques based upon the fact that correlation
 matrices display a great deal of symmetry.  This `hierarchical off-diagonal low-rank' (\texttt{HODLR})
-algorithm can make the storage and operations both scale in proportion to $N_{time}$, although the 
+algorithm can make the storage and operations both scale in proportion to $N_{time}$, although the
 solver is only approximate \citep{Ambikasaran2013,Ambikasaran2016}.  In addition, the
 solver is complicated and can be challenging to use with general choices of kernel.  Another
 promising approximate technique is to use a uniform resampling of the dataset, and then
@@ -224,22 +224,22 @@ the coefficients of the kernels need not be stationary, the computation of the
 likelihood is exact, and the algorithm is simple to implement, and thus is robust.
 Unlike the \texttt{CARMA} model, there is no restriction on the relation between
 the coefficients (except that the kernel needs to be positive definite).  Unlike
-\texttt{HODLR} and \texttt{KISS-GP},  the \texttt{GenRP} method is exact.  The main drawback 
-of this approach is that the sum of exponential kernels with real coefficients can 
+\texttt{HODLR} and \texttt{KISS-GP},  the \texttt{GenRP} method is exact.  The main drawback
+of this approach is that the sum of exponential kernels with real coefficients can
 only represent a limited range of power spectra of auto-correlated time series:
 those which can be expressed the sum of Lorentzians that peak at zero frequency.
 
 However, this drawback turns out to not be significant:  the exponential kernel
-can also have a complex exponential coefficients (plus their complex-conjugates), and 
+can also have a complex exponential coefficients (plus their complex-conjugates), and
 thus approximate an almost arbitrary autocorrelation function with enough terms, most
-importantly allowing for quasi-periodic kernels.  It turns out that the sum of Lorentzian 
-components is a {\it very} good approximation of stellar variability spectra:  the 
+importantly allowing for quasi-periodic kernels.  It turns out that the sum of Lorentzian
+components is a {\it very} good approximation of stellar variability spectra:  the
 activity and granulation noise due to stellar convection may be expressed in terms of zero-frequency
 Lorentzians \citep{1985ESASP.235..199H}, the asteroseismic oscillations may be expressed as non-zero frequency
-Lorentzians \citep{1990ApJ...364..699A,Gruberbauer2009}, and stellar rotation may be 
-parameterized this way as well.  In this paper 
-we extend the \texttt{GenRP} approach to kernels with complex exponentials, which when 
-combined with the complex conjugate leads to damped harmonic auto-correlation functions 
+Lorentzians \citep{1990ApJ...364..699A,Gruberbauer2009}, and stellar rotation may be
+parameterized this way as well.  In this paper
+we extend the \texttt{GenRP} approach to kernels with complex exponentials, which when
+combined with the complex conjugate leads to damped harmonic auto-correlation functions
 which are flexible enough to describe a wide range of variability, and may still
 be solved in $O(N_{time}$ operations.
 
@@ -337,7 +337,7 @@ $\mathbf{t}$, while the data are modeled with a function $m(\mathbf{t};\bvec{\th
 a transit model or Keplerian orbital model) which leaves residuals $\mathbf{r}(\bvec{\theta}) =
 \mathbf{y} - m(\mathbf{t};\bvec{\theta})$. % Note: I'm using the same notation as the peerless project. -EA
 The vector $\bvec{\alpha}$ specifies the parameters of the kernel, while the vector $\bvec{\theta}$
-specifies the parameters of the physical model.  In addition to this likelihood, a prior may be placed on 
+specifies the parameters of the physical model.  In addition to this likelihood, a prior may be placed on
 the values of these model parameters (either the physical or kernel); the log of this prior may be
 added to this log likelihood function.  Note that the kernel
 parameters may also have a physical meaning, but they describe a noisy process, and thus affect
@@ -348,7 +348,7 @@ The kernel is modeled as a sum of damped harmonics,
 \begin{equation}
 K(\tau) = a_0 \delta(\tau) + \sum_{j=1}^{N_{kernel}} a_j e^{-\beta_R \tau} \cos{(\beta_I \tau)},
 \end{equation}
-where $\tau > 0$ is a time-offset between data points, $\beta_R$ represents the decay 
+where $\tau > 0$ is a time-offset between data points, $\beta_R$ represents the decay
 in correlation with time and $\beta_I$ represents oscillations of period $P = 2\pi/\beta_I$, and
 $a_0 = \sigma^2$ is a white-noise component with $\delta(0) = 1$ and zero otherwise.  Formally
 the $\delta(\tau)$ function is a Kronecker delta function for which $\tau$ is the midpoint in
@@ -367,7 +367,7 @@ exponential kernel components as the real case.
 
 Although this is a straightforward extension to the \texttt{GenRP} formalism, there is a disadvantage
 in computational speed:  complex arithmetic requires $\approx 3$ times as many operations as real
-arithmetic.  In addition, it turns out that the complex conjugate component, $\beta^* = \beta_R - i\beta_I$, in 
+arithmetic.  In addition, it turns out that the complex conjugate component, $\beta^* = \beta_R - i\beta_I$, in
 the extended matrix gives a solution which, not surprisingly, is the complex conjugate of the
 component $\beta = \beta_R + i \beta_I$;  thus the computation is redundant.  Finally, complex
 arithmetic has the disadvantage that it is not included in automatic-differentiation packages,
@@ -383,17 +383,17 @@ may be replaced by a $2\times 2$ anti-symmetric matrix,
 -1 & 0
 \end{tabular}\right),
 \end{equation}
-while real numbers use the $2\times 2$ identity matrix, $\mathbf{I}$, 
+while real numbers use the $2\times 2$ identity matrix, $\mathbf{I}$,
 so that $\cos{(\beta_I \tau)} + i \sin{(\beta_I \tau)}$ may be rewritten as the rotation matrix
 \begin{equation}
-\left(\begin{tabular}{ll} 
-$\cos{(\beta_I \tau)}$ & $\sin{(\beta_I \tau)}$ \\ 
-$-\sin{(\beta_I \tau)}$ & $\cos{(\beta_I \tau)}$ 
+\left(\begin{tabular}{ll}
+$\cos{(\beta_I \tau)}$ & $\sin{(\beta_I \tau)}$ \\
+$-\sin{(\beta_I \tau)}$ & $\cos{(\beta_I \tau)}$
 \end{tabular}\right).
 \end{equation}
 The algebraic properties of these matrices are identical to the complex numbers, but only involve
 real components.
-We accomplish this transformation in Appendix \ref{appendixa} by taking sums and differences of the complex 
+We accomplish this transformation in Appendix \ref{appendixa} by taking sums and differences of the complex
 equations, resulting in a real extended matrix that is the same size as the complex matrix.
 This transformation leads to about a factor of two in computational savings, but has the
 additional advantage of allowing the automatic differentiation due to the use of real arithmetic.
@@ -434,7 +434,7 @@ P(\vert f\vert) = a_j \beta_{R,j} \frac{1}{\beta_{R,j}^2 + (2\pi f - \beta_{I,j}
 where $f$ is the frequency in Hz.  The counterpart to the Taylor series is the observation
 that a smooth distribution may be approximated arbitrarily precisely by summing together
 Lorentzians with various values of $(a_j,\beta_{R,j},\beta_{I,j})$.  In the case that
-a peak in the power spectrum is narrow at a specific frequency, then a small value of 
+a peak in the power spectrum is narrow at a specific frequency, then a small value of
 $\beta_{R,j}$ gives a narrow Lorentzian that may approximate that peak.  If the wings
 of the distribution decay faster than $f^{-2}$, then differences between Lorentzians
 can be arranged to cancel in the wings, giving features in the power spectrum that have
@@ -443,7 +443,7 @@ narrower wings.
 The functional form of $K_j$ may be used to approximate some commonly used Kernel components.
 The squared exponential (Gaussian) kernel and the Mat\'ern kernels are commonly
 used radial kernels, while the cosine kernel and the exponential-sine-squared kernels are
-commonly used periodic kernels.  Linear combinations of our basis of damped cosine kernels may be 
+commonly used periodic kernels.  Linear combinations of our basis of damped cosine kernels may be
 used to approximate each of these kernels to better than 1\% with various numbers of damped
 cosine kernel components:
 \begin{itemize}
@@ -451,13 +451,13 @@ cosine kernel components:
 correlations in data, and can be represented exactly with $\beta_R = \beta_I =  0$.
 \item {\bf Exponential kernel.} This kernel, $K(\tau) = e^{-\vert \tau/\tau_0\vert}$, is exactly
 represented with $\beta_I=0$, $\beta_R = \tau_0^{-1}$.
-\item {\bf Cosine kernel.} The cosine kernel, $K(t) = \cos{\left(\frac{2\pi}{P} \vert \tau \vert\right)}$, 
+\item {\bf Cosine kernel.} The cosine kernel, $K(t) = \cos{\left(\frac{2\pi}{P} \vert \tau \vert\right)}$,
 may be represented exactly with $\beta_R=0$ and $\beta_I = \frac{2\pi}{P}$.
 \item {\bf Squared exponential.} The squared exponential or Gaussian kernel, $G(z)=e^{-z^2/2}$,
 has the behavior of declining steeply at large time separation, is an even function, and has $c_1$ = 0.
 Likewise, the Fourier transform of the squared exponential kernel is $\hat G(\omega) = e^{-\omega^2/2}$,
 which also declines steeply at large $\omega$;  this doesn't match the more gradual decline of a
-Lorentzian.  Nevertheless, the squared exponential kernel may be well approximated by the sum of 
+Lorentzian.  Nevertheless, the squared exponential kernel may be well approximated by the sum of
 three exponential kernels:
 \begin{eqnarray}
 %G(z) &\approx& 2.751807 e^{-1.531250 z} \cos{(0.341489 z)} \\
@@ -470,44 +470,44 @@ G(z) &\approx& 2.670143 e^{-1.500258 z} \cos{(0.346731 z)} \\
 which has an accuracy of better than $<2.5\times 10^{-4}$ for all z.
 Note that the last three coefficients depend on the first six as we have constrained
 the first three terms of the Taylor series to match that of a Gaussian exactly, $1-z^2/2$.
-% [2.6701433354886324,1.5002583976327974,-0.3467305042550739,-0.4587049531317026,4.125587583864702,1.3909117346609636] -1.2114383823569297 1.7446017341309372 1.7984359925567543 
+% [2.6701433354886324,1.5002583976327974,-0.3467305042550739,-0.4587049531317026,4.125587583864702,1.3909117346609636] -1.2114383823569297 1.7446017341309372 1.7984359925567543
 %[2.751807496353032,1.5312499408182438,-0.34148888180984543,-0.35462563655835033,4.753504292338051,2.0425716395901157,-1.3968344706423566,1.7967431129750422,-1.7641684073374964
 \item {\bf Mat\'ern $p+1/2$ kernel.}  The Mat\'ern kernel is given by:
 \begin{equation}
 C_{p+1/2}(x) = \sigma^2 e^{-\sqrt{(2p+1)}x} \frac{\Gamma(p+1)}{\Gamma(2p+1)}
 \sum_{i=0}^p \frac{(p+i)!}{i!(p-i)!} (\sqrt{(8p+4)}x)^{p-i},
-\end{equation} 
+\end{equation}
 where $p$ is a positive integer.  In the limit $p\rightarrow \infty$, this becomes the
 squared exponential kernel: $C_\infty(x) = \sigma^2 e^{-x^2/2}$.  But, for small
 values of $p$, the Mat\'ern kernel may be approximated well by the sum of
 $2p$ exponential kernels.  The exponential kernel is the Mat\'ern 1/2 kernel,
 $C_{1/2}(x) = \sigma^2 e^{-x}$ ($p=0$), while
 $p=1$ is relevant to stellar variability, which we describe next.
-\item {\bf Mat\'ern 3/2 kernel.}  The Mat\'ern $3/2$ ($p=1$) kernel is given by: 
+\item {\bf Mat\'ern 3/2 kernel.}  The Mat\'ern $3/2$ ($p=1$) kernel is given by:
 \begin{equation}
 K_{3/2}(\tau) = C_{3/2}(\tau/\tau_0) = (1+v)e^{-v},
-\end{equation} 
-where $v = \sqrt{3}\vert \tau/\tau_0\vert$.  This kernel has a Fourier transform\footnote{Using the normalization convention: 
+\end{equation}
+where $v = \sqrt{3}\vert \tau/\tau_0\vert$.  This kernel has a Fourier transform\footnote{Using the normalization convention:
 $\hat f(\omega) = \frac{1}{\sqrt{2\pi}} \int_{-\infty}^\infty f(t) e^{i\omega t} dt$}  of
 \begin{equation}
 \hat K_{3/2}(\omega) = \frac{\tau_0 6^{3/2}}{\pi^{1/2}} (3+\tau_0^2\omega^2)^{-2},
 \end{equation}
-where $\omega = 2\pi f$.  This kernel may be well approximated by the sum of two exponential kernels: 
+where $\omega = 2\pi f$.  This kernel may be well approximated by the sum of two exponential kernels:
 \begin{equation}
 K_{3/2}(\tau) \approx (1-b)e^{-v}+be^{-v\frac{b-1}{b}},
-\end{equation} 
+\end{equation}
 where $b \gg 1$ is a dimensionless parameter; this approximation is exact in the limit $b \rightarrow \infty$.  For
 large values of $b$, the maximum error of the approximation scales as $2/(e^2b) \approx 0.27/b$; for
 $b=100$, the error in this approximation is $<0.3$\%.  Note that the two exponential terms
 have opposite signs, which may lead to numerical instability for values of $b$ that
-are large.  
+are large.
 
 One advantage of the Mat\'ern 3/2 kernel is that it is smooth across
 $\tau=0$ since its derivative is zero at $\tau=0$.  The exponential kernel {\it does not}
 have this property, which leads to qualitatively different noise properties on small
 timescales due to the sharpness of the exponential kernel at $\tau=0$.  The Mat\'ern 3/2 kernel
 turns out to be similar to the observed properties of stellar activity and granulation, and thus the approximate
-formula is simultaneously physically relevant and computationally convenient.  
+formula is simultaneously physically relevant and computationally convenient.
 The power spectrum of a single exponential scales as $f^{-2}$ at high frequency,
 while the Mat\'ern kernel scales as $f^{-4}$ which more closely matches the power
 spectrum due to activity and granulation in the Sun \citep{2004A&A...414.1139A,2009A&A...495..979M}.
@@ -529,9 +529,9 @@ The Fourier transform has a steeper dependence at large frequencies, $f^{-6}$, a
 power spectrum that requires a steeper spectrum than this, we forego approximating further Mat\'ern kernels.
 \item {\bf Exponential-sine-square kernel.}  This kernel is a periodic, positive valued kernel
 which has been used to model quasi-periodic stellar variability due to star spots.   It is
-given by $E(w,\Gamma) = e^{-\Gamma \sin^2{w}}$ where $w = \frac{\pi}{P}\vert \tau \vert$, which may be 
+given by $E(w,\Gamma) = e^{-\Gamma \sin^2{w}}$ where $w = \frac{\pi}{P}\vert \tau \vert$, which may be
 expanded as a series in $\cos{(2kw)} = \cos{\frac{2\pi}{P} k \vert \tau \vert)}$,
-with $k \in \mathbb{N}$.  We have expanded this to $k=4$, and fit for the coefficients, giving:  
+with $k \in \mathbb{N}$.  We have expanded this to $k=4$, and fit for the coefficients, giving:
 \begin{equation}
 E(w,\Gamma) \approx \sum_{k=0}^4 \left(c_{k,1}+c_{k,2} e^{-c_{k,4}\Gamma^{c_{k,3}}}\right) \cos{(2kw)},
 \end{equation}
@@ -551,9 +551,9 @@ for modeling a wide range of kernel behaviors.
 
 \begin{figure}[!htbp]
 \begin{center}
-\includegraphics[width=\textwidth]{kernel_approx.png}
+\includegraphics[width=\textwidth]{./approximate_kernels/kernel_approx.pdf}
 \caption{Approximation of various kernels with the sums of damped cosines.
-(a). Kernels that may be expressed exactly: constant (dark grey), exponential (cyan), 
+(a). Kernels that may be expressed exactly: constant (dark grey), exponential (cyan),
 cosine (olive), and damped cosine (salmon).
 (b). Approximation of the squared-exponential (Gaussian) kernel (pink) with three
 damped cosine kernels (magenta). (c). The approximation of the exponential-sine-squared
@@ -566,7 +566,7 @@ is approximated with $b=100$. The exact kernels are solid, while approximate are
 
 A standard practice in constructing kernels for solving problems with Gaussian processes
 is to add or multiply the preceding standard kernel components.  In the case of damped cosine
-kernels, the product of two kernels is: 
+kernels, the product of two kernels is:
 \begin{eqnarray}
 K_j(\tau)K_k(\tau) &=&
 \frac{1}{2} a_k a_j e^{-(\beta_{R,j}+\beta_{R,k}) \tau} \left(\cos{(\beta_{I,j}-\beta_{I,k})\tau}+\cos{(\beta_{I,j}+\beta_{I,k})\tau}\right)\\
@@ -578,7 +578,7 @@ construct new kernels from damped cosine kernels.
 
 The upshot is that the damped cosine is an expressive basis kernel that may be used
 to represent a wide range of autocorrelation functions relevant for stellar variability.
-We recommend using a series of sums of damped cosines (in which some parameters may be 
+We recommend using a series of sums of damped cosines (in which some parameters may be
 fixed to specified values to represent particular kernels) to model different amplitudes
 and timescales of variability.  If an initial estimate of the power spectrum or
 autocorrelation function is available, then these may be fit with this series to
@@ -693,7 +693,7 @@ of $MN$ multiplications is required to obtain the predicted values.
 If $M$ is large, this can become quickly prohibitive.  It turns out
 that the structure of the sum of exponential kernels may be exploited
 to obtain the predicted mean in of order $p(M+N)+p^2N$ multiplications,
-i.e.\ a linear scaling with the total number of data points, which can 
+i.e.\ a linear scaling with the total number of data points, which can
 be much fewer if $M$ is large.
 
 The procedure works as follows:
@@ -779,16 +779,16 @@ exponential functions:
 K(\tau) &=& \alpha e^{-\beta_R \tau} \cos{(\omega \tau)}\\
  &=& \frac{1}{2}\alpha \left[e^{-\beta \tau}+e^{-\beta^* \tau}\right],
 \end{eqnarray}
-where $\beta = \beta_R + i\beta_I$ is the 
+where $\beta = \beta_R + i\beta_I$ is the
 complex kernel parameter (i.e.\ $\beta_R = Re(\beta)$, $\beta_I = Im(\beta)$), $\omega = -\beta_I = 2\pi/P$
 is the frequency of oscillation of the kernel with period $P$, and $x^*$ is the complex conjugate of $x$.
 
-Now, the Lorentzian kernal may be included in the GRP algorithm 
-using the two exponential kernels with $\beta_1 = \beta$ and $\beta_2 = \beta^*$.  This 
+Now, the Lorentzian kernal may be included in the GRP algorithm
+using the two exponential kernels with $\beta_1 = \beta$ and $\beta_2 = \beta^*$.  This
 requires the algorithm to use complex arithmetic, which has several disadvantages:
 1).\ complex arithmetic is more expensive by a factor of 2-3; 2).\ the complex conjugate equation
 is redundant as it turns out that $l_2 = l_1^*$, $r_2 = r_1^*$, and $x_i = x_i^*$ (i.e.\ $x_i$ is
-real), meaning that the same equations are being solved twice for the real and complex components; 
+real), meaning that the same equations are being solved twice for the real and complex components;
 and 3).\ if the derivative of the likelihood is computed with automatic
 differentiation (AD), most AD algorithms require real variables.
 
@@ -799,25 +799,25 @@ larger by one, both above and below the diagonal.
 
 Rather than using $\beta$ and its complex conjugate as components of the kernel, we instead
 find the real and imaginary components of the complex equation for $\beta$ by taking the
-sum and difference of the $\beta$ and $\beta^*$ equations (divided by 2 and $2i$, respectively), 
+sum and difference of the $\beta$ and $\beta^*$ equations (divided by 2 and $2i$, respectively),
 and then discard the $\beta^*$ equation, which is redundant.  This keeps the same number of
 additional equations for each $\beta_j$ with non-zero imaginary component (four additional
 equations in the extended matrix), but converts the complex equations to real, thus avoiding
-complex arithmetic, while the kernel components with real $\beta_j$ still only have two 
+complex arithmetic, while the kernel components with real $\beta_j$ still only have two
 additional components in the extended matrix.  The extended matrix adds an extra band above
 and below the diagonal when the $\beta$ and $\beta^*$ equations are combined since this
 mixes the components of the original equations which are shifted by one column from one
-another.  We will enumerate the number of real $\beta$'s as $p_0$, while the total number 
-of $\beta$'s is still $p$.  This gives a total number of equations to be solved with the 
-extended matrix of $N_{ex}= (4(p-p_0)+2p_0+1)\times(N-1)+1$, where $N$ is the number of data 
-points.  
+another.  We will enumerate the number of real $\beta$'s as $p_0$, while the total number
+of $\beta$'s is still $p$.  This gives a total number of equations to be solved with the
+extended matrix of $N_{ex}= (4(p-p_0)+2p_0+1)\times(N-1)+1$, where $N$ is the number of data
+points.
 
 For the complex values of $\beta$, the equations are modified as follows.  We introduce complex
 auxiliary vectors $l_k = l_{k}^R - i l_{k}^I$, with $k \in \{1,2,...,N\}$ and $l_1 = 0$; $r_k =
 r_k^R - i r_k^I$, with $k \in \{2,...,N\}$ and $r_{N+1} = 0$.  Note that we have defined the
 imaginary component as being negative for aesthetic reasons:  this yields a symmetric extended
 matrix (unfortunately the extended matrix has negative eigenvalues, making it non positive-definite,
-so that Cholesky decomposition cannot be applied; nevertheless we prefer to use a symmetric 
+so that Cholesky decomposition cannot be applied; nevertheless we prefer to use a symmetric
 set of equations, and since the values of these variables are discarded in the end, their sign
 is irrelevant).  The length of the vectors $l_k$ and $r_k$
 is the number of kernel components, $p$;  we denote the individual elements of these vectors
@@ -854,19 +854,19 @@ we can drop the variables $r_{k,j}^I$ and $l_{k,j}^I$ as these are zero, and we 
 imaginary components of equations (59) and (60) in \citet{Ambikasaran2015} as well for these, which reduces the total number
 of equations to solve.
 
-With these additional equations, we can solve for the likelihood of sums of full Lorentzian kernels 
-in $O(N)$ operations, but with slightly more computational expense due to having 4 extra variables 
-for each Lorentzian with non-zero $\omega$, and due to having a slightly larger bandwidth due to the 
-cross terms between the real and imaginary variables.  The off-diagonal components are $p_0+2(p-p_0)+2$ above 
-and below the diagonal, for a total bandwidth of $2p_0+4(p-p_0)+5$. In the case in which $p_0=p$, so 
-that the imaginary components of each $\beta$ are zero, the off-diagonal components revert to $p+1$ 
+With these additional equations, we can solve for the likelihood of sums of full Lorentzian kernels
+in $O(N)$ operations, but with slightly more computational expense due to having 4 extra variables
+for each Lorentzian with non-zero $\omega$, and due to having a slightly larger bandwidth due to the
+cross terms between the real and imaginary variables.  The off-diagonal components are $p_0+2(p-p_0)+2$ above
+and below the diagonal, for a total bandwidth of $2p_0+4(p-p_0)+5$. In the case in which $p_0=p$, so
+that the imaginary components of each $\beta$ are zero, the off-diagonal components revert to $p+1$
 above and below the diagonal, giving a bandwidth of $2p+3$ (the same as the GRP algorithm).
 
-As with the GRP method, we can build an extended matrix which is real and symmetric, and which may be 
-solved with a banded solver, as in \citet{NumericalRecipes}.  The determinant of this extended matrix 
-may be computed from the LU decomposition, and it is related to the determinant of the kernel by a 
+As with the GRP method, we can build an extended matrix which is real and symmetric, and which may be
+solved with a banded solver, as in \citet{NumericalRecipes}.  The determinant of this extended matrix
+may be computed from the LU decomposition, and it is related to the determinant of the kernel by a
 factor of $2^N$ (this is due to dividing each equation by $2$ to yield a symmetric matrix).
-We arrange the auxiliary variables with real values of 
+We arrange the auxiliary variables with real values of
 $\beta$ first, followed by the complex variables, yielding the vector
 $x_{ex} = [x_1, \{r_{2,j}^R,l_{2,j}^R;j=1,...,p_0\}, \{r_{2,j}^R,r_{2,j}^I,l_{2,j}^R,l_{2,j}^I;j=p_0+1,...,p\},
 x_2, ..., x_N]$.  The right hand side is given by: $y_{ex} = [b_1/2, \{0; j=1,...,p_0+2(p-p_0)\}, b_2/2, ..., b_N/2]$.
@@ -884,9 +884,9 @@ that there is an extra band above and below the diagonal \citep[compare with Fig
 
 \begin{figure}[!htbp]
 \begin{center}
-\includegraphics[scale=0.175]{./twoterm.eps}
+\includegraphics[scale=0.175]{./twoterm.pdf}
 \hspace{0.2in}
-\includegraphics[scale=1.0]{./colorcode.eps}
+\includegraphics[scale=1.0]{./colorcode.pdf}
 \end{center}
 \caption{Pictorial description of the extended sparse matrix where $N=10$, $p_0=0$, and $p=2$, following
 the example shown in \citet{Ambikasaran2015}.}

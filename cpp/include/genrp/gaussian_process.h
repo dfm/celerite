@@ -20,8 +20,8 @@ public:
   GaussianProcess (Kernel kernel) : kernel_(kernel), dim_(0), computed_(false) {}
 
   size_t size () const { return kernel_.size(); };
-  size_t num_terms () const { return kernel_.num_terms(); };
-  size_t num_coeffs () const { return kernel_.num_coeffs(); };
+
+  const Kernel& kernel () const { return kernel_; };
 
   Eigen::VectorXd params () const { return kernel_.params(); };
   void params (const Eigen::VectorXd& pars) { kernel_.params(pars); };
@@ -43,8 +43,10 @@ public:
   void get_params (double* pars) const;
   void set_params (const double* pars);
 
-  void get_alpha (double* alpha) const;
-  void get_beta (std::complex<double>* beta) const;
+  void get_alpha_real (double* alpha) const;
+  void get_beta_real (double* beta) const;
+  void get_alpha_complex (double* alpha) const;
+  void get_beta_complex (std::complex<double>* beta) const;
 
 private:
   Kernel kernel_;
@@ -68,7 +70,8 @@ template <typename SolverType>
 void GaussianProcess<SolverType>::compute (
     const Eigen::VectorXd& x, const Eigen::VectorXd& yerr) {
   dim_ = x.rows();
-  solver_.alpha_and_beta(kernel_.alpha(), kernel_.beta());
+  solver_.alpha_and_beta(kernel_.alpha_real(), kernel_.beta_real(),
+                         kernel_.alpha_complex(), kernel_.beta_complex());
   solver_.compute(x, yerr.array() * yerr.array());
   computed_ = true;
 }
@@ -119,15 +122,27 @@ void GaussianProcess<SolverType>::set_params (const double* pars) {
 }
 
 template <typename SolverType>
-void GaussianProcess<SolverType>::get_alpha (double* alpha) const {
-  Eigen::VectorXd a = kernel_.alpha();
+void GaussianProcess<SolverType>::get_alpha_real (double* alpha) const {
+  Eigen::VectorXd a = kernel_.alpha_real();
   for (size_t i = 0; i < a.rows(); ++i) alpha[i] = a(i);
 }
 
 template <typename SolverType>
-void GaussianProcess<SolverType>::get_beta (std::complex<double>* beta) const {
-  Eigen::VectorXcd b = kernel_.beta();
-  for (size_t i = 0; i < b.rows(); ++i) beta[i] = b(i);
+void GaussianProcess<SolverType>::get_beta_real (double* beta) const {
+  Eigen::VectorXd a = kernel_.beta_real();
+  for (size_t i = 0; i < a.rows(); ++i) beta[i] = a(i);
+}
+
+template <typename SolverType>
+void GaussianProcess<SolverType>::get_alpha_complex (double* alpha) const {
+  Eigen::VectorXd a = kernel_.alpha_complex();
+  for (size_t i = 0; i < a.rows(); ++i) alpha[i] = a(i);
+}
+
+template <typename SolverType>
+void GaussianProcess<SolverType>::get_beta_complex (std::complex<double>* beta) const {
+  Eigen::VectorXcd a = kernel_.beta_complex();
+  for (size_t i = 0; i < a.rows(); ++i) beta[i] = a(i);
 }
 
 };

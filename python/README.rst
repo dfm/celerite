@@ -1,50 +1,32 @@
-Python and C++ implementation of the generalized Rybicki Press algorithm
-for solving matrices of the form::
-
-    K_{ij} = sum_p a_p exp(-b_p |t_i - t_j|)
-
-The method was developed by `Sivaram Ambikasaran
-<https://github.com/sivaramambikasaran>`_ and you must cite `his paper
-<http://arxiv.org/abs/1409.7852>`_ if you use this code in your work.
-
-This interface allows complex bs and the parameters are specified as
-log-amplitudes, log-Q-factors, and frequencies. A frequency can be set to
-``None`` if it is meant to be non-periodic.
-
 A simple benchmark shows that this scales as O(N):
 
 .. code-block:: python
 
     import time
     import numpy as np
-    import matplotlib.pyplot as pl
+    from genrp import GP
 
-    from ess import GRPSolver
-
-    solver = GRPSolver(
-        np.log([10.0, 5.0]),  # log-amplitudes
-        np.log([0.1, 10.0]),  # log-Q-factors
-        [None, 50.0],         # frequencies
-    )
+    gp = GP()
+    gp.add_term(1.0, 0.1)
+    gp.add_term(0.1, 2.0, 1.6)
 
     N = 2**np.arange(5, 20)
-    times = np.empty((len(N), 3))
+    K = np.maximum((N.max() / N), 5*np.ones_like(N)).astype(int)
+    times = np.empty((len(N), 2))
 
-    t = np.random.rand(np.max(N))
+    t = np.sort(np.random.rand(np.max(N)))
     yerr = np.random.uniform(0.1, 0.2, len(t))
-    b = np.random.randn(len(t))
+    y = np.sin(t)
 
     for i, n in enumerate(N):
         strt = time.time()
-        solver.compute(t[:n], yerr[:n])
-        times[i, 0] = time.time() - strt
+        for k in range(K[i]):
+            gp.compute(t[:n], yerr[:n])
+        times[i, 0] = (time.time() - strt) / K[i]
 
         strt = time.time()
-        solver.log_determinant
-        times[i, 1] = time.time() - strt
-
-        strt = time.time()
-        solver.apply_inverse(b[:n])
-        times[i, 2] = time.time() - strt
+        for k in range(K[i]):
+            gp.log_likelihood(y[:n])
+        times[i, 1] = (time.time() - strt) / K[i]
 
 .. image:: https://raw.github.com/dfm/ess/master/python/demo.png

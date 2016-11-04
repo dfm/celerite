@@ -28,6 +28,9 @@ env:
           NUMPY_VERSION=1.11
 
 install:
+    - wget --quiet "http://bitbucket.org/eigen/eigen/get/${EIGEN_VERSION}.tar.gz"
+    - tar -xzf ${EIGEN_VERSION}.tar.gz
+
     - wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
     - bash miniconda.sh -b -p $HOME/miniconda
     - export PATH=$HOME/miniconda/bin:$PATH
@@ -38,10 +41,6 @@ install:
 
     - conda create --yes -n test python=$PYTHON_VERSION numpy=$NUMPY_VERSION Cython setuptools pytest
     - source activate test
-    # - pip install coveralls
-
-    - wget --quiet "http://bitbucket.org/eigen/eigen/get/${EIGEN_VERSION}.tar.gz"
-    - tar -xzf ${EIGEN_VERSION}.tar.gz
 
     - cd python
     - CXX=g++ python setup.py build_ext -I../eigen-eigen-$EIGEN_HASH --inplace
