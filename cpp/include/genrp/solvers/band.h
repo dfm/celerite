@@ -71,8 +71,6 @@ void BandSolver::compute (const Eigen::VectorXd& x, const Eigen::VectorXd& diag)
   // Set up the extended matrix.
   factor_.resize(1+3*width_, dim_ext_);
   factor_.setConstant(0.0);
-  Eigen::internal::BandMatrix<double> ab(dim_ext_, dim_ext_, 2*width_, width_);
-  ab.coeffs().setConstant(0.0);
   ipiv_.resize(dim_ext_);
 
   // Start with the diagonal.
