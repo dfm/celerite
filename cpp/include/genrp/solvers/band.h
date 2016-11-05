@@ -199,8 +199,8 @@ void BandSolver::compute (const Eigen::VectorXd& x, const Eigen::VectorXd& diag)
   bandec<double>(a_.data(), dim_ext_, width_, width_, al_.data(), ipiv_.data(), &nothing);
 
   // Deal with negative values in the diagonal.
-  Eigen::VectorXcd d = a_.row(width_).cast<std::complex<double> >();
-  std::cout << d << std::endl;
+  Eigen::VectorXcd d = a_.row(2*width_).cast<std::complex<double> >();
+  std::cout << a_ << std::endl;
 
   this->log_det_ = log(d.array()).real().sum();
 }
