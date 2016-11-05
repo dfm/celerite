@@ -69,10 +69,8 @@ void BandSolver::compute (const Eigen::VectorXd& x, const Eigen::VectorXd& diag)
   dim_ext_ = block_size_ * (n - 1) + 1;
 
   // Set up the extended matrix.
-  factor_.resize(1+3*width_, dim_ext_);
+  factor_.resize(1+2*width_, dim_ext_);
   factor_.setConstant(0.0);
-  Eigen::internal::BandMatrix<double> ab(dim_ext_, dim_ext_, 2*width_, width_);
-  ab.coeffs().setConstant(0.0);
   ipiv_.resize(dim_ext_);
 
   // Start with the diagonal.
@@ -196,7 +194,7 @@ void BandSolver::compute (const Eigen::VectorXd& x, const Eigen::VectorXd& diag)
   }
 
   // Build and factorize the sparse matrix.
-  band_factorize(dim_ext_, width_, width_, factor_, ipiv_);
+  band_factorize(width_, width_, factor_, ipiv_);
 
   // Deal with negative values in the diagonal.
   Eigen::VectorXcd d = factor_.row(2*width_).cast<std::complex<double> >();

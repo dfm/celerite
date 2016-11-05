@@ -2,6 +2,7 @@
 #define _GENRP_LAPACK_
 
 #include <complex>
+#include "genrp/banded.h"
 
 extern "C" void dgbtrf_(int* m,
                         int* n,
@@ -27,12 +28,16 @@ extern "C" void dgbtrs_(char* trans,
 namespace genrp {
 
 // Real band solver:
-int band_factorize (int m, int kl, int ku, Eigen::MatrixXd& ab, Eigen::VectorXi& ipiv) {
-  int n = ab.cols(),
-      ldab = ab.outerStride(),
-      info;
-  dgbtrf_(&m, &n, &kl, &ku, ab.data(), &ldab, ipiv.data(), &info);
-  return info;
+int band_factorize (int m, int kl, int ku, Eigen::MatrixXd& a, Eigen::MatrixXd& al, Eigen::VectorXi& ipiv) {
+  int n = a.cols(),
+      ldab = a.outerStride(),
+      info,
+      d;
+  Eigen::MatrixXd al(n, kl);
+  bandec<double>(a.data(), n, kl, ku, al.data(), ipiv.data(), &d);
+  return 0;
+  // dgbtrf_(&m, &n, &kl, &ku, ab.data(), &ldab, ipiv.data(), &info);
+  // return info;
 }
 
 int band_solve (int kl, int ku,
