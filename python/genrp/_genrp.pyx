@@ -1,7 +1,7 @@
 # distutils: language = c++
 from __future__ import division
 
-__all__ = ["get_library_version", "GP", "GradGP", "Solver"]
+__all__ = ["get_library_version", "GP", "Solver"]
 
 cimport cython
 

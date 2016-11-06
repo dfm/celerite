@@ -5,11 +5,11 @@ from __future__ import division, print_function
 import pytest
 import numpy as np
 
-from . import Solver, GP, GradGP
+from . import Solver, GP
 
 __all__ = ["test_invalid_parameters", "test_log_determinant", "test_solve",
            "test_kernel_params", "test_build_gp", "test_log_likelihood",
-           "test_psd", "test_nyquist_singularity", "test_grad_log_likelihood"]
+           "test_psd", "test_nyquist_singularity"]
 
 
 def test_invalid_parameters(seed=42):
@@ -246,57 +246,3 @@ def test_nyquist_singularity(seed=4220):
           0.5*len(y)*np.log(2.0*np.pi))
 
     assert np.allclose(ll, llgp)
-
-
-def test_grad_log_likelihood(seed=42):
-    np.random.seed(seed)
-    x = np.sort(np.random.rand(10))
-    yerr = np.random.uniform(0.1, 0.5, len(x))
-    y = np.sin(x)
-
-    gp = GP()
-    grad_gp = GradGP()
-    with pytest.raises(RuntimeError):
-        grad_gp.log_likelihood(y)
-    for term, grad in zip([(-0.5, 0.1), (-0.6, 0.7, 1.0)],
-                          [dict(grad_log_a=[1.0, 0, 0, 0, 0],
-                                grad_log_q=[0, 1.0, 0, 0, 0]),
-                           dict(grad_log_a=[0, 0, 1.0, 0, 0],
-                                grad_log_q=[0, 0, 0, 1.0, 0],
-                                grad_log_f=[0, 0, 0, 0, 1.0])]):
-        gp.add_term(*term)
-        grad_gp.add_term(*term, **grad)
-
-        assert grad_gp.computed is False
-
-        with pytest.raises(ValueError):
-            grad_gp.compute(np.random.rand(len(x)), yerr)
-
-        gp.compute(x, yerr)
-        grad_gp.compute(x, yerr)
-        assert grad_gp.computed is True
-
-        ll = grad_gp.log_likelihood(y)[0]
-        K = gp.get_matrix(x)
-        K[np.diag_indices_from(K)] += yerr**2
-        ll0 = -0.5 * np.dot(y, np.linalg.solve(K, y))
-        ll0 -= 0.5 * np.linalg.slogdet(K)[1]
-        ll0 -= 0.5 * len(x) * np.log(2*np.pi)
-        assert np.allclose(ll, ll0)
-
-    print(grad_gp.log_likelihood(y))
-
-    # # Check that changing the parameters changes the likelihood.
-    # gp.compute(x, yerr)
-    # ll1 = gp.log_likelihood(y)
-    # params = gp.params
-    # params[0] += 0.1
-    # gp.params = params
-    # gp.compute(x, yerr)
-    # ll2 = gp.log_likelihood(y)
-    # assert not np.allclose(ll1, ll2)
-
-    # gp[1] += 0.1
-    # gp.compute(x, yerr)
-    # ll3 = gp.log_likelihood(y)
-    # assert not np.allclose(ll2, ll3)
