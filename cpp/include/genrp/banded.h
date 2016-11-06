@@ -6,7 +6,7 @@
 namespace genrp {
 
 #define SWAP(a,b) {dum=(a);(a)=(b);(b)=dum;}
-#define TINY 1.245e-16
+#define TINY 1.0e-20
 
 size_t get_index (size_t i, size_t j, size_t dx)
 {
@@ -16,6 +16,8 @@ size_t get_index (size_t i, size_t j, size_t dx)
 template <typename T>
 void bandec(T* a, int n, int m1, int m2, T* al, int indx[], int* d)
 {
+  using std::abs;
+
   int i,j,k,l;
   int mm;
   T dum;
@@ -33,7 +35,7 @@ void bandec(T* a, int n, int m1, int m2, T* al, int indx[], int* d)
     i=k;
     if (l < n) l++;
     for (j=k+1;j<=l;j++) {
-      if (std::abs(a[get_index(j, 1, mm)]) > std::abs(dum)) {
+      if (abs(a[get_index(j, 1, mm)]) > abs(dum)) {
         dum=a[get_index(j, 1, mm)];
         i=j;
       }

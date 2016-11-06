@@ -108,6 +108,8 @@ T BandSolver::build_matrix (
   Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>& al,
   Eigen::VectorXi& ipiv
 ) {
+  using std::abs;
+
   // Check dimensions.
   assert ((x.rows() == diag.rows()) && "DIMENSION_MISMATCH");
   this->n_ = x.rows();
@@ -132,8 +134,8 @@ T BandSolver::build_matrix (
   int block_id, start_a, start_b, a, b;
   double dt;
   T value;
-  Eigen::ArrayXd ebt, phi, gamma_real(p_real), gamma_complex_real(p_complex),
-                 gamma_complex_imag(p_complex);
+  Eigen::Array<T, Eigen::Dynamic, 1> ebt, phi,
+    gamma_real(p_real), gamma_complex_real(p_complex), gamma_complex_imag(p_complex);
   for (k = 0; k < n_ - 1; ++k) {
     // Pre-compute the gammas.
     dt = x(k+1) - x(k);
@@ -246,11 +248,11 @@ T BandSolver::build_matrix (
 
   // Build and factorize the sparse matrix.
   int nothing;
-  bandec<double>(ab.data(), dim_ext, width, width, al.data(), ipiv.data(), &nothing);
+  bandec<T>(ab.data(), dim_ext, width, width, al.data(), ipiv.data(), &nothing);
 
   // Compute the determinant.
   T ld = T(0.0);
-  for (size_t i = 0; i < dim_ext; ++i) ld += log(std::abs(ab(0, i)));
+  for (size_t i = 0; i < dim_ext; ++i) ld += log(abs(ab(0, i)));
 
   return ld;
 }
