@@ -3,7 +3,6 @@
 
 #include <cmath>
 #include <vector>
-#include <complex>
 #include <Eigen/Core>
 
 namespace genrp {
@@ -80,8 +79,12 @@ public:
     params[2] = log(f);
   };
 
-  std::complex<double> beta () const {
-    return std::complex<double>(tpq, tpf);
+  double beta_real () const {
+    return tpq;
+  };
+
+  double beta_imag () const {
+    return tpf;
   };
 
   void log_f (double log_f) {
@@ -153,10 +156,17 @@ public:
     return alpha;
   };
 
-  Eigen::VectorXcd beta_complex () const {
-    Eigen::VectorXcd beta(pterms_.size());
+  Eigen::VectorXd beta_complex_real () const {
+    Eigen::VectorXd beta(pterms_.size());
     for (size_t i = 0; i < pterms_.size(); ++i)
-      beta(i) = pterms_[i].beta();
+      beta(i) = pterms_[i].beta_real();
+    return beta;
+  };
+
+  Eigen::VectorXd beta_complex_imag () const {
+    Eigen::VectorXd beta(pterms_.size());
+    for (size_t i = 0; i < pterms_.size(); ++i)
+      beta(i) = pterms_[i].beta_imag();
     return beta;
   };
 
