@@ -96,6 +96,7 @@ cdef class GP:
     cdef Kernel[AutoDiffScalar[VectorXd] ] grad_kernel
 
     cdef int _data_size
+    cdef int _grad_data_size
 
     cdef object _terms
 
@@ -103,6 +104,7 @@ cdef class GP:
         self.gp = new GaussianProcess[BandSolver[double], double](self.kernel)
         self.grad_gp = new GaussianProcess[BandSolver[AutoDiffScalar[VectorXd] ], AutoDiffScalar[VectorXd] ](self.grad_kernel)
         self._data_size = -1
+        self._grad_data_size = -1
         self._terms = []
 
     def __dealloc__(self):
@@ -115,6 +117,10 @@ cdef class GP:
     property computed:
         def __get__(self):
             return self._data_size >= 0
+
+    property grad_computed:
+        def __get__(self):
+            return self._grad_data_size >= 0
 
     property alpha_real:
         def __get__(self):
@@ -163,6 +169,7 @@ cdef class GP:
             self.gp.set_params(<double*>p.data)
 
             self._data_size = -1
+            self._grad_data_size = -1
 
     def __getitem__(self, i):
         return self.params[i]
@@ -228,6 +235,7 @@ cdef class GP:
         self.grad_gp = new GaussianProcess[BandSolver[AutoDiffScalar[VectorXd] ], AutoDiffScalar[VectorXd] ](self.grad_kernel)
 
         self._data_size = -1
+        self._grad_data_size = -1
 
     def get_matrix(self, np.ndarray[DTYPE_t, ndim=1] x1, x2=None):
         if x2 is None:
@@ -256,6 +264,16 @@ cdef class GP:
         self._data_size = x.shape[0]
         self.gp.compute(self._data_size, <double*>x.data, <double*>yerr.data)
 
+    def compute_grad(self, np.ndarray[DTYPE_t, ndim=1] x, np.ndarray[DTYPE_t, ndim=1] yerr):
+        if x.shape[0] != yerr.shape[0]:
+            raise ValueError("dimension mismatch")
+        cdef int i
+        for i in range(x.shape[0] - 1):
+            if x[i+1] <= x[i]:
+                raise ValueError("the time series must be ordered")
+        self._grad_data_size = x.shape[0]
+        self.grad_gp.compute(self._grad_data_size, <double*>x.data, <double*>yerr.data)
+
     def log_likelihood(self, np.ndarray[DTYPE_t, ndim=1] y):
         if not self.computed:
             raise RuntimeError("you must call 'compute' first")
@@ -263,87 +281,24 @@ cdef class GP:
             raise ValueError("dimension mismatch")
         return self.gp.log_likelihood(<double*>y.data)
 
-    def sample(self, np.ndarray[DTYPE_t, ndim=1] x, double tiny=1e-12):
-        cdef np.ndarray[DTYPE_t, ndim=2] K = self.get_matrix(x)
-        K[np.diag_indices_from(K)] += tiny
-        return np.random.multivariate_normal(np.zeros_like(x), K)
-
-
-cdef class GradGP:
-
-    cdef GaussianProcess[BandSolver[AutoDiffScalar[VectorXd] ], AutoDiffScalar[VectorXd] ]* gp
-    cdef Kernel[AutoDiffScalar[VectorXd] ] kernel
-    cdef int _data_size
-
-    def __cinit__(self):
-        self.gp = new GaussianProcess[BandSolver[AutoDiffScalar[VectorXd] ], AutoDiffScalar[VectorXd] ](self.kernel)
-        self._data_size = -1
-
-    def __dealloc__(self):
-        del self.gp
-
-    def __len__(self):
-        return self.gp.size()
-
-    property computed:
-        def __get__(self):
-            return self._data_size >= 0
-
-    def add_term(self, double log_a, double log_q, log_f=None,
-                 grad_log_a=None, grad_log_q=None, grad_log_f=None):
-        cdef AutoDiffScalar[VectorXd] la, lq, lf
-        cdef np.ndarray[DTYPE_t, ndim=1] gla, glq, glf
-
-        lq = AutoDiffScalar[VectorXd](log_q)
-
-        if grad_log_a is not None:
-            gla = np.atleast_1d(grad_log_a)
-            la = AutoDiffScalar[VectorXd](log_a, Map[VectorXd](<double*>gla.data, gla.shape[0]))
-        else:
-            la = AutoDiffScalar[VectorXd](log_a)
-
-        if grad_log_q is not None:
-            glq = np.atleast_1d(grad_log_q)
-            lq = AutoDiffScalar[VectorXd](log_q, Map[VectorXd](<double*>glq.data, glq.shape[0]))
-        else:
-            lq = AutoDiffScalar[VectorXd](log_q)
-
-        if log_f is None:
-            self.kernel.add_term(la, lq)
-        else:
-            if grad_log_f is not None:
-                glf = np.atleast_1d(grad_log_f)
-                lf = AutoDiffScalar[VectorXd](log_f, Map[VectorXd](<double*>glf.data, glf.shape[0]))
-            else:
-                lf = AutoDiffScalar[VectorXd](log_f)
-            self.kernel.add_term(la, lq, lf)
-
-        del self.gp
-        self.gp = new GaussianProcess[BandSolver[AutoDiffScalar[VectorXd] ], AutoDiffScalar[VectorXd] ](self.kernel)
-        self._data_size = -1
-
-    def compute(self, np.ndarray[DTYPE_t, ndim=1] x, np.ndarray[DTYPE_t, ndim=1] yerr):
-        if x.shape[0] != yerr.shape[0]:
-            raise ValueError("dimension mismatch")
-        cdef int i
-        for i in range(x.shape[0] - 1):
-            if x[i+1] <= x[i]:
-                raise ValueError("the time series must be ordered")
-        self._data_size = x.shape[0]
-        self.gp.compute(self._data_size, <double*>x.data, <double*>yerr.data)
-
-    def log_likelihood(self, np.ndarray[DTYPE_t, ndim=1] y):
-        if not self.computed:
-            raise RuntimeError("you must call 'compute' first")
+    def grad_log_likelihood(self, np.ndarray[DTYPE_t, ndim=1] y):
+        if not self.grad_computed:
+            raise RuntimeError("you must call 'compute_grad' first")
         if y.shape[0] != self._data_size:
             raise ValueError("dimension mismatch")
-        cdef AutoDiffScalar[VectorXd] ll = self.gp.log_likelihood(<double*>y.data)
+
+        cdef AutoDiffScalar[VectorXd] ll = self.grad_gp.log_likelihood(<double*>y.data)
         cdef VectorXd grad = ll.derivatives()
         cdef np.ndarray[DTYPE_t, ndim=1] grad_ll = np.empty(grad.rows(), dtype=DTYPE)
         cdef int i
         for i in range(grad.rows()):
             grad_ll[i] = grad(i)
         return ll.value(), grad_ll
+
+    def sample(self, np.ndarray[DTYPE_t, ndim=1] x, double tiny=1e-12):
+        cdef np.ndarray[DTYPE_t, ndim=2] K = self.get_matrix(x)
+        K[np.diag_indices_from(K)] += tiny
+        return np.random.multivariate_normal(np.zeros_like(x), K)
 
 
 cdef class Solver:
