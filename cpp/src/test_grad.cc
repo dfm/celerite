@@ -4,6 +4,29 @@
 
 #include "genrp/solvers/band.h"
 
+#define DO_TEST(FUNC, VAR1, VAR2)                            \
+{                                                            \
+  double value, delta;                                       \
+  VAR1 += eps;                                               \
+  solver.compute(alpha_real, beta_real,                      \
+      alpha_complex, beta_complex_real, beta_complex_imag,   \
+      x, yerr2);                                             \
+  value = FUNC;                                              \
+  VAR1 -= 2.0*eps;                                           \
+  solver.compute(alpha_real, beta_real,                      \
+      alpha_complex, beta_complex_real, beta_complex_imag,   \
+      x, yerr2);                                             \
+  value -= FUNC;                                             \
+  VAR1 += eps;                                               \
+  value /= 2.0 * eps;                                        \
+  delta = std::abs(value - VAR2);                            \
+  if (delta > 1e-5) {                                        \
+    std::cerr << "Test failed: '" << #FUNC << ", " << #VAR1 << "': |" << value << " - " << VAR2 << "| = " << delta << std::endl; \
+    return 1;                                                \
+  } else                                                     \
+    std::cerr << "Test passed: '" << #FUNC << " " << #VAR1 << "' - error: " << delta << std::endl; \
+}
+
 int main (int argc, char* argv[])
 {
   typedef Eigen::AutoDiffScalar<Eigen::VectorXd> ad_t;
@@ -52,45 +75,48 @@ int main (int argc, char* argv[])
                                          beta_complex_real_grad(nterms),
                                          beta_complex_imag_grad(nterms),
                                          yerr2_grad(N);
-
-  ad_t white_noise = ad_t(-5.0, nparams, 0);
   for (size_t i = 0; i < N; ++i)
-    yerr2_grad(i) = yerr2(i) + exp(white_noise);
+    yerr2_grad(i) = ad_t(yerr2(i), nparams, 0);
 
   size_t par = 1;
   for (size_t i = 0; i < nterms; ++i) {
-    alpha_real_grad(i) = exp(ad_t(log(alpha_real(i)), nparams, par++));
-    beta_real_grad(i) = exp(ad_t(log(beta_real(i)), nparams, par++));
-    alpha_complex_grad(i) = exp(ad_t(log(alpha_complex(i)), nparams, par++));
-    beta_complex_real_grad(i) = exp(ad_t(log(beta_complex_real(i)), nparams, par++));
-    beta_complex_imag_grad(i) = exp(ad_t(log(beta_complex_imag(i)), nparams, par++));
+    alpha_real_grad(i) = ad_t(alpha_real(i), nparams, par++);
+    beta_real_grad(i) = ad_t(beta_real(i), nparams, par++);
+    alpha_complex_grad(i) = ad_t(alpha_complex(i), nparams, par++);
+    beta_complex_real_grad(i) = ad_t(beta_complex_real(i), nparams, par++);
+    beta_complex_imag_grad(i) = ad_t(beta_complex_imag(i), nparams, par++);
   }
 
-  genrp::BandSolver<ad_t> solver;
-  solver.compute(alpha_real_grad, beta_real_grad,
+  genrp::BandSolver<double> solver;
+  genrp::BandSolver<ad_t> grad_solver;
+  grad_solver.compute(alpha_real_grad, beta_real_grad,
       alpha_complex_grad, beta_complex_real_grad, beta_complex_imag_grad,
       x, yerr2_grad);
 
-  ad_t ld = solver.log_determinant();
+  ad_t grad_log_det = grad_solver.log_determinant(),
+       grad_dot_solve = grad_solver.dot_solve(y);
 
-  ad_t val = solver.dot_solve(y);
+  double eps = 1.23e-5;
+  DO_TEST(solver.log_determinant(), yerr2.array(), grad_log_det.derivatives()(0))
+  DO_TEST(solver.dot_solve(y), yerr2.array(), grad_dot_solve.derivatives()(0))
 
-  ad_t ll = -0.5 * val - 0.5 * ld;
-  std::cout << ll.derivatives() << std::endl;
+  par = 1;
+  for (size_t i = 0; i < nterms; ++i) {
+    DO_TEST(solver.log_determinant(), alpha_real(i), grad_log_det.derivatives()(par))
+    DO_TEST(solver.dot_solve(y), alpha_real(i), grad_dot_solve.derivatives()(par++))
 
-  // double eps = 1.23e-4, delta = 0.0;
-  // beta_real(0) += eps;
+    DO_TEST(solver.log_determinant(), beta_real(i), grad_log_det.derivatives()(par))
+    DO_TEST(solver.dot_solve(y), beta_real(i), grad_dot_solve.derivatives()(par++))
 
-  // solver = genrp::BandSolver(alpha_real, beta_real);
-  // solver.compute(x, yerr2);
-  // delta = solver.log_determinant();
+    DO_TEST(solver.log_determinant(), alpha_complex(i), grad_log_det.derivatives()(par))
+    DO_TEST(solver.dot_solve(y), alpha_complex(i), grad_dot_solve.derivatives()(par++))
 
-  // beta_real(0) -= 2*eps;
-  // solver = genrp::BandSolver(alpha_real, beta_real);
-  // solver.compute(x, yerr2);
-  // delta -= solver.log_determinant();
+    DO_TEST(solver.log_determinant(), beta_complex_real(i), grad_log_det.derivatives()(par))
+    DO_TEST(solver.dot_solve(y), beta_complex_real(i), grad_dot_solve.derivatives()(par++))
 
-  // std::cout << (0.5 * delta / eps) << std::endl;
+    DO_TEST(solver.log_determinant(), beta_complex_imag(i), grad_log_det.derivatives()(par))
+    DO_TEST(solver.dot_solve(y), beta_complex_imag(i), grad_dot_solve.derivatives()(par++))
+  }
 
   return 0;
 }
