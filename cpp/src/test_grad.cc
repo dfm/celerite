@@ -45,7 +45,7 @@ int main (int argc, char* argv[])
   y = sin(x.array());
 
   // Set up the gradients
-  size_t nparams = 3 * nterms + 2;
+  size_t nparams = 3 * nterms + 3;
   Eigen::Matrix<ad_t, Eigen::Dynamic, 1> alpha_real_grad(nterms),
                                          beta_real_grad(nterms),
                                          alpha_complex_grad(nterms),
