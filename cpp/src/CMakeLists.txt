@@ -11,4 +11,5 @@ endmacro (GENRP_TEST)
 
 genrp_test(test_solvers)
 genrp_test(test_gp)
+genrp_test(test_gp_grad)
 genrp_test(test_grad)

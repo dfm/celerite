@@ -8,109 +8,112 @@
 namespace genrp {
 
 
+template <typename T>
 class Term {
-  friend class Kernel;
 public:
-  Term (double log_a, double log_q) {
+  Term (const T& log_a, const T& log_q) {
     this->log_a(log_a);
     this->log_q(log_q);
   };
 
   size_t size () const { return 2; };
 
-  void set_params (const double* params) {
-    log_a(params[0]);
-    log_q(params[1]);
+  void set_params (const T* const params) {
+    this->log_a(params[0]);
+    this->log_q(params[1]);
   };
 
-  void get_params (double* params) const {
+  void get_params (T* params) const {
     params[0] = log(a);
     params[1] = log(q);
   };
 
-  double alpha () const {
+  T alpha () const {
     return fp2a * q;
   };
 
-  double beta () const {
+  T beta () const {
     return tpq;
   };
 
-  virtual double psd (double f) const {
-    double df = f / q;
+  virtual T psd (double f) const {
+    T df = f / q;
     return 2.0 * a / (1.0 + df * df);
   };
 
-  virtual double value (double dt) const {
+  virtual T value (double dt) const {
     return fp2a * q * exp(-tpq * fabs(dt));
   };
 
-  void log_a (double log_a) {
+  void log_a (const T& log_a) {
     a = exp(log_a);
     fp2a = 4.0 * M_PI * M_PI * a;
   };
 
-  void log_q (double log_q) {
+  void log_q (const T& log_q) {
     q = exp(log_q);
     tpq = 2.0 * M_PI * q;
   };
 
 protected:
-  double a, q, fp2a, tpq;
+  T a, q, fp2a, tpq;
 };
 
-class PeriodicTerm : public Term {
+template <typename T>
+class PeriodicTerm : public Term<T> {
 public:
-  PeriodicTerm (double log_a, double log_q, double log_f) : Term(log_a, log_q) {
+  PeriodicTerm (const T& log_a, const T& log_q, const T& log_f) : Term<T>(log_a, log_q) {
     this->log_f(log_f);
   };
 
   size_t size () const { return 3; };
 
-  void set_params (const double* params) {
-    log_a(params[0]);
-    log_q(params[1]);
-    log_f(params[2]);
+  void set_params (const T* const params) {
+    this->log_a(params[0]);
+    this->log_q(params[1]);
+    this->log_f(params[2]);
   };
 
-  void get_params (double* params) const {
-    params[0] = log(a);
-    params[1] = log(q);
-    params[2] = log(f);
+  void get_params (T* params) const {
+    params[0] = log(this->a);
+    params[1] = log(this->q);
+    params[2] = log(this->f);
   };
 
-  double beta_real () const {
-    return tpq;
+  T beta_real () const {
+    return this->tpq;
   };
 
-  double beta_imag () const {
-    return tpf;
+  T beta_imag () const {
+    return this->tpf;
   };
 
-  void log_f (double log_f) {
+  void log_f (const T& log_f) {
     f = exp(log_f);
     tpf = 2.0 * M_PI * f;
   }
 
-  double value (double dt) const {
-    return fp2a * q * exp(-tpq * fabs(dt)) * cos(tpf * dt);
+  T value (double dt) const {
+    return this->fp2a * this->q * exp(-this->tpq * fabs(dt)) * cos(this->tpf * dt);
   };
 
-  double psd (double f) const {
-    double df, psd = 0.0;
-    df = (f - this->f) / q;
-    psd += a / (1.0 + df * df);
-    df = (f + this->f) / q;
-    psd += a / (1.0 + df * df);
+  T psd (double f) const {
+    T df, psd = T(0.0);
+    df = (f - this->f) / this->q;
+    psd += this->a / (1.0 + df * df);
+    df = (f + this->f) / this->q;
+    psd += this->a / (1.0 + df * df);
     return psd;
   };
 
 private:
-  double f, tpf;
+  T f, tpf;
 };
 
 
+template <typename T>
 class Kernel {
+  typedef Eigen::Matrix<T, Eigen::Dynamic, 1> vector_t;
 public:
   Kernel () {};
 
@@ -125,54 +128,54 @@ public:
   size_t p_real () const { return terms_.size(); };
   size_t p_complex () const { return pterms_.size(); };
 
-  void add_term (double log_amp, double log_q) {
-    Term term(log_amp, log_q);
+  void add_term (const T& log_amp, const T& log_q) {
+    Term<T> term(log_amp, log_q);
     terms_.push_back(term);
   };
 
-  void add_term (double log_amp, double log_q, double log_freq) {
-    PeriodicTerm term(log_amp, log_q, log_freq);
+  void add_term (const T& log_amp, const T& log_q, const T& log_freq) {
+    PeriodicTerm<T> term(log_amp, log_q, log_freq);
     pterms_.push_back(term);
   };
 
-  Eigen::VectorXd alpha_real () const {
-    Eigen::VectorXd alpha(terms_.size());
+  vector_t alpha_real () const {
+    vector_t alpha(terms_.size());
     for (size_t i = 0; i < terms_.size(); ++i)
       alpha(i) = terms_[i].alpha();
     return alpha;
   };
 
-  Eigen::VectorXd beta_real () const {
-    Eigen::VectorXd beta(terms_.size());
+  vector_t beta_real () const {
+    vector_t beta(terms_.size());
     for (size_t i = 0; i < terms_.size(); ++i)
       beta(i) = terms_[i].beta();
     return beta;
   };
 
-  Eigen::VectorXd alpha_complex () const {
-    Eigen::VectorXd alpha(pterms_.size());
+  vector_t alpha_complex () const {
+    vector_t alpha(pterms_.size());
     for (size_t i = 0; i < pterms_.size(); ++i)
       alpha(i) = pterms_[i].alpha();
     return alpha;
   };
 
-  Eigen::VectorXd beta_complex_real () const {
-    Eigen::VectorXd beta(pterms_.size());
+  vector_t beta_complex_real () const {
+    vector_t beta(pterms_.size());
     for (size_t i = 0; i < pterms_.size(); ++i)
       beta(i) = pterms_[i].beta_real();
     return beta;
   };
 
-  Eigen::VectorXd beta_complex_imag () const {
-    Eigen::VectorXd beta(pterms_.size());
+  vector_t beta_complex_imag () const {
+    vector_t beta(pterms_.size());
     for (size_t i = 0; i < pterms_.size(); ++i)
       beta(i) = pterms_[i].beta_imag();
     return beta;
   };
 
-  Eigen::VectorXd params () const {
+  vector_t params () const {
     size_t i, count;
-    Eigen::VectorXd pars(size());
+    vector_t pars(size());
     for (i = 0, count = 0; i < terms_.size(); ++i, count += 2)
       terms_[i].get_params(&(pars(count)));
     for (i = 0; i < pterms_.size(); ++i, count += 3)
@@ -180,7 +183,7 @@ public:
     return pars;
   };
 
-  void params (const Eigen::VectorXd& pars) {
+  void params (const vector_t& pars) {
     size_t i, count;
     for (i = 0, count = 0; i < terms_.size(); ++i, count += 2)
       terms_[i].set_params(&(pars(count)));
@@ -188,23 +191,23 @@ public:
       pterms_[i].set_params(&(pars(count)));
   };
 
-  double value (double dt) const {
-    double result = 0.0;
+  T value (double dt) const {
+    T result = 0.0;
     for (size_t i = 0; i < terms_.size(); ++i) result += terms_[i].value(dt);
     for (size_t i = 0; i < pterms_.size(); ++i) result += pterms_[i].value(dt);
     return result;
   };
 
-  double psd (double f) const {
-    double result = 0.0;
+  T psd (double f) const {
+    T result = 0.0;
     for (size_t i = 0; i < terms_.size(); ++i) result += terms_[i].psd(f);
     for (size_t i = 0; i < pterms_.size(); ++i) result += pterms_[i].psd(f);
     return result;
   };
 
 private:
-  std::vector<Term> terms_;
-  std::vector<PeriodicTerm> pterms_;
+  std::vector<Term<T> > terms_;
+  std::vector<PeriodicTerm<T> > pterms_;
 
 };
 

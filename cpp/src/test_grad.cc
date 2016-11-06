@@ -1,7 +1,6 @@
 #include <iostream>
 #include <Eigen/Core>
 #include <unsupported/Eigen/AutoDiff>
-
 #include "genrp/solvers/band.h"
 
 #define DO_TEST(FUNC, VAR1, VAR2)                            \

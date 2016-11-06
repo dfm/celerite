@@ -30,12 +30,12 @@ def get_library_version():
 
 cdef extern from "genrp/genrp.h" namespace "genrp":
 
-    cdef cppclass Kernel:
+    cdef cppclass Kernel[T]:
         Kernel()
-        void add_term (double log_amp, double log_q)
-        void add_term (double log_amp, double log_q, double log_freq)
-        double value (double dt) const
-        double psd (double w) const
+        void add_term (const T log_amp, const T log_q)
+        void add_term (const T log_amp, const T log_q, const T log_freq)
+        T value (double dt) const
+        T psd (double f) const
         size_t p () const
         size_t p_real () const
         size_t p_complex () const
@@ -52,32 +52,32 @@ cdef extern from "genrp/genrp.h" namespace "genrp":
         T solve_dot (const double* b) const
         T log_determinant () const
 
-    cdef cppclass GaussianProcess[SolverType]:
-        GaussianProcess (Kernel kernel)
+    cdef cppclass GaussianProcess[SolverType, T]:
+        GaussianProcess (Kernel[T] kernel)
         size_t size () const
-        const Kernel kernel () const
+        const Kernel[T] kernel () const
         SolverType solver () const
         void compute (size_t N, const double* x, const double* yerr)
-        double log_likelihood (const double* y) const
-        double kernel_value (double dt) const
-        double kernel_psd (double w) const
-        void get_params (double* pars) const
-        void set_params (const double* pars)
-        void get_alpha_real (double* alpha) const
-        void get_beta_real (double* alpha) const
-        void get_alpha_complex (double* alpha) const
-        void get_beta_complex_real (double* beta) const
-        void get_beta_complex_imag (double* beta) const
+        T log_likelihood (const double* y) const
+        T kernel_value (double dt) const
+        T kernel_psd (double w) const
+        void get_params (T* pars) const
+        void set_params (const T* const pars)
+        void get_alpha_real (T* alpha) const
+        void get_beta_real (T* alpha) const
+        void get_alpha_complex (T* alpha) const
+        void get_beta_complex_real (T* beta) const
+        void get_beta_complex_imag (T* beta) const
 
 
 cdef class GP:
 
-    cdef GaussianProcess[BandSolver[double] ]* gp
-    cdef Kernel kernel
+    cdef GaussianProcess[BandSolver[double], double]* gp
+    cdef Kernel[double] kernel
     cdef int _data_size
 
     def __cinit__(self):
-        self.gp = new GaussianProcess[BandSolver[double] ](self.kernel)
+        self.gp = new GaussianProcess[BandSolver[double], double](self.kernel)
         self._data_size = -1
 
     def __dealloc__(self):
@@ -148,7 +148,7 @@ cdef class GP:
         else:
             self.kernel.add_term(log_amp, log_q, log_freq)
         del self.gp
-        self.gp = new GaussianProcess[BandSolver[double] ](self.kernel)
+        self.gp = new GaussianProcess[BandSolver[double], double](self.kernel)
         self._data_size = -1
 
     def get_matrix(self, np.ndarray[DTYPE_t, ndim=1] x1, x2=None):
