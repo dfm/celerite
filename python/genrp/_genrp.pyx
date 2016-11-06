@@ -42,7 +42,7 @@ cdef extern from "genrp/genrp.h" namespace "genrp":
 
     cdef cppclass DirectSolver:
         DirectSolver (size_t p_real, const double* alpha_real, const double* beta_real,
-                      size_t p_complex, const double* alpha_complex, const double complex* beta_complex)
+                    size_t p_complex, const double* alpha_complex, const double* beta_complex_real, const double* beta_complex_imag)
         void compute (size_t N, const double* t, const double* d)
         void solve (const double* b, double* x) const
         void solve (size_t nrhs, const double* b, double* x) const
@@ -51,7 +51,7 @@ cdef extern from "genrp/genrp.h" namespace "genrp":
 
     cdef cppclass BandSolver:
         BandSolver (size_t p_real, const double* alpha_real, const double* beta_real,
-                    size_t p_complex, const double* alpha_complex, const double complex* beta_complex)
+                    size_t p_complex, const double* alpha_complex, const double* beta_complex_real, const double* beta_complex_imag)
         void compute (size_t N, const double* t, const double* d)
         void solve (const double* b, double* x) const
         void solve (size_t nrhs, const double* b, double* x) const
@@ -72,7 +72,8 @@ cdef extern from "genrp/genrp.h" namespace "genrp":
         void get_alpha_real (double* alpha) const
         void get_beta_real (double* alpha) const
         void get_alpha_complex (double* alpha) const
-        void get_beta_complex (double complex* beta) const
+        void get_beta_complex_real (double* beta) const
+        void get_beta_complex_imag (double* beta) const
 
 
 cdef class GP:
@@ -113,10 +114,16 @@ cdef class GP:
             self.gp.get_alpha_complex(<double*>a.data)
             return a
 
-    property beta_complex:
+    property beta_complex_real:
         def __get__(self):
-            cdef np.ndarray[CDTYPE_t] a = np.empty(self.gp.kernel().p_complex(), dtype=CDTYPE)
-            self.gp.get_beta_complex(<double complex*>a.data)
+            cdef np.ndarray[DTYPE_t] a = np.empty(self.gp.kernel().p_complex(), dtype=DTYPE)
+            self.gp.get_beta_complex_real(<double*>a.data)
+            return a
+
+    property beta_complex_imag:
+        def __get__(self):
+            cdef np.ndarray[DTYPE_t] a = np.empty(self.gp.kernel().p_complex(), dtype=DTYPE)
+            self.gp.get_beta_complex_imag(<double*>a.data)
             return a
 
     property params:
@@ -214,13 +221,15 @@ cdef class Solver:
     cdef np.ndarray beta_real
     cdef unsigned int p_complex
     cdef np.ndarray alpha_complex
-    cdef np.ndarray beta_complex
+    cdef np.ndarray beta_complex_real
+    cdef np.ndarray beta_complex_imag
 
     def __cinit__(self,
                   np.ndarray[DTYPE_t, ndim=1] alpha_real,
                   np.ndarray[DTYPE_t, ndim=1] beta_real,
                   np.ndarray[DTYPE_t, ndim=1] alpha_complex,
-                  np.ndarray[CDTYPE_t, ndim=1] beta_complex,
+                  np.ndarray[DTYPE_t, ndim=1] beta_complex_real,
+                  np.ndarray[DTYPE_t, ndim=1] beta_complex_imag,
                   np.ndarray[DTYPE_t, ndim=1] t,
                   d=1e-10):
         if not np.all(np.diff(t) > 0.0):
@@ -229,7 +238,9 @@ cdef class Solver:
         # Check the shapes:
         if alpha_real.shape[0] != beta_real.shape[0]:
             raise ValueError("dimension mismatch")
-        if alpha_complex.shape[0] != beta_complex.shape[0]:
+        if alpha_complex.shape[0] != beta_complex_real.shape[0]:
+            raise ValueError("dimension mismatch")
+        if alpha_complex.shape[0] != beta_complex_imag.shape[0]:
             raise ValueError("dimension mismatch")
 
         # Save the dimensions
@@ -240,7 +251,8 @@ cdef class Solver:
         self.beta_real = beta_real
         self.p_complex = alpha_complex.shape[0]
         self.alpha_complex = alpha_complex
-        self.beta_complex = beta_complex
+        self.beta_complex_real = beta_complex_real
+        self.beta_complex_imag = beta_complex_imag
 
         try:
             d = float(d)
@@ -258,7 +270,8 @@ cdef class Solver:
             <double*>(self.beta_real.data),
             self.p_complex,
             <double*>(self.alpha_complex.data),
-            <double complex*>(self.beta_complex.data),
+            <double*>(self.beta_complex_real.data),
+            <double*>(self.beta_complex_imag.data),
         )
         self.solver.compute(
             self.N,
@@ -289,7 +302,7 @@ cdef class Solver:
         cdef double asum = self.alpha_real.sum() + self.alpha_complex.sum()
         cdef double delta
         cdef double value
-        cdef int i, j, p
+        cdef size_t i, j, p
         cdef np.ndarray[DTYPE_t, ndim=2] A = np.empty((self.N, self.N),
                                                       dtype=DTYPE)
         for i in range(self.N):
@@ -301,8 +314,8 @@ cdef class Solver:
                     value += self.alpha_real[p]*exp(-self.beta_real[p]*delta)
                 for p in range(self.p_complex):
                     value += self.alpha_complex[p]*(
-                        exp(-self.beta_complex[p].real*delta) *
-                        cos(self.beta_complex[p].imag*delta)
+                        exp(-self.beta_complex_real[p]*delta) *
+                        cos(self.beta_complex_imag[p]*delta)
                     )
                 A[i, j] = value
                 A[j, i] = value

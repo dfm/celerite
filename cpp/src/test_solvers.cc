@@ -47,7 +47,7 @@ int main (int argc, char* argv[])
 
   // Set the scale of the uncertainties.
   yerr2.array() *= 0.1;
-  yerr2.array() += 1.0;
+  yerr2.array() += 0.3;
 
   // The times need to be sorted.
   std::sort(x.data(), x.data() + x.size());
@@ -63,9 +63,9 @@ int main (int argc, char* argv[])
   DO_TEST(band_real_log_det, direct_real.log_determinant(), band_real.log_determinant())
   DO_TEST(band_real_dot_solve, direct_real.dot_solve(y), band_real.dot_solve(y))
 
-  genrp::BandSolver band_complex(alpha_real, beta_real, alpha_complex, beta_complex_real, beta_complex_imag);
+  genrp::BandSolver band_complex(alpha_complex, beta_complex_real, beta_complex_imag);
   band_complex.compute(x, yerr2);
-  genrp::DirectSolver direct_complex(alpha_real, beta_real, alpha_complex, beta_complex_real, beta_complex_imag);
+  genrp::DirectSolver direct_complex(alpha_complex, beta_complex_real, beta_complex_imag);
   direct_complex.compute(x, yerr2);
 
   DO_TEST(band_complex_dot_solve, direct_complex.dot_solve(y), band_complex.dot_solve(y))

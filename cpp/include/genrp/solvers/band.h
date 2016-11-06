@@ -250,7 +250,7 @@ T BandSolver::build_matrix (
 
   // Compute the determinant.
   T ld = T(0.0);
-  for (size_t i = 0; i < dim_ext; ++i) if (ab(0, i) > T(0.0)) ld += log(ab(0, i));
+  for (size_t i = 0; i < dim_ext; ++i) ld += log(std::abs(ab(0, i)));
 
   return ld;
 }
