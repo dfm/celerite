@@ -77,9 +77,7 @@ class build_ext(_build_ext):
 if __name__ == "__main__":
     import sys
     import glob
-    import pprint
     import numpy
-    import numpy.__config__ as npconf
 
     # Publish the library to PyPI.
     if "publish" in sys.argv[-1]:
@@ -87,7 +85,8 @@ if __name__ == "__main__":
         sys.exit()
 
     # Default compile arguments.
-    compile_args = dict(libraries=[], define_macros=[("NDEBUG", None)])
+    compile_args = dict(libraries=[], define_macros=[("NDEBUG", None)],
+                        extra_compile_args=["-O4"])
     if os.name == "posix":
         compile_args["libraries"].append("m")
 
@@ -96,16 +95,6 @@ if __name__ == "__main__":
         localincl,
         numpy.get_include(),
     ]
-
-    # Figure out numpy's LAPACK configuration.
-    info = npconf.get_info("blas_opt_info")
-    print("Found LAPACK linking info:")
-    pprint.pprint(info)
-    for k, v in info.items():
-        try:
-            compile_args[k] = compile_args.get(k, []) + v
-        except TypeError:
-            continue
 
     # Check for the Cython source (development mode) and compile it if it
     # exists.
@@ -150,8 +139,6 @@ if __name__ == "__main__":
         import builtins
     builtins.__GENRP_SETUP__ = True
     import genrp
-
-    print(glob.glob("genrp/include/genrp/*.h"))
 
     setup(
         name="genrp",
