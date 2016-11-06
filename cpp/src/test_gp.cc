@@ -40,10 +40,10 @@ int main (int argc, char* argv[])
     complex_kernel.add_term(randu(-1.0, 1.0), randu(-1.0, 1.0), randu(-1.0, 1.0));
   }
 
-  genrp::GaussianProcess<genrp::DirectSolver> direct_real(real_kernel),
-                                              direct_complex(complex_kernel);
-  genrp::GaussianProcess<genrp::BandSolver> band_real(real_kernel),
-                                            band_complex(complex_kernel);
+  genrp::GaussianProcess<genrp::DirectSolver<double> > direct_real(real_kernel),
+                                                       direct_complex(complex_kernel);
+  genrp::GaussianProcess<genrp::BandSolver<double> > band_real(real_kernel),
+                                                     band_complex(complex_kernel);
 
   // Generate some fake data.
   Eigen::VectorXd x = Eigen::VectorXd::Random(N),

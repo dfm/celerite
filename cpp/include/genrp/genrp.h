@@ -1,5 +1,5 @@
-#ifndef _GENRP_GENRP_
-#define _GENRP_GENRP_
+#ifndef _GENRP_GENRP_H_
+#define _GENRP_GENRP_H_
 
 #include "genrp/kernel.h"
 #include "genrp/solvers.h"

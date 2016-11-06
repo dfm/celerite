@@ -40,23 +40,17 @@ cdef extern from "genrp/genrp.h" namespace "genrp":
         size_t p_real () const
         size_t p_complex () const
 
-    cdef cppclass DirectSolver:
-        DirectSolver (size_t p_real, const double* alpha_real, const double* beta_real,
-                    size_t p_complex, const double* alpha_complex, const double* beta_complex_real, const double* beta_complex_imag)
-        void compute (size_t N, const double* t, const double* d)
-        void solve (const double* b, double* x) const
-        void solve (size_t nrhs, const double* b, double* x) const
-        double solve_dot (const double* b) const
-        double log_determinant () const
-
-    cdef cppclass BandSolver:
-        BandSolver (size_t p_real, const double* alpha_real, const double* beta_real,
-                    size_t p_complex, const double* alpha_complex, const double* beta_complex_real, const double* beta_complex_imag)
-        void compute (size_t N, const double* t, const double* d)
-        void solve (const double* b, double* x) const
-        void solve (size_t nrhs, const double* b, double* x) const
-        double solve_dot (const double* b) const
-        double log_determinant () const
+    cdef cppclass BandSolver[T]:
+        BandSolver ()
+        void compute (
+            size_t p_real, const T* const alpha_real, const T* const beta_real,
+            size_t p_complex, const T* const alpha_complex,
+            const T* const beta_complex_real, const T* const beta_complex_imag,
+            size_t N, const double* t, const T* d)
+        void solve (const double* b, T* x) const
+        void solve (size_t nrhs, const double* b, T* x) const
+        T solve_dot (const double* b) const
+        T log_determinant () const
 
     cdef cppclass GaussianProcess[SolverType]:
         GaussianProcess (Kernel kernel)
@@ -78,12 +72,12 @@ cdef extern from "genrp/genrp.h" namespace "genrp":
 
 cdef class GP:
 
-    cdef GaussianProcess[BandSolver]* gp
+    cdef GaussianProcess[BandSolver[double] ]* gp
     cdef Kernel kernel
     cdef int _data_size
 
     def __cinit__(self):
-        self.gp = new GaussianProcess[BandSolver](self.kernel)
+        self.gp = new GaussianProcess[BandSolver[double] ](self.kernel)
         self._data_size = -1
 
     def __dealloc__(self):
@@ -154,7 +148,7 @@ cdef class GP:
         else:
             self.kernel.add_term(log_amp, log_q, log_freq)
         del self.gp
-        self.gp = new GaussianProcess[BandSolver](self.kernel)
+        self.gp = new GaussianProcess[BandSolver[double] ](self.kernel)
         self._data_size = -1
 
     def get_matrix(self, np.ndarray[DTYPE_t, ndim=1] x1, x2=None):
@@ -212,7 +206,7 @@ cdef class GP:
 
 cdef class Solver:
 
-    cdef BandSolver* solver
+    cdef BandSolver[double]* solver
     cdef unsigned int N
     cdef np.ndarray t
     cdef np.ndarray diagonal
@@ -264,7 +258,8 @@ cdef class Solver:
             d = d + np.zeros_like(self.t)
         self.diagonal = d
 
-        self.solver = new BandSolver(
+        self.solver = new BandSolver[double]()
+        self.solver.compute(
             self.p_real,
             <double*>(self.alpha_real.data),
             <double*>(self.beta_real.data),
@@ -272,8 +267,6 @@ cdef class Solver:
             <double*>(self.alpha_complex.data),
             <double*>(self.beta_complex_real.data),
             <double*>(self.beta_complex_imag.data),
-        )
-        self.solver.compute(
             self.N,
             <double*>(self.t.data),
             <double*>(self.diagonal.data)

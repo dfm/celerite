@@ -1,5 +1,5 @@
-#ifndef _GENRP_KERNEL_
-#define _GENRP_KERNEL_
+#ifndef _GENRP_KERNEL_H_
+#define _GENRP_KERNEL_H_
 
 #include <cmath>
 #include <vector>

@@ -1,5 +1,5 @@
-#ifndef _GENRP_GAUSSIAN_PROCESS_
-#define _GENRP_GAUSSIAN_PROCESS_
+#ifndef _GENRP_GAUSSIAN_PROCESS_H_
+#define _GENRP_GAUSSIAN_PROCESS_H_
 
 #include <complex>
 #include <Eigen/Dense>
@@ -71,10 +71,11 @@ template <typename SolverType>
 void GaussianProcess<SolverType>::compute (
     const Eigen::VectorXd& x, const Eigen::VectorXd& yerr) {
   dim_ = x.rows();
-  solver_.alpha_and_beta(kernel_.alpha_real(), kernel_.beta_real(),
-                         kernel_.alpha_complex(), kernel_.beta_complex_real(),
-                         kernel_.beta_complex_imag());
-  solver_.compute(x, yerr.array() * yerr.array());
+  solver_.compute(
+    kernel_.alpha_real(), kernel_.beta_real(),
+    kernel_.alpha_complex(), kernel_.beta_complex_real(), kernel_.beta_complex_imag(),
+    x, yerr.array() * yerr.array()
+  );
   computed_ = true;
 }
 
