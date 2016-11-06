@@ -2,7 +2,7 @@
 # ceres-solver: https://github.com/ceres-solver/ceres-solver
 
 cmake_minimum_required(VERSION 2.8.0)
-project(GenRP CXX)
+project(GenRP C CXX)
 
 # Make CMake aware of the cmake folder for local FindXXX scripts,
 # append rather than set in case the user has passed their own
@@ -32,8 +32,6 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 include(ReadGenRPVersionFromSource)
 read_genrp_version_from_source(${CMAKE_SOURCE_DIR})
 
-find_package(BLAS REQUIRED)
-find_package(LAPACK REQUIRED)
 find_package(Eigen REQUIRED)
 if (EIGEN_VERSION VERSION_LESS 3.1.0)
 message(FATAL_ERROR "-- GenRP requires Eigen version >= 3.1.0 in order "
@@ -45,11 +43,6 @@ enable_testing()
 # Includes.
 include_directories(include)
 include_directories(SYSTEM ${EIGEN_INCLUDE_DIRS})
-
-# Links.
-list(APPEND GENRP_LIBRARIES
-     ${LAPACK_LIBRARIES}
-     ${BLAS_LIBRARIES})
 
 # Set the default flags to an empty string.
 set (GENRP_CXX_FLAGS)

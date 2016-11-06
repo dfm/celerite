@@ -1,5 +1,10 @@
 sudo: false
 
+addons:
+    apt:
+        packages:
+            - cmake
+
 env:
     global:
         - EIGEN_VERSION=3.2.9
@@ -44,9 +49,18 @@ install:
 
     - cd python
     - CXX=g++ python setup.py build_ext -I../eigen-eigen-$EIGEN_HASH --inplace
+    - cd ..
+
+    - cd cpp
+    - cmake . -DEIGEN_CHECK_INCLUDE_DIRS=../eigen-eigen-$EIGEN_HASH
+    - make
+    - cd ..
 
 script:
+    - cd python
     - py.test -v genrp/tests.py
+    - cd ../cpp
+    - make test
 
 # after_success:
 #     - coveralls
