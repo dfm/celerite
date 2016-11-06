@@ -2,7 +2,7 @@
 #include <Eigen/Core>
 
 #include "genrp/solvers/direct.h"
-#include "genrp/solvers/band.h"
+// #include "genrp/solvers/band.h"
 
 #define DO_TEST(NAME, VAR1, VAR2)                            \
 {                                                            \
@@ -55,21 +55,23 @@ int main (int argc, char* argv[])
   // Compute the y values.
   y = sin(x.array());
 
-  genrp::DirectSolver direct_real(alpha_real, beta_real);
-  direct_real.compute(x, yerr2);
-  genrp::BandSolver band_real(alpha_real, beta_real);
-  band_real.compute(x, yerr2);
+  genrp::DirectSolver<double> direct_real;
+  direct_real.compute(alpha_real, beta_real, Eigen::VectorXd(), Eigen::VectorXd(), Eigen::VectorXd(), x, yerr2);
+  // genrp::BandSolver band_real;
+  // band_real.compute(alpha_real, beta_real, x, yerr2);
 
-  DO_TEST(band_real_log_det, direct_real.log_determinant(), band_real.log_determinant())
-  DO_TEST(band_real_dot_solve, direct_real.dot_solve(y), band_real.dot_solve(y))
+  std::cout << direct_real.log_determinant() << std::endl;
 
-  genrp::BandSolver band_complex(alpha_complex, beta_complex_real, beta_complex_imag);
-  band_complex.compute(x, yerr2);
-  genrp::DirectSolver direct_complex(alpha_complex, beta_complex_real, beta_complex_imag);
-  direct_complex.compute(x, yerr2);
+  // DO_TEST(band_real_log_det, direct_real.log_determinant(), band_real.log_determinant())
+  // DO_TEST(band_real_dot_solve, direct_real.dot_solve(y), band_real.dot_solve(y))
 
-  DO_TEST(band_complex_dot_solve, direct_complex.dot_solve(y), band_complex.dot_solve(y))
-  DO_TEST(band_complex_log_det, direct_complex.log_determinant(), band_complex.log_determinant())
+  // genrp::BandSolver band_complex(alpha_complex, beta_complex_real, beta_complex_imag);
+  // band_complex.compute(x, yerr2);
+  // genrp::DirectSolver direct_complex(alpha_complex, beta_complex_real, beta_complex_imag);
+  // direct_complex.compute(x, yerr2);
+
+  // DO_TEST(band_complex_dot_solve, direct_complex.dot_solve(y), band_complex.dot_solve(y))
+  // DO_TEST(band_complex_log_det, direct_complex.log_determinant(), band_complex.log_determinant())
 
   return 0;
 }
