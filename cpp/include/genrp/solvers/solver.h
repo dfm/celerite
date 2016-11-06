@@ -58,7 +58,7 @@ template <typename T>
 T Solver<T>::dot_solve (const Eigen::VectorXd& b) const {
   Eigen::Matrix<T, Eigen::Dynamic, 1> out(n_);
   solve(b, out.data());
-  return b.transpose() * out;
+  return b.transpose().cast<T>() * out;
 }
 
 template <typename T>
