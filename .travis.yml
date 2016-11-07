@@ -1,5 +1,7 @@
 sudo: false
-
+language: c
+os:
+    - linux
 addons:
     apt:
         packages:
@@ -8,7 +10,7 @@ addons:
 env:
     global:
         - EIGEN_VERSION=3.2.9
-          EIGEN_HASH=dc6cfdf9bcec
+          TEST_LANG='python'
 
     matrix:
         - PYTHON_VERSION=2.7
@@ -32,35 +34,16 @@ env:
         - PYTHON_VERSION=3.5
           NUMPY_VERSION=1.11
 
+        - TEST_LANG='cpp'
+
 install:
-    - wget --quiet "http://bitbucket.org/eigen/eigen/get/${EIGEN_VERSION}.tar.gz"
-    - tar -xzf ${EIGEN_VERSION}.tar.gz
-
-    - wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
-    - bash miniconda.sh -b -p $HOME/miniconda
-    - export PATH=$HOME/miniconda/bin:$PATH
-    - hash -r
-    - conda config --set always_yes yes --set changeps1 no
-    - conda update -q conda
-    - conda info -a
-
-    - conda create --yes -n test python=$PYTHON_VERSION numpy=$NUMPY_VERSION Cython setuptools pytest
-    - source activate test
-
-    - cd python
-    - CXX=g++ python setup.py build_ext -I../eigen-eigen-$EIGEN_HASH --inplace
-    - cd ..
-
-    - cd cpp
-    - cmake . -DEIGEN_CHECK_INCLUDE_DIRS=../eigen-eigen-$EIGEN_HASH
-    - make
-    - cd ..
+    - source .ci/travis-$TRAVIS_OS_NAME.sh
 
 script:
+    - if [[ $TEST_LANG == 'cpp' ]]; then
+        cd cpp
+        make test
+        return
+      fi
     - cd python
     - py.test -v genrp/tests.py
-    - cd ../cpp
-    - make test
-
-# after_success:
-#     - coveralls
