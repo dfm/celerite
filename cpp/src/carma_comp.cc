@@ -1,8 +1,10 @@
 #include <iostream>
+#include <complex>
 #include <sys/time.h>
 #include <Eigen/Core>
 
 #include "genrp/solvers.h"
+#include "genrp/carma.h"
 
 // Timer for the benchmark.
 double get_timestamp ()
@@ -23,15 +25,29 @@ int main (int argc, char* argv[])
   size_t niter = 5;
   if (argc >= 4) niter = atoi(argv[3]);
 
+  double sigma = 1.0;
+
+  Eigen::VectorXd carma_arparams = Eigen::VectorXd::Random(nterms),
+                  carma_maparams = Eigen::VectorXd::Random(nterms-1);
+
   // Set up the coefficients.
-  Eigen::VectorXd alpha = Eigen::VectorXd::Random(nterms),
-                  beta_real = Eigen::VectorXd::Random(nterms),
-                  beta_complex_real = Eigen::VectorXd::Random(nterms),
-                  beta_complex_imag = Eigen::VectorXd::Random(nterms);
-  alpha.array() += 1.0;
-  beta_real.array() += 1.0;
-  beta_complex_real.array() += 1.0;
-  beta_complex_imag.array() += 1.0;
+  size_t n_complex = nterms / 2,
+         n_real = nterms - n_complex * 2;
+  std::cout << n_real << " " << n_complex << "\n";
+  Eigen::VectorXd alpha_real = Eigen::VectorXd::Random(n_real),
+                  beta_real = Eigen::VectorXd::Random(n_real),
+                  alpha_complex = Eigen::VectorXd::Random(n_complex),
+                  beta_complex_real = Eigen::VectorXd::Random(n_complex),
+                  beta_complex_imag = Eigen::VectorXd::Random(n_complex);
+  if (n_real > 0) {
+    alpha_real.array() += 1.0;
+    beta_real.array() += 1.0;
+  }
+  if (n_complex > 0) {
+    alpha_complex.array() += 1.0;
+    beta_complex_real.array() += 1.0;
+    beta_complex_imag.array() += 1.0;
+  }
 
   // Generate some fake data.
   Eigen::VectorXd x0 = Eigen::VectorXd::Random(N_max),
@@ -57,42 +73,34 @@ int main (int argc, char* argv[])
 
     // Benchmark the solver.
     double strt,
-           real_compute_time = 0.0, real_solve_time = 0.0,
-           complex_compute_time = 0.0, complex_solve_time = 0.0;
+           compute_time = 0.0, solve_time = 0.0, carma_time = 0.0;
+
     for (size_t i = 0; i < niter; ++i) {
       strt = get_timestamp();
-      solver.compute(alpha, beta_real, x, yerr);
-      real_compute_time += get_timestamp() - strt;
+      solver.compute(alpha_real, beta_real, alpha_complex, beta_complex_real, beta_complex_imag, x, yerr);
+      compute_time += get_timestamp() - strt;
     }
 
     for (size_t i = 0; i < niter; ++i) {
       strt = get_timestamp();
       solver.dot_solve(y);
-      real_solve_time += get_timestamp() - strt;
+      solve_time += get_timestamp() - strt;
     }
 
     for (size_t i = 0; i < niter; ++i) {
       strt = get_timestamp();
-      solver.compute(alpha, beta_real, alpha, beta_complex_real, beta_complex_imag, x, yerr);
-      complex_compute_time += get_timestamp() - strt;
-    }
-
-    for (size_t i = 0; i < niter; ++i) {
-      strt = get_timestamp();
-      solver.dot_solve(y);
-      complex_solve_time += get_timestamp() - strt;
+      genrp::carma::CARMASolver carma_solver(0.0, carma_arparams, carma_maparams);
+      carma_solver.setup();
+      carma_solver.log_likelihood(x, y, yerr);
+      carma_time += get_timestamp() - strt;
     }
 
     // Print the results.
     std::cout << N;
     std::cout << " ";
-    std::cout << real_compute_time / niter;
+    std::cout << (compute_time + solve_time) / niter;
     std::cout << " ";
-    std::cout << real_solve_time / niter;
-    std::cout << " ";
-    std::cout << complex_compute_time / niter;
-    std::cout << " ";
-    std::cout << complex_solve_time / niter;
+    std::cout << carma_time / niter;
     std::cout << "\n";
   }
 
