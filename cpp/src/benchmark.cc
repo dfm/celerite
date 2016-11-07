@@ -35,11 +35,13 @@ int main (int argc, char* argv[])
 
   // Set up the coefficients.
   Eigen::VectorXd alpha = Eigen::VectorXd::Random(nterms),
-                  beta_real = Eigen::VectorXd::Random(nterms);
-  Eigen::VectorXcd beta_complex = Eigen::VectorXcd::Random(nterms);
+                  beta_real = Eigen::VectorXd::Random(nterms),
+                  beta_complex_real = Eigen::VectorXd::Random(nterms),
+                  beta_complex_imag = Eigen::VectorXd::Random(nterms);
   alpha.array() += 1.0;
   beta_real.array() += 1.0;
-  beta_complex.array() += std::complex<double>(1.0, 1.0);
+  beta_complex_real.array() += 1.0;
+  beta_complex_imag.array() += 1.0;
 
   // Generate some fake data.
   Eigen::VectorXd x0 = Eigen::VectorXd::Random(N_max),
@@ -56,8 +58,7 @@ int main (int argc, char* argv[])
   // Compute the y values.
   y0 = sin(x0.array());
 
-  genrp::BandSolver band_real(alpha, beta_real);
-  genrp::BandSolver band_complex(alpha, beta_real, alpha, beta_complex);
+  genrp::BandSolver<double> solver;
 
   for (size_t N = 64; N <= N_max; N *= 2) {
     Eigen::VectorXd x = x0.topRows(N),
@@ -70,19 +71,25 @@ int main (int argc, char* argv[])
            complex_compute_time = 0.0, complex_solve_time = 0.0;
     for (size_t i = 0; i < niter; ++i) {
       strt = get_timestamp();
-      band_real.compute(x, yerr);
+      solver.compute(alpha, beta_real, x, yerr);
       real_compute_time += get_timestamp() - strt;
+    }
 
+    for (size_t i = 0; i < niter; ++i) {
       strt = get_timestamp();
-      band_real.dot_solve(y);
+      solver.dot_solve(y);
       real_solve_time += get_timestamp() - strt;
+    }
 
+    for (size_t i = 0; i < niter; ++i) {
       strt = get_timestamp();
-      band_complex.compute(x, yerr);
+      solver.compute(alpha, beta_real, alpha, beta_complex_real, beta_complex_imag, x, yerr);
       complex_compute_time += get_timestamp() - strt;
+    }
 
+    for (size_t i = 0; i < niter; ++i) {
       strt = get_timestamp();
-      band_complex.dot_solve(y);
+      solver.dot_solve(y);
       complex_solve_time += get_timestamp() - strt;
     }
 

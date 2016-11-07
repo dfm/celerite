@@ -32,15 +32,13 @@ int main (int argc, char* argv[])
   Eigen::VectorXd alpha_real = Eigen::VectorXd::Random(nterms + 1),
                   alpha_complex = Eigen::VectorXd::Random(nterms),
                   beta_real = Eigen::VectorXd::Random(nterms + 1),
-                  alpha_all(3*nterms + 1);
-  Eigen::VectorXcd beta_complex = Eigen::VectorXcd::Random(nterms),
-                   beta_all(3*nterms + 1);
+                  beta_complex_real = Eigen::VectorXd::Random(nterms),
+                  beta_complex_imag = Eigen::VectorXd::Random(nterms);
   alpha_real.array() += 1.0;
   alpha_complex.array() += 1.0;
   beta_real.array() += 1.0;
-  beta_complex.array() += std::complex<double>(1.0, 1.0);
-  alpha_all << alpha_real, 0.5 * alpha_complex.array(), 0.5 * alpha_complex.array();
-  beta_all << beta_real.cast<std::complex<double> >(), beta_complex, beta_complex.conjugate();
+  beta_complex_real.array() += 1.0;
+  beta_complex_imag.array() += 1.0;
 
   // Generate some fake data.
   Eigen::VectorXd x = Eigen::VectorXd::Random(N),
@@ -49,7 +47,7 @@ int main (int argc, char* argv[])
 
   // Set the scale of the uncertainties.
   yerr2.array() *= 0.1;
-  yerr2.array() += 1.0;
+  yerr2.array() += 0.3;
 
   // The times need to be sorted.
   std::sort(x.data(), x.data() + x.size());
@@ -57,21 +55,23 @@ int main (int argc, char* argv[])
   // Compute the y values.
   y = sin(x.array());
 
-  genrp::DirectSolver direct_real(alpha_real, beta_real);
-  direct_real.compute(x, yerr2);
-  genrp::DirectSolver direct_complex(alpha_real, beta_real, alpha_complex, beta_complex);
-  direct_complex.compute(x, yerr2);
+  genrp::DirectSolver<double> direct;
+  genrp::BandSolver<double> band;
 
-  genrp::BandSolver band_real(alpha_real, beta_real);
-  band_real.compute(x, yerr2);
-  genrp::BandSolver band_complex(alpha_real, beta_real, alpha_complex, beta_complex);
-  band_complex.compute(x, yerr2);
+  direct.compute(alpha_real, beta_real, x, yerr2);
+  band.compute(alpha_real, beta_real, x, yerr2);
+  DO_TEST(band_real_log_det, direct.log_determinant(), band.log_determinant())
+  DO_TEST(band_real_dot_solve, direct.dot_solve(y), band.dot_solve(y))
 
-  DO_TEST(band_real_dot_solve, direct_real.dot_solve(y), band_real.dot_solve(y))
-  DO_TEST(band_real_log_det, direct_real.log_determinant(), band_real.log_determinant())
+  band.compute(alpha_complex, beta_complex_real, beta_complex_imag, x, yerr2);
+  direct.compute(alpha_complex, beta_complex_real, beta_complex_imag, x, yerr2);
+  DO_TEST(band_complex_dot_solve, direct.dot_solve(y), band.dot_solve(y))
+  DO_TEST(band_complex_log_det, direct.log_determinant(), band.log_determinant())
 
-  DO_TEST(band_complex_dot_solve, direct_complex.dot_solve(y), band_complex.dot_solve(y))
-  DO_TEST(band_complex_log_det, direct_complex.log_determinant(), band_complex.log_determinant())
+  band.compute(alpha_real, beta_real, alpha_complex, beta_complex_real, beta_complex_imag, x, yerr2);
+  direct.compute(alpha_real, beta_real, alpha_complex, beta_complex_real, beta_complex_imag, x, yerr2);
+  DO_TEST(band_mixed_dot_solve, direct.dot_solve(y), band.dot_solve(y))
+  DO_TEST(band_mixed_log_det, direct.log_determinant(), band.log_determinant())
 
   return 0;
 }

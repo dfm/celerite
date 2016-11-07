@@ -18,6 +18,7 @@ gp.add_term(0.1, 2.0, 1.6)
 N = 2**np.arange(5, 20)
 K = np.maximum((N.max() / N), 5*np.ones_like(N)).astype(int)
 times = np.empty((len(N), 2))
+times[:] = np.nan
 
 t = np.sort(np.random.rand(np.max(N)))
 yerr = np.random.uniform(0.1, 0.2, len(t))
@@ -34,7 +35,7 @@ for i, n in enumerate(N):
         gp.log_likelihood(y[:n])
     times[i, 1] = (time.time() - strt) / K[i]
 
-    print(n, times[i, 0], times[i, 1])
+    print(n, times[i, :])
 
 pl.plot(N, N / N[-1] * 2.0, "k", label="$\mathcal{O}(N)$")
 pl.plot(N, times[:, 0], ".-", label="compute")

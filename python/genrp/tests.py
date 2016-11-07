@@ -19,11 +19,14 @@ def test_invalid_parameters(seed=42):
     alpha_real = np.array([1.0, 2.0])
     beta_real = np.array([1.0, 0.5])
     alpha_complex = np.array([1.0])
-    beta_complex = np.array([1.0 + 1.0j])
+    beta_complex_real = np.array([1.0])
+    beta_complex_imag = np.array([1.0])
     with pytest.raises(ValueError):
-        Solver(alpha_real, beta_real, alpha_complex, beta_complex, t)
+        Solver(alpha_real, beta_real, alpha_complex, beta_complex_real,
+               beta_complex_imag, t)
     t = np.sort(t)
-    Solver(alpha_real, beta_real, alpha_complex, beta_complex, t)
+    Solver(alpha_real, beta_real, alpha_complex, beta_complex_real,
+           beta_complex_imag, t)
 
 
 def test_log_determinant(seed=42):
@@ -34,10 +37,11 @@ def test_log_determinant(seed=42):
     alpha_real = np.array([1.5, 0.1])
     beta_real = np.array([1.0, 0.3])
     alpha_complex = np.array([1.2])
-    beta_complex = np.array([1.0 + 1.0j])
+    beta_complex_real = np.array([1.0])
+    beta_complex_imag = np.array([1.0])
 
-    solver = Solver(alpha_real, beta_real, alpha_complex, beta_complex, t,
-                    diag)
+    solver = Solver(alpha_real, beta_real, alpha_complex, beta_complex_real,
+                    beta_complex_imag, t, diag)
     K = solver.get_matrix()
     assert np.allclose(solver.log_determinant, np.linalg.slogdet(K)[1])
 
@@ -50,10 +54,11 @@ def test_solve(seed=42):
     alpha_real = np.array([1.3, 1.5])
     beta_real = np.array([0.5, 0.2])
     alpha_complex = np.array([1.0])
-    beta_complex = np.array([1.0 + 1.0j])
+    beta_complex_real = np.array([1.0])
+    beta_complex_imag = np.array([1.0])
 
-    solver = Solver(alpha_real, beta_real, alpha_complex, beta_complex, t,
-                    diag)
+    solver = Solver(alpha_real, beta_real, alpha_complex, beta_complex_real,
+                    beta_complex_imag, t, diag)
     K = solver.get_matrix()
     b = np.random.randn(len(t))
     assert np.allclose(solver.apply_inverse(b), np.linalg.solve(K, b))
@@ -68,21 +73,24 @@ def test_kernel_params():
     alpha_real = []
     beta_real = []
     alpha_complex = []
-    beta_complex = []
+    beta_complex_real = []
+    beta_complex_imag = []
     for term in terms:
         if len(term) == 2:
             a, q = np.exp(term)
-            alpha_real.append(4 * np.pi**2 * a * q)
-            beta_real.append(2 * np.pi * q)
+            alpha_real.append(4.0 * np.pi**2 * a * q)
+            beta_real.append(2.0 * np.pi * q)
             continue
         a, q, f = np.exp(term)
-        alpha_complex.append(4 * np.pi**2 * a * q)
-        beta_complex.append(2 * np.pi * q + 2.0j * np.pi * f)
+        alpha_complex.append(4.0 * np.pi**2 * a * q)
+        beta_complex_real.append(2.0 * np.pi * q)
+        beta_complex_imag.append(2.0 * np.pi * f)
 
     assert np.allclose(gp.alpha_real, alpha_real)
     assert np.allclose(gp.beta_real, beta_real)
     assert np.allclose(gp.alpha_complex, alpha_complex)
-    assert np.allclose(gp.beta_complex, beta_complex)
+    assert np.allclose(gp.beta_complex_real, beta_complex_real)
+    assert np.allclose(gp.beta_complex_imag, beta_complex_imag)
 
 
 def test_kernel_value(seed=42):
@@ -225,8 +233,8 @@ def test_nyquist_singularity(seed=4220):
     ts[2] = ts[2]+1e-8*np.random.randn()
     ts[3] = ts[3]+1e-7*np.random.randn()
 
-    yerr = np.random.uniform(low=0.1, high=0.2, size=4)
-    y = np.random.randn(4)
+    yerr = np.random.uniform(low=0.1, high=0.2, size=len(ts))
+    y = np.random.randn(len(ts))
 
     gp.compute(ts, yerr)
     llgp = gp.log_likelihood(y)
