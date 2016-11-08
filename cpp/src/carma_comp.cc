@@ -26,13 +26,13 @@ int main (int argc, char* argv[])
   if (argc >= 4) niter = atoi(argv[3]);
 
   double sigma = 1.0;
-
   Eigen::VectorXd carma_arparams = Eigen::VectorXd::Random(nterms),
                   carma_maparams = Eigen::VectorXd::Random(nterms-1);
 
   // Set up the coefficients.
-  size_t n_complex = nterms / 2,
-         n_real = nterms - n_complex * 2;
+  /* size_t n_complex = nterms / 2, */
+  /*        n_real = nterms - n_complex * 2; */
+  size_t n_complex = 0, n_real = nterms;
   std::cout << n_real << " " << n_complex << "\n";
   Eigen::VectorXd alpha_real = Eigen::VectorXd::Random(n_real),
                   beta_real = Eigen::VectorXd::Random(n_real),
