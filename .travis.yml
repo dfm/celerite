@@ -41,14 +41,14 @@ install:
     - source .ci/travis-$TRAVIS_OS_NAME.sh
 
 script: |
-    if [[ $TEST_LANG == 'cpp' ]]
+    if [[ $TEST_LANG == paper ]]
     then
       source .ci/build-paper.sh
-    elif [[ $TEST_LANG == 'cpp' ]]
+    elif [[ $TEST_LANG == cpp ]]
     then
       cd cpp
       make test
-    elif [[ $TEST_LANG == 'python' ]]
+    elif [[ $TEST_LANG == python ]]
     then
       cd python
       py.test -v genrp/tests.py
