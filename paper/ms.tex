@@ -201,9 +201,86 @@ These implementations are available online at \project{GitHub}
 \url{https://github.com/dfm/GenRP} and \project{Zenodo} \dfmtodo{add zenodo
 archive}.
 
-\section{Fast Gaussian Processes for time series analysis}
+%
+% New Outline:
+% 1. Introduction
+% 2. Gaussian processes
+%   - GPs in general
+%   - RP method
+%   - Ambikasaran method
+%   - Generalization
+% 3. Implementation and performance
+%   - Implementation considerations: band solver vs. sparse, parameterization
+%   - Benchmark numbers
+%   - Scaling with N and M
+%   - Description of APIs
+% 4. Examples
+%   - Simulated data: a simple exact GenRP simulation, a GenRP simulation with
+%     structure, a few standard kernels, a AGW kernel
+%   - An AGN light curve
+%   - An RR Lyrae
+%   - A kepler light curve
+%   - An asteroseismic target
+% 5. Comparisons to other methods
+% 6. Summary
+%   - Possible applications
+%
 
-A change.
+\section{Gaussian processes in one-dimension}
+
+\citep{Rasmussen:2006}
+
+\subsection{Gaussian processes with Lorentzian power spectra}
+
+\citep{Rybicki:1995, Ambikasaran:2015}
+
+\subsection{Generalization to quasi-periodic covariance}
+
+Our method.
+
+
+\section{Implementation \& performance}
+
+\subsection{Implementation considerations}
+
+Solvers.
+Banded vs.\ sparse.
+
+\subsection{Benchmarks \& scaling}
+
+\subsection{Parameterization \& API}
+
+
+\section{Examples}
+
+\subsection{Simulated data}
+
+\begin{enumerate}
+\item an OU process
+\item a full GenRP process
+\item Some standard kernels: Matern, Exp-squared, etc.
+\item A KISS-GP process
+\end{enumerate}
+
+\subsection{Real data}
+
+\begin{enumerate}
+\item AGN
+\item RR Lyrae
+\item Kepler with simulated transit
+\item Asteroseismic target
+\end{enumerate}
+
+
+\section{Comparisons to other methods}
+
+Toeplitz, KISS-GP, CARMA, HODLR.
+
+Limitations of GenRP: one-dimension, stationary, etc.
+
+
+\section{Summary}
+
 
 
 % DFM: I'm going to redistribute the following in other sections.
@@ -303,9 +380,8 @@ A change.
 % The plan of the paper is...
 
 
-\section{Outline}
-
-\begin{enumerate}
+% \section{Outline}
+% \begin{enumerate}
 %\item Non-parametric modeling of time series with correlated noise using Gaussian processes
 %\item Assumptions:\\
 %  a). Stationary noise (although this can be broken).\\
@@ -327,53 +403,53 @@ A change.
 %     - periodic variability due to spots/plages/etc. can also be
 %       approximated by Lorentzian(s)
 %\item Generalized Ambikasarn for complex coefficients (Hermitian).
-\item Performance:\\
-  a). Show $O(N*p^2)$ scaling\\
-  b). Show comparison to HODLR.\\
-  c). Show comparison to wavelet (ala Carter \& Winn).\\
-  d). Compare with CARMA Kallman filter(?).
-\item Various methods/formulae:\\
-  a). Likelihood computation.\\
-  b). Generating GP with particular covariance [yet to solve]. [ ]\\
-  c). Inferring particular components.\\
-  d). Computing derivatives of GPs (as used in RV methods).\\
-  e). Forecasting/interpolating.\\
-  f). Inferring confidence intervals.\\
-  g). Derivative of likelihood function with respect to kernel parameters.\\
-  h). Non-stationary GP (can the coefficients vary with time?).\\
-  i). Multi-band (each element of extended matrix becomes a matrix).
-  j). Approximating various kernels: Matern, exp(sin$^2$), Gaussian, etc.
-\item Generalization to non-stationary noise.
-\item Example application: TYC 3559\\
-  a). Entire long-cadence 17-quarter Kepler dataset (~65k data points).\\
-  b). Analysis of solar data.
-  c). CO2 Mauna Kea
-  d). TBD Computing derivatives of GPs (as used in RV methods).\\
-  e). TBD Forecasting/interpolating.\\
-  f). TBD Inferring confidence intervals.\\
-  g). Autodiff: Derivative of likelihood function with respect to kernel parameters.\\
-  h). TBD Non-stationary GP (can the coefficients vary with time?).\\
-  i). TBD Multi-band (each element of extended matrix becomes a matrix).
+% \item Performance:\\
+%   a). Show $O(N*p^2)$ scaling\\
+%   b). Show comparison to HODLR.\\
+%   c). Show comparison to wavelet (ala Carter \& Winn).\\
+%   d). Compare with CARMA Kallman filter(?).
+% \item Various methods/formulae:\\
+%   a). Likelihood computation.\\
+%   b). Generating GP with particular covariance [yet to solve]. [ ]\\
+%   c). Inferring particular components.\\
+%   d). Computing derivatives of GPs (as used in RV methods).\\
+%   e). Forecasting/interpolating.\\
+%   f). Inferring confidence intervals.\\
+%   g). Derivative of likelihood function with respect to kernel parameters.\\
+%   h). Non-stationary GP (can the coefficients vary with time?).\\
+%   i). Multi-band (each element of extended matrix becomes a matrix).
+%   j). Approximating various kernels: Matern, exp(sin$^2$), Gaussian, etc.
+% \item Generalization to non-stationary noise.
+% \item Example application: TYC 3559\\
+%   a). Entire long-cadence 17-quarter Kepler dataset (~65k data points).\\
+%   b). Analysis of solar data.
+%   c). CO2 Mauna Kea
+%   d). TBD Computing derivatives of GPs (as used in RV methods).\\
+%   e). TBD Forecasting/interpolating.\\
+%   f). TBD Inferring confidence intervals.\\
+%   g). Autodiff: Derivative of likelihood function with respect to kernel parameters.\\
+%   h). TBD Non-stationary GP (can the coefficients vary with time?).\\
+%   i). TBD Multi-band (each element of extended matrix becomes a matrix).
 
-\item Example application: TYC 3559\\
-  a). Entire long-cadence 17-quarter Kepler dataset (~65k data points).\\
-  b). Simulated datasets - hyperparameter/PSD inference.\\
-  c). Analysis of solar data?
+% \item Example application: TYC 3559\\
+%   a). Entire long-cadence 17-quarter Kepler dataset (~65k data points).\\
+%   b). Simulated datasets - hyperparameter/PSD inference.\\
+%   c). Analysis of solar data?
 
-\item Possible future applications:\\
-  a). Inference of asteroseismic variability - ala Andrew Gordon Wilson \citep{2013arXiv1302.4245W}, but
-      with Lorentzians, not Gaussians.\\
-  b). Multi-waveband GPs.\\
-  c). RV interpolation.\\
-  d). Non-parametric phase functions.\\
-  e). Better calibration of the flicker log(g) relation.\\
-  f). Measurement of rotational periods - gyrochronology.\\
-  g). Doppler shifts in oscillating EBs.
+% \item Possible future applications:\\
+%   a). Inference of asteroseismic variability - ala Andrew Gordon Wilson \citep{2013arXiv1302.4245W}, but
+%       with Lorentzians, not Gaussians.\\
+%   b). Multi-waveband GPs.\\
+%   c). RV interpolation.\\
+%   d). Non-parametric phase functions.\\
+%   e). Better calibration of the flicker log(g) relation.\\
+%   f). Measurement of rotational periods - gyrochronology.\\
+%   g). Doppler shifts in oscillating EBs.
 
-\item Appendix:
-  a). Description/summary of mathematics.\\
-  b). Description of code.
-\end{enumerate}
+% \item Appendix:
+%   a). Description/summary of mathematics.\\
+%   b). Description of code.
+% \end{enumerate}
 
 \section{Generalized Press-Rybicki}
 
