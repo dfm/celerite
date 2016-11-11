@@ -13,8 +13,10 @@ then
   if git diff --name-only $TRAVIS_COMMIT_RANGE | grep 'paper/'
   then
     echo "Building the paper..."
+    export GENRP_BUILDING_PAPER=true
     source "$( dirname "${BASH_SOURCE[0]}" )"/setup-texlive.sh
   fi
+  export GENRP_BUILDING_PAPER=false
   return
 fi
 

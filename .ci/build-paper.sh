@@ -1,5 +1,9 @@
 #!/bin/bash -x
 
+if [[ $GENRP_BUILDING_PAPER == false ]]; then
+  return
+fi
+
 # Build the paper
 cd paper
 make
