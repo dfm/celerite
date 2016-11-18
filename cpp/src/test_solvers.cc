@@ -30,15 +30,25 @@ int main (int argc, char* argv[])
 
   // Set up the coefficients.
   Eigen::VectorXd alpha_real = Eigen::VectorXd::Random(nterms + 1),
-                  alpha_complex = Eigen::VectorXd::Random(nterms),
+                  alpha_complex_real = Eigen::VectorXd::Random(nterms),
+                  alpha_complex_imag = Eigen::VectorXd::Random(nterms),
                   beta_real = Eigen::VectorXd::Random(nterms + 1),
                   beta_complex_real = Eigen::VectorXd::Random(nterms),
                   beta_complex_imag = Eigen::VectorXd::Random(nterms);
   alpha_real.array() += 1.0;
-  alpha_complex.array() += 1.0;
+  alpha_complex_real.array() += 1.0;
+  alpha_complex_imag.array() += 1.0;
   beta_real.array() += 1.0;
   beta_complex_real.array() += 1.0;
   beta_complex_imag.array() += 1.0;
+
+  // Ensure positive definiteness.
+  double ar = (alpha_complex_real.array() * beta_complex_real.array()).sum(),
+         ai = (alpha_complex_imag.array() * beta_complex_imag.array()).sum();
+  alpha_complex_real.array() += ai / ar;
+
+  // alpha_complex_real.array() += alpha_complex_imag.array();
+  alpha_complex_imag.array() += alpha_complex_real.array();
 
   // Generate some fake data.
   Eigen::VectorXd x = Eigen::VectorXd::Random(N),
@@ -63,13 +73,13 @@ int main (int argc, char* argv[])
   DO_TEST(band_real_log_det, direct.log_determinant(), band.log_determinant())
   DO_TEST(band_real_dot_solve, direct.dot_solve(y), band.dot_solve(y))
 
-  band.compute(alpha_complex, beta_complex_real, beta_complex_imag, x, yerr2);
-  direct.compute(alpha_complex, beta_complex_real, beta_complex_imag, x, yerr2);
+  band.compute(alpha_complex_real, alpha_complex_imag, beta_complex_real, beta_complex_imag, x, yerr2);
+  direct.compute(alpha_complex_real, alpha_complex_imag, beta_complex_real, beta_complex_imag, x, yerr2);
   DO_TEST(band_complex_dot_solve, direct.dot_solve(y), band.dot_solve(y))
   DO_TEST(band_complex_log_det, direct.log_determinant(), band.log_determinant())
 
-  band.compute(alpha_real, beta_real, alpha_complex, beta_complex_real, beta_complex_imag, x, yerr2);
-  direct.compute(alpha_real, beta_real, alpha_complex, beta_complex_real, beta_complex_imag, x, yerr2);
+  band.compute(alpha_real, beta_real, alpha_complex_real, alpha_complex_imag, beta_complex_real, beta_complex_imag, x, yerr2);
+  direct.compute(alpha_real, beta_real, alpha_complex_real, alpha_complex_imag, beta_complex_real, beta_complex_imag, x, yerr2);
   DO_TEST(band_mixed_dot_solve, direct.dot_solve(y), band.dot_solve(y))
   DO_TEST(band_mixed_log_det, direct.log_determinant(), band.log_determinant())
 
