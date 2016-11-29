@@ -18,7 +18,8 @@ public:
   virtual void compute (
     const Eigen::Matrix<T, Eigen::Dynamic, 1>& alpha_real,
     const Eigen::Matrix<T, Eigen::Dynamic, 1>& beta_real,
-    const Eigen::Matrix<T, Eigen::Dynamic, 1>& alpha_complex,
+    const Eigen::Matrix<T, Eigen::Dynamic, 1>& alpha_complex_real,
+    const Eigen::Matrix<T, Eigen::Dynamic, 1>& alpha_complex_imag,
     const Eigen::Matrix<T, Eigen::Dynamic, 1>& beta_complex_real,
     const Eigen::Matrix<T, Eigen::Dynamic, 1>& beta_complex_imag,
     const Eigen::VectorXd& x,
@@ -33,11 +34,28 @@ public:
   void compute (
     const Eigen::Matrix<T, Eigen::Dynamic, 1>& alpha_real,
     const Eigen::Matrix<T, Eigen::Dynamic, 1>& beta_real,
+    const Eigen::Matrix<T, Eigen::Dynamic, 1>& alpha_complex_real,
+    const Eigen::Matrix<T, Eigen::Dynamic, 1>& beta_complex_real,
+    const Eigen::Matrix<T, Eigen::Dynamic, 1>& beta_complex_imag,
     const Eigen::VectorXd& x,
     const Eigen::Matrix<T, Eigen::Dynamic, 1>& diag
   );
   void compute (
-    const Eigen::Matrix<T, Eigen::Dynamic, 1>& alpha_complex,
+    const Eigen::Matrix<T, Eigen::Dynamic, 1>& alpha_real,
+    const Eigen::Matrix<T, Eigen::Dynamic, 1>& beta_real,
+    const Eigen::VectorXd& x,
+    const Eigen::Matrix<T, Eigen::Dynamic, 1>& diag
+  );
+  void compute (
+    const Eigen::Matrix<T, Eigen::Dynamic, 1>& alpha_complex_real,
+    const Eigen::Matrix<T, Eigen::Dynamic, 1>& beta_complex_real,
+    const Eigen::Matrix<T, Eigen::Dynamic, 1>& beta_complex_imag,
+    const Eigen::VectorXd& x,
+    const Eigen::Matrix<T, Eigen::Dynamic, 1>& diag
+  );
+  void compute (
+    const Eigen::Matrix<T, Eigen::Dynamic, 1>& alpha_complex_real,
+    const Eigen::Matrix<T, Eigen::Dynamic, 1>& alpha_complex_imag,
     const Eigen::Matrix<T, Eigen::Dynamic, 1>& beta_complex_real,
     const Eigen::Matrix<T, Eigen::Dynamic, 1>& beta_complex_imag,
     const Eigen::VectorXd& x,
@@ -45,8 +63,17 @@ public:
   );
 
   // Eigen-free interface.
-  void compute (size_t p_real, const T* const alpha_real, const T* const beta_real,
-                size_t p_complex, const T* const alpha_complex, const T* const beta_complex_real, const T* const beta_complex_imag,
+  void compute (size_t p_real,
+                const T* const alpha_real, const T* const beta_real,
+                size_t p_complex,
+                const T* const alpha_complex_real,
+                const T* const beta_complex_real, const T* const beta_complex_imag,
+                size_t n, const double* t, const T* const diag);
+  void compute (size_t p_real,
+                const T* const alpha_real, const T* const beta_real,
+                size_t p_complex,
+                const T* const alpha_complex_real, const T* const alpha_complex_imag,
+                const T* const beta_complex_real, const T* const beta_complex_imag,
                 size_t n, const double* t, const T* const diag);
   void solve (const double* const b, T* x) const;
   void solve (size_t nrhs, const double* const b, T* x) const;
@@ -71,17 +98,32 @@ template <typename T>
 void Solver<T>::compute (
   const Eigen::Matrix<T, Eigen::Dynamic, 1>& alpha_real,
   const Eigen::Matrix<T, Eigen::Dynamic, 1>& beta_real,
+  const Eigen::Matrix<T, Eigen::Dynamic, 1>& alpha_complex_real,
+  const Eigen::Matrix<T, Eigen::Dynamic, 1>& beta_complex_real,
+  const Eigen::Matrix<T, Eigen::Dynamic, 1>& beta_complex_imag,
+  const Eigen::VectorXd& x,
+  const Eigen::Matrix<T, Eigen::Dynamic, 1>& diag
+)
+{
+  Eigen::Matrix<T, Eigen::Dynamic, 1> alpha_complex_imag = Eigen::Matrix<T, Eigen::Dynamic, 1>::Zero(alpha_complex_real.rows());
+  this->compute(alpha_real, beta_real, alpha_complex_real, alpha_complex_imag, beta_complex_real, beta_complex_imag, x, diag);
+}
+
+template <typename T>
+void Solver<T>::compute (
+  const Eigen::Matrix<T, Eigen::Dynamic, 1>& alpha_real,
+  const Eigen::Matrix<T, Eigen::Dynamic, 1>& beta_real,
   const Eigen::VectorXd& x,
   const Eigen::Matrix<T, Eigen::Dynamic, 1>& diag
 )
 {
   Eigen::Matrix<T, Eigen::Dynamic, 1> nothing;
-  this->compute(alpha_real, beta_real, nothing, nothing, nothing, x, diag);
+  this->compute(alpha_real, beta_real, nothing, nothing, nothing, nothing, x, diag);
 }
 
 template <typename T>
 void Solver<T>::compute (
-  const Eigen::Matrix<T, Eigen::Dynamic, 1>& alpha_complex,
+  const Eigen::Matrix<T, Eigen::Dynamic, 1>& alpha_complex_real,
   const Eigen::Matrix<T, Eigen::Dynamic, 1>& beta_complex_real,
   const Eigen::Matrix<T, Eigen::Dynamic, 1>& beta_complex_imag,
   const Eigen::VectorXd& x,
@@ -89,14 +131,29 @@ void Solver<T>::compute (
 )
 {
   Eigen::Matrix<T, Eigen::Dynamic, 1> nothing;
-  this->compute(nothing, nothing, alpha_complex, beta_complex_real, beta_complex_imag, x, diag);
+  Eigen::Matrix<T, Eigen::Dynamic, 1> alpha_complex_imag = Eigen::Matrix<T, Eigen::Dynamic, 1>::Zero(alpha_complex_real.rows());
+  this->compute(nothing, nothing, alpha_complex_real, alpha_complex_imag, beta_complex_real, beta_complex_imag, x, diag);
+}
+
+template <typename T>
+void Solver<T>::compute (
+  const Eigen::Matrix<T, Eigen::Dynamic, 1>& alpha_complex_real,
+  const Eigen::Matrix<T, Eigen::Dynamic, 1>& alpha_complex_imag,
+  const Eigen::Matrix<T, Eigen::Dynamic, 1>& beta_complex_real,
+  const Eigen::Matrix<T, Eigen::Dynamic, 1>& beta_complex_imag,
+  const Eigen::VectorXd& x,
+  const Eigen::Matrix<T, Eigen::Dynamic, 1>& diag
+)
+{
+  Eigen::Matrix<T, Eigen::Dynamic, 1> nothing;
+  this->compute(nothing, nothing, alpha_complex_real, alpha_complex_imag, beta_complex_real, beta_complex_imag, x, diag);
 }
 
 // Eigen-free interface:
 template <typename T>
 void Solver<T>::compute (
     size_t p_real, const T* const alpha_real, const T* const beta_real,
-    size_t p_complex, const T* const alpha_complex, const T* const beta_complex_real, const T* const beta_complex_imag,
+    size_t p_complex, const T* const alpha_complex_real, const T* const beta_complex_real, const T* const beta_complex_imag,
     size_t n, const double* t, const T* const diag
 )
 {
@@ -105,7 +162,27 @@ void Solver<T>::compute (
   compute(
     vector_t(alpha_real, p_real, 1),
     vector_t(beta_real, p_real, 1),
-    vector_t(alpha_complex, p_complex, 1),
+    vector_t(alpha_complex_real, p_complex, 1),
+    vector_t(beta_complex_real, p_complex, 1),
+    vector_t(beta_complex_imag, p_complex, 1),
+    dbl_vector_t(t, n, 1), vector_t(diag, n, 1)
+  );
+}
+
+template <typename T>
+void Solver<T>::compute (
+    size_t p_real, const T* const alpha_real, const T* const beta_real,
+    size_t p_complex, const T* const alpha_complex_real, const T* const alpha_complex_imag, const T* const beta_complex_real, const T* const beta_complex_imag,
+    size_t n, const double* t, const T* const diag
+)
+{
+  typedef Eigen::Map<const Eigen::Matrix<T, Eigen::Dynamic, 1> > dbl_vector_t;
+  typedef Eigen::Map<const Eigen::Matrix<T, Eigen::Dynamic, 1> > vector_t;
+  compute(
+    vector_t(alpha_real, p_real, 1),
+    vector_t(beta_real, p_real, 1),
+    vector_t(alpha_complex_real, p_complex, 1),
+    vector_t(alpha_complex_imag, p_complex, 1),
     vector_t(beta_complex_real, p_complex, 1),
     vector_t(beta_complex_imag, p_complex, 1),
     dbl_vector_t(t, n, 1), vector_t(diag, n, 1)

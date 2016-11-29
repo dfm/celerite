@@ -27,7 +27,8 @@ public:
   void compute (
     const Eigen::Matrix<T, Eigen::Dynamic, 1>& alpha_real,
     const Eigen::Matrix<T, Eigen::Dynamic, 1>& beta_real,
-    const Eigen::Matrix<T, Eigen::Dynamic, 1>& alpha_complex,
+    const Eigen::Matrix<T, Eigen::Dynamic, 1>& alpha_complex_real,
+    const Eigen::Matrix<T, Eigen::Dynamic, 1>& alpha_complex_imag,
     const Eigen::Matrix<T, Eigen::Dynamic, 1>& beta_complex_real,
     const Eigen::Matrix<T, Eigen::Dynamic, 1>& beta_complex_imag,
     const Eigen::VectorXd& x,
@@ -60,7 +61,8 @@ template <typename T>
 void BandSolver<T>::compute (
   const Eigen::Matrix<T, Eigen::Dynamic, 1>& alpha_real,
   const Eigen::Matrix<T, Eigen::Dynamic, 1>& beta_real,
-  const Eigen::Matrix<T, Eigen::Dynamic, 1>& alpha_complex,
+  const Eigen::Matrix<T, Eigen::Dynamic, 1>& alpha_complex_real,
+  const Eigen::Matrix<T, Eigen::Dynamic, 1>& alpha_complex_imag,
   const Eigen::Matrix<T, Eigen::Dynamic, 1>& beta_complex_real,
   const Eigen::Matrix<T, Eigen::Dynamic, 1>& beta_complex_imag,
   const Eigen::VectorXd& x,
@@ -71,13 +73,18 @@ void BandSolver<T>::compute (
 
   // Check the dimensions
   assert ((alpha_real.rows() == beta_real.rows()) && "DIMENSION_MISMATCH");
-  assert ((alpha_complex.rows() == beta_complex_real.rows()) && "DIMENSION_MISMATCH");
-  assert ((alpha_complex.rows() == beta_complex_imag.rows()) && "DIMENSION_MISMATCH");
+  assert ((alpha_complex_real.rows() == alpha_complex_imag.rows()) && "DIMENSION_MISMATCH");
+  assert ((alpha_complex_real.rows() == beta_complex_real.rows()) && "DIMENSION_MISMATCH");
+  assert ((alpha_complex_real.rows() == beta_complex_imag.rows()) && "DIMENSION_MISMATCH");
   assert ((x.rows() == diag.rows()) && "DIMENSION_MISMATCH");
+
+  T ar = (alpha_complex_real.array() * beta_complex_real.array()).sum(),
+    ai = (alpha_complex_imag.array() * beta_complex_imag.array()).sum();
+  assert ((ar >= ai) && "INVALID PARAMETERS");
 
   // Save the dimensions for later use
   this->p_real_ = alpha_real.rows();
-  this->p_complex_ = alpha_complex.rows();
+  this->p_complex_ = alpha_complex_real.rows();
   this->n_ = x.rows();
 
   // Dimensions.
@@ -92,7 +99,7 @@ void BandSolver<T>::compute (
   ipiv_.resize(dim_ext);
 
   // Start with the diagonal.
-  T sum_alpha = alpha_real.sum() + alpha_complex.sum();
+  T sum_alpha = alpha_real.sum() + alpha_complex_real.sum() + alpha_complex_imag.sum();
   for (k = 0; k < n; ++k)
     get_band_element(a_, width, 0, k*block_size) = diag(k) + sum_alpha;
 
@@ -183,9 +190,15 @@ void BandSolver<T>::compute (
     for (j = 0; j < p_complex; ++j) {
       a = start_a + 2*j;
       b = start_b;
-      value = 0.5 * alpha_complex(j);
+      value = 0.5 * alpha_complex_real(j);
       get_band_element(a_, width, b-a, a) = value;
       get_band_element(a_, width, a-b, a) = value;
+
+      a += 1;
+      value = 0.5 * alpha_complex_imag(j);
+      get_band_element(a_, width, b-a, a) = value;
+      get_band_element(a_, width, a-b, a) = value;
+      a -= 1;
 
       if (k > 0) {
         a -= block_size;
