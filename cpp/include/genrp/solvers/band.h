@@ -77,10 +77,7 @@ void BandSolver<T>::compute (
   assert ((alpha_complex_real.rows() == beta_complex_real.rows()) && "DIMENSION_MISMATCH");
   assert ((alpha_complex_real.rows() == beta_complex_imag.rows()) && "DIMENSION_MISMATCH");
   assert ((x.rows() == diag.rows()) && "DIMENSION_MISMATCH");
-
-  T ar = (alpha_complex_real.array() * beta_complex_real.array()).sum(),
-    ai = (alpha_complex_imag.array() * beta_complex_imag.array()).sum();
-  assert ((ar >= ai) && "INVALID PARAMETERS");
+  assert (((alpha_complex_real.array() * beta_complex_real.array()).sum() >= (alpha_complex_imag.array() * beta_complex_imag.array()).sum()) && "INVALID PARAMETERS");
 
   // Save the dimensions for later use
   this->p_real_ = alpha_real.rows();
