@@ -5,21 +5,25 @@
 
 #define DO_TEST(FUNC, VAR1, VAR2)                            \
 {                                                            \
-  double value, delta;                                       \
-  VAR1 += eps;                                               \
-  std::cout << solver.compute(alpha_real, beta_real,                      \
-      alpha_complex, beta_complex_real, beta_complex_imag,   \
-      x, yerr2)<< std::endl;                                             \
-  value = FUNC;                                              \
-  VAR1 -= 2.0*eps;                                           \
-  std::cout << solver.compute(alpha_real, beta_real,                      \
-      alpha_complex, beta_complex_real, beta_complex_imag,   \
-      x, yerr2) << std::endl;                                             \
-  value -= FUNC;                                             \
-  VAR1 += eps;                                               \
-  value /= 2.0 * eps;                                        \
+  int flag = 1;                                              \
+  double value, delta, eps0 = eps;                                       \
+  while (flag != 0) {                                        \
+    VAR1 += eps0;                                               \
+    flag = solver.compute(alpha_real, beta_real,                      \
+        alpha_complex, beta_complex_real, beta_complex_imag,   \
+        x, yerr2);                                             \
+    value = FUNC;                                              \
+    VAR1 -= 2.0*eps0;                                           \
+    flag += solver.compute(alpha_real, beta_real,                      \
+        alpha_complex, beta_complex_real, beta_complex_imag,   \
+        x, yerr2);                                             \
+    value -= FUNC;                                             \
+    VAR1 += eps0;                                               \
+    value /= 2.0 * eps0;                                        \
+    eps0 /= 2.0;                                               \
+  }                                                              \
   delta = std::abs(value - VAR2);                            \
-  if (delta > 1e-5) {                                        \
+  if (delta > 7e-5) {                                        \
     std::cerr << "Test failed: '" << #FUNC << ", " << #VAR1 << "': |" << value << " - " << VAR2 << "| = " << delta << std::endl; \
     return 1;                                                \
   } else                                                     \
