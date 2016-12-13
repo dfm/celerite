@@ -14,7 +14,7 @@ public:
   DirectSolver () {};
   ~DirectSolver () {};
 
-  void compute (
+  int compute (
     const Eigen::Matrix<T, Eigen::Dynamic, 1>& alpha_real,
     const Eigen::Matrix<T, Eigen::Dynamic, 1>& beta_real,
     const Eigen::Matrix<T, Eigen::Dynamic, 1>& alpha_complex_real,
@@ -35,7 +35,7 @@ private:
 };
 
 template <typename T>
-void DirectSolver<T>::compute (
+int DirectSolver<T>::compute (
   const Eigen::Matrix<T, Eigen::Dynamic, 1>& alpha_real,
   const Eigen::Matrix<T, Eigen::Dynamic, 1>& beta_real,
   const Eigen::Matrix<T, Eigen::Dynamic, 1>& alpha_complex_real,
@@ -46,13 +46,13 @@ void DirectSolver<T>::compute (
   const Eigen::Matrix<T, Eigen::Dynamic, 1>& diag
 )
 {
-  // Check the dimensions
-  assert ((alpha_real.rows() == beta_real.rows()) && "DIMENSION_MISMATCH");
-  assert ((alpha_complex_real.rows() == alpha_complex_imag.rows()) && "DIMENSION_MISMATCH");
-  assert ((alpha_complex_real.rows() == beta_complex_real.rows()) && "DIMENSION_MISMATCH");
-  assert ((alpha_complex_real.rows() == beta_complex_imag.rows()) && "DIMENSION_MISMATCH");
-  assert ((x.rows() == diag.rows()) && "DIMENSION_MISMATCH");
-  assert (((alpha_complex_real.array() * beta_complex_real.array()).sum() >= (alpha_complex_imag.array() * beta_complex_imag.array()).sum()) && "INVALID PARAMETERS");
+  bool flag = this->check_coefficients(
+    alpha_real, beta_real,
+    alpha_complex_real, alpha_complex_imag,
+    beta_complex_real, beta_complex_imag
+  );
+  if (!flag) return 1;
+  if (x.rows() != diag.rows()) return 2;
 
   // Save the dimensions for later use
   this->p_real_ = alpha_real.rows();
@@ -68,7 +68,7 @@ void DirectSolver<T>::compute (
 
     for (size_t j = i+1; j < this->n_; ++j) {
       v = 0.0;
-      dx = fabs(x(j) - x(i));
+      dx = std::abs(x(j) - x(i));
       v += (alpha_real.array() * exp(-beta_real.array() * dx)).sum();
       v += (alpha_complex_real.array() * exp(-beta_complex_real.array() * dx) * cos(beta_complex_imag.array() * dx)).sum();
       v += (alpha_complex_imag.array() * exp(-beta_complex_real.array() * dx) * sin(beta_complex_imag.array() * dx)).sum();
@@ -80,6 +80,8 @@ void DirectSolver<T>::compute (
   // Factorize the matrix.
   factor_ = K.ldlt();
   this->log_det_ = log(factor_.vectorD().array()).sum();
+
+  return 0;
 }
 
 template <typename T>

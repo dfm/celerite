@@ -97,8 +97,10 @@ int main (int argc, char* argv[])
   ASSERT_ALL_CLOSE("sturm5", c, sturm[4]);
 
   // Count roots
-  int nroots = genrp::polycountroots(a) + genrp::polycountroots(-a);
-  if (sturm.size() != 2) {
+  int nroots = genrp::polycountroots(a);
+  a *= -1.0;
+  nroots += genrp::polycountroots(a);
+  if (nroots != 2) {
     std::cerr << "Test failed: \"countroots\"" << std::endl;
     return 1;
   } else {

@@ -38,17 +38,10 @@ int main (int argc, char* argv[])
   alpha_real.array() += 1.0;
   alpha_complex_real.array() += 1.0;
   alpha_complex_imag.array() += 1.0;
+  alpha_complex_imag.array() *= 0.5;
   beta_real.array() += 1.0;
   beta_complex_real.array() += 1.0;
   beta_complex_imag.array() += 1.0;
-
-  // Ensure positive definiteness.
-  double ar = (alpha_complex_real.array() * beta_complex_real.array()).sum(),
-         ai = (alpha_complex_imag.array() * beta_complex_imag.array()).sum();
-  alpha_complex_real.array() += ai / ar;
-
-  // alpha_complex_real.array() += alpha_complex_imag.array();
-  alpha_complex_imag.array() += alpha_complex_real.array();
 
   // Generate some fake data.
   Eigen::VectorXd x = Eigen::VectorXd::Random(N),

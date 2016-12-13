@@ -7,14 +7,14 @@
 {                                                            \
   double value, delta;                                       \
   VAR1 += eps;                                               \
-  solver.compute(alpha_real, beta_real,                      \
+  std::cout << solver.compute(alpha_real, beta_real,                      \
       alpha_complex, beta_complex_real, beta_complex_imag,   \
-      x, yerr2);                                             \
+      x, yerr2)<< std::endl;                                             \
   value = FUNC;                                              \
   VAR1 -= 2.0*eps;                                           \
-  solver.compute(alpha_real, beta_real,                      \
+  std::cout << solver.compute(alpha_real, beta_real,                      \
       alpha_complex, beta_complex_real, beta_complex_imag,   \
-      x, yerr2);                                             \
+      x, yerr2) << std::endl;                                             \
   value -= FUNC;                                             \
   VAR1 += eps;                                               \
   value /= 2.0 * eps;                                        \
@@ -45,11 +45,11 @@ int main (int argc, char* argv[])
                   alpha_complex = Eigen::VectorXd::Random(nterms),
                   beta_complex_real = Eigen::VectorXd::Random(nterms),
                   beta_complex_imag = Eigen::VectorXd::Random(nterms);
-  alpha_real.array() += 1.0;
-  alpha_complex.array() += 1.0;
-  beta_real.array() += 1.0;
-  beta_complex_real.array() += 1.0;
-  beta_complex_imag.array() += 1.0;
+  alpha_real.array() += 1.;
+  alpha_complex.array() += 1.;
+  beta_real.array() += 1.;
+  beta_complex_real.array() += 1.;
+  beta_complex_imag.array() += 1.;
 
   // Generate some fake data.
   Eigen::VectorXd x = Eigen::VectorXd::Random(N),
@@ -58,7 +58,7 @@ int main (int argc, char* argv[])
 
   // Set the scale of the uncertainties.
   yerr2.array() *= 0.1;
-  yerr2.array() += 0.3;
+  yerr2.array() += 2.5;
 
   // The times need to be sorted.
   std::sort(x.data(), x.data() + x.size());
@@ -95,7 +95,7 @@ int main (int argc, char* argv[])
   ad_t grad_log_det = grad_solver.log_determinant(),
        grad_dot_solve = grad_solver.dot_solve(y);
 
-  double eps = 1.23e-5;
+  double eps = 1.23e-6;
   DO_TEST(solver.log_determinant(), yerr2.array(), grad_log_det.derivatives()(0))
   DO_TEST(solver.dot_solve(y), yerr2.array(), grad_dot_solve.derivatives()(0))
 

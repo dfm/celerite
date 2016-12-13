@@ -24,7 +24,7 @@ class BandSolver : public Solver<T> {
 public:
   BandSolver () {};
 
-  void compute (
+  int compute (
     const Eigen::Matrix<T, Eigen::Dynamic, 1>& alpha_real,
     const Eigen::Matrix<T, Eigen::Dynamic, 1>& beta_real,
     const Eigen::Matrix<T, Eigen::Dynamic, 1>& alpha_complex_real,
@@ -58,7 +58,7 @@ inline T& get_band_element (Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>& m,
 }
 
 template <typename T>
-void BandSolver<T>::compute (
+int BandSolver<T>::compute (
   const Eigen::Matrix<T, Eigen::Dynamic, 1>& alpha_real,
   const Eigen::Matrix<T, Eigen::Dynamic, 1>& beta_real,
   const Eigen::Matrix<T, Eigen::Dynamic, 1>& alpha_complex_real,
@@ -71,13 +71,13 @@ void BandSolver<T>::compute (
 {
   using std::abs;
 
-  // Check the dimensions
-  assert ((alpha_real.rows() == beta_real.rows()) && "DIMENSION_MISMATCH");
-  assert ((alpha_complex_real.rows() == alpha_complex_imag.rows()) && "DIMENSION_MISMATCH");
-  assert ((alpha_complex_real.rows() == beta_complex_real.rows()) && "DIMENSION_MISMATCH");
-  assert ((alpha_complex_real.rows() == beta_complex_imag.rows()) && "DIMENSION_MISMATCH");
-  assert ((x.rows() == diag.rows()) && "DIMENSION_MISMATCH");
-  assert (((alpha_complex_real.array() * beta_complex_real.array()).sum() >= (alpha_complex_imag.array() * beta_complex_imag.array()).sum()) && "INVALID PARAMETERS");
+  bool flag = this->check_coefficients(
+    alpha_real, beta_real,
+    alpha_complex_real, alpha_complex_imag,
+    beta_complex_real, beta_complex_imag
+  );
+  if (!flag) return 1;
+  if (x.rows() != diag.rows()) return 2;
 
   // Save the dimensions for later use
   this->p_real_ = alpha_real.rows();
@@ -230,6 +230,8 @@ void BandSolver<T>::compute (
   T ld = T(0.0);
   for (size_t i = 0; i < dim_ext; ++i) ld += log(abs(a_(0, i)));
   this->log_det_ = ld;
+
+  return 0;
 }
 
 template <typename T>

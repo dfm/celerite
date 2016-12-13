@@ -7,17 +7,19 @@
 
 namespace genrp {
 
-double polyval (const Eigen::VectorXd& p, const double x) {
-  double result = 0.0;
+template <typename T>
+T polyval (const Eigen::Matrix<T, Eigen::Dynamic, 1>& p, const double x) {
+  T result = T(0.0);
   for (size_t i = 0; i < p.rows(); ++i) result = result * x + p[i];
   return result;
 }
 
-Eigen::VectorXd polyadd (const Eigen::VectorXd& p1, const Eigen::VectorXd& p2) {
+template <typename T>
+Eigen::Matrix<T, Eigen::Dynamic, 1> polyadd (const Eigen::Matrix<T, Eigen::Dynamic, 1>& p1, const Eigen::Matrix<T, Eigen::Dynamic, 1>& p2) {
   int n1 = p1.rows(),
       n2 = p2.rows(),
       n = std::max(p1.rows(), p2.rows());
-  Eigen::VectorXd result(n);
+  Eigen::Matrix<T, Eigen::Dynamic, 1> result(n);
   result.setConstant(0.0);
   for (int i = 0; i < n; ++i) {
     if (i < n1) result[n - i - 1] += p1[n1 - i - 1];
@@ -26,11 +28,12 @@ Eigen::VectorXd polyadd (const Eigen::VectorXd& p1, const Eigen::VectorXd& p2) {
   return result;
 }
 
-Eigen::VectorXd polymul (const Eigen::VectorXd& p1, const Eigen::VectorXd& p2) {
+template <typename T>
+Eigen::Matrix<T, Eigen::Dynamic, 1> polymul (const Eigen::Matrix<T, Eigen::Dynamic, 1>& p1, const Eigen::Matrix<T, Eigen::Dynamic, 1>& p2) {
   int n1 = p1.rows(),
       n2 = p2.rows(),
       n = n1 + n2 - 1;
-  Eigen::VectorXd result(n);
+  Eigen::Matrix<T, Eigen::Dynamic, 1> result(n);
   result.setConstant(0.0);
   for (int i = 0; i < n; ++i)
     for (int j = 0; j < n2; ++j)
@@ -39,12 +42,14 @@ Eigen::VectorXd polymul (const Eigen::VectorXd& p1, const Eigen::VectorXd& p2) {
   return result;
 }
 
-Eigen::VectorXd polyrem (const Eigen::VectorXd& u, const Eigen::VectorXd& v) {
+template <typename T>
+Eigen::Matrix<T, Eigen::Dynamic, 1> polyrem (const Eigen::Matrix<T, Eigen::Dynamic, 1>& u, const Eigen::Matrix<T, Eigen::Dynamic, 1>& v) {
   int m = u.rows() - 1,
       n = v.rows() - 1,
       p = m - n + 1;
-  double d, scale = 1.0 / v[0];
-  Eigen::VectorXd q = Eigen::VectorXd::Zero(std::max(p, 1)),
+  using std::abs;
+  T d, scale = T(1.0) / v[0];
+  Eigen::Matrix<T, Eigen::Dynamic, 1> q = Eigen::Matrix<T, Eigen::Dynamic, 1>::Zero(std::max(p, 1)),
                   r = u;  // This makes a copy!
   for (int k = 0; k < p; ++k) {
     d = scale * r[k];
@@ -53,24 +58,26 @@ Eigen::VectorXd polyrem (const Eigen::VectorXd& u, const Eigen::VectorXd& v) {
   }
   int strt;
   for (strt = 0; strt < m; ++strt) {
-    if (std::abs(r[strt]) > 1e-14) break;
+    if (abs(r[strt]) > 1e-14) break;
   }
   return r.tail(m + 1 - strt);
 }
 
-Eigen::VectorXd polyder (const Eigen::VectorXd& p) {
+template <typename T>
+Eigen::Matrix<T, Eigen::Dynamic, 1> polyder (const Eigen::Matrix<T, Eigen::Dynamic, 1>& p) {
   int n = p.rows() - 1;
-  Eigen::VectorXd d = p;  // Copy.
+  Eigen::Matrix<T, Eigen::Dynamic, 1> d = p;  // Copy.
   for (int i = 0; i < n; ++i) {
     d[i] *= n - i;
   }
   return d.head(n);
 }
 
-std::vector<Eigen::VectorXd> polysturm (const Eigen::VectorXd& p) {
+template <typename T>
+std::vector<Eigen::Matrix<T, Eigen::Dynamic, 1> > polysturm (const Eigen::Matrix<T, Eigen::Dynamic, 1>& p) {
   int n = p.rows() - 1;
-  std::vector<Eigen::VectorXd> sturm;
-  Eigen::VectorXd p0 = p, p1 = polyder(p0), tmp;
+  std::vector<Eigen::Matrix<T, Eigen::Dynamic, 1> > sturm;
+  Eigen::Matrix<T, Eigen::Dynamic, 1> p0 = p, p1 = polyder(p0), tmp;
   sturm.push_back(p0);
   sturm.push_back(p1);
   for (int k = 0; k < n; ++k) {
@@ -90,12 +97,13 @@ int sgn(T val) {
 }
 
 // Count the positive roots of a polynomial using Sturm's theorem.
-int polycountroots (const Eigen::VectorXd& p) {
+template <typename T>
+int polycountroots (const Eigen::Matrix<T, Eigen::Dynamic, 1>& p) {
   int n = p.rows() - 1,
       count = 0;
 
   // Compute the initial signs and count any initial sign change.
-  Eigen::VectorXd p0 = p, p1 = polyder(p0), tmp;
+  Eigen::Matrix<T, Eigen::Dynamic, 1> p0 = p, p1 = polyder(p0), tmp;
   int s_0 = sgn(p1[p1.rows() - 1]),
       s_inf = sgn(p1[0]),
       s;
