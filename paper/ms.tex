@@ -232,6 +232,32 @@ archive}.
 
 \subsection{Gaussian processes with Lorentzian power spectra}
 
+Parameters:
+\begin{eqnarray}\eqlabel{kernel}
+k(\tau) &=& \sum_{j=1}^p \left[
+    a_j\,\exp\left(-c_j\,\tau\right)\,\cos\left(-d_j\,\tau\right) +
+    b_j\,\exp\left(-c_j\,\tau\right)\,\sin\left(-d_j\,\tau\right)
+\right]
+\end{eqnarray}
+where $\tau = |\Delta t|$.
+Equivalently, this can be written as
+\begin{eqnarray}
+k(\tau) &=& \sum_{j=1}^p \left[
+    \frac{1}{2}(a_j + i\,b_j)\,\exp\left(-(c_j+i\,d_j)\,\tau\right) +
+    \frac{1}{2}(a_j - i\,b_j)\,\exp\left(-(c_j-i\,d_j)\,\tau\right)
+\right]\quad.
+\end{eqnarray}
+
+The power spectral density is computed by taking the Fourier transform of
+\eq{kernel} to find
+\begin{eqnarray}
+S(\omega) = \sum_{j=1}^p \sqrt{\frac{2}{\pi}}
+\frac{(a_j\,c_j+b_j\,d_j)\,({c_j}^2+{d_j}^2)+(a_j\,c_j-b_j\,d_j)\,\omega^2}
+{\omega^4+2\,({c_j}^2-{d_j}^2)\,\omega^2+({c_j}^2+{d_j}^2)^2}\quad.
+\end{eqnarray}
+
+
+
 \citep{Rybicki:1995, Ambikasaran:2015}
 
 \subsection{Generalization to quasi-periodic covariance}
