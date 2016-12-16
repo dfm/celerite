@@ -53,8 +53,8 @@ int DirectSolver<T>::compute (
     alpha_complex_real, alpha_complex_imag,
     beta_complex_real, beta_complex_imag
   );
-  if (!flag) return 1;
-  if (x.rows() != diag.rows()) return 2;
+  if (!flag) return SOLVER_NOT_COMPUTED;
+  if (x.rows() != diag.rows()) return SOLVER_DIMENSION_MISMATCH;
 
   // Save the dimensions for later use
   this->p_real_ = alpha_real.rows();

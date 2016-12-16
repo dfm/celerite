@@ -88,7 +88,6 @@ T get_kernel_value (
   T tau
 ) {
   using std::abs;
-  typedef Eigen::Matrix<T, Eigen::Dynamic, 1> vector_t;
 
   T t = abs(tau), k = T(0.0);
 

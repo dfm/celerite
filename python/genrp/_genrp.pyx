@@ -49,15 +49,16 @@ cdef extern from "genrp/genrp.h" namespace "genrp":
 
     cdef cppclass BandSolver[T]:
         BandSolver ()
-        void compute (
+        int compute (
             size_t p_real, const T* const alpha_real, const T* const beta_real,
-            size_t p_complex, const T* const alpha_complex,
+            size_t p_complex,
+            const T* const alpha_complex_real, const T* const alpha_complex_imag,
             const T* const beta_complex_real, const T* const beta_complex_imag,
             size_t N, const double* t, const T* d)
         void solve (const double* b, T* x) const
         void solve (size_t nrhs, const double* b, T* x) const
-        T solve_dot (const double* b) const
-        T log_determinant () const
+        T dot_solve (const double* b) except +
+        T log_determinant () except +
 
     cdef cppclass GaussianProcess[SolverType, T]:
         GaussianProcess (Kernel[T] kernel)
@@ -214,14 +215,16 @@ cdef class Solver:
     cdef np.ndarray alpha_real
     cdef np.ndarray beta_real
     cdef unsigned int p_complex
-    cdef np.ndarray alpha_complex
+    cdef np.ndarray alpha_complex_real
+    cdef np.ndarray alpha_complex_imag
     cdef np.ndarray beta_complex_real
     cdef np.ndarray beta_complex_imag
 
     def __cinit__(self,
                   np.ndarray[DTYPE_t, ndim=1] alpha_real,
                   np.ndarray[DTYPE_t, ndim=1] beta_real,
-                  np.ndarray[DTYPE_t, ndim=1] alpha_complex,
+                  np.ndarray[DTYPE_t, ndim=1] alpha_complex_real,
+                  np.ndarray[DTYPE_t, ndim=1] alpha_complex_imag,
                   np.ndarray[DTYPE_t, ndim=1] beta_complex_real,
                   np.ndarray[DTYPE_t, ndim=1] beta_complex_imag,
                   np.ndarray[DTYPE_t, ndim=1] t,
@@ -232,9 +235,11 @@ cdef class Solver:
         # Check the shapes:
         if alpha_real.shape[0] != beta_real.shape[0]:
             raise ValueError("dimension mismatch")
-        if alpha_complex.shape[0] != beta_complex_real.shape[0]:
+        if alpha_complex_real.shape[0] != alpha_complex_imag.shape[0]:
             raise ValueError("dimension mismatch")
-        if alpha_complex.shape[0] != beta_complex_imag.shape[0]:
+        if alpha_complex_real.shape[0] != beta_complex_real.shape[0]:
+            raise ValueError("dimension mismatch")
+        if alpha_complex_real.shape[0] != beta_complex_imag.shape[0]:
             raise ValueError("dimension mismatch")
 
         # Save the dimensions
@@ -243,8 +248,9 @@ cdef class Solver:
         self.p_real = alpha_real.shape[0]
         self.alpha_real = alpha_real
         self.beta_real = beta_real
-        self.p_complex = alpha_complex.shape[0]
-        self.alpha_complex = alpha_complex
+        self.p_complex = alpha_complex_real.shape[0]
+        self.alpha_complex_real = alpha_complex_real
+        self.alpha_complex_imag = alpha_complex_imag
         self.beta_complex_real = beta_complex_real
         self.beta_complex_imag = beta_complex_imag
 
@@ -259,18 +265,25 @@ cdef class Solver:
         self.diagonal = d
 
         self.solver = new BandSolver[double]()
-        self.solver.compute(
+        cdef int flag = self.solver.compute(
             self.p_real,
             <double*>(self.alpha_real.data),
             <double*>(self.beta_real.data),
             self.p_complex,
-            <double*>(self.alpha_complex.data),
+            <double*>(self.alpha_complex_real.data),
+            <double*>(self.alpha_complex_imag.data),
             <double*>(self.beta_complex_real.data),
             <double*>(self.beta_complex_imag.data),
             self.N,
             <double*>(self.t.data),
             <double*>(self.diagonal.data)
         )
+        if flag:
+            if flag == 1:
+                raise ValueError("dimension mismatch")
+            elif flag == 2:
+                raise np.linalg.LinAlgError("invalid parameters")
+            raise RuntimeError("compute failed")
 
     def __dealloc__(self):
         del self.solver
@@ -292,7 +305,7 @@ cdef class Solver:
         return alpha
 
     def get_matrix(self):
-        cdef double asum = self.alpha_real.sum() + self.alpha_complex.sum()
+        cdef double asum = self.alpha_real.sum() + self.alpha_complex_real.sum()
         cdef double delta
         cdef double value
         cdef size_t i, j, p
@@ -306,7 +319,7 @@ cdef class Solver:
                 for p in range(self.p_real):
                     value += self.alpha_real[p]*exp(-self.beta_real[p]*delta)
                 for p in range(self.p_complex):
-                    value += self.alpha_complex[p]*(
+                    value += self.alpha_complex_real[p]*(
                         exp(-self.beta_complex_real[p]*delta) *
                         cos(self.beta_complex_imag[p]*delta)
                     )

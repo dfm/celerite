@@ -18,15 +18,20 @@ def test_invalid_parameters(seed=42):
 
     alpha_real = np.array([1.0, 2.0])
     beta_real = np.array([1.0, 0.5])
-    alpha_complex = np.array([1.0])
+    alpha_complex_real = np.array([1.0])
+    alpha_complex_imag = np.array([0.0])
     beta_complex_real = np.array([1.0])
     beta_complex_imag = np.array([1.0])
     with pytest.raises(ValueError):
-        Solver(alpha_real, beta_real, alpha_complex, beta_complex_real,
-               beta_complex_imag, t)
+        Solver(alpha_real, beta_real, alpha_complex_real, alpha_complex_imag,
+               beta_complex_real, beta_complex_imag, t)
     t = np.sort(t)
-    Solver(alpha_real, beta_real, alpha_complex, beta_complex_real,
-           beta_complex_imag, t)
+    Solver(alpha_real, beta_real, alpha_complex_real, alpha_complex_imag,
+           beta_complex_real, beta_complex_imag, t)
+    alpha_complex_imag = np.array([3.0])
+    with pytest.raises(np.linalg.LinAlgError):
+        Solver(alpha_real, beta_real, alpha_complex_real, alpha_complex_imag,
+               beta_complex_real, beta_complex_imag, t)
 
 
 def test_log_determinant(seed=42):
