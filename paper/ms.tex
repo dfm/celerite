@@ -337,7 +337,7 @@ Limitations of GenRP: one-dimension, stationary, etc.
 % techniques require a stationary kernel. {\color{red} Is this true for GEORGE?}
 
 % The approach we explore in this paper is based upon a method developed by Press \&
-% Rybicki twenty years ago \citep{1995PhRvL..74.1060R}.  They observed that a correlation
+% Rybicki twenty years ago \citep{Rybicki:1995}.  They observed that a correlation
 % matrix consisting of a single exponential kernel has an inverse that is tri-diagonal.
 % The coefficients and solution of a tri-diagonal matrix scale in proportion to $O(N_{time})$.
 % They also indicated that a combination of two exponential kernels would have a simliar scaling,
@@ -346,7 +346,7 @@ Limitations of GenRP: one-dimension, stationary, etc.
 % A significant advance was made in generalizing the Press-Rybicki method to an
 % arbitrary number of exponential kernels by utilizing the fact that the elements of
 % such matrices can be written in terms of the products of components of two vectors,
-% which are so-called semi-separable matrices \citep{Ambikasaran2015}.  This `Generalized
+% which are so-called semi-separable matrices \citep{Ambikasaran:2015}.  This `Generalized
 % Rybicki-Press' (\texttt{GenRP}) approach
 % has many advantages:  the computation time and storage both scale as $O(N_{time})$,
 % the coefficients of the kernels need not be stationary, the computation of the
@@ -391,11 +391,11 @@ Limitations of GenRP: one-dimension, stationary, etc.
 %\item Solution(s):\\
 %  a). HODLR \citep{Ambikasaran2013,Ambikasaran2016}\\
 %  b). CARMA (Lorentzian power spectra, but with limitations) \citep{Kelly2014}\\
-%  c). Tri-diagonal (Press \& Rybicki) \citep{1995PhRvL..74.1060R}
+%  c). Tri-diagonal (Press \& Rybicki) \citep{Rybicki:1995}
 %  d). KISS-GP \citep{WilsonNickisch2015} %Kernel Interpolation for Scalable Structured Gaussian Processes (KISS-GP) Andrew Wilson, Hannes Nickisch Proceedings of The 32nd International Conference on Machine Learning, pp. 1775-1784, 2015
 %\item Problem: HODLR is tricky to use; CARMA requires certain relations between
 %  coefficients of Lorentzians (right?); P\&R only works for up to 2 components + white noise
-%\item Solution: Ambikasaran \citep{Ambikasaran2015} shows how sum of exponential kernels can be solved in order
+%\item Solution: Ambikasaran \citep{Ambikasaran:2015} shows how sum of exponential kernels can be solved in order
 %   $O(N*p^2)$, where p is number of Lorentzians.
 %  - Sum of Lorentzians is a good description of stellar variability:
 %     - granulation has expoential (or sums of exponential) noise
@@ -488,7 +488,7 @@ Now, the damped harmonic kernel components may be rewritten as:
  a_j e^{-\beta_R \tau} \cos{(\beta_I \tau)} = a_j \frac{1}{2}\left( e^{-(\beta_R + i \beta_I) \tau} +  e^{-(\beta_R + i \beta_I) \tau}\right),
 \end{equation}
 where $i^2 = -1$, which has the advantage of utilizing precisely the same form as the Rybicki-Press covariance
-matrix, and thus the Generalized Rybicki-Press algorithm may be applied as in \citet{Ambikasaran2015}.
+matrix, and thus the Generalized Rybicki-Press algorithm may be applied as in \citet{Ambikasaran:2015}.
 The only difference is that the $\beta$ coefficients are now complex, $\beta = \beta_R + i \beta_I$,
 but otherwise the mathematical form of the extended matrix is identical, but with twice as many
 exponential kernel components as the real case.
@@ -777,7 +777,7 @@ detector, or modeling uncertainty) may be present in
 gravitational wave time series, and so Gaussian processes may be a way to address
 this problem \citep{Moore2016}.  Accreting black holes show time series which
 may be modeled by correlated noise \citep{Kelly2014};  indeed, this was the
-motivation for the original technique developed by Rybicki \& Press \citep{1992ApJ...398..169R,1995PhRvL..74.1060R}.
+motivation for the original technique developed by Rybicki \& Press \citep{1992ApJ...398..169R,Rybicki:1995}.
 This approach may be broadly used for characterizing quasar variability \citep{2010ApJ...721.1014M},
 measuring time lags with reverberation mapping \citep{2011ApJ...735...80Z},
 and modeling time delays in multiply-imaged gravitationally-lensed systems \citep{1998ApJ...507..108P}.
@@ -792,7 +792,7 @@ with git commit \texttt{\githash} (\gitdate).
 
 \section{Solving for log likelihood with extended matrix}
 
-Here we summarize \citet{Ambikasaran2015}, and then point to appendix
+Here we summarize \citet{Ambikasaran:2015}, and then point to appendix
 for how to do this with oscillating kernels.
 
 \section{Training}
@@ -900,7 +900,7 @@ NNX13AC07G and by other grants and contracts.
 \appendix \label{appendixa}
 
 Here we adapt the generalized Rybicki-Press (GRP) algorithm to handle periodic kernels.  We
-follow closely the notation and equations given in \citet{Ambikasaran2015}.  We start
+follow closely the notation and equations given in \citet{Ambikasaran:2015}.  We start
 with the observation that a Lorentzian correlation function may be decomposed into the sum of two
 exponential functions:
 \begin{eqnarray}
@@ -962,24 +962,24 @@ Equation (61) becomes:
 \gamma_{k,j}^R r_{k+1,j}^R + \gamma_{k,j}^I r_{k+1,j}^I\right] = \frac{b_k}{2},
 \end{equation}
 for $j \in \{1,...,p\}$ and $k \in \{1,...,N\}$.  There is no imaginary component to equation (61)
-in \citet{Ambikasaran2015}.
+in \citet{Ambikasaran:2015}.
 
-Equation (60) in \citet{Ambikasaran2015} has real and imaginary components:
+Equation (60) in \citet{Ambikasaran:2015} has real and imaginary components:
 \begin{eqnarray} \label{Amb60}
 \gamma_{k,j}^R l_{k,j}^R +\gamma_{k,j}^I l_{k,j}^I + \gamma_{k,j}^R x_k - l_{k+1,j}^R &=& 0,\\
 \gamma_{k,j}^I l_{k,j}^R -\gamma_{k,j}^R l_{k,j}^I + \gamma_{k,j}^I x_k + l_{k+1,j}^I &=& 0,
 \end{eqnarray}
 with $j \in \{1,...,p\}$ and $k \in \{1,...,N-1\}$
-\citep[note that we have shifted the indices of this equation by one from the indexing using in][]{Ambikasaran2015}.
+\citep[note that we have shifted the indices of this equation by one from the indexing using in][]{Ambikasaran:2015}.
 
-Finally, equation (59) in \citet{Ambikasaran2015} has real and imaginary components:
+Finally, equation (59) in \citet{Ambikasaran:2015} has real and imaginary components:
 \begin{align} \label{Amb59}
 -&r_{k,j}^R + \frac{\alpha_j}{2} x_k &+ \gamma_{k,j}^R r_{k+1,j}^R + \gamma_{k,j}^I r_{k+1,j}^I &&=0,\\
  &r_{k,j}^I &+ \gamma_{k,j}^I r_{k+1,j}^R - \gamma_{k,j}^R r_{k+1,j}^I &&=0,
 \end{align}
 with $j \in \{1,...,p\}$ and $k \in \{2,...,N\}$.  Note that for the $p_0$ real components
 we can drop the variables $r_{k,j}^I$ and $l_{k,j}^I$ as these are zero, and we can drop the
-imaginary components of equations (59) and (60) in \citet{Ambikasaran2015} as well for these, which reduces the total number
+imaginary components of equations (59) and (60) in \citet{Ambikasaran:2015} as well for these, which reduces the total number
 of equations to solve.
 
 With these additional equations, we can solve for the likelihood of sums of full Lorentzian kernels
@@ -1003,12 +1003,12 @@ The extended matrix, $A_{ex}$, is constructed by inserting the coefficients of e
 The solution is found by solving $A_{ex} x_{ex} = y_{ex}$ with LU decomposition and back-substitution
 with a banded algorithm.
 
-The matrix has a similar structure as the real case constructed by \citep{Ambikasaran2015}, but the
+The matrix has a similar structure as the real case constructed by \citep{Ambikasaran:2015}, but the
 imaginary and real components mix (this is due to the representation of imaginary numbers as
 $2\times 2$ matrices).  Figure \ref{matrix_structure} shows an example of the structure of the extended
 matrix for two Lorentzians with non-zero $\omega$ values.  This is analagous to the real case with
 $p=2$ which also has four additional equations for each row of the original kernel.  This matrix shows
-that there is an extra band above and below the diagonal \citep[compare with Figure 2 of][]{Ambikasaran2015}.
+that there is an extra band above and below the diagonal \citep[compare with Figure 2 of][]{Ambikasaran:2015}.
 
 \begin{figure}[!htbp]
 \begin{center}
@@ -1017,7 +1017,7 @@ that there is an extra band above and below the diagonal \citep[compare with Fig
 \includegraphics[scale=1.0]{./colorcode.pdf}
 \end{center}
 \caption{Pictorial description of the extended sparse matrix where $N=10$, $p_0=0$, and $p=2$, following
-the example shown in \citet{Ambikasaran2015}.}
+the example shown in \citet{Ambikasaran:2015}.}
 \label{matrix_structure}
 \end{figure}
 
