@@ -275,17 +275,17 @@ $\omega = \pm d_j$.
 
 Our method.
 
-The general ACF is given by
-\begin{equation}
-K(\tau) = a_r e^{-b_r \vert\tau\vert} \cos{(b_r \vert\tau\vert)} + a_i e^{-b_r \vert\tau\vert} \sin{(b_r \vert\tau\vert)}.
-\end{equation}
-which has a power spectrum given by
-\begin{equation}
-P(\omega) = P_0 \frac{(a_ib_i+a_rb_r)(b_i^2+b_r^2)+(a_rb_r-a_ib_i)\omega^2}{(\omega^2-(b_i^2+b_r^2))^2 + 4b_r^2\omega^2}.
-\end{equation}
-The power spectrum should be non-negative since it is the absolute square of the Fourier transform of the noise.
-Note that the denominator is always non-negative, so the power spectrum is non-negative if $a_ib_i+a_rb_r \ge 0$ and
-$a_rb_r-a_ib_i \ge 0$.
+%The general ACF is given by
+%\begin{equation}
+%K(\tau) = a_r e^{-b_r \vert\tau\vert} \cos{(b_r \vert\tau\vert)} + a_i e^{-b_r \vert\tau\vert} \sin{(b_r \vert\tau\vert)}.
+%\end{equation}
+%which has a power spectrum given by
+%\begin{equation}
+%P(\omega) = P_0 \frac{(a_ib_i+a_rb_r)(b_i^2+b_r^2)+(a_rb_r-a_ib_i)\omega^2}{(\omega^2-(b_i^2+b_r^2))^2 + 4b_r^2\omega^2}.
+%\end{equation}
+%The power spectrum should be non-negative since it is the absolute square of the Fourier transform of the noise.
+%Note that the denominator is always non-negative, so the power spectrum is non-negative if $a_ib_i+a_rb_r \ge 0$ and
+%$a_rb_r-a_ib_i \ge 0$.
 
 \subsection{Relation to stochastically-driven, damped simple harmonic oscillator}
 
@@ -307,8 +307,9 @@ P(\omega) = P_0 \frac{\omega_0^4}{(\omega^2-\omega_0^2)^2 + \omega_0^2\omega^2/Q
 \end{equation}
 where $P_0$ is a normalization constant.
 
-This power spectrum matches that of our basis kernel if $\omega_0^2 = b_r^2+b_i^2$,
-$a_rb_r-a_ib_i = 0$, $a_ib_i+a_rb_r=\omega_0^2$, and $4b_r^2 = \omega_0^2/Q^2$.
+% Check to see that signs match
+This power spectrum matches that of our basis kernel if $\omega_0^2 = c_j^2+d_j^2$,
+$a_jc_j-b_jd_j = 0$, $b_jd_j+a_jc_j=\omega_0^2$, and $4c_j^2 = \omega_0^2/Q^2$.
 The power spectrum can be normalized by $P_0$ in amplitude and $\omega_0$ in
 frequency to yield a spectral shape that only depends upon $Q$.  This is plotted
 in Figure \ref{sho_psd} for various values of $Q$.  This power spectrum has
@@ -330,7 +331,8 @@ This power spectrum has several limits of interest:
 This matches the power spectrum of the Mat\'ern 3/2 kernel, and can be represented by the following
 autocovariance function:
 \begin{equation}
-K(\tau) = a_r e^{-b_r \vert\tau\vert} \left(\cos{(b_i \vert\tau\vert)} + \frac{b_r}{b_i}\sin{(b_i \vert\tau\vert)}\right),
+K(\tau) = a_j e^{-c_j \vert\tau\vert} \left(\cos{(d_j \vert\tau\vert)} + \frac{c_j}{d_j}\sin{(d_j \vert\tau\vert)}\right),
+% Check to see that signs match in this equation.
 \end{equation}
 in the limit that $b_i \rightarrow \infty$, for which the second term has a coefficients that diverges,
 but with large values of $b_i$, this may approximate the Mat\'ern kernel well.  Note that this
