@@ -209,8 +209,10 @@ archive}.
 %   - RP method
 %   - Ambikasaran method
 %   - Generalization
+%   - Relation to stochastically-driven, damped simple harmonic oscillator
 % 3. Implementation and performance
 %   - Implementation considerations: band solver vs. sparse, parameterization
+%   - Ensuring positive-definite covariance matrix: Sturm's theorem
 %   - Benchmark numbers
 %   - Scaling with N and M
 %   - Description of APIs
@@ -238,6 +240,85 @@ archive}.
 
 Our method.
 
+The general ACF is given by
+\begin{equation}
+K(\tau) = a_r e^{-b_r \vert\tau\vert} \cos{(b_r \vert\tau\vert)} + a_i e^{-b_r \vert\tau\vert} \sin{(b_r \vert\tau\vert)}.
+\end{equation}
+which has a power spectrum given by
+\begin{equation}
+P(\omega) = P_0 \frac{(a_ib_i+a_rb_r)(b_i^2+b_r^2)+(a_rb_r-a_ib_i)\omega^2}{(\omega^2-(b_i^2+b_r^2))^2 + 4b_r^2\omega^2}.
+\end{equation}
+The power spectrum should be non-negative since it is the absolute square of the Fourier transform of the noise.
+Note that the denominator is always non-negative, so the power spectrum is non-negative if $a_ib_i+a_rb_r \ge 0$ and
+$a_rb_r-a_ib_i \ge 0$.
+
+\subsection{Relation to stochastically-driven, damped simple harmonic oscillator}
+
+Intrinsic stellar variability consists primarily of random fluctuations driven by 
+convection, oscillations excited by convection, and rotational variability.  These first
+two types of variability may be well-described by a model of a damped simple-harmonic oscillator
+driven by stochastic variability \citep{1990ApJ...364..699A}.  The governing differential equation is
+\begin{equation}
+y^{\prime\prime}+ \frac{\omega_0}{Q} y^\prime + \omega_0^2 y = \epsilon,
+\end{equation}
+where $y(t)$ is a displacement, $^{\prime}$ represents a time derivative,
+$\omega_0$ is the frequency of an undamped oscillator, $Q$ is the quality factor
+of the oscillation, and $\epsilon(t)$ is a stochastic driving force.
+
+In the limit of an infinite time series and white random forcing, the noise-free power 
+spectrum of this equation is given by:
+\begin{equation}
+P(\omega) = P_0 \frac{\omega_0^4}{(\omega^2-\omega_0^2)^2 + \omega_0^2\omega^2/Q^2},
+\end{equation}
+where $P_0$ is a normalization constant.
+
+This power spectrum matches that of our basis kernel if $\omega_0^2 = b_r^2+b_i^2$,
+$a_rb_r-a_ib_i = 0$, $a_ib_i+a_rb_r=\omega_0^2$, and $4b_r^2 = \omega_0^2/Q^2$.
+The power spectrum can be normalized by $P_0$ in amplitude and $\omega_0$ in
+frequency to yield a spectral shape that only depends upon $Q$.  This is plotted
+in Figure \ref{sho_psd} for various values of $Q$.  This power spectrum has
+a peak frequency given by $\omega_{max} = \omega_0\sqrt{1-1/(2Q^2)}$, which is
+greater than zero for $Q > 1/\sqrt{2}$.
+
+\begin{figure}[!htbp]
+\begin{center}
+\includegraphics[width=\textwidth]{./approximate_kernels/sho.png}
+\caption{Normalized power spectra of the stochastically-driven, damped simple
+harmonic oscillator.}
+\label{sho_psd}
+\end{center}
+\end{figure}
+
+This power spectrum has several limits of interest:
+\begin{itemize}
+\item $Q=1/2$:  This results in a power spectrum $\propto 1/(x^2+1)^2$, where $x=\omega/\omega_0$.
+This matches the power spectrum of the Mat\'ern 3/2 kernel, and can be represented by the following
+autocovariance function:
+\begin{equation}
+K(\tau) = a_r e^{-b_r \vert\tau\vert} \left(\cos{(b_i \vert\tau\vert)} + \frac{b_r}{b_i}\sin{(b_i \vert\tau\vert)}\right),
+\end{equation}
+in the limit that $b_i \rightarrow \infty$, for which the second term has a coefficients that diverges,
+but with large values of $b_i$, this may approximate the Mat\'ern kernel well.  Note that this
+power spectrum peaks at $\omega=0$.
+\item $Q=1/\sqrt{2}$:  This results in a power spectrum $\propto 1/(x^4+1)$, which is a functional
+form used to fit the Solar granulation power spectrum by \cite{2009A&A...495..979M}.  This kernel has
+dependence
+\begin{equation}
+K(\tau) = a_r e^{-b_r\vert\tau\vert} \left(\cos{(b_i\vert\tau\vert)}+\sin{(b_i\vert\tau\vert)}\right).
+\end{equation}
+Despite the sinusoidal dependence of the kernel, the strong damping causes the power spectrum to
+peak at zero frequency; such a low quality oscillator doesn't display even quasi-periodic behavior.
+\item $Q \gg 1$: This represents a high-quality oscillator which approaches a narrow peak.  The
+power spectrum approaches
+\begin{equation}
+P(\omega) \approx P_0 \frac{Q^2}{1-1/(4Q^2)+4x_{max}^2\left(x-x_{max}\right)^2Q^2},
+\end{equation}
+where $x_{max}=\sqrt{1-1/(2Q^2)}$.  This shape approaches a Lorentzian for $x \approx x_{max}$ with
+a width of $1/(2Qx_{max})$ and a peak height $\propto Q^2$.
+\end{itemize}
+
+The stochastically driven, damped simple-harmonic oscillator can then represent a wide range of intrinsic stellar variability, with
+low $Q \approx 1$ representing granulation noise, and high $Q >> 1$ representing asteroseismic variability.
 
 \section{Implementation \& performance}
 
@@ -245,6 +326,12 @@ Our method.
 
 Solvers.
 Banded vs.\ sparse.
+
+\subsection{Ensuring positive definiteness: Sturm's theorem}
+
+Relation of positive power spectrum to positive definite covariance matrix.
+Power spectrum of a sum of kernels.
+Sturm's theorem applied to numerator of power spectrum.
 
 \subsection{Benchmarks \& scaling}
 
