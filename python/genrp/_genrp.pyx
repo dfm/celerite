@@ -12,8 +12,6 @@ from libc.math cimport fabs, exp, cos
 
 DTYPE = np.float64
 ctypedef np.float64_t DTYPE_t
-CDTYPE = np.complex128
-ctypedef np.complex128_t CDTYPE_t
 
 cdef extern from "genrp/version.h":
     cdef int GENRP_VERSION_MAJOR
@@ -36,14 +34,6 @@ cdef extern from "Eigen/Core" namespace "Eigen":
 
     cdef cppclass Map[T]:
         Map(double*, int)
-
-cdef extern from "unsupported/Eigen/AutoDiff" namespace "Eigen":
-    cdef cppclass AutoDiffScalar[T]:
-        AutoDiffScalar()
-        AutoDiffScalar(double value)
-        AutoDiffScalar(double value, Map[VectorXd] grad)
-        double value ()
-        VectorXd derivatives ()
 
 cdef extern from "genrp/genrp.h" namespace "genrp":
 
@@ -92,24 +82,17 @@ cdef class GP:
     cdef GaussianProcess[BandSolver[double], double]* gp
     cdef Kernel[double] kernel
 
-    cdef GaussianProcess[BandSolver[AutoDiffScalar[VectorXd] ], AutoDiffScalar[VectorXd] ]* grad_gp
-    cdef Kernel[AutoDiffScalar[VectorXd] ] grad_kernel
-
     cdef int _data_size
-    cdef int _grad_data_size
 
     cdef object _terms
 
     def __cinit__(self):
         self.gp = new GaussianProcess[BandSolver[double], double](self.kernel)
-        self.grad_gp = new GaussianProcess[BandSolver[AutoDiffScalar[VectorXd] ], AutoDiffScalar[VectorXd] ](self.grad_kernel)
         self._data_size = -1
-        self._grad_data_size = -1
         self._terms = []
 
     def __dealloc__(self):
         del self.gp
-        del self.grad_gp
 
     def __len__(self):
         return self.gp.size()
@@ -117,10 +100,6 @@ cdef class GP:
     property computed:
         def __get__(self):
             return self._data_size >= 0
-
-    property grad_computed:
-        def __get__(self):
-            return self._grad_data_size >= 0
 
     property alpha_real:
         def __get__(self):
@@ -169,7 +148,6 @@ cdef class GP:
             self.gp.set_params(<double*>p.data)
 
             self._data_size = -1
-            self._grad_data_size = -1
 
     def __getitem__(self, i):
         return self.params[i]
@@ -180,62 +158,11 @@ cdef class GP:
         self.params = params
 
     def add_term(self, log_a, log_q, log_f=None):
-        cdef double la, lq, lf
-        cdef AutoDiffScalar[VectorXd] ad_la, ad_lq, ad_lf
-        cdef np.ndarray[DTYPE_t, ndim=1] grad_la, grad_lq, grad_lf
-
-        try:
-            if len(log_a) != 2:
-                raise ValueError("invalid term amplitude parameter")
-        except TypeError:
-            la = log_a
-            ad_la = AutoDiffScalar[VectorXd](la)
-        else:
-            la = log_a[0]
-            grad_la = np.atleast_1d(log_a[1])
-            ad_la = AutoDiffScalar[VectorXd](la, Map[VectorXd](<double*>grad_la.data, grad_la.shape[0]))
-
-        try:
-            if len(log_q) != 2:
-                raise ValueError("invalid term q-factor parameter")
-        except TypeError:
-            lq = log_q
-            ad_lq = AutoDiffScalar[VectorXd](lq)
-        else:
-            lq = log_q[0]
-            grad_lq = np.atleast_1d(log_q[1])
-            ad_lq = AutoDiffScalar[VectorXd](lq, Map[VectorXd](<double*>grad_lq.data, grad_lq.shape[0]))
-
-        if log_f is None:
-            self.kernel.add_term(la, lq)
-            self.grad_kernel.add_term(ad_la, ad_lq)
-
-        else:
-            try:
-                if len(log_f) != 2:
-                    raise ValueError("invalid term frequency parameter")
-            except TypeError:
-                lf = log_f
-                ad_lf = AutoDiffScalar[VectorXd](lf)
-            else:
-                lf = log_f[0]
-                grad_lf = np.atleast_1d(log_f[1])
-                ad_lf = AutoDiffScalar[VectorXd](lf, Map[VectorXd](<double*>grad_lf.data, grad_lf.shape[0]))
-
-            self.kernel.add_term(la, lq, lf)
-            self.grad_kernel.add_term(ad_la, ad_lq, ad_lf)
-
-        # Save the term
+        self.kernel.add_term(log_a, log_q, log_f)
         self._terms.append((log_a, log_q, log_f))
-
-        # Update the solvers
         del self.gp
         self.gp = new GaussianProcess[BandSolver[double], double](self.kernel)
-        del self.grad_gp
-        self.grad_gp = new GaussianProcess[BandSolver[AutoDiffScalar[VectorXd] ], AutoDiffScalar[VectorXd] ](self.grad_kernel)
-
         self._data_size = -1
-        self._grad_data_size = -1
 
     def get_matrix(self, np.ndarray[DTYPE_t, ndim=1] x1, x2=None):
         if x2 is None:
@@ -264,36 +191,12 @@ cdef class GP:
         self._data_size = x.shape[0]
         self.gp.compute(self._data_size, <double*>x.data, <double*>yerr.data)
 
-    def compute_grad(self, np.ndarray[DTYPE_t, ndim=1] x, np.ndarray[DTYPE_t, ndim=1] yerr):
-        if x.shape[0] != yerr.shape[0]:
-            raise ValueError("dimension mismatch")
-        cdef int i
-        for i in range(x.shape[0] - 1):
-            if x[i+1] <= x[i]:
-                raise ValueError("the time series must be ordered")
-        self._grad_data_size = x.shape[0]
-        self.grad_gp.compute(self._grad_data_size, <double*>x.data, <double*>yerr.data)
-
     def log_likelihood(self, np.ndarray[DTYPE_t, ndim=1] y):
         if not self.computed:
             raise RuntimeError("you must call 'compute' first")
         if y.shape[0] != self._data_size:
             raise ValueError("dimension mismatch")
         return self.gp.log_likelihood(<double*>y.data)
-
-    def grad_log_likelihood(self, np.ndarray[DTYPE_t, ndim=1] y):
-        if not self.grad_computed:
-            raise RuntimeError("you must call 'compute_grad' first")
-        if y.shape[0] != self._data_size:
-            raise ValueError("dimension mismatch")
-
-        cdef AutoDiffScalar[VectorXd] ll = self.grad_gp.log_likelihood(<double*>y.data)
-        cdef VectorXd grad = ll.derivatives()
-        cdef np.ndarray[DTYPE_t, ndim=1] grad_ll = np.empty(grad.rows(), dtype=DTYPE)
-        cdef int i
-        for i in range(grad.rows()):
-            grad_ll[i] = grad(i)
-        return ll.value(), grad_ll
 
     def sample(self, np.ndarray[DTYPE_t, ndim=1] x, double tiny=1e-12):
         cdef np.ndarray[DTYPE_t, ndim=2] K = self.get_matrix(x)

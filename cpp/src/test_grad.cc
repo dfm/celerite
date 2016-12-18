@@ -5,21 +5,25 @@
 
 #define DO_TEST(FUNC, VAR1, VAR2)                            \
 {                                                            \
-  double value, delta;                                       \
-  VAR1 += eps;                                               \
-  solver.compute(alpha_real, beta_real,                      \
-      alpha_complex, beta_complex_real, beta_complex_imag,   \
-      x, yerr2);                                             \
-  value = FUNC;                                              \
-  VAR1 -= 2.0*eps;                                           \
-  solver.compute(alpha_real, beta_real,                      \
-      alpha_complex, beta_complex_real, beta_complex_imag,   \
-      x, yerr2);                                             \
-  value -= FUNC;                                             \
-  VAR1 += eps;                                               \
-  value /= 2.0 * eps;                                        \
+  int flag = 1;                                              \
+  double value, delta, eps0 = eps;                                       \
+  while (flag != 0) {                                        \
+    VAR1 += eps0;                                               \
+    flag = solver.compute(alpha_real, beta_real,                      \
+        alpha_complex, beta_complex_real, beta_complex_imag,   \
+        x, yerr2);                                             \
+    value = FUNC;                                              \
+    VAR1 -= 2.0*eps0;                                           \
+    flag += solver.compute(alpha_real, beta_real,                      \
+        alpha_complex, beta_complex_real, beta_complex_imag,   \
+        x, yerr2);                                             \
+    value -= FUNC;                                             \
+    VAR1 += eps0;                                               \
+    value /= 2.0 * eps0;                                        \
+    eps0 /= 2.0;                                               \
+  }                                                              \
   delta = std::abs(value - VAR2);                            \
-  if (delta > 1e-5) {                                        \
+  if (delta > 7e-5) {                                        \
     std::cerr << "Test failed: '" << #FUNC << ", " << #VAR1 << "': |" << value << " - " << VAR2 << "| = " << delta << std::endl; \
     return 1;                                                \
   } else                                                     \
@@ -45,11 +49,11 @@ int main (int argc, char* argv[])
                   alpha_complex = Eigen::VectorXd::Random(nterms),
                   beta_complex_real = Eigen::VectorXd::Random(nterms),
                   beta_complex_imag = Eigen::VectorXd::Random(nterms);
-  alpha_real.array() += 1.0;
-  alpha_complex.array() += 1.0;
-  beta_real.array() += 1.0;
-  beta_complex_real.array() += 1.0;
-  beta_complex_imag.array() += 1.0;
+  alpha_real.array() += 1.;
+  alpha_complex.array() += 1.;
+  beta_real.array() += 1.;
+  beta_complex_real.array() += 1.;
+  beta_complex_imag.array() += 1.;
 
   // Generate some fake data.
   Eigen::VectorXd x = Eigen::VectorXd::Random(N),
@@ -58,7 +62,7 @@ int main (int argc, char* argv[])
 
   // Set the scale of the uncertainties.
   yerr2.array() *= 0.1;
-  yerr2.array() += 0.3;
+  yerr2.array() += 2.5;
 
   // The times need to be sorted.
   std::sort(x.data(), x.data() + x.size());
@@ -95,7 +99,7 @@ int main (int argc, char* argv[])
   ad_t grad_log_det = grad_solver.log_determinant(),
        grad_dot_solve = grad_solver.dot_solve(y);
 
-  double eps = 1.23e-5;
+  double eps = 1.23e-6;
   DO_TEST(solver.log_determinant(), yerr2.array(), grad_log_det.derivatives()(0))
   DO_TEST(solver.dot_solve(y), yerr2.array(), grad_dot_solve.derivatives()(0))
 
