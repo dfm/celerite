@@ -4,6 +4,7 @@
 #include <cmath>
 #include <Eigen/Dense>
 
+#include "genrp/utils.h"
 #include "genrp/solvers/solver.h"
 
 namespace genrp {
@@ -11,7 +12,7 @@ namespace genrp {
 template <typename T>
 class DirectSolver : public Solver<T> {
 public:
-  DirectSolver () {};
+  DirectSolver () : Solver<T>() {};
   ~DirectSolver () {};
 
   int compute (
@@ -46,13 +47,14 @@ int DirectSolver<T>::compute (
   const Eigen::Matrix<T, Eigen::Dynamic, 1>& diag
 )
 {
-  bool flag = this->check_coefficients(
+  this->computed_ = false;
+  bool flag = check_coefficients(
     alpha_real, beta_real,
     alpha_complex_real, alpha_complex_imag,
     beta_complex_real, beta_complex_imag
   );
-  if (!flag) return 1;
-  if (x.rows() != diag.rows()) return 2;
+  if (!flag) return SOLVER_NOT_COMPUTED;
+  if (x.rows() != diag.rows()) return SOLVER_DIMENSION_MISMATCH;
 
   // Save the dimensions for later use
   this->p_real_ = alpha_real.rows();
@@ -61,17 +63,14 @@ int DirectSolver<T>::compute (
 
   // Build the matrix.
   double dx;
-  T v, asum = alpha_real.sum() + alpha_complex_real.sum() + alpha_complex_imag.sum();
+  T v, asum = alpha_real.sum() + alpha_complex_real.sum();
   Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> K(this->n_, this->n_);
   for (size_t i = 0; i < this->n_; ++i) {
     K(i, i) = asum + diag(i);
 
     for (size_t j = i+1; j < this->n_; ++j) {
-      v = 0.0;
-      dx = std::abs(x(j) - x(i));
-      v += (alpha_real.array() * exp(-beta_real.array() * dx)).sum();
-      v += (alpha_complex_real.array() * exp(-beta_complex_real.array() * dx) * cos(beta_complex_imag.array() * dx)).sum();
-      v += (alpha_complex_imag.array() * exp(-beta_complex_real.array() * dx) * sin(beta_complex_imag.array() * dx)).sum();
+      dx = x(j) - x(i);
+      v = get_kernel_value(alpha_real, beta_real, alpha_complex_real, alpha_complex_imag, beta_complex_real, beta_complex_imag, dx);
       K(i, j) = v;
       K(j, i) = v;
     }
@@ -80,13 +79,19 @@ int DirectSolver<T>::compute (
   // Factorize the matrix.
   factor_ = K.ldlt();
   this->log_det_ = log(factor_.vectorD().array()).sum();
+  this->computed_ = true;
 
   return 0;
 }
 
 template <typename T>
 void DirectSolver<T>::solve (const Eigen::MatrixXd& b, T* x) const {
-  assert ((b.rows() == this->n_) && "DIMENSION_MISMATCH");
+  if (b.rows() != this->n_) {
+    throw SOLVER_DIMENSION_MISMATCH;
+  }
+  if (!(this->computed_)) {
+    throw SOLVER_NOT_COMPUTED;
+  }
   size_t nrhs = b.cols();
 
   Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>

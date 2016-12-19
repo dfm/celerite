@@ -5,6 +5,7 @@
 #include <iostream>
 #include <Eigen/Core>
 
+#include "genrp/utils.h"
 #include "genrp/banded.h"
 #include "genrp/solvers/solver.h"
 
@@ -22,7 +23,8 @@ namespace genrp {
 template <typename T>
 class BandSolver : public Solver<T> {
 public:
-  BandSolver () {};
+  BandSolver () : Solver<T>() {};
+  ~BandSolver () {};
 
   int compute (
     const Eigen::Matrix<T, Eigen::Dynamic, 1>& alpha_real,
@@ -71,13 +73,14 @@ int BandSolver<T>::compute (
 {
   using std::abs;
 
-  bool flag = this->check_coefficients(
+  this->computed_ = false;
+  bool flag = check_coefficients(
     alpha_real, beta_real,
     alpha_complex_real, alpha_complex_imag,
     beta_complex_real, beta_complex_imag
   );
-  if (!flag) return 1;
-  if (x.rows() != diag.rows()) return 2;
+  if (!flag) return SOLVER_NOT_COMPUTED;
+  if (x.rows() != diag.rows()) return SOLVER_DIMENSION_MISMATCH;
 
   // Save the dimensions for later use
   this->p_real_ = alpha_real.rows();
@@ -96,7 +99,7 @@ int BandSolver<T>::compute (
   ipiv_.resize(dim_ext);
 
   // Start with the diagonal.
-  T sum_alpha = alpha_real.sum() + alpha_complex_real.sum() + alpha_complex_imag.sum();
+  T sum_alpha = alpha_real.sum() + alpha_complex_real.sum();
   for (k = 0; k < n; ++k)
     get_band_element(a_, width, 0, k*block_size) = diag(k) + sum_alpha;
 
@@ -230,13 +233,19 @@ int BandSolver<T>::compute (
   T ld = T(0.0);
   for (size_t i = 0; i < dim_ext; ++i) ld += log(abs(a_(0, i)));
   this->log_det_ = ld;
+  this->computed_ = true;
 
   return 0;
 }
 
 template <typename T>
 void BandSolver<T>::solve (const Eigen::MatrixXd& b, T* x) const {
-  assert ((b.rows() == this->n_) && "DIMENSION_MISMATCH");
+  if (b.rows() != this->n_) {
+    throw SOLVER_DIMENSION_MISMATCH;
+  }
+  if (!(this->computed_)) {
+    throw SOLVER_NOT_COMPUTED;
+  }
   size_t nrhs = b.cols();
 
   BLOCKSIZE
