@@ -308,12 +308,20 @@ P(\omega) = P_0 \frac{\omega_0^4}{(\omega^2-\omega_0^2)^2 + \omega_0^2\omega^2/Q
 where $P_0$ is a normalization constant.
 
 % Check to see that signs match
-This power spectrum matches that of our basis kernel if $\omega_0^2 = c_j^2+d_j^2$,
-$a_jc_j-b_jd_j = 0$, $b_jd_j+a_jc_j=\omega_0^2$, and $4c_j^2 = \omega_0^2/Q^2$.
+This power spectrum matches that of our basis kernel if
+\begin{eqnarray}
+\omega_0^2 &=& c_j^2+d_j^2,\\
+a_jc_j-b_jd_j &=& 0,\\
+\omega_0^2&=& b_jd_j+a_jc_j ,\\
+\omega_0^2/Q^2&=& 4c_j^2.
+\end{eqnarray}
 The power spectrum can be normalized by $P_0$ in amplitude and $\omega_0$ in
 frequency to yield a spectral shape that only depends upon $Q$.  This is plotted
-in Figure \ref{sho_psd} for various values of $Q$.  This power spectrum has
-a peak frequency given by $\omega_{max} = \omega_0\sqrt{1-1/(2Q^2)}$, which is
+in Figure \ref{sho_psd} for various values of $Q$.  
+Note that the oscillation frequency that appears in the kernel, $d_j$, differs
+from that of the simple-harmonic oscillator, $\omega_0$, due to the damping
+frequency, $c_j$.  This power spectrum has
+a peak frequency given by $\omega_{max} = \omega_0\sqrt{1-1/(2Q^2)} = d_j$, which is
 greater than zero for $Q > 1/\sqrt{2}$.
 
 \begin{figure}[!htbp]
@@ -354,8 +362,9 @@ where $x_{max}=\sqrt{1-1/(2Q^2)}$.  This shape approaches a Lorentzian for $x \a
 a width of $1/(2Qx_{max})$ and a peak height $\propto Q^2$.
 \end{itemize}
 
-The stochastically driven, damped simple-harmonic oscillator can then represent a wide range of intrinsic stellar variability, with
-low $Q \approx 1$ representing granulation noise, and high $Q >> 1$ representing asteroseismic variability.
+The stochastically-driven, damped simple-harmonic oscillator can then represent a wide range of intrinsic 
+stellar variability, with low $Q \approx 1$ representing granulation noise, and high $Q >> 1$ representing 
+asteroseismic variability.
 
 \section{Implementation \& performance}
 
@@ -393,8 +402,8 @@ Sturm's theorem applied to numerator of power spectrum.
 \item RR Lyrae
 \item Kepler with simulated transit
 \item Asteroseismic target
+\item Stellar rotational variability
 \end{enumerate}
-
 
 \section{Comparisons to other methods}
 
