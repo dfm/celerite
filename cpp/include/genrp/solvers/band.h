@@ -99,7 +99,7 @@ int BandSolver<T>::compute (
   ipiv_.resize(dim_ext);
 
   // Start with the diagonal.
-  T sum_alpha = alpha_real.sum() + alpha_complex_real.sum() + alpha_complex_imag.sum();
+  T sum_alpha = alpha_real.sum() + alpha_complex_real.sum();
   for (k = 0; k < n; ++k)
     get_band_element(a_, width, 0, k*block_size) = diag(k) + sum_alpha;
 

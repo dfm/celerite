@@ -37,15 +37,16 @@ cdef extern from "Eigen/Core" namespace "Eigen":
 
 cdef extern from "genrp/genrp.h" namespace "genrp":
 
-    cdef cppclass Kernel[T]:
-        Kernel()
-        void add_term (const T log_amp, const T log_q)
-        void add_term (const T log_amp, const T log_q, const T log_freq)
-        T value (double dt) const
-        T psd (double f) const
-        size_t p () const
-        size_t p_real () const
-        size_t p_complex () const
+    cdef double get_kernel_value(
+        size_t p_real,
+        const double* const alpha_real, const double* const beta_real,
+        size_t p_complex,
+        const double* const alpha_complex_real,
+        const double* const alpha_complex_imag,
+        const double* const beta_complex_real,
+        const double* const beta_complex_imag,
+        double tau
+    )
 
     cdef cppclass BandSolver[T]:
         BandSolver ()
@@ -59,6 +60,16 @@ cdef extern from "genrp/genrp.h" namespace "genrp":
         void solve (size_t nrhs, const double* b, T* x) const
         T dot_solve (const double* b) except +
         T log_determinant () except +
+
+    cdef cppclass Kernel[T]:
+        Kernel()
+        void add_term (const T log_amp, const T log_q)
+        void add_term (const T log_amp, const T log_q, const T log_freq)
+        T value (double dt) const
+        T psd (double f) const
+        size_t p () const
+        size_t p_real () const
+        size_t p_complex () const
 
     cdef cppclass GaussianProcess[SolverType, T]:
         GaussianProcess (Kernel[T] kernel)
@@ -305,24 +316,36 @@ cdef class Solver:
         return alpha
 
     def get_matrix(self):
-        cdef double asum = self.alpha_real.sum() + self.alpha_complex_real.sum()
         cdef double delta
         cdef double value
-        cdef size_t i, j, p
+        cdef size_t i, j
         cdef np.ndarray[DTYPE_t, ndim=2] A = np.empty((self.N, self.N),
                                                       dtype=DTYPE)
         for i in range(self.N):
-            A[i, i] = self.diagonal[i] + asum
+            A[i, i] = self.diagonal[i] + get_kernel_value(
+                self.alpha_real.shape[0],
+                <double*>self.alpha_real.data,
+                <double*>self.beta_real.data,
+                self.alpha_complex_real.shape[0],
+                <double*>self.alpha_complex_real.data,
+                <double*>self.alpha_complex_imag.data,
+                <double*>self.beta_complex_real.data,
+                <double*>self.beta_complex_imag.data,
+                0.0
+            )
             for j in range(i + 1, self.N):
                 delta = fabs(self.t[i] - self.t[j])
-                value = 0.0
-                for p in range(self.p_real):
-                    value += self.alpha_real[p]*exp(-self.beta_real[p]*delta)
-                for p in range(self.p_complex):
-                    value += self.alpha_complex_real[p]*(
-                        exp(-self.beta_complex_real[p]*delta) *
-                        cos(self.beta_complex_imag[p]*delta)
-                    )
+                value = get_kernel_value(
+                    self.alpha_real.shape[0],
+                    <double*>self.alpha_real.data,
+                    <double*>self.beta_real.data,
+                    self.alpha_complex_real.shape[0],
+                    <double*>self.alpha_complex_real.data,
+                    <double*>self.alpha_complex_imag.data,
+                    <double*>self.beta_complex_real.data,
+                    <double*>self.beta_complex_imag.data,
+                    delta
+                )
                 A[i, j] = value
                 A[j, i] = value
         return A

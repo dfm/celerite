@@ -162,7 +162,7 @@ int Solver<T>::compute (
     size_t n, const double* t, const T* const diag
 )
 {
-  typedef Eigen::Map<const Eigen::Matrix<T, Eigen::Dynamic, 1> > dbl_vector_t;
+  typedef Eigen::Map<const Eigen::Matrix<double, Eigen::Dynamic, 1> > dbl_vector_t;
   typedef Eigen::Map<const Eigen::Matrix<T, Eigen::Dynamic, 1> > vector_t;
   return compute(
     vector_t(alpha_real, p_real, 1),

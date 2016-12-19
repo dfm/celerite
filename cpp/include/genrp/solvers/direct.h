@@ -63,7 +63,7 @@ int DirectSolver<T>::compute (
 
   // Build the matrix.
   double dx;
-  T v, asum = alpha_real.sum() + alpha_complex_real.sum() + alpha_complex_imag.sum();
+  T v, asum = alpha_real.sum() + alpha_complex_real.sum();
   Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> K(this->n_, this->n_);
   for (size_t i = 0; i < this->n_; ++i) {
     K(i, i) = asum + diag(i);

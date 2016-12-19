@@ -8,15 +8,16 @@
 
 namespace genrp {
 
-template <typename T>
+template <typename Derived>
 bool check_coefficients (
-  const Eigen::Matrix<T, Eigen::Dynamic, 1>& alpha_real,
-  const Eigen::Matrix<T, Eigen::Dynamic, 1>& beta_real,
-  const Eigen::Matrix<T, Eigen::Dynamic, 1>& alpha_complex_real,
-  const Eigen::Matrix<T, Eigen::Dynamic, 1>& alpha_complex_imag,
-  const Eigen::Matrix<T, Eigen::Dynamic, 1>& beta_complex_real,
-  const Eigen::Matrix<T, Eigen::Dynamic, 1>& beta_complex_imag
+  const Eigen::DenseBase<Derived>& alpha_real,
+  const Eigen::DenseBase<Derived>& beta_real,
+  const Eigen::DenseBase<Derived>& alpha_complex_real,
+  const Eigen::DenseBase<Derived>& alpha_complex_imag,
+  const Eigen::DenseBase<Derived>& beta_complex_real,
+  const Eigen::DenseBase<Derived>& beta_complex_imag
 ) {
+  typedef typename Derived::Scalar T;
   typedef Eigen::Matrix<T, Eigen::Dynamic, 1> vector_t;
 
   if (alpha_real.rows() != beta_real.rows()) return false;
@@ -77,17 +78,18 @@ bool check_coefficients (
   return (nroots == 0);
 }
 
-template <typename T>
-T get_kernel_value (
-  const Eigen::Matrix<T, Eigen::Dynamic, 1>& alpha_real,
-  const Eigen::Matrix<T, Eigen::Dynamic, 1>& beta_real,
-  const Eigen::Matrix<T, Eigen::Dynamic, 1>& alpha_complex_real,
-  const Eigen::Matrix<T, Eigen::Dynamic, 1>& alpha_complex_imag,
-  const Eigen::Matrix<T, Eigen::Dynamic, 1>& beta_complex_real,
-  const Eigen::Matrix<T, Eigen::Dynamic, 1>& beta_complex_imag,
-  T tau
+template <typename Derived>
+typename Derived::Scalar get_kernel_value (
+  const Eigen::DenseBase<Derived>& alpha_real,
+  const Eigen::DenseBase<Derived>& beta_real,
+  const Eigen::DenseBase<Derived>& alpha_complex_real,
+  const Eigen::DenseBase<Derived>& alpha_complex_imag,
+  const Eigen::DenseBase<Derived>& beta_complex_real,
+  const Eigen::DenseBase<Derived>& beta_complex_imag,
+  typename Derived::Scalar tau
 ) {
   using std::abs;
+  typedef typename Derived::Scalar T;
 
   T t = abs(tau), k = T(0.0);
 
@@ -103,16 +105,17 @@ T get_kernel_value (
   return k;
 }
 
-template <typename T>
-T get_psd_value (
-  const Eigen::Matrix<T, Eigen::Dynamic, 1>& alpha_real,
-  const Eigen::Matrix<T, Eigen::Dynamic, 1>& beta_real,
-  const Eigen::Matrix<T, Eigen::Dynamic, 1>& alpha_complex_real,
-  const Eigen::Matrix<T, Eigen::Dynamic, 1>& alpha_complex_imag,
-  const Eigen::Matrix<T, Eigen::Dynamic, 1>& beta_complex_real,
-  const Eigen::Matrix<T, Eigen::Dynamic, 1>& beta_complex_imag,
-  T omega
+template <typename Derived>
+typename Derived::Scalar get_psd_value (
+  const Eigen::DenseBase<Derived>& alpha_real,
+  const Eigen::DenseBase<Derived>& beta_real,
+  const Eigen::DenseBase<Derived>& alpha_complex_real,
+  const Eigen::DenseBase<Derived>& alpha_complex_imag,
+  const Eigen::DenseBase<Derived>& beta_complex_real,
+  const Eigen::DenseBase<Derived>& beta_complex_imag,
+  typename Derived::Scalar& omega
 ) {
+  typedef typename Derived::Scalar T;
   T w2 = omega * omega, p = T(0.0), a, b, c, d, w02;
   for (int i = 0; i < alpha_real.rows(); ++i) {
     a = alpha_real[i];
@@ -130,6 +133,76 @@ T get_psd_value (
   }
 
   return sqrt(2.0 / M_PI) * p;
+}
+
+template <typename T>
+bool check_coefficients (
+  size_t p_real,
+  const T* const alpha_real,
+  const T* const beta_real,
+  size_t p_complex,
+  const T* const alpha_complex_real,
+  const T* const alpha_complex_imag,
+  const T* const beta_complex_real,
+  const T* const beta_complex_imag
+) {
+  typedef Eigen::Map<const Eigen::Matrix<T, Eigen::Dynamic, 1> > vector_t;
+  return check_coefficients(
+    vector_t(alpha_real, p_real, 1),
+    vector_t(beta_real, p_real, 1),
+    vector_t(alpha_complex_real, p_complex, 1),
+    vector_t(alpha_complex_imag, p_complex, 1),
+    vector_t(beta_complex_real, p_complex, 1),
+    vector_t(beta_complex_imag, p_complex, 1)
+  );
+}
+
+template <typename T>
+T get_kernel_value (
+  size_t p_real,
+  const T* const alpha_real,
+  const T* const beta_real,
+  size_t p_complex,
+  const T* const alpha_complex_real,
+  const T* const alpha_complex_imag,
+  const T* const beta_complex_real,
+  const T* const beta_complex_imag,
+  T tau
+) {
+  typedef Eigen::Map<const Eigen::Matrix<T, Eigen::Dynamic, 1> > vector_t;
+  return get_kernel_value(
+    vector_t(alpha_real, p_real, 1),
+    vector_t(beta_real, p_real, 1),
+    vector_t(alpha_complex_real, p_complex, 1),
+    vector_t(alpha_complex_imag, p_complex, 1),
+    vector_t(beta_complex_real, p_complex, 1),
+    vector_t(beta_complex_imag, p_complex, 1),
+    tau
+  );
+}
+
+template <typename T>
+T get_psd_value (
+  size_t p_real,
+  const T* const alpha_real,
+  const T* const beta_real,
+  size_t p_complex,
+  const T* const alpha_complex_real,
+  const T* const alpha_complex_imag,
+  const T* const beta_complex_real,
+  const T* const beta_complex_imag,
+  T omega
+) {
+  typedef Eigen::Map<const Eigen::Matrix<T, Eigen::Dynamic, 1> > vector_t;
+  return get_psd_value(
+    vector_t(alpha_real, p_real, 1),
+    vector_t(beta_real, p_real, 1),
+    vector_t(alpha_complex_real, p_complex, 1),
+    vector_t(alpha_complex_imag, p_complex, 1),
+    vector_t(beta_complex_real, p_complex, 1),
+    vector_t(beta_complex_imag, p_complex, 1),
+    omega
+  );
 }
 
 };
