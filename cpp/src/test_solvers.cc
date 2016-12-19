@@ -38,7 +38,7 @@ int main (int argc, char* argv[])
   alpha_real.array() += 1.0;
   alpha_complex_real.array() += 1.0;
   alpha_complex_imag.array() += 1.0;
-  alpha_complex_imag.array() *= 0.5;
+  alpha_complex_imag.array() *= 0.1;
   beta_real.array() += 1.0;
   beta_complex_real.array() += 1.0;
   beta_complex_imag.array() += 1.0;
