@@ -21,27 +21,26 @@ int main (int argc, char* argv[])
 {
   srand(42);
 
-  size_t nterms = 3;
-  if (argc >= 2) nterms = atoi(argv[1]);
   size_t N = 1024;
   if (argc >= 3) N = atoi(argv[2]);
   size_t niter = 10;
   if (argc >= 4) niter = atoi(argv[3]);
 
   // Set up the coefficients.
-  Eigen::VectorXd alpha_real = Eigen::VectorXd::Random(nterms + 1),
-                  alpha_complex_real = Eigen::VectorXd::Random(nterms),
-                  alpha_complex_imag = Eigen::VectorXd::Random(nterms),
-                  beta_real = Eigen::VectorXd::Random(nterms + 1),
-                  beta_complex_real = Eigen::VectorXd::Random(nterms),
-                  beta_complex_imag = Eigen::VectorXd::Random(nterms);
-  alpha_real.array() += 1.0;
-  alpha_complex_real.array() += 1.0;
-  alpha_complex_imag.array() += 1.0;
-  alpha_complex_imag.array() *= 0.1;
-  beta_real.array() += 1.0;
-  beta_complex_real.array() += 1.0;
-  beta_complex_imag.array() += 1.0;
+  size_t p_real = 2, p_complex = 1;
+  Eigen::VectorXd alpha_real(p_real),
+                  alpha_complex_real(p_complex),
+                  alpha_complex_imag(p_complex),
+                  beta_real(p_real),
+                  beta_complex_real(p_complex),
+                  beta_complex_imag(p_complex);
+
+  alpha_real << 1.3, 1.5;
+  beta_real  << 0.5, 0.2;
+  alpha_complex_real << 1.0;
+  alpha_complex_imag << 0.1;
+  beta_complex_real  << 1.0;
+  beta_complex_imag  << 1.0;
 
   // Generate some fake data.
   Eigen::VectorXd x = Eigen::VectorXd::Random(N),
