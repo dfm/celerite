@@ -47,7 +47,7 @@ script: |
     elif [[ $TEST_LANG == cpp ]]
     then
       cd cpp
-      make test
+      CTEST_OUTPUT_ON_FAILURE=1 make test
     elif [[ $TEST_LANG == python ]]
     then
       cd python
