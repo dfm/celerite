@@ -277,7 +277,7 @@ Our method.
 
 %The general ACF is given by
 %\begin{equation}
-%K(\tau) = a_r e^{-b_r \vert\tau\vert} \cos{(b_r \vert\tau\vert)} + a_i e^{-b_r \vert\tau\vert} \sin{(b_r \vert\tau\vert)}.
+%k(\tau) = a_r e^{-b_r \tau} \cos{(b_r \tau)} + a_i e^{-b_r \tau} \sin{(b_r \tau)}.
 %\end{equation}
 %which has a power spectrum given by
 %\begin{equation}
@@ -303,19 +303,30 @@ of the oscillation, and $\epsilon(t)$ is a stochastic driving force.
 In the limit of an infinite time series and white random forcing, the noise-free power 
 spectrum of this equation is given by:
 \begin{equation}
-P(\omega) = P_0 \frac{\omega_0^4}{(\omega^2-\omega_0^2)^2 + \omega_0^2\omega^2/Q^2},
+P(\omega) = P_0 \sqrt{\frac{2}{\pi}} \frac{\omega_0^4}{(\omega^2-\omega_0^2)^2 + \omega_0^2\omega^2/Q^2},
 \end{equation}
 where $P_0$ is a normalization constant.
 
 % Check to see that signs match
 This power spectrum matches that of our basis kernel if
 \begin{eqnarray}
-\omega_0^2 &=& c_j^2+d_j^2,\\
-a_jc_j-b_jd_j &=& 0,\\
-\omega_0^2&=& b_jd_j+a_jc_j ,\\
-\omega_0^2/Q^2&=& 4c_j^2.
+a_j &=& P_0  \omega_0 Q\\
+b_j &=& a_j \left(4Q^2-1\right)^{-1/2}\\
+c_j &=& \frac{\omega_0}{2Q}\\
+d_j &=& \omega_0 \left(1-\frac{1}{4Q^2}\right)^{1/2},
+%\omega_0^2 &=& c_j^2+d_j^2,\\
+%a_jc_j-b_jd_j &=& 0,\\
+%\omega_0^2&=& b_jd_j+a_jc_j ,\\
+%\omega_0^2/Q^2&=& 4c_j^2.
 \end{eqnarray}
-The power spectrum can be normalized by $P_0$ in amplitude and $\omega_0$ in
+for $Q \ge \frac{1}{2}$ and $j=p=1$.  This gives a kernel with dependence
+\begin{eqnarray}\eqlabel{sho_kernel}
+%k(\tau) &=& P_0  \omega_0 Q e^{-\frac{\omega_0 \tau}{2Q}} \left[\cos{\lambda}+\frac{1}{\left(4Q^2-1\right)^{1/2}}
+k(\tau) &=&  P_0  \omega_0 Q e^{-\frac{\omega_0 \tau}{2Q}} \cos{\left(\lambda-\phi\right)},\\
+\lambda &=& \left(1-\frac{1}{4Q^2}\right)^{1/2}\omega_0\tau,\\
+\tan{\phi} &=& \left(4Q^2-1\right)^{-1/2}.
+\end{eqnarray}
+The power spectrum can be normalized by $P_0\omega_0 Q$ in amplitude and $\omega_0$ in
 frequency to yield a spectral shape that only depends upon $Q$.  This is plotted
 in Figure \ref{sho_psd} for various values of $Q$.  
 Note that the oscillation frequency that appears in the kernel, $d_j$, differs
@@ -326,45 +337,54 @@ greater than zero for $Q > 1/\sqrt{2}$.
 
 \begin{figure}[!htbp]
 \begin{center}
-\includegraphics[width=\textwidth]{./approximate_kernels/sho.png}
+\includegraphics[width=0.75\textwidth]{./approximate_kernels/sho.png}
 \caption{Normalized power spectra of the stochastically-driven, damped simple
-harmonic oscillator.}
+harmonic oscillator. The dotted black line shows the peak frequency, $d_j = \omega_0 (1-1/(2Q)^2)^{1/2}$.}
 \label{sho_psd}
 \end{center}
 \end{figure}
 
 This power spectrum has several limits of interest:
 \begin{itemize}
-\item $Q=1/2$:  This results in a power spectrum $\propto 1/(x^2+1)^2$, where $x=\omega/\omega_0$.
+\item $Q=1/2$:  This corresponds to a critically damped harmonic oscillator, which results in a power 
+spectrum $\propto 1/(x^2+1)^2$, where $x=\omega/\omega_0$.
 This matches the power spectrum of the Mat\'ern 3/2 kernel, and can be represented by the following
 autocovariance function:
 \begin{equation}
-K(\tau) = a_j e^{-c_j \vert\tau\vert} \left(\cos{(d_j \vert\tau\vert)} + \frac{c_j}{d_j}\sin{(d_j \vert\tau\vert)}\right),
+k(\tau) = a_j e^{-c_j \tau} \left[\cos{(d_j \tau)} + \frac{c_j}{d_j}\sin{(d_j \tau)}\right],
 % Check to see that signs match in this equation.
 \end{equation}
-in the limit that $b_i \rightarrow \infty$, for which the second term has a coefficients that diverges,
-but with large values of $b_i$, this may approximate the Mat\'ern kernel well.  Note that this
-power spectrum peaks at $\omega=0$.
+in the limit that $d_j \rightarrow \infty$, corresponding to $\phi=\pi/2$, for which the second 
+term has a coefficient that diverges, but with large values of $d_j$, this may approximate the 
+Mat\'ern kernel well.  Note that this power spectrum peaks at $\omega=0$.
 \item $Q=1/\sqrt{2}$:  This results in a power spectrum $\propto 1/(x^4+1)$, which is a functional
 form used to fit the Solar granulation power spectrum by \cite{2009A&A...495..979M}.  This kernel has
 dependence
 \begin{equation}
-K(\tau) = a_r e^{-b_r\vert\tau\vert} \left(\cos{(b_i\vert\tau\vert)}+\sin{(b_i\vert\tau\vert)}\right).
+k(\tau) = a_j e^{-c_j\tau} \left[\cos{(d_j\tau)}+\sin{(d_j\tau)}\right],
 \end{equation}
+corresponding to $\phi = \pi/4$.
 Despite the sinusoidal dependence of the kernel, the strong damping causes the power spectrum to
-peak at zero frequency; such a low quality oscillator doesn't display even quasi-periodic behavior.
-\item $Q \gg 1$: This represents a high-quality oscillator which approaches a narrow peak.  The
-power spectrum approaches
+peak at zero frequency; such a low quality oscillator doesn't even display quasi-periodic behavior.
+\item $Q \gg 1$: This represents a high-quality oscillator which approaches a narrow peak. 
+The kernel approaches
+\begin{equation}
+k(\tau) = P_0 \omega_0 Q e^{-\omega_0\tau/(2Q)} \cos{\left(\omega_0\tau\right)},
+\end{equation}
+for $Q \gg 1$.  The power spectrum approaches
 \begin{equation}
 P(\omega) \approx P_0 \frac{Q^2}{1-1/(4Q^2)+4x_{max}^2\left(x-x_{max}\right)^2Q^2},
 \end{equation}
 where $x_{max}=\sqrt{1-1/(2Q^2)}$.  This shape approaches a Lorentzian for $x \approx x_{max}$ with
-a width of $1/(2Qx_{max})$ and a peak height $\propto Q^2$.
+a width of $1/(Qx_{max})$ and a peak height $\propto Q^2$.
 \end{itemize}
 
-The stochastically-driven, damped simple-harmonic oscillator can then represent a wide range of intrinsic 
-stellar variability, with low $Q \approx 1$ representing granulation noise, and high $Q >> 1$ representing 
-asteroseismic variability.
+The stochastically-driven, damped simple-harmonic oscillator can then describe a wide range of intrinsic 
+stellar variability, with low $Q \approx 1$ representing granulation noise, and high $Q \gg 1$ representing 
+asteroseismic variability.  Taking the sum over oscillators with various $Q, P_0,$ and $\omega_0$ can
+give an accurate accounting of the power spectrum of stellar variability with $Q \ge \frac{1}{2}$ and
+$P_0 >0$.  As this kernel is exactly described by the exponential kernel, this functional form
+is tractable to solving in $\mathcal{O}(N)$ operations, as described next.
 
 \section{Implementation \& performance}
 
@@ -375,9 +395,62 @@ Banded vs.\ sparse.
 
 \subsection{Ensuring positive definiteness: Sturm's theorem}
 
-Relation of positive power spectrum to positive definite covariance matrix.
-Power spectrum of a sum of kernels.
-Sturm's theorem applied to numerator of power spectrum.
+The power spectrum is computed from taking the square of the Fourier transform of the data
+time series; hence, the power-spectrum must be non-negative.  In constructing a kernel,
+if any of the parameters $a_j$ or $b_j$ are negative, then it is possible for the power
+spectrum to go negative, which violates the definition of the power spectrum.  Consequently,
+if any of these coefficients is negative, it is necessary to check that the power spectrum
+is still non-negative.  Note that a non-negative power-spectrum does not require the auto-correlation
+function to be positive for all $\tau$.  The positive power spectrum is related to the
+positive eigenvalues of the covariance matrix which are necessary for a positive-definite matrix
+in limiting cases \citep{messerschmitt2006autocorrelation}.  We find empirically that requiring an everywhere
+positive power spectrum results in positive eigenvalues for the covariance matrix, and
+so we describe here how to ensure a positive power spectrum using Sturm's theorem.
+%Relation of positive power spectrum to positive definite covariance matrix.
+%Power spectrum of a sum of kernels.
+
+In the case of $p$ complex Lorentzians we can check for negative values of the PSD by solving for the
+roots of the power spectrum, abbreviating with $z = \omega^2$:
+\begin{equation}
+P(\omega)=  \sum_{j=1}^{p} \frac{q_j z + r_j}{z^2+s_jz + t_j} = 0
+\end{equation}
+where
+\begin{eqnarray}
+q_j &=& a_jc_j-b_jd_j\\
+r_j &=& (d_j^2+c_j^2)(b_jd_j+a_jc_j)\\
+s_j &=& 2(c_j^2-d_j^2)\\
+t_j &=& (c_j^2+d_j^2)^2.
+\end{eqnarray}
+The denominators of each term are positive, so we can multiply through by $\Pi_j \left(z^2+s_jz + t_j\right)$ yielding:
+\begin{equation}
+P_0(z) = \sum_{j=1}^{p} (q_j z + r_j)\Pi_{k \ne j}\left(z^2+s_kz + t_k\right) = 0,
+\end{equation}
+which is a polynomial with order $p_{ord}=2(p-1)+1$.  With $p=2$, this yields a cubic equation
+which may be solved exactly for the roots.
+
+A procedure based upon Sturm's theorem \citep{Dorrie1965} allows one to determine whether there are any 
+real roots within the range $(0,\infty]$. We first construct $P_0(z)$ and it's derivative 
+$P_1(z) = P^\prime(z)$, and then loop from $k=2$ to $k=p_{ord}$, computing 
+$P_k(z) = -{\rm rem}(P_{k-2},P_{k-1})$.  The function ${\rm rem}(p,q)$ is the remainder polynomial after dividing $p(z)$ by $q(z)$.
+
+We evaluate the $z^0$ coefficients of each of the polynomial in the series by evaluating $f_0 = \{P_0(0),...,P_{p_{ord}}(0)\}$ to
+give us the signs of these polynomials evaluated at $z=0$.
+Likewise, we evaluate the coefficients of the largest order term in each polynomial which gives the sign of the polynomial 
+as $z \rightarrow \infty$.  This gives $f_\infty = \{C(P_0,p_{ord}),C(P_1,p_{ord}-1),..., C(P_{p_{ord}},1)\}$ where 
+$C(p(z),m)$ returns the coefficient of $z^m$ in polynomial $p(z)$.
+
+With the series of coefficients $f_0$ and $f_\infty$, we then determine how many times the sign changes in each 
+of these, where $\sigma(0)$ is the number of sign changes at $z=0$, and $\sigma(\infty)$ is the number of sign 
+changes at $z \rightarrow \infty$.  The total number of real roots in the range $(0,\infty]$ is given 
+by $N_{+}=\sigma(0)-\sigma(\infty)$.
+
+We have checked that this procedure works for a wide range of parameters, and we find that it robustly 
+matches the number of positive real roots which we evaluated numerically.
+
+The advantage of this procedure is that it does not require computing the roots, but only carrying out algebraic 
+manipulation of polynomials to determine the number of positive real roots.  If a non-zero real root is found, then
+likelihood may be set to zero.
+%Sturm's theorem applied to numerator of power spectrum.
 
 \subsection{Benchmarks \& scaling}
 
@@ -607,7 +680,7 @@ $m(\mathbf{t};\bvec{\theta})$.
 
 The kernel is modeled as a sum of damped harmonics,
 \begin{equation}
-K(\tau) = a_0 \delta(\tau) + \sum_{j=1}^{N_{kernel}} a_j e^{-\beta_R \tau} \cos{(\beta_I \tau)},
+k(\tau) = a_0 \delta(\tau) + \sum_{j=1}^{N_{kernel}} a_j e^{-\beta_R \tau} \cos{(\beta_I \tau)},
 \end{equation}
 where $\tau > 0$ is a time-offset between data points, $\beta_R$ represents the decay
 in correlation with time and $\beta_I$ represents oscillations of period $P = 2\pi/\beta_I$, and
@@ -664,7 +737,7 @@ additional advantage of allowing the automatic differentiation due to the use of
 A stationary, smooth kernel may generally be expressed as a Taylor series for the $\tau \ne 0$ component,
 plus the white noise component:
 \begin{equation}
-K(\tau) = a_0 \delta(\tau) +  \sum_{j=0}^\infty c_j \vert\tau\vert^j.
+k(\tau) = a_0 \delta(\tau) +  \sum_{j=0}^\infty c_j \vert\tau\vert^j.
 \end{equation}
 Note that this encompasses all smooth, time-stationary kernels, and generally $c_1 \le 0$ as
 correlated noise initially declines with separation in time.  We wish to approximate this
@@ -679,7 +752,7 @@ which has a Taylor series expansion:
 \frac{1}{6} \left(\beta_R^3-3\beta_R\beta_I^2\right)\tau^3 + \frac{1}{24} \left(\beta_R^4+\beta_I^4-6\beta_R^2\beta_I^2\right) \tau^4+ O(\tau^5),
 \end{eqnarray}
 which may be continued to any order in $\tau$ as necessary.
-If an approximation to $K(\tau)$ is desired in a Taylor series to some high order $N$, this
+If an approximation to $k(\tau)$ is desired in a Taylor series to some high order $N$, this
 requires combining $N/2$ components of $K_j(\tau,a_j,\beta_{R,j},\beta_{I,j})$ with $\beta_{R,j}$ and $\beta_{I,j}$
 chosen to match the coefficients $c_j$.  Note that for $N=1$ we only require a damped exponential
 kernel with $\beta_I = 0$.
@@ -710,9 +783,9 @@ cosine kernel components:
 \begin{itemize}
 \item {\bf Constant kernel.} A constant kernel component can be used to capture long-timescale
 correlations in data, and can be represented exactly with $\beta_R = \beta_I =  0$.
-\item {\bf Exponential kernel.} This kernel, $K(\tau) = e^{-\vert \tau/\tau_0\vert}$, is exactly
+\item {\bf Exponential kernel.} This kernel, $k(\tau) = e^{-\vert \tau/\tau_0\vert}$, is exactly
 represented with $\beta_I=0$, $\beta_R = \tau_0^{-1}$.
-\item {\bf Cosine kernel.} The cosine kernel, $K(t) = \cos{\left(\frac{2\pi}{P} \vert \tau \vert\right)}$,
+\item {\bf Cosine kernel.} The cosine kernel, $k(t) = \cos{\left(\frac{2\pi}{P} \vert \tau \vert\right)}$,
 may be represented exactly with $\beta_R=0$ and $\beta_I = \frac{2\pi}{P}$.
 \item {\bf Squared exponential.} The squared exponential or Gaussian kernel, $G(z)=e^{-z^2/2}$,
 has the behavior of declining steeply at large time separation, is an even function, and has $c_1$ = 0.
@@ -942,14 +1015,14 @@ predict or interpolate data points.   If our training times are given by
 ${\bf t}$, while the predicted times are given by ${\bf t}_*$, then
 mean values at the predicted times are given by (RW 2.23):
 \begin{eqnarray}
-\bar f_{*,k} &=& \sum_j K(t_{*,k},t_j) b_j,\\
+\bar f_{*,k} &=& \sum_j k(t_{*,k},t_j) b_j,\\
 &=& \sum_j \sum_p \alpha_p e^{-\beta_p \vert t_{*,k}-t_j\vert} b_j,\\
 &=& \sum_p \alpha_p \sum_j e^{-\beta_p \vert t_{*,k}-t_j\vert} b_j,\\
-y_k &=& \sum_j K(t_j,t_k) b_j,
+y_k &=& \sum_j k(t_j,t_k) b_j,
 \end{eqnarray}
 where the latter equation may be solved for ${\bf b}$ using the extended
 matrix formalism.  Let the length of ${\bf t}_*$ be $M$; then, the
-matrix $K({\bf t}_*,{\bf t})$ has a size $M \times N$, and so a total
+matrix $k({\bf t}_*,{\bf t})$ has a size $M \times N$, and so a total
 of $MN$ multiplications is required to obtain the predicted values.
 If $M$ is large, this can become quickly prohibitive.  It turns out
 that the structure of the sum of exponential kernels may be exploited
@@ -982,9 +1055,9 @@ so this procedure avoids a heavy computational burden.
 The variance may be handled in a similar manner, but with $p^2$ coefficients
 to recursively update. For example, if $t_{*,k} > t_j \forall j,k$ then:
 \begin{eqnarray}
-cov(f_{*,k}) &=&  K(t_{*,k},t_{*,k}) - \sum_p \sum_q \alpha_p \alpha_q e^{-\beta_p(t_{*,k}-{\bf t}^T)} K({\bf t},{\bf t})^{-1} e^{-\beta_q (t_{*,k}-{\bf t})},\\
-&=& K(0) - \sum_p \sum_q \alpha_p \alpha_q \zeta_{p,q,k},\\
-\zeta_{p,q,k} &=&   e^{-\beta_p(t_{*,k}-{\bf t}^T)} K({\bf t},{\bf t})^{-1} e^{-\beta_q (t_{*,k}-{\bf t})},\\
+cov(f_{*,k}) &=&  k(t_{*,k},t_{*,k}) - \sum_p \sum_q \alpha_p \alpha_q e^{-\beta_p(t_{*,k}-{\bf t}^T)} k({\bf t},{\bf t})^{-1} e^{-\beta_q (t_{*,k}-{\bf t})},\\
+&=& k(0) - \sum_p \sum_q \alpha_p \alpha_q \zeta_{p,q,k},\\
+\zeta_{p,q,k} &=&   e^{-\beta_p(t_{*,k}-{\bf t}^T)} k({\bf t},{\bf t})^{-1} e^{-\beta_q (t_{*,k}-{\bf t})},\\
 &=&  e^{-(\beta_p+\beta_q)(t_{*,k}-t_{*,k-1})} \zeta_{p,q,k-1}.
 \end{eqnarray}
 The recursive updates to the $\zeta_{p,q,k}$ parameters can be made at each step.
@@ -1037,7 +1110,7 @@ follow closely the notation and equations given in \citet{Ambikasaran:2015}.  We
 with the observation that a Lorentzian correlation function may be decomposed into the sum of two
 exponential functions:
 \begin{eqnarray}
-K(\tau) &=& \alpha e^{-\beta_R \tau} \cos{(\omega \tau)}\\
+k(\tau) &=& \alpha e^{-\beta_R \tau} \cos{(\omega \tau)}\\
  &=& \frac{1}{2}\alpha \left[e^{-\beta \tau}+e^{-\beta^* \tau}\right],
 \end{eqnarray}
 where $\beta = \beta_R + i\beta_I$ is the
@@ -1151,7 +1224,7 @@ that there is an extra band above and below the diagonal \citep[compare with Fig
 \end{center}
 \caption{Pictorial description of the extended sparse matrix where $N=10$, $p_0=0$, and $p=2$, following
 the example shown in \citet{Ambikasaran:2015}.}
-\label{matrix_structure}
+\figurelabel{matrix_structure}
 \end{figure}
 
 {\bf Should I give some examples of this?  Some pseudocode?}
