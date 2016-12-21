@@ -734,47 +734,47 @@ additional advantage of allowing the automatic differentiation due to the use of
 
 \section{Kernel components}
 
-A stationary, smooth kernel may generally be expressed as a Taylor series for the $\tau \ne 0$ component,
-plus the white noise component:
-\begin{equation}
-k(\tau) = a_0 \delta(\tau) +  \sum_{j=0}^\infty c_j \vert\tau\vert^j.
-\end{equation}
-Note that this encompasses all smooth, time-stationary kernels, and generally $c_1 \le 0$ as
-correlated noise initially declines with separation in time.  We wish to approximate this
-as the sum of damped cosine kernels, and since this general kernel is symmetric in $\tau$, we
-can carry out the approximation in terms of sums of damped cosine kernel components
-\begin{equation}
-K_j(\tau,a_j,\beta_{R,j},\beta_{I,j}) = a_j \exp{(\beta_{R,j} \tau)}\cos{(\beta_{I,j} \tau)},
-\end{equation}
-which has a Taylor series expansion:
-\begin{eqnarray}
-\exp{(\beta_R \tau)}\cos{(\beta_I \tau)} &=& 1 - \beta_R \tau + \frac{1}{2}\left(\beta_R^2 - \beta_I^2\right)\tau^2 \\c &-&
-\frac{1}{6} \left(\beta_R^3-3\beta_R\beta_I^2\right)\tau^3 + \frac{1}{24} \left(\beta_R^4+\beta_I^4-6\beta_R^2\beta_I^2\right) \tau^4+ O(\tau^5),
-\end{eqnarray}
-which may be continued to any order in $\tau$ as necessary.
-If an approximation to $k(\tau)$ is desired in a Taylor series to some high order $N$, this
-requires combining $N/2$ components of $K_j(\tau,a_j,\beta_{R,j},\beta_{I,j})$ with $\beta_{R,j}$ and $\beta_{I,j}$
-chosen to match the coefficients $c_j$.  Note that for $N=1$ we only require a damped exponential
-kernel with $\beta_I = 0$.
+%A stationary, smooth kernel may generally be expressed as a Taylor series for the $\tau \ne 0$ component,
+%plus the white noise component:
+%\begin{equation}
+%k(\tau) = a_0 \delta(\tau) +  \sum_{j=0}^\infty c_j \tau^j.
+%\end{equation}
+%Note that this encompasses all smooth, time-stationary kernels, and generally $c_1 \le 0$ as
+%correlated noise initially declines with separation in time.  We wish to approximate this
+%as the sum of damped cosine kernels, and since this general kernel is symmetric in $\tau$, we
+%can carry out the approximation in terms of sums of damped cosine kernel components
+%\begin{equation}
+%K_j(\tau,a_j,\beta_{R,j},\beta_{I,j}) = a_j \exp{(\beta_{R,j} \tau)}\cos{(\beta_{I,j} \tau)},
+%\end{equation}
+%which has a Taylor series expansion:
+%\begin{eqnarray}
+%\exp{(\beta_R \tau)}\cos{(\beta_I \tau)} &=& 1 - \beta_R \tau + \frac{1}{2}\left(\beta_R^2 - \beta_I^2\right)\tau^2 \\
+%- \frac{1}{6} \left(\beta_R^3-3\beta_R\beta_I^2\right)\tau^3 &+& \frac{1}{24} \left(\beta_R^4+\beta_I^4-6\beta_R^2\beta_I^2\right) \tau^4+ O(\tau^5),
+%\end{eqnarray}
+%which may be continued to any order in $\tau$ as necessary.
+%If an approximation to $k(\tau)$ is desired in a Taylor series to some high order $N$, this
+%requires combining $N/2$ components of $K_j(\tau,a_j,\beta_{R,j},\beta_{I,j})$ with $\beta_{R,j}$ and $\beta_{I,j}$
+%chosen to match the coefficients $c_j$.  Note that for $N=1$ we only require a damped exponential
+%kernel with $\beta_I = 0$.
+%
+%Another way to view this is in the power spectrum of the gaussian process, which is the
+%Fourier transform of the autocorrelation function.  The power spectrum of the $K_j$ kernel
+%is a Lorentzian, for which the frequency is given by $\omega = \beta_{I,j}$, while the
+%width of the Lorentzian is determined by $\beta_{R,j}$.  The functional form of this
+%power spectrum is: {\color{red} Check that this is true.}
+%\begin{equation}
+%P(\vert f\vert) = a_j \beta_{R,j} \frac{1}{\beta_{R,j}^2 + (2\pi f - \beta_{I,j})^2},
+%\end{equation}
+%where $f$ is the frequency in Hz.  The counterpart to the Taylor series is the observation
+%that a smooth distribution may be approximated arbitrarily precisely by summing together
+%Lorentzians with various values of $(a_j,\beta_{R,j},\beta_{I,j})$.  In the case that
+%a peak in the power spectrum is narrow at a specific frequency, then a small value of
+%$\beta_{R,j}$ gives a narrow Lorentzian that may approximate that peak.  If the wings
+%of the distribution decay faster than $f^{-2}$, then differences between Lorentzians
+%can be arranged to cancel in the wings, giving features in the power spectrum that have
+%narrower wings.
 
-Another way to view this is in the power spectrum of the gaussian process, which is the
-Fourier transform of the autocorrelation function.  The power spectrum of the $K_j$ kernel
-is a Lorentzian, for which the frequency is given by $\omega = \beta_{I,j}$, while the
-width of the Lorentzian is determined by $\beta_{R,j}$.  The functional form of this
-power spectrum is: {\color{red} Check that this is true.}
-\begin{equation}
-P(\vert f\vert) = a_j \beta_{R,j} \frac{1}{\beta_{R,j}^2 + (2\pi f - \beta_{I,j})^2},
-\end{equation}
-where $f$ is the frequency in Hz.  The counterpart to the Taylor series is the observation
-that a smooth distribution may be approximated arbitrarily precisely by summing together
-Lorentzians with various values of $(a_j,\beta_{R,j},\beta_{I,j})$.  In the case that
-a peak in the power spectrum is narrow at a specific frequency, then a small value of
-$\beta_{R,j}$ gives a narrow Lorentzian that may approximate that peak.  If the wings
-of the distribution decay faster than $f^{-2}$, then differences between Lorentzians
-can be arranged to cancel in the wings, giving features in the power spectrum that have
-narrower wings.
-
-The functional form of $K_j$ may be used to approximate some commonly used Kernel components.
+The functional form of $k_j$ may be used to approximate some commonly used Kernel components.
 The squared exponential (Gaussian) kernel and the Mat\'ern kernels are commonly
 used radial kernels, while the cosine kernel and the exponential-sine-squared kernels are
 commonly used periodic kernels.  Linear combinations of our basis of damped cosine kernels may be
@@ -792,20 +792,13 @@ has the behavior of declining steeply at large time separation, is an even funct
 Likewise, the Fourier transform of the squared exponential kernel is $\hat G(\omega) = e^{-\omega^2/2}$,
 which also declines steeply at large $\omega$;  this doesn't match the more gradual decline of a
 Lorentzian.  Nevertheless, the squared exponential kernel may be well approximated by the sum of
-three exponential kernels:
+four exponential kernels:
 \begin{eqnarray}
-%G(z) &\approx& 2.751807 e^{-1.531250 z} \cos{(0.341489 z)} \\
-% &-& 0.354626 e^{-4.753504 z} \cos{(2.042572 z)}\\
-% &-& 1.396834 e^{-1.796743 z} \cos{(1.764168 z)},
-G(z) &\approx& 2.670143 e^{-1.500258 z} \cos{(0.346731 z)} \\
- &-& 0.458705 e^{-4.125588 z} \cos{(1.390912 z)}\\
- &-& 1.211438 e^{-1.744602 z} \cos{(1.798436 z)},
+G(z) &\approx& 63.119512 e^{-1.479579 z} -32.173615 e^{-1.593691 z} -29.425156 e^{-1.388929 z}\\
+&+& e^{-1.383928 z} \left[-0.519196\cos{(1.883396 z)} +0.285478 \sin{(1.883396 z)}\right] \\
 \end{eqnarray}
-which has an accuracy of better than $<2.5\times 10^{-4}$ for all z.
-Note that the last three coefficients depend on the first six as we have constrained
-the first three terms of the Taylor series to match that of a Gaussian exactly, $1-z^2/2$.
-% [2.6701433354886324,1.5002583976327974,-0.3467305042550739,-0.4587049531317026,4.125587583864702,1.3909117346609636] -1.2114383823569297 1.7446017341309372 1.7984359925567543
-%[2.751807496353032,1.5312499408182438,-0.34148888180984543,-0.35462563655835033,4.753504292338051,2.0425716395901157,-1.3968344706423566,1.7967431129750422,-1.7641684073374964
+which has an accuracy of better than $<3\times 10^{-3}$ for all z, and the power spectrum has
+been constrained to be positive.
 \item {\bf Mat\'ern $p+1/2$ kernel.}  The Mat\'ern kernel is given by:
 \begin{equation}
 C_{p+1/2}(x) = \sigma^2 e^{-\sqrt{(2p+1)}x} \frac{\Gamma(p+1)}{\Gamma(2p+1)}
@@ -819,16 +812,16 @@ $C_{1/2}(x) = \sigma^2 e^{-x}$ ($p=0$), while
 $p=1$ is relevant to stellar variability, which we describe next.
 \item {\bf Mat\'ern 3/2 kernel.}  The Mat\'ern $3/2$ ($p=1$) kernel is given by:
 \begin{equation}
-K_{3/2}(\tau) = C_{3/2}(\tau/\tau_0) = (1+v)e^{-v},
+k_{3/2}(\tau) = C_{3/2}(\tau/\tau_0) = (1+v)e^{-v},
 \end{equation}
 where $v = \sqrt{3}\vert \tau/\tau_0\vert$.  This kernel has a Fourier transform\footnote{Using the normalization convention:
 $\hat f(\omega) = \frac{1}{\sqrt{2\pi}} \int_{-\infty}^\infty f(t) e^{i\omega t} dt$}  of
 \begin{equation}
-\hat K_{3/2}(\omega) = \frac{\tau_0 6^{3/2}}{\pi^{1/2}} (3+\tau_0^2\omega^2)^{-2},
+\hat k_{3/2}(\omega) = \frac{\tau_0 6^{3/2}}{\pi^{1/2}} (3+\tau_0^2\omega^2)^{-2},
 \end{equation}
 where $\omega = 2\pi f$.  This kernel may be well approximated by the sum of two exponential kernels:
 \begin{equation}
-K_{3/2}(\tau) \approx (1-b)e^{-v}+be^{-v\frac{b-1}{b}},
+k_{3/2}(\tau) \approx (1-b)e^{-v}+be^{-v\frac{b-1}{b}},
 \end{equation}
 where $b \gg 1$ is a dimensionless parameter; this approximation is exact in the limit $b \rightarrow \infty$.  For
 large values of $b$, the maximum error of the approximation scales as $2/(e^2b) \approx 0.27/b$; for
@@ -847,15 +840,15 @@ while the Mat\'ern kernel scales as $f^{-4}$ which more closely matches the powe
 spectrum due to activity and granulation in the Sun \citep{2004A&A...414.1139A,2009A&A...495..979M}.
 \item {\bf Mat\'ern 5/2 kernel.}  The Mat\'ern 5/2 kernel is given by
 \begin{equation}
-K_{5/2}(t) = C_{5/2}(y) = \sigma^2 (1+y+y^2/3)e^{-y},
+k_{5/2}(t) = C_{5/2}(y) = \sigma^2 (1+y+y^2/3)e^{-y},
 \end{equation}
 where $y = \sqrt{5}\vert \tau/\tau_0\vert$.  The Fourier transform is:
 \begin{equation}
-\hat K_{5/2}(\omega) = \frac{2\tau_0 10^{5/2}}{3\pi^{1/2}} (5+\tau_0^2\omega^2)^{-3}.
+\hat k_{5/2}(\omega) = \frac{2\tau_0 10^{5/2}}{3\pi^{1/2}} (5+\tau_0^2\omega^2)^{-3}.
 \end{equation}
 This kernel may be approximated well by the sum of four exponential kernels
 \begin{eqnarray}
-K_{5/2}(\tau) &\approx& -147.6965573 e^{-1.0097610 y} + 85.8875034 e^{-1.0621734 y}\\
+k_{5/2}(\tau) &\approx& -147.6965573 e^{-1.0097610 y} + 85.8875034 e^{-1.0621734 y}\\
  &-&4.6540017 e^{-0.8353745 y} + 67.4630744 e^{-0.9160394 y},
 \end{eqnarray}
 which is accurate to $<4\times 10^{-6}$ for $y \le 10$.
@@ -892,7 +885,7 @@ cosine (olive), and damped cosine (salmon).
 (b). Approximation of the squared-exponential (Gaussian) kernel (pink) with three
 damped cosine kernels (magenta). (c). The approximation of the exponential-sine-squared
 kernel with $\Gamma =1$ (blue) and $\Gamma = 3$ (green). (d). Two Mat\'ern kernels,
-$K_{3/2}$ (yellow/brown) and $K_{5/2}$ (violet).  The Mat\'ern 3/2 kernel
+$k_{3/2}$ (yellow/brown) and $k_{5/2}$ (violet).  The Mat\'ern 3/2 kernel
 is approximated with $b=100$. The exact kernels are solid, while approximate are dashed.}
 \label{kernel_approx}
 \end{center}
@@ -902,10 +895,10 @@ A standard practice in constructing kernels for solving problems with Gaussian p
 is to add or multiply the preceding standard kernel components.  In the case of damped cosine
 kernels, the product of two kernels is:
 \begin{eqnarray}
-K_j(\tau)K_k(\tau) &=&
+k_j(\tau)k_k(\tau) &=&
 \frac{1}{2} a_k a_j e^{-(\beta_{R,j}+\beta_{R,k}) \tau} \left(\cos{(\beta_{I,j}-\beta_{I,k})\tau}+\cos{(\beta_{I,j}+\beta_{I,k})\tau}\right)\\
-&=& \frac{1}{2} \left(K_j(\tau,a_ja_k,\beta_{R,j}+\beta_{R,k},\beta_{I,j}-\beta_{I,k})\right.\\
-&+&\left. K_j(\tau,a_ja_k,\beta_{R,j}+\beta_{R,k},\beta_{I,j}+\beta_{I,k})\right).
+&=& \frac{1}{2} \left(k_j(\tau,a_ja_k,\beta_{R,j}+\beta_{R,k},\beta_{I,j}-\beta_{I,k})\right.\\
+&+&\left. k_j(\tau,a_ja_k,\beta_{R,j}+\beta_{R,k},\beta_{I,j}+\beta_{I,k})\right).
 \end{eqnarray}
 which is the sum of two damped cosine kernels.  Thus, only addition is necessary to
 construct new kernels from damped cosine kernels.
