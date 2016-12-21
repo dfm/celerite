@@ -40,6 +40,7 @@ int main (int argc, char* argv[])
 
   double carma_ll, genrp_ll, strt;
   Eigen::MatrixXd compute_times(max_terms, 3);
+  compute_times.setConstant(0.0);
   for (size_t nterms = 1; nterms <= max_terms; ++nterms) {
     Eigen::VectorXd carma_arparams = Eigen::VectorXd::Random(nterms),
                     carma_maparams = Eigen::VectorXd::Random(nterms-1),
@@ -70,6 +71,27 @@ int main (int argc, char* argv[])
       genrp_ll = -0.5*(solver.dot_solve(y) + solver.log_determinant() + x.rows() * log(2.0 * M_PI));
     }
     compute_times(nterms - 1, 2) = (get_timestamp() - strt) / niter;
+    std::cerr << nterms << " " << carma_ll << " " << genrp_ll << std::endl;
+
+    bool is_ok = genrp::check_coefficients(alpha_real, beta_real, alpha_complex_real, alpha_complex_imag, beta_complex_real, beta_complex_imag);
+    if (!is_ok) {
+      std::cerr << "alpha_real: " << alpha_real.transpose() << std::endl;
+      std::cerr << "beta_real: "  << beta_real.transpose()  << std::endl;
+      std::cerr << "alpha_complex_real: " << alpha_complex_real.transpose() << std::endl;
+      std::cerr << "alpha_complex_imag: " << alpha_complex_imag.transpose() << std::endl;
+      std::cerr << "beta_complex_real: "  << beta_complex_real.transpose()  << std::endl;
+      std::cerr << "beta_complex_imag: "  << beta_complex_imag.transpose()  << std::endl;
+      std::cerr << std::endl;
+
+      for (double t = 0.0; t <= 5000.0; t += 0.01) {
+        double p = genrp::get_psd_value(alpha_real, beta_real, alpha_complex_real, alpha_complex_imag, beta_complex_real, beta_complex_imag, t);
+        if (p < 0.0) {
+          std::cerr << t << " " << p << std::endl;
+        }
+      }
+      std::cerr << std::endl;
+      // return 1;
+    }
   }
 
   std::cout<< compute_times << std::endl;

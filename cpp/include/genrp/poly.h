@@ -2,6 +2,7 @@
 #define _GENRP_POLY_H_
 
 #include <cmath>
+#include <cfloat>
 #include <vector>
 #include <Eigen/Core>
 
@@ -58,7 +59,9 @@ Eigen::Matrix<T, Eigen::Dynamic, 1> polyrem (const Eigen::Matrix<T, Eigen::Dynam
   }
   int strt;
   for (strt = 0; strt < m; ++strt) {
-    if (abs(r[strt]) > 1e-14) break;
+    if (abs(r[strt]) >= 1e-10) {
+      break;
+    }
   }
   return r.tail(m + 1 - strt);
 }

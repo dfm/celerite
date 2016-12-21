@@ -28,37 +28,40 @@ bool check_coefficients (
   // Start by building the polynomials for each term.
   int n = alpha_real.rows() + alpha_complex_real.rows();
   std::vector<vector_t> num(n), denom(n);
-  T ar, br, ai, bi;
+  T a, b, c, d, c2, d2, w0;
   int k = 0;
   for (int i = 0; i < alpha_real.rows(); ++i, ++k) {
-    ar = alpha_real[i];
-    br = beta_real[i];
+    a = alpha_real[i];
+    c = beta_real[i];
+    c2 = c*c;
 
     num[k].resize(2);
-    num[k][0] = ar*br;
-    num[k][1] = ar*br*br*br;
+    num[k][0] = a*c;
+    num[k][1] = a*c*c2;
 
     denom[k].resize(3);
     denom[k][0] = T(1.0);
-    denom[k][1] = 2.0*br*br;
-    denom[k][2] = br*br*br*br;
+    denom[k][1] = 2.0*c2;
+    denom[k][2] = c2*c2;
   }
 
   for (int i = 0; i < alpha_complex_real.rows(); ++i, ++k) {
-    ar = alpha_complex_real[i];
-    br = beta_complex_real[i];
-    ai = alpha_complex_imag[i];
-    bi = beta_complex_imag[i];
+    a = alpha_complex_real[i];
+    b = alpha_complex_imag[i];
+    c = beta_complex_real[i];
+    d = beta_complex_imag[i];
+    c2 = c*c;
+    d2 = d*d;
+    w0 = c2 + d2;
 
     num[k].resize(2);
-    num[k][0] = ar*br - ai*bi;
-    num[k][1] = (ar*br + ai*bi) * (br*br + bi*bi);
+    num[k][0] = a*c - b*d;
+    num[k][1] = (a*c + b*d) * w0;
 
     denom[k].resize(3);
     denom[k][0] = T(1.0);
-    denom[k][1] = 2.0*(br*br - bi*bi);
-    denom[k][2] = br*br + bi*bi;
-    denom[k][2] *= denom[k][2];
+    denom[k][1] = 2.0*(c2 - d2);
+    denom[k][2] = w0 * w0;
   }
 
   // Compute the full numerator.

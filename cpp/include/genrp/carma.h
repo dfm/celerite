@@ -45,11 +45,6 @@ Eigen::VectorXcd poly_from_roots (const Eigen::VectorXcd& roots) {
   return poly;
 }
 
-struct Prediction {
-  double expectation;
-  double variance;
-};
-
 struct State {
   double time;
   Eigen::VectorXcd x;
@@ -161,28 +156,27 @@ void setup () {
 void reset (double t) {
   // Step 2 from Kelly et al.
   state_.time = t;
-  state_.x = Eigen::VectorXcd::Zero(p_);
+  state_.x.resize(p_);
+  state_.x.setConstant(0.0);
   state_.P = V_;
 };
 
-Prediction predict (double yerr) const {
+void predict (double yerr) {
   // Steps 3 and 9 from Kelly et al.
-  Prediction pred;
   std::complex<double> tmp = b_ * state_.x;
-  pred.expectation = tmp.real();
+  expectation_ = tmp.real();
   tmp = b_ * state_.P * b_.adjoint();
-  pred.variance = yerr * yerr + tmp.real();
+  variance_ = yerr * yerr + tmp.real();
 
   // Check the variance value for instability.
-  if (pred.variance < 0.0) throw 1;
-  return pred;
+  if (variance_ < 0.0) throw 1;
 };
 
-void update_state (const Prediction& pred, double y) {
+void update_state (double y) {
   // Steps 4-6 and 10-12 from Kelly et al.
-  Eigen::VectorXcd K = state_.P * b_.adjoint() / pred.variance;
-  state_.x += (y - pred.expectation) * K;
-  state_.P -= pred.variance * K * K.adjoint();
+  Eigen::VectorXcd K = state_.P * b_.adjoint() / variance_;
+  state_.x += (y - expectation_) * K;
+  state_.P -= variance_ * K * K.adjoint();
 };
 
 void advance_time (double dt) {
@@ -196,18 +190,17 @@ void advance_time (double dt) {
 double log_likelihood (const Eigen::VectorXd& t, const Eigen::VectorXd& y, const Eigen::VectorXd& yerr) {
   unsigned n = t.rows();
   double r, ll = n * log(2.0 * M_PI);
-  Prediction pred;
 
   reset(t(0));
   for (unsigned i = 0; i < n; ++i) {
     // Integrate the Kalman filter.
-    pred = predict(yerr(i));
-    update_state(pred, y(i));
+    predict(yerr(i));
+    update_state(y(i));
     if (i < n - 1) advance_time(t(i+1) - t(i));
 
     // Update the likelihood evaluation.
-    r = y(i) - pred.expectation;
-    ll += r * r / pred.variance + log(pred.variance);
+    r = y(i) - expectation_;
+    ll += r * r / variance_ + log(variance_);
   }
 
   return -0.5 * ll;
@@ -254,6 +247,10 @@ private:
   Eigen::MatrixXcd V_;
   Eigen::ArrayXcd lambda_base_;
   State state_;
+
+  // Prediction
+  double expectation_, variance_;
+
 }; // class CARMASolver
 
 }; // namespace carma
