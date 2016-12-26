@@ -355,6 +355,7 @@ S(\omega) = \sum_{j=1}^p \sqrt{\frac{2}{\pi}}
 \frac{(a_j\,c_j+b_j\,d_j)\,({c_j}^2+{d_j}^2)+(a_j\,c_j-b_j\,d_j)\,\omega^2}
 {\omega^4+2\,({c_j}^2-{d_j}^2)\,\omega^2+({c_j}^2+{d_j}^2)^2}\quad.
 \end{eqnarray}
+
 The physical interpretation of this model isn't immediately obvious and we
 will return to a more general discussion of the physical intuition in a moment
 but we can start with one useful special case of this model.
@@ -377,38 +378,23 @@ This model can be interpreted intuitively as a quasiperiodic oscillator with
 amplitude $A_j = a_j$, quality factor $Q_j = c_j$, and period $P_j = 2\,\pi /
 d_j$.
 
-
-%The general ACF is given by
-%\begin{equation}
-%k(\tau) = a_r e^{-b_r \tau} \cos{(b_r \tau)} + a_i e^{-b_r \tau} \sin{(b_r \tau)}.
-%\end{equation}
-%which has a power spectrum given by
-%\begin{equation}
-%P(\omega) = P_0 \frac{(a_ib_i+a_rb_r)(b_i^2+b_r^2)+(a_rb_r-a_ib_i)\omega^2}{(\omega^2-(b_i^2+b_r^2))^2 + 4b_r^2\omega^2}.
-%\end{equation}
-%The power spectrum should be non-negative since it is the absolute square of the Fourier transform of the noise.
-%Note that the denominator is always non-negative, so the power spectrum is non-negative if $a_ib_i+a_rb_r \ge 0$ and
-%$a_rb_r-a_ib_i \ge 0$.
-
-\subsection{Relation to stochastically-driven, damped simple harmonic oscillator}
-
-Intrinsic stellar variability consists primarily of random fluctuations driven by
-convection, oscillations excited by convection, and rotational variability.  These first
-two types of variability may be well-described by a model of a damped simple-harmonic oscillator
-driven by stochastic variability \citep{1990ApJ...364..699A}.  The governing differential equation is
+Another special case of the \genrp\ model of great physical interest is a
+stochastically driven, damped simple harmonic oscillator.
+The differential equation for this system is
 \begin{equation}
-y^{\prime\prime}+ \frac{\omega_0}{Q} y^\prime + \omega_0^2 y = \epsilon,
+    \left[\frac{\dd^2}{\dd t^2} + \frac{\omega_0}{Q}\,\frac{\dd}{\dd t}
+    + \omega_0^2\right]\, y(t) = \epsilon(t)
 \end{equation}
-where $y(t)$ is a displacement, $^{\prime}$ represents a time derivative,
-$\omega_0$ is the frequency of an undamped oscillator, $Q$ is the quality factor
-of the oscillation, and $\epsilon(t)$ is a stochastic driving force.
-
-In the limit of an infinite time series and white random forcing, the noise-free power
-spectrum of this equation is given by:
+where $\omega_0$ is the frequency of the undamped oscillator, $Q$ is the
+quality factor of the oscillator, and $\epsilon(t)$ is a stochastic driving
+force.
+In the limit of an infinite time series and white random forcing, the PSD of
+this equation is given by \citep{Anderson:1990}
 \begin{equation}
-P(\omega) = P_0 \sqrt{\frac{2}{\pi}} \frac{\omega_0^4}{(\omega^2-\omega_0^2)^2 + \omega_0^2\omega^2/Q^2},
+S(\omega) = \sqrt{\frac{2}{\pi}}\,\frac{S_0\,\omega_0^4}
+    {(\omega^2-\omega_0^2)^2 + \omega_0^2\omega^2/Q^2}
 \end{equation}
-where $P_0$ is a normalization constant.
+where $S_0$ is a normalization constant.
 
 % Check to see that signs match
 This power spectrum matches that of our basis kernel if
