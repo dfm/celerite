@@ -1,4 +1,5 @@
 #include <iostream>
+#include <cmath>
 #include <complex>
 #include <sys/time.h>
 #include <Eigen/Core>
@@ -42,12 +43,28 @@ int main (int argc, char* argv[])
   Eigen::MatrixXd compute_times(max_terms, 3);
   compute_times.setConstant(0.0);
   for (size_t nterms = 1; nterms <= max_terms; ++nterms) {
-    Eigen::VectorXd carma_arparams = Eigen::VectorXd::Random(nterms),
-                    carma_maparams = Eigen::VectorXd::Random(nterms-1),
+    Eigen::VectorXd carma_arparams,
+                    carma_maparams,
                     alpha_real, beta_real, alpha_complex_real, alpha_complex_imag,
                     beta_complex_real, beta_complex_imag;
 
     compute_times(nterms - 1, 0) = nterms;
+
+    bool is_ok = false;
+    while (!is_ok) {
+      // Resample the parameters until good ones are chosen
+      carma_arparams = Eigen::VectorXd::Random(nterms);
+      carma_maparams = Eigen::VectorXd::Random(nterms-1);
+      carma_arparams.array() += 1.0;
+      carma_maparams.array() += 1.0;
+      carma_arparams.array() /= 2.0 * nterms;
+      carma_maparams.array() /= 2.0 * nterms;
+      genrp::carma::CARMASolver carma_solver(0.0, carma_arparams, carma_maparams);
+      carma_solver.get_genrp_coeffs(alpha_real, beta_real,
+        alpha_complex_real, alpha_complex_imag, beta_complex_real, beta_complex_imag);
+
+      is_ok = genrp::check_coefficients(alpha_real, beta_real, alpha_complex_real, alpha_complex_imag, beta_complex_real, beta_complex_imag);
+    }
 
     // Compute using the CARMA model.
     strt = get_timestamp();
@@ -65,33 +82,48 @@ int main (int argc, char* argv[])
 
     // Compute using the genrp model.
     genrp::BandSolver<double> solver;
+    int flag = -1;
     strt = get_timestamp();
     for (size_t i = 0; i < niter; ++i) {
-      solver.compute(alpha_real, beta_real, alpha_complex_real, alpha_complex_imag, beta_complex_real, beta_complex_imag, x, diag);
+      flag = solver.compute(alpha_real, beta_real, alpha_complex_real, alpha_complex_imag, beta_complex_real, beta_complex_imag, x, diag);
+      if (flag) {
+        genrp_ll = NAN;
+        break;
+      }
       genrp_ll = -0.5*(solver.dot_solve(y) + solver.log_determinant() + x.rows() * log(2.0 * M_PI));
     }
-    compute_times(nterms - 1, 2) = (get_timestamp() - strt) / niter;
-    std::cerr << nterms << " " << carma_ll << " " << genrp_ll << std::endl;
+    double direct_ll = NAN;
+    if (!flag) {
+      genrp::DirectSolver<double> dsolver;
+      dsolver.compute(alpha_real, beta_real, alpha_complex_real, alpha_complex_imag, beta_complex_real, beta_complex_imag, x, diag);
+      direct_ll = -0.5*(dsolver.dot_solve(y) + dsolver.log_determinant() + x.rows() * log(2.0 * M_PI));
 
-    bool is_ok = genrp::check_coefficients(alpha_real, beta_real, alpha_complex_real, alpha_complex_imag, beta_complex_real, beta_complex_imag);
-    if (!is_ok) {
-      std::cerr << "alpha_real: " << alpha_real.transpose() << std::endl;
-      std::cerr << "beta_real: "  << beta_real.transpose()  << std::endl;
-      std::cerr << "alpha_complex_real: " << alpha_complex_real.transpose() << std::endl;
-      std::cerr << "alpha_complex_imag: " << alpha_complex_imag.transpose() << std::endl;
-      std::cerr << "beta_complex_real: "  << beta_complex_real.transpose()  << std::endl;
-      std::cerr << "beta_complex_imag: "  << beta_complex_imag.transpose()  << std::endl;
-      std::cerr << std::endl;
-
-      for (double t = 0.0; t <= 5000.0; t += 0.01) {
-        double p = genrp::get_psd_value(alpha_real, beta_real, alpha_complex_real, alpha_complex_imag, beta_complex_real, beta_complex_imag, t);
-        if (p < 0.0) {
-          std::cerr << t << " " << p << std::endl;
-        }
-      }
-      std::cerr << std::endl;
-      // return 1;
+      compute_times(nterms - 1, 2) = (get_timestamp() - strt) / niter;
+    } else {
+      compute_times(nterms - 1, 2) = NAN;
     }
+
+
+    std::cerr << nterms << " " << direct_ll << " " << carma_ll << " " << genrp_ll << std::endl;
+
+    // if (flag) {
+    //   std::cerr << "alpha_real: " << alpha_real.transpose() << std::endl;
+    //   std::cerr << "beta_real: "  << beta_real.transpose()  << std::endl;
+    //   std::cerr << "alpha_complex_real: " << alpha_complex_real.transpose() << std::endl;
+    //   std::cerr << "alpha_complex_imag: " << alpha_complex_imag.transpose() << std::endl;
+    //   std::cerr << "beta_complex_real: "  << beta_complex_real.transpose()  << std::endl;
+    //   std::cerr << "beta_complex_imag: "  << beta_complex_imag.transpose()  << std::endl;
+    //   std::cerr << std::endl;
+
+    //   for (double t = 0.0; t <= 5000.0; t += 0.01) {
+    //     double p = genrp::get_psd_value(alpha_real, beta_real, alpha_complex_real, alpha_complex_imag, beta_complex_real, beta_complex_imag, t);
+    //     if (p < 0.0) {
+    //       std::cerr << t << " " << p << std::endl;
+    //     }
+    //   }
+    //   std::cerr << std::endl;
+    //   // return 1;
+    // }
   }
 
   std::cout<< compute_times << std::endl;

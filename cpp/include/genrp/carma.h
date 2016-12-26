@@ -6,14 +6,10 @@
 #include <complex>
 #include <Eigen/Dense>
 
+#include "genrp/utils.h"
+
 namespace genrp {
 namespace carma {
-
-template <typename T1, typename T2>
-inline bool isclose (const T1& a, const T2& b) {
-  using std::abs;
-  return (abs(a - b) <= 1e-6);
-}
 
 Eigen::VectorXcd roots_from_params (const Eigen::VectorXd& params) {
   unsigned n = params.rows();
@@ -83,17 +79,18 @@ void get_genrp_coeffs (
   bool is_conj;
   std::complex<double> term1, term2, full_term;
   for (size_t k = 0; k < p_; ++k) {
-    term1 = 0.0;
-    term2 = 0.0;
-    for (size_t l = 0; l < q_ + 1; ++l) {
-      term1 += beta_[l] * pow(arroots_[k], l);
-      term2 += beta_[l] * pow(-arroots_[k], l);
+    term1 = log(beta_[0]);
+    term2 = log(beta_[0]);
+    for (size_t l = 1; l < q_ + 1; ++l) {
+      term1 = _logsumexp(term1, log(beta_[l]) + std::complex<double>(l) * log(arroots_[k]));
+      term2 = _logsumexp(term2, log(beta_[l]) + std::complex<double>(l) * log(-arroots_[k]));
     }
-    full_term = -sigma_ * sigma_ * term1 * term2 / arroots_[k].real();
+    full_term = 2.0 * log(sigma_) + term1 + term2 - log(-arroots_[k].real());
     for (size_t l = 0; l < p_; ++l) {
       if (l != k)
-        full_term /= (arroots_[l] - arroots_[k]) * (std::conj(arroots_[l]) + arroots_[k]);
+        full_term -= log(arroots_[l] - arroots_[k]) + log(std::conj(arroots_[l]) + arroots_[k]);
     }
+    full_term = exp(full_term);
 
     // Check for and discard conjugate pairs.
     if (isclose(full_term.imag(), 0.0) && isclose(arroots_[k].imag(), 0.0)) {

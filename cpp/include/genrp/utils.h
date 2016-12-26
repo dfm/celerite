@@ -1,12 +1,24 @@
 #ifndef _GENRP_UTILS_H_
 #define _GENRP_UTILS_H_
 
+#include <cmath>
 #include <vector>
 #include <Eigen/Core>
 
 #include "genrp/poly.h"
 
 namespace genrp {
+
+template <typename T1, typename T2>
+inline bool isclose (const T1& a, const T2& b) {
+  using std::abs;
+  return (abs(a - b) <= 1e-6);
+}
+
+template <typename T>
+T _logsumexp (const T& a, const T& b) {
+  return b + log(T(1.0) + exp(a - b));
+}
 
 template <typename Derived>
 bool check_coefficients (

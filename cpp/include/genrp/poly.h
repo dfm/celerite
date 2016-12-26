@@ -50,8 +50,8 @@ Eigen::Matrix<T, Eigen::Dynamic, 1> polyrem (const Eigen::Matrix<T, Eigen::Dynam
       p = m - n + 1;
   using std::abs;
   T d, scale = T(1.0) / v[0];
-  Eigen::Matrix<T, Eigen::Dynamic, 1> q = Eigen::Matrix<T, Eigen::Dynamic, 1>::Zero(std::max(p, 1)),
-                  r = u;  // This makes a copy!
+  Eigen::Matrix<T, Eigen::Dynamic, 1> q(std::max(p, 1)), r = u; // This makes a copy!
+  q.setConstant(T(0.0));
   for (int k = 0; k < p; ++k) {
     d = scale * r[k];
     q[k] = d;
@@ -59,11 +59,11 @@ Eigen::Matrix<T, Eigen::Dynamic, 1> polyrem (const Eigen::Matrix<T, Eigen::Dynam
   }
   int strt;
   for (strt = 0; strt < m; ++strt) {
-    if (abs(r[strt]) >= 1e-10) {
-      break;
+    if (abs(r[strt]) >= 1e-8) {
+      return r.tail(m + 1 - strt);
     }
   }
-  return r.tail(m + 1 - strt);
+  return r;
 }
 
 template <typename T>

@@ -65,8 +65,9 @@
 % ------------------ %
 
 % Projects:
-\newcommand{\project}[1]{\textsl{#1}}
+\newcommand{\project}[1]{\textsf{#1}}
 \newcommand{\kepler}{\project{Kepler}}
+\newcommand{\genrp}{\project{genrp}}
 
 \newcommand{\foreign}[1]{\emph{#1}}
 \newcommand{\etal}{\foreign{et\,al.}}
@@ -227,9 +228,77 @@ archive}.
 %   - Possible applications
 %
 
-\section{Gaussian processes in one-dimension}
+\section{Gaussian processes}
 
-\citep{Rasmussen:2006}
+Gaussian Processes \citep[GPs;][]{Rasmussen:2006} are a class of stochastic
+models parameterized by a mean function $\mu_\bvec{\theta}(\bvec{x})$ and a
+covariance or ``kernel'' function $k_\bvec{\alpha}(\bvec{x}_i,\,\bvec{x}_j)$
+parameterized by the parameters $\bvec{\theta}$ and $\bvec{\alpha}$
+respectively.
+Under this model, the log-likelihood of observing a dataset
+\begin{eqnarray}
+\bvec{y} = \left(\begin{array}{ccccc}
+    y_1\quad && \cdots\quad && y_N
+\end{array}\right)^\T
+\end{eqnarray}
+at coordinates
+\begin{eqnarray}
+X = \left(\begin{array}{ccccc}
+    \bvec{x}_1\quad && \cdots\quad && \bvec{x}_N
+\end{array}\right)^\T
+\end{eqnarray}
+is
+\begin{eqnarray}\eqlabel{gp-likelihood}
+\ln{p(\bvec{y}\,|\,{X,\,\bvec{\theta}},\,\bvec{\alpha})} =
+    -\frac{1}{2} {\bvec{r}_\bvec{\theta}}^\T\,{K_\bvec{\alpha}}^{-1}\,
+        \bvec{r}_\bvec{\theta}
+    -\frac{1}{2}\ln\det K_\bvec{\alpha}
+    - \frac{N}{2} \ln{(2\pi)}
+\end{eqnarray}
+where
+\begin{eqnarray}
+    \bvec{r}_\bvec{\theta} = \left(\begin{array}{ccccc}
+    y_1 - \mu_\bvec{\theta}(\bvec{x}_1)\quad && \cdots\quad &&
+    y_N - \mu_\bvec{\theta}(\bvec{x}_N)
+\end{array}\right)^\T
+\end{eqnarray}
+is the vector of residuals and the elements of the covariance matrix $K$ are
+given by $[K_\bvec{\alpha}]_{ij} = k_\bvec{\alpha}(\bvec{x}_i,\,\bvec{x}_j)$.
+The maximum likelihood values for the parameters $\bvec{\theta}$ and
+$\bvec{\alpha}$ for a given dataset $(\bvec{y},\,X)$ can be found by
+maximizing \eq{gp-likelihood} with respect to $\bvec{\theta}$ and
+$\bvec{\alpha}$ using a non-linear optimization routine \dfmtodo{examples and
+CITE}.
+Similarly, probabilistic constraints on $\bvec{\theta}$ and $\bvec{\alpha}$
+can be obtained by multiplying the likelihood by a prior
+$p(\bvec{\theta},\,\bvec{\alpha})$ and using a Markov Chain Monte Carlo (MCMC;
+\dfmtodo{CITE}) algorithm to sample from the posterior probability density.
+
+The application of GP models is generally limited to small datasets because
+the computational cost of computing the inverse and determinant of the matrix
+$K_\bvec{\alpha}$ scales as the cube of the number of data points $N$,
+$\mathcal{O}(N^3)$.
+This means that for large datasets, every evaluation of the likelihood will
+quickly become computationally intractable.
+In this case, standard non-linear optimization or MCMC will no longer be
+practical inference methods.
+
+In the following Section, we present a method of improving this scaling that
+we call the \genrp\ method.
+The \genrp\ method requires using a specific model for the covariance
+$k_\bvec{\alpha}(\bvec{x}_i,\,\bvec{x}_j)$ and it has several limitations.
+The method can only be applied to one-dimensional datasets.
+When we say ``one-dimensional'' here, it means that the \emph{input
+coordinates} $\bvec{x}_i$ are scalar, $\bvec{x}_i \equiv t_i$.\footnote{We are
+using $t$ as the input coordinate because one-dimensional GPs are often
+applied to time series data but this isn't a real restriction and the \genrp\
+method can be applied to \emph{any} one-dimensional dataset.}
+Furthermore, the covariance function for the \genrp\ method is ``stationary''.
+This means that the function $k_\bvec{\alpha}(t_i,\,t_j)$ is only a function
+of $\tau_{ij} \equiv |t_i - t_j|$.
+
+
+\section{The genrp model}
 
 \subsection{Gaussian processes with Lorentzian power spectra}
 
@@ -288,7 +357,7 @@ Our method.
 
 \subsection{Relation to stochastically-driven, damped simple harmonic oscillator}
 
-Intrinsic stellar variability consists primarily of random fluctuations driven by 
+Intrinsic stellar variability consists primarily of random fluctuations driven by
 convection, oscillations excited by convection, and rotational variability.  These first
 two types of variability may be well-described by a model of a damped simple-harmonic oscillator
 driven by stochastic variability \citep{1990ApJ...364..699A}.  The governing differential equation is
@@ -299,7 +368,7 @@ where $y(t)$ is a displacement, $^{\prime}$ represents a time derivative,
 $\omega_0$ is the frequency of an undamped oscillator, $Q$ is the quality factor
 of the oscillation, and $\epsilon(t)$ is a stochastic driving force.
 
-In the limit of an infinite time series and white random forcing, the noise-free power 
+In the limit of an infinite time series and white random forcing, the noise-free power
 spectrum of this equation is given by:
 \begin{equation}
 P(\omega) = P_0 \sqrt{\frac{2}{\pi}} \frac{\omega_0^4}{(\omega^2-\omega_0^2)^2 + \omega_0^2\omega^2/Q^2},
@@ -327,7 +396,7 @@ k(\tau) &=&  P_0  \omega_0 Q e^{-\frac{\omega_0 \tau}{2Q}} \cos{\left(\lambda-\p
 \end{eqnarray}
 The power spectrum can be normalized by $P_0\omega_0 Q$ in amplitude and $\omega_0$ in
 frequency to yield a spectral shape that only depends upon $Q$.  This is plotted
-in Figure \ref{sho_psd} for various values of $Q$.  
+in Figure \ref{sho_psd} for various values of $Q$.
 Note that the oscillation frequency that appears in the kernel, $d_j$, differs
 from that of the simple-harmonic oscillator, $\omega_0$, due to the damping
 frequency, $c_j$.  This power spectrum has
@@ -345,7 +414,7 @@ harmonic oscillator. The dotted black line shows the peak frequency, $d_j = \ome
 
 This power spectrum has several limits of interest:
 \begin{itemize}
-\item $Q=1/2$:  This corresponds to a critically damped harmonic oscillator, which results in a power 
+\item $Q=1/2$:  This corresponds to a critically damped harmonic oscillator, which results in a power
 spectrum $\propto 1/(x^2+1)^2$, where $x=\omega/\omega_0$.
 This matches the power spectrum of the Mat\'ern 3/2 kernel, and can be represented by the following
 autocovariance function:
@@ -353,8 +422,8 @@ autocovariance function:
 k(\tau) = a_j e^{-c_j \tau} \left[\cos{(d_j \tau)} + \frac{c_j}{d_j}\sin{(d_j \tau)}\right],
 % Check to see that signs match in this equation.
 \end{equation}
-in the limit that $d_j \rightarrow \infty$, corresponding to $\phi=\pi/2$, for which the second 
-term has a coefficient that diverges, but with large values of $d_j$, this may approximate the 
+in the limit that $d_j \rightarrow \infty$, corresponding to $\phi=\pi/2$, for which the second
+term has a coefficient that diverges, but with large values of $d_j$, this may approximate the
 Mat\'ern kernel well.  Note that this power spectrum peaks at $\omega=0$.
 \item $Q=1/\sqrt{2}$:  This results in a power spectrum $\propto 1/(x^4+1)$, which is a functional
 form used to fit the Solar granulation power spectrum by \cite{2009A&A...495..979M}.  This kernel has
@@ -365,7 +434,7 @@ k(\tau) = a_j e^{-c_j\tau} \left[\cos{(d_j\tau)}+\sin{(d_j\tau)}\right],
 corresponding to $\phi = \pi/4$.
 Despite the sinusoidal dependence of the kernel, the strong damping causes the power spectrum to
 peak at zero frequency; such a low quality oscillator doesn't even display quasi-periodic behavior.
-\item $Q \gg 1$: This represents a high-quality oscillator which approaches a narrow peak. 
+\item $Q \gg 1$: This represents a high-quality oscillator which approaches a narrow peak.
 The kernel approaches
 \begin{equation}
 k(\tau) = P_0 \omega_0 Q e^{-\omega_0\tau/(2Q)} \cos{\left(\omega_0\tau\right)},
@@ -378,8 +447,8 @@ where $x_{max}=\sqrt{1-1/(2Q^2)}$.  This shape approaches a Lorentzian for $x \a
 a width of $1/(Qx_{max})$ and a peak height $\propto Q^2$.
 \end{itemize}
 
-The stochastically-driven, damped simple-harmonic oscillator can then describe a wide range of intrinsic 
-stellar variability, with low $Q \approx 1$ representing granulation noise, and high $Q \gg 1$ representing 
+The stochastically-driven, damped simple-harmonic oscillator can then describe a wide range of intrinsic
+stellar variability, with low $Q \approx 1$ representing granulation noise, and high $Q \gg 1$ representing
 asteroseismic variability.  Taking the sum over oscillators with various $Q, P_0,$ and $\omega_0$ can
 give an accurate accounting of the power spectrum of stellar variability with $Q \ge \frac{1}{2}$ and
 $P_0 >0$.  As this kernel is exactly described by the exponential kernel, this functional form
@@ -427,26 +496,26 @@ P_0(z) = \sum_{j=1}^{p} (q_j z + r_j)\Pi_{k \ne j}\left(z^2+s_kz + t_k\right) = 
 which is a polynomial with order $p_{ord}=2(p-1)+1$.  With $p=2$, this yields a cubic equation
 which may be solved exactly for the roots.
 
-A procedure based upon Sturm's theorem \citep{Dorrie1965} allows one to determine whether there are any 
-real roots within the range $(0,\infty]$. We first construct $P_0(z)$ and it's derivative 
-$P_1(z) = P^\prime(z)$, and then loop from $k=2$ to $k=p_{ord}$, computing 
+A procedure based upon Sturm's theorem \citep{Dorrie1965} allows one to determine whether there are any
+real roots within the range $(0,\infty]$. We first construct $P_0(z)$ and it's derivative
+$P_1(z) = P^\prime(z)$, and then loop from $k=2$ to $k=p_{ord}$, computing
 $P_k(z) = -{\rm rem}(P_{k-2},P_{k-1})$.  The function ${\rm rem}(p,q)$ is the remainder polynomial after dividing $p(z)$ by $q(z)$.
 
 We evaluate the $z^0$ coefficients of each of the polynomial in the series by evaluating $f_0 = \{P_0(0),...,P_{p_{ord}}(0)\}$ to
 give us the signs of these polynomials evaluated at $z=0$.
-Likewise, we evaluate the coefficients of the largest order term in each polynomial which gives the sign of the polynomial 
-as $z \rightarrow \infty$.  This gives $f_\infty = \{C(P_0,p_{ord}),C(P_1,p_{ord}-1),..., C(P_{p_{ord}},1)\}$ where 
+Likewise, we evaluate the coefficients of the largest order term in each polynomial which gives the sign of the polynomial
+as $z \rightarrow \infty$.  This gives $f_\infty = \{C(P_0,p_{ord}),C(P_1,p_{ord}-1),..., C(P_{p_{ord}},1)\}$ where
 $C(p(z),m)$ returns the coefficient of $z^m$ in polynomial $p(z)$.
 
-With the series of coefficients $f_0$ and $f_\infty$, we then determine how many times the sign changes in each 
-of these, where $\sigma(0)$ is the number of sign changes at $z=0$, and $\sigma(\infty)$ is the number of sign 
-changes at $z \rightarrow \infty$.  The total number of real roots in the range $(0,\infty]$ is given 
+With the series of coefficients $f_0$ and $f_\infty$, we then determine how many times the sign changes in each
+of these, where $\sigma(0)$ is the number of sign changes at $z=0$, and $\sigma(\infty)$ is the number of sign
+changes at $z \rightarrow \infty$.  The total number of real roots in the range $(0,\infty]$ is given
 by $N_{+}=\sigma(0)-\sigma(\infty)$.
 
-We have checked that this procedure works for a wide range of parameters, and we find that it robustly 
+We have checked that this procedure works for a wide range of parameters, and we find that it robustly
 matches the number of positive real roots which we evaluated numerically.
 
-The advantage of this procedure is that it does not require computing the roots, but only carrying out algebraic 
+The advantage of this procedure is that it does not require computing the roots, but only carrying out algebraic
 manipulation of polynomials to determine the number of positive real roots.  If a non-zero real root is found, then
 likelihood may be set to zero.
 %Sturm's theorem applied to numerator of power spectrum.
@@ -790,7 +859,7 @@ may be represented exactly with $c_j=0$ and $d_j= \frac{2\pi}{P}$.
 has the behavior of declining steeply at large time separation, is an even function, and has $c_1$ = 0.
 Likewise, the Fourier transform of the squared exponential kernel is $\hat G(\omega) = e^{-\omega^2/2}$,
 which also declines steeply at large $\omega$;  this doesn't match the more gradual decline of the
-power spectrum of a damped sinuosoid.  Nevertheless, the squared exponential kernel may be well approximated 
+power spectrum of a damped sinuosoid.  Nevertheless, the squared exponential kernel may be well approximated
 by the sum of four exponential kernels:
 \begin{eqnarray}
 G(z) &\approx& 63.119512 e^{-1.479579 z} -32.173615 e^{-1.593691 z} -29.425156 e^{-1.388929 z}\\
