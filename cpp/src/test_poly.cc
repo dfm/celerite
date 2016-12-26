@@ -58,6 +58,7 @@ int main (int argc, char* argv[])
   c.resize(1);
   c << 0.75;
   d = genrp::polyrem(a, b);
+  std::cout << c.transpose() << std::endl << d.transpose() << std::endl;
   ASSERT_ALL_CLOSE("polyrem1", c, d);
   d = genrp::polyrem(b, a);
   ASSERT_ALL_CLOSE("polyrem2", b, d);

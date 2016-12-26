@@ -63,7 +63,7 @@ Eigen::Matrix<T, Eigen::Dynamic, 1> polyrem (const Eigen::Matrix<T, Eigen::Dynam
       return r.tail(m + 1 - strt);
     }
   }
-  return r;
+  return r.tail(1);
 }
 
 template <typename T>
