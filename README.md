@@ -1,6 +1,7 @@
 [![Build Status](http://img.shields.io/travis/dfm/GenRP/master.svg?style=flat)](https://travis-ci.org/dfm/GenRP)
 [![MIT License](http://img.shields.io/badge/license-MIT-blue.svg?style=flat)](https://github.com/dfm/GenRP/blob/master/LICENSE
 )
+[![Latest PDF](https://img.shields.io/badge/PDF-latest-orange.svg)](https://github.com/dfm/GenRP/blob/master-pdf/paper/ms.pdf)
 
 Implementations of the Generalized Rybicki Press method in C++, Python, and Julia.
 This method is an `O(N)` algorithm for solving matrices of the form
