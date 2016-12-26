@@ -263,7 +263,7 @@ where
 \end{array}\right)^\T
 \end{eqnarray}
 is the vector of residuals and the elements of the covariance matrix $K$ are
-given by $[K_\bvec{\alpha}]_{ij} = k_\bvec{\alpha}(\bvec{x}_i,\,\bvec{x}_j)$.
+given by $[K_\bvec{\alpha}]_{nm} = k_\bvec{\alpha}(\bvec{x}_n,\,\bvec{x}_m)$.
 The maximum likelihood values for the parameters $\bvec{\theta}$ and
 $\bvec{\alpha}$ for a given dataset $(\bvec{y},\,X)$ can be found by
 maximizing \eq{gp-likelihood} with respect to $\bvec{\theta}$ and
@@ -286,66 +286,97 @@ practical inference methods.
 In the following Section, we present a method of improving this scaling that
 we call the \genrp\ method.
 The \genrp\ method requires using a specific model for the covariance
-$k_\bvec{\alpha}(\bvec{x}_i,\,\bvec{x}_j)$ and it has several limitations.
+$k_\bvec{\alpha}(\bvec{x}_n,\,\bvec{x}_m)$ and it has several limitations.
 The method can only be applied to one-dimensional datasets.
 When we say ``one-dimensional'' here, it means that the \emph{input
-coordinates} $\bvec{x}_i$ are scalar, $\bvec{x}_i \equiv t_i$.\footnote{We are
+coordinates} $\bvec{x}_n$ are scalar, $\bvec{x}_n \equiv t_n$.\footnote{We are
 using $t$ as the input coordinate because one-dimensional GPs are often
 applied to time series data but this isn't a real restriction and the \genrp\
 method can be applied to \emph{any} one-dimensional dataset.}
 Furthermore, the covariance function for the \genrp\ method is ``stationary''.
-This means that the function $k_\bvec{\alpha}(t_i,\,t_j)$ is only a function
-of $\tau_{ij} \equiv |t_i - t_j|$.
+This means that the function $k_\bvec{\alpha}(t_n,\,t_m)$ is only a function
+of $\tau_{nm} \equiv |t_n - t_m|$.
 
 
 \section{The genrp model}
 
 To scale GP models to larger datasets, \citet{Rybicki:1995} presented a method
 of computing \eq{gp-likelihood} in $\mathcal{O}(N)$ when the covariance
-function is.
+function is
+\begin{eqnarray}
+k_\bvec{\alpha}(\tau_{nm}) = \sigma_n^2\,\delta_{nm} + a\,\exp(-c\,\tau_{nm})
+\end{eqnarray}
+where $\{{\sigma_n}^2\}_{n=1}^N$ are the measurement uncertainties,
+$\delta_{nm}$ is the Dirac delta, and $\bvec{\alpha} = (a,\,c)$.
+The intuition behind this method is that, for the choice of $k_\bvec{\alpha}$,
+the inverse of $K_\bvec{\alpha}$ is tridiagonal and can it can be computed
+with a small number of operations for each data point.
+Subsequently, \citet{Ambikasaran:2015} generalized this method to arbitrary
+mixtures of exponentials
+\begin{eqnarray}
+k_\bvec{\alpha}(\tau_{nm}) = \sigma_n^2\,\delta_{nm} +
+    \sum_{j=1}^J a_j\,\exp(-c_j\,\tau_{nm})\quad.
+\end{eqnarray}
+In this case, the inverse becomes more complicated but \eq{gp-likelihood} can
+still be evaluated in $\mathcal{O}(J^2\,N)$ operations where $J$ is the number
+of components in the mixture and $N$ is still the number of data points.
 
-\subsection{Gaussian processes with Lorentzian power spectra}
-
-Parameters:
-\begin{eqnarray}\eqlabel{kernel}
-k(\tau) &=& \sum_{j=1}^p \left[
-    a_j\,\exp\left(-c_j\,\tau\right)\,\cos\left(-d_j\,\tau\right) +
-    b_j\,\exp\left(-c_j\,\tau\right)\,\sin\left(-d_j\,\tau\right)
+It turns out that this kernel function can be made even more general by
+introducing complex parameters $a_j \to a_j+i\,b_j$ and $c_j \to c_j+i\,d_j$.
+In this case, the covariance function becomes
+\begin{eqnarray}\eqlabel{genrp-kernel-complex}
+k_\bvec{\alpha}(\tau_{nm}) = \sigma_n^2\,\delta_{nm} +
+    \sum_{j=1}^N &&\left[
+    \frac{1}{2}(a_j + i\,b_j)\,\exp\left(-(c_j+i\,d_j)\,\tau_{nm}\right)
+        \right. \nonumber\\
+    &&+\left.
+    \frac{1}{2}(a_j - i\,b_j)\,\exp\left(-(c_j-i\,d_j)\,\tau_{nm}\right)
 \right]
 \end{eqnarray}
-where $\tau = |\Delta t|$.
-Equivalently, this can be written as
-\begin{eqnarray}
-k(\tau) &=& \sum_{j=1}^p \left[
-    \frac{1}{2}(a_j + i\,b_j)\,\exp\left(-(c_j+i\,d_j)\,\tau\right) +
-    \frac{1}{2}(a_j - i\,b_j)\,\exp\left(-(c_j-i\,d_j)\,\tau\right)
-\right]\quad.
-\end{eqnarray}
+and, for this function, \eq{gp-likelihood} can still be solved with
+$\mathcal{O}(J^2\,N)$ operations.
+The details of this method and a few implementation considerations are
+discussed in \app{implementation}.
 
-The power spectral density is computed by taking the Fourier transform of
-\eq{kernel} to find
+\eq{genrp-kernel-complex} can also be expressed as
+\begin{eqnarray}\eqlabel{genrp-kernel}
+k_\bvec{\alpha}(\tau_{nm}) = \sigma_n^2\,\delta_{nm} +
+    \sum_{j=1}^J &&\left[
+    a_j\,\exp\left(-c_j\,\tau_{nm}\right)\,\cos\left(d_j\,\tau_{nm}\right)
+        \right.\nonumber\\
+    &&+ \left.
+    b_j\,\exp\left(-c_j\,\tau_{nm}\right)\,\sin\left(d_j\,\tau_{nm}\right)
+\right] \quad.
+\end{eqnarray}
+The Fourier transform of this covariance function is the power spectral
+density (PSD) of the model and it is given by
 \begin{eqnarray}
 S(\omega) = \sum_{j=1}^p \sqrt{\frac{2}{\pi}}
 \frac{(a_j\,c_j+b_j\,d_j)\,({c_j}^2+{d_j}^2)+(a_j\,c_j-b_j\,d_j)\,\omega^2}
 {\omega^4+2\,({c_j}^2-{d_j}^2)\,\omega^2+({c_j}^2+{d_j}^2)^2}\quad.
 \end{eqnarray}
-
-For some $b_j=0$, the PSD for the $j$-th component becomes
+The physical interpretation of this model isn't immediately obvious and we
+will return to a more general discussion of the physical intuition in a moment
+but we can start with one useful special case of this model.
+If we set the imaginary amplitude $b_j$ for some component $j$ to zero, that
+term of \eq{genrp-kernel} becomes
+\begin{eqnarray}
+k_j(\tau_{nm}) =
+    a_j\,\exp\left(-c_j\,\tau_{nm}\right)\,\cos\left(d_j\,\tau_{nm}\right)
+\end{eqnarray}
+and the PSD for the this component is
 \begin{eqnarray}
 S_j(\omega) = \frac{1}{\sqrt{2\,\pi}}\,\frac{a_j}{c_j}\,\left[
     \frac{1}{1+\left(\frac{\omega-d_j}{c_j}\right)^2} +
     \frac{1}{1+\left(\frac{\omega+d_j}{c_j}\right)^2}
-\right]
+\right] \quad.
 \end{eqnarray}
-a pair of Lorentzian distributions with width $c_j$ centered on
-$\omega = \pm d_j$.
+This PSD is the sum of two Lorentzian or Cauchy distributions with width
+$c_j$ centered on $\omega = \pm d_j$.
+This model can be interpreted intuitively as a quasiperiodic oscillator with
+amplitude $A_j = a_j$, quality factor $Q_j = c_j$, and period $P_j = 2\,\pi /
+d_j$.
 
-
-\citep{Rybicki:1995, Ambikasaran:2015}
-
-\subsection{Generalization to quasi-periodic covariance}
-
-Our method.
 
 %The general ACF is given by
 %\begin{equation}
@@ -1171,7 +1202,9 @@ NNX13AC07G and by other grants and contracts.
 	% \project{scipy} \citep{Jones:2001}.
 }
 
-\appendix \label{appendixa}
+\appendix
+
+\section{Implementation details}\sectlabel{implementation}
 
 Here we adapt the generalized Rybicki-Press (GRP) algorithm to handle periodic kernels.  We
 follow closely the notation and equations given in \citet{Ambikasaran:2015}.  We start
