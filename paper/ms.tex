@@ -350,7 +350,7 @@ k_\bvec{\alpha}(\tau_{nm}) = \sigma_n^2\,\delta_{nm} +
 \end{eqnarray}
 The Fourier transform of this covariance function is the power spectral
 density (PSD) of the model and it is given by
-\begin{eqnarray}
+\begin{eqnarray}\eqlabel{genrp-psd}
 S(\omega) = \sum_{j=1}^p \sqrt{\frac{2}{\pi}}
 \frac{(a_j\,c_j+b_j\,d_j)\,({c_j}^2+{d_j}^2)+(a_j\,c_j-b_j\,d_j)\,\omega^2}
 {\omega^4+2\,({c_j}^2-{d_j}^2)\,\omega^2+({c_j}^2+{d_j}^2)^2}\quad.
@@ -390,25 +390,21 @@ quality factor of the oscillator, and $\epsilon(t)$ is a stochastic driving
 force.
 In the limit of an infinite time series and white random forcing, the PSD of
 this equation is given by \citep{Anderson:1990}
-\begin{equation}
+\begin{equation}\eqlabel{sho-psd}
 S(\omega) = \sqrt{\frac{2}{\pi}}\,\frac{S_0\,\omega_0^4}
     {(\omega^2-\omega_0^2)^2 + \omega_0^2\omega^2/Q^2}
 \end{equation}
 where $S_0$ is a normalization constant.
-
-% Check to see that signs match
-This power spectrum matches that of our basis kernel if
+This power spectrum in \eq{sho-psd} matches \eq{genrp-psd} if
 \begin{eqnarray}
-a_j &=& P_0  \omega_0 Q\\
-b_j &=& a_j \left(4Q^2-1\right)^{-1/2}\\
+a_j &=& S_0\,\omega_0\,Q \\
+b_j &=& \frac{S_0\,\omega_0\,Q}{\sqrt{4\,Q^2-1}} \\
 c_j &=& \frac{\omega_0}{2Q}\\
-d_j &=& \omega_0 \left(1-\frac{1}{4Q^2}\right)^{1/2},
-%\omega_0^2 &=& c_j^2+d_j^2,\\
-%a_jc_j-b_jd_j &=& 0,\\
-%\omega_0^2&=& b_jd_j+a_jc_j ,\\
-%\omega_0^2/Q^2&=& 4c_j^2.
+d_j &=& \omega_0 \sqrt{1-\frac{1}{4Q^2}} \quad,
 \end{eqnarray}
-for $Q \ge \frac{1}{2}$ and $j=p=1$.  This gives a kernel with dependence
+and $Q > \frac{1}{2}$.
+
+This gives a kernel with dependence
 \begin{eqnarray}\eqlabel{sho_kernel}
 %k(\tau) &=& P_0  \omega_0 Q e^{-\frac{\omega_0 \tau}{2Q}} \left[\cos{\lambda}+\frac{1}{\left(4Q^2-1\right)^{1/2}}
 k(\tau) &=&  P_0  \omega_0 Q e^{-\frac{\omega_0 \tau}{2Q}} \cos{\left(\lambda-\phi\right)},\\
