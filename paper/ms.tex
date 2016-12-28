@@ -355,10 +355,10 @@ S(\omega) = \sum_{j=1}^p \sqrt{\frac{2}{\pi}}
 \frac{(a_j\,c_j+b_j\,d_j)\,({c_j}^2+{d_j}^2)+(a_j\,c_j-b_j\,d_j)\,\omega^2}
 {\omega^4+2\,({c_j}^2-{d_j}^2)\,\omega^2+({c_j}^2+{d_j}^2)^2}\quad.
 \end{eqnarray}
-
 The physical interpretation of this model isn't immediately obvious and we
 will return to a more general discussion of the physical intuition in a moment
-but we can start with one useful special case of this model.
+but we can start with a discussion of some useful special cases of this model.
+
 If we set the imaginary amplitude $b_j$ for some component $j$ to zero, that
 term of \eq{genrp-kernel} becomes
 \begin{eqnarray}
@@ -388,108 +388,6 @@ with the PSD
 S_j(\omega) = \sqrt{\frac{2}{\pi}}\,\frac{a_j}{c_j}\,
     \frac{1}{1+\left(\frac{\omega}{c_j}\right)^2} \quad.
 \end{eqnarray}
-
-Another special case of the \genrp\ model of great physical interest is a
-stochastically driven, damped simple harmonic oscillator.
-The differential equation for this system is
-\begin{equation}
-    \left[\frac{\dd^2}{\dd t^2} + \frac{\omega_0}{Q}\,\frac{\dd}{\dd t}
-    + \omega_0^2\right]\, y(t) = \epsilon(t)
-\end{equation}
-where $\omega_0$ is the frequency of the undamped oscillator, $Q$ is the
-quality factor of the oscillator, and $\epsilon(t)$ is a stochastic driving
-force.
-In the limit of an infinite time series and white random forcing, the PSD of
-this equation is given by \citep{Anderson:1990}
-\begin{equation}\eqlabel{sho-psd}
-S(\omega) = \sqrt{\frac{2}{\pi}}\,\frac{S_0\,\omega_0^4}
-    {(\omega^2-\omega_0^2)^2 + \omega_0^2\omega^2/Q^2}
-\end{equation}
-where $S_0$ is a normalization constant.
-The power spectrum in \eq{sho-psd} matches \eq{genrp-psd} if
-\begin{eqnarray}
-a_j &=& S_0\,\omega_0\,Q \\
-b_j &=& \frac{S_0\,\omega_0\,Q}{\sqrt{4\,Q^2-1}} \\
-c_j &=& \frac{\omega_0}{2\,Q}\\
-d_j &=& \frac{\omega_0}{2\,Q} \sqrt{4\,Q^2-1} \quad,
-\end{eqnarray}
-for $Q \ge \frac{1}{2}$.
-For $0 < Q < \frac{1}{2}$, \eq{sho-psd} can be captured by a pair of \genrp\ terms
-with parameters
-\begin{eqnarray}
-a_{j\pm} &=& \frac{1}{2}\,S_0\,\omega_0\,Q\,\left[ 1 \pm
-        \frac{1}{\sqrt{1-4\,Q^2}}\right] \\
-b_{j\pm} &=& 0 \\
-    c_{j\pm} &=& \frac{\omega_0}{2\,Q}\,\left[1 \mp \sqrt{1-4\,Q^2}\right] \\
-d_{j\pm} &=& 0 \quad.
-\end{eqnarray}
-
-This gives a kernel with dependence
-\begin{eqnarray}\eqlabel{sho_kernel}
-%k(\tau) &=& P_0  \omega_0 Q e^{-\frac{\omega_0 \tau}{2Q}} \left[\cos{\lambda}+\frac{1}{\left(4Q^2-1\right)^{1/2}}
-k(\tau) &=&  P_0  \omega_0 Q e^{-\frac{\omega_0 \tau}{2Q}} \cos{\left(\lambda-\phi\right)},\\
-\lambda &=& \left(1-\frac{1}{4Q^2}\right)^{1/2}\omega_0\tau,\\
-\tan{\phi} &=& \left(4Q^2-1\right)^{-1/2}.
-\end{eqnarray}
-The power spectrum can be normalized by $P_0\omega_0 Q$ in amplitude and $\omega_0$ in
-frequency to yield a spectral shape that only depends upon $Q$.  This is plotted
-in Figure \ref{sho_psd} for various values of $Q$.
-Note that the oscillation frequency that appears in the kernel, $d_j$, differs
-from that of the simple-harmonic oscillator, $\omega_0$, due to the damping
-frequency, $c_j$.  This power spectrum has
-a peak frequency given by $\omega_{max} = \omega_0\sqrt{1-1/(2Q^2)} = d_j$, which is
-greater than zero for $Q > 1/\sqrt{2}$.
-
-\begin{figure}[!htbp]
-\begin{center}
-\includegraphics[width=0.75\textwidth]{./approximate_kernels/sho.png}
-\caption{Normalized power spectra of the stochastically-driven, damped simple
-harmonic oscillator. The dotted black line shows the peak frequency, $d_j = \omega_0 (1-1/(2Q)^2)^{1/2}$.}
-\label{sho_psd}
-\end{center}
-\end{figure}
-
-This power spectrum has several limits of interest:
-\begin{itemize}
-\item $Q=1/2$:  This corresponds to a critically damped harmonic oscillator, which results in a power
-spectrum $\propto 1/(x^2+1)^2$, where $x=\omega/\omega_0$.
-This matches the power spectrum of the Mat\'ern 3/2 kernel, and can be represented by the following
-autocovariance function:
-\begin{equation}
-k(\tau) = a_j e^{-c_j \tau} \left[\cos{(d_j \tau)} + \frac{c_j}{d_j}\sin{(d_j \tau)}\right],
-% Check to see that signs match in this equation.
-\end{equation}
-in the limit that $d_j \rightarrow \infty$, corresponding to $\phi=\pi/2$, for which the second
-term has a coefficient that diverges, but with large values of $d_j$, this may approximate the
-Mat\'ern kernel well.  Note that this power spectrum peaks at $\omega=0$.
-\item $Q=1/\sqrt{2}$:  This results in a power spectrum $\propto 1/(x^4+1)$, which is a functional
-form used to fit the Solar granulation power spectrum by \cite{2009A&A...495..979M}.  This kernel has
-dependence
-\begin{equation}
-k(\tau) = a_j e^{-c_j\tau} \left[\cos{(d_j\tau)}+\sin{(d_j\tau)}\right],
-\end{equation}
-corresponding to $\phi = \pi/4$.
-Despite the sinusoidal dependence of the kernel, the strong damping causes the power spectrum to
-peak at zero frequency; such a low quality oscillator doesn't even display quasi-periodic behavior.
-\item $Q \gg 1$: This represents a high-quality oscillator which approaches a narrow peak.
-The kernel approaches
-\begin{equation}
-k(\tau) = P_0 \omega_0 Q e^{-\omega_0\tau/(2Q)} \cos{\left(\omega_0\tau\right)},
-\end{equation}
-for $Q \gg 1$.  The power spectrum approaches
-\begin{equation}
-P(\omega) \approx P_0 \frac{Q^2}{1-1/(4Q^2)+4x_{max}^2\left(x-x_{max}\right)^2Q^2},
-\end{equation}
-where $x_{max}=\sqrt{1-1/(2Q^2)}$.  This shape approaches a Lorentzian for $x \approx x_{max}$ with
-a width of $1/(Qx_{max})$ and a peak height $\propto Q^2$.
-\end{itemize}
-
-The stochastically-driven, damped simple-harmonic oscillator can then describe a wide range of intrinsic
-stellar variability, with low $Q \approx 1$ representing granulation noise, and high $Q \gg 1$ representing
-asteroseismic variability.  Taking the sum over oscillators with various $Q, P_0,$ and $\omega_0$ can
-give an accurate accounting of the power spectrum of stellar variability with $Q \ge \frac{1}{2}$ and
-$P_0 >0$.  As this kernel is exactly described by the exponential kernel, this functional form
-is tractable to solving in $\mathcal{O}(N)$ operations, as described next.
 
 \section{Implementation \& performance}
 
@@ -560,6 +458,151 @@ likelihood may be set to zero.
 \subsection{Benchmarks \& scaling}
 
 \subsection{Parameterization \& API}
+
+\section{Genrp as a model of stellar variations}
+
+Another special case of the \genrp\ model of great physical interest is a
+stochastically driven simple harmonic oscillator.
+The differential equation for this system is
+\begin{equation}
+    \left[\frac{\dd^2}{\dd t^2} + \frac{\omega_0}{Q}\,\frac{\dd}{\dd t}
+    + \omega_0^2\right]\, y(t) = \epsilon(t)
+\end{equation}
+where $\omega_0$ is the frequency of the undamped oscillator, $Q$ is the
+quality factor of the oscillator, and $\epsilon(t)$ is a stochastic driving
+force.
+In the limit of an infinite time series and white random forcing, the PSD of
+this equation is given by \citep{Anderson:1990}
+\begin{equation}\eqlabel{sho-psd}
+S(\omega) = \sqrt{\frac{2}{\pi}}\,\frac{S_0\,\omega_0^4}
+    {(\omega^2-\omega_0^2)^2 + \omega_0^2\omega^2/Q^2}
+\end{equation}
+where $S_0$ is a normalization constant.
+The power spectrum in \eq{sho-psd} matches \eq{genrp-psd} if
+\begin{eqnarray}
+a_j &=& S_0\,\omega_0\,Q \\
+b_j &=& \frac{S_0\,\omega_0\,Q}{\sqrt{4\,Q^2-1}} \\
+c_j &=& \frac{\omega_0}{2\,Q}\\
+d_j &=& \frac{\omega_0}{2\,Q} \sqrt{4\,Q^2-1} \quad,
+\end{eqnarray}
+for $Q \ge \frac{1}{2}$.
+For $0 < Q \le \frac{1}{2}$, \eq{sho-psd} can be captured by a pair of \genrp\
+terms with parameters
+\begin{eqnarray}
+a_{j\pm} &=& \frac{1}{2}\,S_0\,\omega_0\,Q\,\left[ 1 \pm
+        \frac{1}{\sqrt{1-4\,Q^2}}\right] \\
+b_{j\pm} &=& 0 \\
+    c_{j\pm} &=& \frac{\omega_0}{2\,Q}\,\left[1 \mp \sqrt{1-4\,Q^2}\right] \\
+d_{j\pm} &=& 0 \quad.
+\end{eqnarray}
+It is interesting to note that, because of the damping, the characteristic
+oscillation frequency in this model $d_j$, for any finite quality factor $Q$,
+is not equal to the frequency of the undamped oscillator $\omega_0$.
+
+The power spectrum in \eq{sho-psd} has several limits of physical interest:
+\begin{itemize}
+
+{\item For $Q = 1/\sqrt{2}$, \eq{sho-psd} simplifies to
+\begin{eqnarray}
+S(\omega) = \sqrt{\frac{2}{\pi}}\,\frac{S_0}{(\omega/\omega_0)^4+1} \quad.
+\end{eqnarray}
+A model like this has been used to model the granulation is Solar data
+\citep{Michel:2009}}
+
+{\item Substituting $Q = 1/2$, \eq{sho-psd} becomes
+\begin{eqnarray}
+S(\omega) =
+\sqrt{\frac{2}{\pi}}\,\frac{S_0}{\left[(\omega/\omega_0)^2+1\right]^2}
+\end{eqnarray}
+with the corresponding covariance function
+\begin{eqnarray}
+k(\tau) &=& \lim_{f \to 0}\,
+    \frac{1}{2}\,S_0\,\omega_0\,e^{-\omega_0\,\tau}\,
+    \left[\cos(f\,\tau) + \frac{\omega_0}{f}\,\sin(f\,\tau)\right] \\
+&=& \frac{1}{2}\,S_0\,\omega_0\,e^{-\omega_0\,\tau}\,[1-\omega_0\,\tau] \quad.
+\end{eqnarray}
+This covariance function is also known as the Mat\'ern-3/2 function
+\citep{Rasmussen:2006}.
+}
+
+{\item Finally, in the limit $Q \to \infty$, \eq{sho-psd} becomes
+\begin{eqnarray}
+S(\omega) =
+\sqrt{\frac{2}{\pi}}\,\frac{S_0}{\left[(\omega/\omega_0)^2-1\right]^2} \quad.
+\end{eqnarray}}
+
+\end{itemize}
+
+% This gives a kernel with dependence
+% \begin{eqnarray}\eqlabel{sho_kernel}
+% %k(\tau) &=& P_0  \omega_0 Q e^{-\frac{\omega_0 \tau}{2Q}} \left[\cos{\lambda}+\frac{1}{\left(4Q^2-1\right)^{1/2}}
+% k(\tau) &=&  P_0  \omega_0 Q e^{-\frac{\omega_0 \tau}{2Q}} \cos{\left(\lambda-\phi\right)},\\
+% \lambda &=& \left(1-\frac{1}{4Q^2}\right)^{1/2}\omega_0\tau,\\
+% \tan{\phi} &=& \left(4Q^2-1\right)^{-1/2}.
+% \end{eqnarray}
+% The power spectrum can be normalized by $P_0\omega_0 Q$ in amplitude and $\omega_0$ in
+% frequency to yield a spectral shape that only depends upon $Q$.  This is plotted
+% in Figure \ref{sho_psd} for various values of $Q$.
+% Note that the oscillation frequency that appears in the kernel, $d_j$, differs
+% from that of the simple-harmonic oscillator, $\omega_0$, due to the damping
+% frequency, $c_j$.  This power spectrum has
+% a peak frequency given by $\omega_{max} = \omega_0\sqrt{1-1/(2Q^2)} = d_j$, which is
+% greater than zero for $Q > 1/\sqrt{2}$.
+
+% \begin{figure}[!htbp]
+% \begin{center}
+% \includegraphics[width=0.75\textwidth]{./approximate_kernels/sho.png}
+% \caption{Normalized power spectra of the stochastically-driven, damped simple
+% harmonic oscillator. The dotted black line shows the peak frequency, $d_j = \omega_0 (1-1/(2Q)^2)^{1/2}$.}
+% \label{sho_psd}
+% \end{center}
+% \end{figure}
+
+% This power spectrum has several limits of interest:
+% \begin{itemize}
+% \item $Q=1/2$:  This corresponds to a critically damped harmonic oscillator, which results in a power
+% spectrum $\propto 1/(x^2+1)^2$, where $x=\omega/\omega_0$.
+% This matches the power spectrum of the Mat\'ern 3/2 kernel, and can be represented by the following
+% autocovariance function:
+% \begin{equation}
+% k(\tau) = a_j e^{-c_j \tau} \left[\cos{(d_j \tau)} + \frac{c_j}{d_j}\sin{(d_j \tau)}\right],
+% % Check to see that signs match in this equation.
+% \end{equation}
+% in the limit that $d_j \rightarrow \infty$, corresponding to $\phi=\pi/2$, for which the second
+% term has a coefficient that diverges, but with large values of $d_j$, this may approximate the
+% Mat\'ern kernel well.  Note that this power spectrum peaks at $\omega=0$.
+% \item $Q=1/\sqrt{2}$:  This results in a power spectrum $\propto 1/(x^4+1)$, which is a functional
+% form used to fit the Solar granulation power spectrum by \cite{2009A&A...495..979M}.  This kernel has
+% dependence
+% \begin{equation}
+% k(\tau) = a_j e^{-c_j\tau} \left[\cos{(d_j\tau)}+\sin{(d_j\tau)}\right],
+% \end{equation}
+% corresponding to $\phi = \pi/4$.
+% Despite the sinusoidal dependence of the kernel, the strong damping causes the power spectrum to
+% peak at zero frequency; such a low quality oscillator doesn't even display quasi-periodic behavior.
+% \item $Q \gg 1$: This represents a high-quality oscillator which approaches a narrow peak.
+% The kernel approaches
+% \begin{equation}
+% k(\tau) = P_0 \omega_0 Q e^{-\omega_0\tau/(2Q)} \cos{\left(\omega_0\tau\right)},
+% \end{equation}
+% for $Q \gg 1$.  The power spectrum approaches
+% \begin{equation}
+% P(\omega) \approx P_0 \frac{Q^2}{1-1/(4Q^2)+4x_{max}^2\left(x-x_{max}\right)^2Q^2},
+% \end{equation}
+% where $x_{max}=\sqrt{1-1/(2Q^2)}$.  This shape approaches a Lorentzian for $x \approx x_{max}$ with
+% a width of $1/(Qx_{max})$ and a peak height $\propto Q^2$.
+% \end{itemize}
+
+The stochastically-driven, damped simple-harmonic oscillator can then describe
+a wide range of intrinsic stellar variability, with low $Q \approx 1$
+representing granulation noise, and high $Q \gg 1$ representing asteroseismic
+variability.
+Taking the sum over oscillators with various $Q, S_0,$ and $\omega_0$ can give
+an accurate accounting of the power spectrum of stellar variability with $Q
+\ge \frac{1}{2}$ and $S_0 >0$.
+As this kernel is exactly described by the exponential kernel, this functional
+form is tractable to solving in $\mathcal{O}(N)$ operations, as described
+next.
 
 
 \section{Examples}
