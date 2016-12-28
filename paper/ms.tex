@@ -410,17 +410,17 @@ The power spectrum in \eq{sho-psd} matches \eq{genrp-psd} if
 \begin{eqnarray}
 a_j &=& S_0\,\omega_0\,Q \\
 b_j &=& \frac{S_0\,\omega_0\,Q}{\sqrt{4\,Q^2-1}} \\
-c_j &=& \frac{\omega_0}{2Q}\\
-d_j &=& \omega_0 \sqrt{1-\frac{1}{4Q^2}} \quad,
+c_j &=& \frac{\omega_0}{2\,Q}\\
+d_j &=& \frac{\omega_0}{2\,Q} \sqrt{4\,Q^2-1} \quad,
 \end{eqnarray}
 for $Q \ge \frac{1}{2}$.
-For $Q < \frac{1}{2}$, \eq{sho-psd} can be captured by a pair of \genrp\ terms
+For $0 < Q < \frac{1}{2}$, \eq{sho-psd} can be captured by a pair of \genrp\ terms
 with parameters
 \begin{eqnarray}
-a_{j\pm} &=& \frac{1}{2}\,\left[ S_0\,\omega_0\,Q \pm
-        \frac{S_0\,\omega_0\,Q}{\sqrt{1-4\,Q^2}}\right] \\
+a_{j\pm} &=& \frac{1}{2}\,S_0\,\omega_0\,Q\,\left[ 1 \pm
+        \frac{1}{\sqrt{1-4\,Q^2}}\right] \\
 b_{j\pm} &=& 0 \\
-c_{j\pm} &=& \frac{\omega_0}{2Q} \pm \omega_0 \sqrt{\frac{1}{4Q^2}-1} \\
+    c_{j\pm} &=& \frac{\omega_0}{2\,Q}\,\left[1 \mp \sqrt{1-4\,Q^2}\right] \\
 d_{j\pm} &=& 0 \quad.
 \end{eqnarray}
 
