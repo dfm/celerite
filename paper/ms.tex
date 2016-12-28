@@ -378,6 +378,17 @@ This model can be interpreted intuitively as a quasiperiodic oscillator with
 amplitude $A_j = a_j$, quality factor $Q_j = c_j$, and period $P_j = 2\,\pi /
 d_j$.
 
+Similarly, setting both $b_j$ and $d_j$ to zero, we get a Ornstein--Uhlenbeck
+process
+\begin{eqnarray}
+k_j(\tau_{nm}) = a_j\,\exp\left(-c_j\,\tau_{nm}\right)
+\end{eqnarray}
+with the PSD
+\begin{eqnarray}
+S_j(\omega) = \sqrt{\frac{2}{\pi}}\,\frac{a_j}{c_j}\,
+    \frac{1}{1+\left(\frac{\omega}{c_j}\right)^2} \quad.
+\end{eqnarray}
+
 Another special case of the \genrp\ model of great physical interest is a
 stochastically driven, damped simple harmonic oscillator.
 The differential equation for this system is
@@ -395,14 +406,23 @@ S(\omega) = \sqrt{\frac{2}{\pi}}\,\frac{S_0\,\omega_0^4}
     {(\omega^2-\omega_0^2)^2 + \omega_0^2\omega^2/Q^2}
 \end{equation}
 where $S_0$ is a normalization constant.
-This power spectrum in \eq{sho-psd} matches \eq{genrp-psd} if
+The power spectrum in \eq{sho-psd} matches \eq{genrp-psd} if
 \begin{eqnarray}
 a_j &=& S_0\,\omega_0\,Q \\
 b_j &=& \frac{S_0\,\omega_0\,Q}{\sqrt{4\,Q^2-1}} \\
 c_j &=& \frac{\omega_0}{2Q}\\
 d_j &=& \omega_0 \sqrt{1-\frac{1}{4Q^2}} \quad,
 \end{eqnarray}
-and $Q > \frac{1}{2}$.
+for $Q \ge \frac{1}{2}$.
+For $Q < \frac{1}{2}$, \eq{sho-psd} can be captured by a pair of \genrp\ terms
+with parameters
+\begin{eqnarray}
+a_{j\pm} &=& \frac{1}{2}\,\left[ S_0\,\omega_0\,Q \pm
+        \frac{S_0\,\omega_0\,Q}{\sqrt{1-4\,Q^2}}\right] \\
+b_{j\pm} &=& 0 \\
+c_{j\pm} &=& \frac{\omega_0}{2Q} \pm \omega_0 \sqrt{\frac{1}{4Q^2}-1} \\
+d_{j\pm} &=& 0 \quad.
+\end{eqnarray}
 
 This gives a kernel with dependence
 \begin{eqnarray}\eqlabel{sho_kernel}
