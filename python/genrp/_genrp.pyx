@@ -1,7 +1,7 @@
 # distutils: language = c++
 from __future__ import division
 
-__all__ = ["get_library_version", "Solver"]
+__all__ = ["get_library_version", "kernel_value", "kernel_psd", "Solver"]
 
 cimport cython
 
@@ -47,6 +47,17 @@ cdef extern from "genrp/genrp.h" namespace "genrp":
         double tau
     )
 
+    cdef double get_psd_value(
+        size_t p_real,
+        const double* const alpha_real, const double* const beta_real,
+        size_t p_complex,
+        const double* const alpha_complex_real,
+        const double* const alpha_complex_imag,
+        const double* const beta_complex_real,
+        const double* const beta_complex_imag,
+        double omega
+    )
+
 cdef extern from "genrp/genrp.h" namespace "genrp::solver":
     cdef cppclass BandSolver[T]:
         BandSolver ()
@@ -60,6 +71,58 @@ cdef extern from "genrp/genrp.h" namespace "genrp::solver":
         void solve (size_t nrhs, const double* b, T* x) const
         T dot_solve (const double* b) except +
         T log_determinant () except +
+
+
+def kernel_value(
+    np.ndarray[DTYPE_t, ndim=1] alpha_real,
+    np.ndarray[DTYPE_t, ndim=1] beta_real,
+    np.ndarray[DTYPE_t, ndim=1] alpha_complex_real,
+    np.ndarray[DTYPE_t, ndim=1] alpha_complex_imag,
+    np.ndarray[DTYPE_t, ndim=1] beta_complex_real,
+    np.ndarray[DTYPE_t, ndim=1] beta_complex_imag,
+    np.ndarray[DTYPE_t, ndim=1] tau,
+):
+    cdef int i
+    cdef np.ndarray[DTYPE_t, ndim=1] k = np.empty_like(tau)
+    for i in range(tau.shape[0]):
+        k[i] = get_kernel_value(
+            alpha_real.shape[0],
+            <double*>alpha_real.data,
+            <double*>beta_real.data,
+            alpha_complex_real.shape[0],
+            <double*>alpha_complex_real.data,
+            <double*>alpha_complex_imag.data,
+            <double*>beta_complex_real.data,
+            <double*>beta_complex_imag.data,
+            fabs(tau[i])
+        )
+    return k
+
+
+def kernel_psd(
+    np.ndarray[DTYPE_t, ndim=1] alpha_real,
+    np.ndarray[DTYPE_t, ndim=1] beta_real,
+    np.ndarray[DTYPE_t, ndim=1] alpha_complex_real,
+    np.ndarray[DTYPE_t, ndim=1] alpha_complex_imag,
+    np.ndarray[DTYPE_t, ndim=1] beta_complex_real,
+    np.ndarray[DTYPE_t, ndim=1] beta_complex_imag,
+    np.ndarray[DTYPE_t, ndim=1] omega,
+):
+    cdef int i
+    cdef np.ndarray[DTYPE_t, ndim=1] p = np.empty_like(omega)
+    for i in range(omega.shape[0]):
+        p[i] = get_psd_value(
+            alpha_real.shape[0],
+            <double*>alpha_real.data,
+            <double*>beta_real.data,
+            alpha_complex_real.shape[0],
+            <double*>alpha_complex_real.data,
+            <double*>alpha_complex_imag.data,
+            <double*>beta_complex_real.data,
+            <double*>beta_complex_imag.data,
+            omega[i]
+        )
+    return p
 
 
 cdef class Solver:
