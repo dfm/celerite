@@ -231,6 +231,7 @@ def test_solve(seed=42):
 # Test whether the GP can properly handle the case where the Lorentzian has a
 # very large quality factor and the time samples are almost exactly at Nyquist
 # sampling.  This can frustrate Green's-function-based CARMA solvers.
+@pytest.mark.skip(reason="API is changing")
 def test_nyquist_singularity(seed=4220):
     np.random.seed(seed)
 

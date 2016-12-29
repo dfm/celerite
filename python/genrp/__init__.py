@@ -10,6 +10,7 @@ except NameError:
 if not __GENRP_SETUP__:
     __all__ = ["Solver", "GP"]
 
-    from ._genrp import Solver, GP, get_library_version
+    from .genrp import GP
+    from ._genrp import Solver, get_library_version
 
     __library_version__ = get_library_version()

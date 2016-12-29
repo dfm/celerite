@@ -4,7 +4,7 @@
 #include <sys/time.h>
 #include <Eigen/Core>
 
-#include "genrp/solvers.h"
+#include "genrp/genrp.h"
 #include "genrp/carma.h"
 #include "genrp/utils.h"
 
@@ -81,7 +81,7 @@ int main (int argc, char* argv[])
       alpha_complex_real, alpha_complex_imag, beta_complex_real, beta_complex_imag);
 
     // Compute using the genrp model.
-    genrp::BandSolver<double> solver;
+    genrp::solver::BandSolver<double> solver;
     int flag = -1;
     strt = get_timestamp();
     for (size_t i = 0; i < niter; ++i) {
@@ -94,7 +94,7 @@ int main (int argc, char* argv[])
     }
     double direct_ll = NAN;
     if (!flag) {
-      genrp::DirectSolver<double> dsolver;
+      genrp::solver::DirectSolver<double> dsolver;
       dsolver.compute(alpha_real, beta_real, alpha_complex_real, alpha_complex_imag, beta_complex_real, beta_complex_imag, x, diag);
       direct_ll = -0.5*(dsolver.dot_solve(y) + dsolver.log_determinant() + x.rows() * log(2.0 * M_PI));
 
