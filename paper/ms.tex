@@ -318,9 +318,9 @@ mixtures of exponentials
 k_\bvec{\alpha}(\tau_{nm}) = \sigma_n^2\,\delta_{nm} +
     \sum_{j=1}^J a_j\,\exp(-c_j\,\tau_{nm})\quad.
 \end{eqnarray}
-In this case, the inverse becomes more complicated but \eq{gp-likelihood} can
-still be evaluated in $\mathcal{O}(J^2\,N)$ operations where $J$ is the number
-of components in the mixture and $N$ is still the number of data points.
+In this case, the inverse will be dense but \eq{gp-likelihood} can still be
+evaluated in $\mathcal{O}(J^2\,N)$ operations where $J$ is the number of
+components in the mixture and $N$ is still the number of data points.
 
 It turns out that this kernel function can be made even more general by
 introducing complex parameters $a_j \to a_j+i\,b_j$ and $c_j \to c_j+i\,d_j$.
@@ -367,7 +367,7 @@ k_j(\tau_{nm}) =
     a_j\,\exp\left(-c_j\,\tau_{nm}\right)\,\cos\left(d_j\,\tau_{nm}\right)
 \end{eqnarray}
 and the PSD for the this component is
-\begin{eqnarray}
+\begin{eqnarray}\eqlabel{lorentz-psd}
 S_j(\omega) = \frac{1}{\sqrt{2\,\pi}}\,\frac{a_j}{c_j}\,\left[
     \frac{1}{1+\left(\frac{\omega-d_j}{c_j}\right)^2} +
     \frac{1}{1+\left(\frac{\omega+d_j}{c_j}\right)^2}
@@ -463,7 +463,7 @@ likelihood may be set to zero.
 \section{Genrp as a model of stellar variations}
 
 Another special case of the \genrp\ model of great physical interest is a
-stochastically driven simple harmonic oscillator.
+stochastically-driven simple harmonic oscillator.
 The differential equation for this system is
 \begin{equation}
     \left[\frac{\dd^2}{\dd t^2} + \frac{\omega_0}{Q}\,\frac{\dd}{\dd t}
@@ -516,94 +516,60 @@ S(\omega) =
 \sqrt{\frac{2}{\pi}}\,\frac{S_0}{\left[(\omega/\omega_0)^2+1\right]^2}
 \end{eqnarray}
 with the corresponding covariance function
-\begin{eqnarray}
+\begin{eqnarray}\eqlabel{approx-matern}
 k(\tau) &=& \lim_{f \to 0}\,
     \frac{1}{2}\,S_0\,\omega_0\,e^{-\omega_0\,\tau}\,
     \left[\cos(f\,\tau) + \frac{\omega_0}{f}\,\sin(f\,\tau)\right] \\
-&=& \frac{1}{2}\,S_0\,\omega_0\,e^{-\omega_0\,\tau}\,[1-\omega_0\,\tau] \quad.
+&=& \frac{1}{2}\,S_0\,\omega_0\,e^{-\omega_0\,\tau}\,[1+\omega_0\,\tau] \quad.
 \end{eqnarray}
 This covariance function is also known as the Mat\'ern-3/2 function
 \citep{Rasmussen:2006}.
+This suggests that the Mat\'ern-3/2 covariance can be well approximated using
+the \genrp\ framework with a small value of $f$ in \eq{approx-matern} but we
+caution that this could also lead to numerical issues with the solver.
 }
 
-{\item Finally, in the limit $Q \to \infty$, \eq{sho-psd} becomes
+{\item Finally, in the limit of large $Q$, the model approaches a high
+    quality oscillation with frequency $\omega_0$ and covariance function
 \begin{eqnarray}
-S(\omega) =
-\sqrt{\frac{2}{\pi}}\,\frac{S_0}{\left[(\omega/\omega_0)^2-1\right]^2} \quad.
+k(\tau) \approx
+    \frac{1}{2}\,S_0\,\omega_0\,Q\,
+    \exp\left(-\frac{\omega_0\,\tau}{2\,Q}\right)\,
+    \cos\left(\omega_0\,\tau\right) \quad.
 \end{eqnarray}}
 
 \end{itemize}
+\Figure{sho} shows a plot of the PSD for these limits and several other values
+of $Q$.
+This figure demonstrates that for $Q \le 1/2$, the model has no oscillatory
+behavior and that for large $Q$, the shape of the PSD near the peak frequency
+approaches a Lorentzian.
 
-% This gives a kernel with dependence
-% \begin{eqnarray}\eqlabel{sho_kernel}
-% %k(\tau) &=& P_0  \omega_0 Q e^{-\frac{\omega_0 \tau}{2Q}} \left[\cos{\lambda}+\frac{1}{\left(4Q^2-1\right)^{1/2}}
-% k(\tau) &=&  P_0  \omega_0 Q e^{-\frac{\omega_0 \tau}{2Q}} \cos{\left(\lambda-\phi\right)},\\
-% \lambda &=& \left(1-\frac{1}{4Q^2}\right)^{1/2}\omega_0\tau,\\
-% \tan{\phi} &=& \left(4Q^2-1\right)^{-1/2}.
-% \end{eqnarray}
-% The power spectrum can be normalized by $P_0\omega_0 Q$ in amplitude and $\omega_0$ in
-% frequency to yield a spectral shape that only depends upon $Q$.  This is plotted
-% in Figure \ref{sho_psd} for various values of $Q$.
-% Note that the oscillation frequency that appears in the kernel, $d_j$, differs
-% from that of the simple-harmonic oscillator, $\omega_0$, due to the damping
-% frequency, $c_j$.  This power spectrum has
-% a peak frequency given by $\omega_{max} = \omega_0\sqrt{1-1/(2Q^2)} = d_j$, which is
-% greater than zero for $Q > 1/\sqrt{2}$.
+These special cases demonstrate that the stochastically-driven simple harmonic
+oscillator provides a physically motivated model that is flexible enough to
+describe a wide range of stellar variations.
+Low $Q \approx 1$ can capture granulation noise and high $Q \gg 1$ is a good
+model for asteroseismic oscillations.
+In practice, we will take a sum over oscillators with different values of $Q$,
+$S_0$, and $\omega_0$ to give a sufficient accounting of the power spectrum
+stellar time series.
+Since this kernel is exactly described by the exponential kernel, the
+likelihood (\eqalt{gp-likelihood}) can be evaluated for a time series with $N$
+measurements in $\mathcal{O}(N)$ operations using the \genrp\ method described
+in the previous section.
 
-% \begin{figure}[!htbp]
-% \begin{center}
-% \includegraphics[width=0.75\textwidth]{./approximate_kernels/sho.png}
-% \caption{Normalized power spectra of the stochastically-driven, damped simple
-% harmonic oscillator. The dotted black line shows the peak frequency, $d_j = \omega_0 (1-1/(2Q)^2)^{1/2}$.}
-% \label{sho_psd}
-% \end{center}
-% \end{figure}
-
-% This power spectrum has several limits of interest:
-% \begin{itemize}
-% \item $Q=1/2$:  This corresponds to a critically damped harmonic oscillator, which results in a power
-% spectrum $\propto 1/(x^2+1)^2$, where $x=\omega/\omega_0$.
-% This matches the power spectrum of the Mat\'ern 3/2 kernel, and can be represented by the following
-% autocovariance function:
-% \begin{equation}
-% k(\tau) = a_j e^{-c_j \tau} \left[\cos{(d_j \tau)} + \frac{c_j}{d_j}\sin{(d_j \tau)}\right],
-% % Check to see that signs match in this equation.
-% \end{equation}
-% in the limit that $d_j \rightarrow \infty$, corresponding to $\phi=\pi/2$, for which the second
-% term has a coefficient that diverges, but with large values of $d_j$, this may approximate the
-% Mat\'ern kernel well.  Note that this power spectrum peaks at $\omega=0$.
-% \item $Q=1/\sqrt{2}$:  This results in a power spectrum $\propto 1/(x^4+1)$, which is a functional
-% form used to fit the Solar granulation power spectrum by \cite{2009A&A...495..979M}.  This kernel has
-% dependence
-% \begin{equation}
-% k(\tau) = a_j e^{-c_j\tau} \left[\cos{(d_j\tau)}+\sin{(d_j\tau)}\right],
-% \end{equation}
-% corresponding to $\phi = \pi/4$.
-% Despite the sinusoidal dependence of the kernel, the strong damping causes the power spectrum to
-% peak at zero frequency; such a low quality oscillator doesn't even display quasi-periodic behavior.
-% \item $Q \gg 1$: This represents a high-quality oscillator which approaches a narrow peak.
-% The kernel approaches
-% \begin{equation}
-% k(\tau) = P_0 \omega_0 Q e^{-\omega_0\tau/(2Q)} \cos{\left(\omega_0\tau\right)},
-% \end{equation}
-% for $Q \gg 1$.  The power spectrum approaches
-% \begin{equation}
-% P(\omega) \approx P_0 \frac{Q^2}{1-1/(4Q^2)+4x_{max}^2\left(x-x_{max}\right)^2Q^2},
-% \end{equation}
-% where $x_{max}=\sqrt{1-1/(2Q^2)}$.  This shape approaches a Lorentzian for $x \approx x_{max}$ with
-% a width of $1/(Qx_{max})$ and a peak height $\propto Q^2$.
-% \end{itemize}
-
-The stochastically-driven, damped simple-harmonic oscillator can then describe
-a wide range of intrinsic stellar variability, with low $Q \approx 1$
-representing granulation noise, and high $Q \gg 1$ representing asteroseismic
-variability.
-Taking the sum over oscillators with various $Q, S_0,$ and $\omega_0$ can give
-an accurate accounting of the power spectrum of stellar variability with $Q
-\ge \frac{1}{2}$ and $S_0 >0$.
-As this kernel is exactly described by the exponential kernel, this functional
-form is tractable to solving in $\mathcal{O}(N)$ operations, as described
-next.
+\begin{figure}[!htbp]
+\begin{center}
+\includegraphics[width=0.75\textwidth]{figures/sho.pdf}
+\caption{The power spectrum of a stochastically-driven simple harmonic
+    oscillator (\eqalt{sho-psd}) plotted for several values of the quality
+    factor $Q$.
+    For comparison, the dashed line shows the Lorentzian function from
+    \eq{lorentz-psd} with $c_j = 2\,Q = 20$ and normalized so that
+    $S(d_j) = Q^2 = 100$.
+    \figurelabel{sho}}
+\end{center}
+\end{figure}
 
 
 \section{Examples}
