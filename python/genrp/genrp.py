@@ -2,21 +2,40 @@
 
 from __future__ import division, print_function
 import numpy as np
+from ._genrp import Solver
 
 __all__ = ["GP"]
 
 
 class GP(object):
 
-    def __init__(self):
-        self._solver = None
-        self._computed = False
-        self._data_size = -1
-        self._terms = []
+    def __init__(self, kernel):
+        self.kernel = kernel
 
-    def __len__(self):
-        raise NotImplementedError()
-        #  return len(terms)
+        self.solver = None
+        self._computed = False
+        self._t = None
+        self._y_var = None
+
+    def compute(self, t, yerr=1.123e-12):
+        self._t = np.asarray(t, dtype=float)
+        self._y_var = yerr * yerr + np.zeros_like(self._t)
+        self.solver = Solver(
+            self.kernel.alpha_real,
+            self.kernel.beta_real,
+            self.kernel.alpha_complex_real,
+            self.kernel.alpha_complex_imag,
+            self.kernel.beta_complex_real,
+            self.kernel.beta_complex_imag,
+            self._t,
+            self._y_var,
+        )
+        self._computed = True
+
+    def log_likelihood(self, y):
+        return -0.5 * (self.solver.dot_solve(y) +
+                       self.solver.log_determinant +
+                       len(y) * np.log(2*np.pi))
 
     @property
     def computed(self):

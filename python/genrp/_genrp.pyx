@@ -212,6 +212,11 @@ cdef class Solver:
         def __get__(self):
             return self.solver.log_determinant()
 
+    def dot_solve(self, np.ndarray[DTYPE_t, ndim=1] y):
+        if y.shape[0] != self.N:
+            raise ValueError("dimension mismatch")
+        return self.solver.dot_solve(<double*>y.data)
+
     def apply_inverse(self, np.ndarray[DTYPE_t, ndim=1] y, in_place=False):
         if y.shape[0] != self.N:
             raise ValueError("dimension mismatch")
