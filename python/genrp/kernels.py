@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from __future__ import division, print_function
+import math
 import numpy as np
 
 from ._genrp import kernel_value, kernel_psd
@@ -11,6 +12,9 @@ __all__ = [
 
 
 class Kernel(object):
+
+    def __len__(self):
+        return 0
 
     def get_value(self, x):
         x = np.asarray(x)
@@ -78,7 +82,6 @@ class Kernel(object):
 
 
 class Sum(Kernel):
-    is_kernel = False
 
     def __init__(self, k1, k2):
         self.k1 = k1
@@ -86,6 +89,9 @@ class Sum(Kernel):
 
     def __repr__(self):
         return "{0} + {1}".format(self.k1, self.k2)
+
+    def __len__(self):
+        return len(self.k1) + len(self.k2)
 
     @property
     def p_real(self):
@@ -126,12 +132,15 @@ class Sum(Kernel):
 
 class RealTerm(Kernel):
 
-    def __init__(self, a, c):
+    def __init__(self, a, log_c):
         self.a = a
-        self.c = c
+        self.log_c = log_c
 
     def __repr__(self):
-        return "RealTerm({0.a}, {0.c})".format(self)
+        return "RealTerm({0.a}, {0.log_c})".format(self)
+
+    def __len__(self):
+        return 2
 
     @property
     def p_real(self):
@@ -143,24 +152,24 @@ class RealTerm(Kernel):
 
     @property
     def beta_real(self):
-        return np.array([self.c])
+        return np.array([math.exp(self.log_c)])
 
 
 class ComplexTerm(Kernel):
 
     def __init__(self, *args):
         if len(args) == 3:
-            a, c, d = args
+            a, log_c, log_d = args
             b = 0.0
         else:
-            a, b, c, d = args
+            a, b, log_c, log_d = args
         self.a = a
         self.b = b
-        self.c = c
-        self.d = d
+        self.log_c = log_c
+        self.log_d = log_d
 
     def __repr__(self):
-        return "ComplexTerm({0.a}, {0.b}, {0.c}, {0.d})".format(self)
+        return "ComplexTerm({0.a}, {0.b}, {0.log_c}, {0.log_d})".format(self)
 
     @property
     def p_complex(self):
@@ -176,68 +185,77 @@ class ComplexTerm(Kernel):
 
     @property
     def beta_complex_real(self):
-        return np.array([self.c])
+        return np.array([math.exp(self.log_c)])
 
     @property
     def beta_complex_imag(self):
-        return np.array([self.d])
+        return np.array([math.exp(self.log_d)])
 
 
 class SHOTerm(Kernel):
 
-    def __init__(self, S0, Q, w0):
-        self.S0 = S0
-        self.Q = Q
-        self.w0 = w0
+    def __init__(self, log_S0, log_Q, log_w0):
+        self.log_S0 = log_S0
+        self.log_Q = log_Q
+        self.log_w0 = log_w0
 
     def __repr__(self):
-        return "SHOTerm({0.S0}, {0.Q}, {0.w0})".format(self)
+        return "SHOTerm({0.log_S0}, {0.log_Q}, {0.log_w0})".format(self)
 
     @property
     def p_real(self):
-        return 2 if self.Q < 0.5 else 0
+        Q = math.exp(self.log_Q)
+        return 2 if Q < 0.5 else 0
 
     @property
     def p_complex(self):
-        return 0 if self.Q < 0.5 else 1
+        Q = math.exp(self.log_Q)
+        return 0 if Q < 0.5 else 1
 
     @property
     def alpha_real(self):
-        if self.Q >= 0.5:
+        Q = math.exp(self.log_Q)
+        if Q >= 0.5:
             return np.empty(0)
-        f = 1.0 / np.sqrt(1.0 - 4.0 * self.Q**2)
-        return 0.5*self.S0*self.w0*self.Q*np.array([1.0+f, 1.0-f])
+        f = 1.0 / math.sqrt(1.0 - 4.0 * Q**2)
+        return 0.5*math.exp(self.log_S0+self.log_w0)*Q*np.array([1.0+f, 1.0-f])
 
     @property
     def beta_real(self):
-        if self.Q >= 0.5:
+        Q = math.exp(self.log_Q)
+        if Q >= 0.5:
             return np.empty(0)
-        f = np.sqrt(1.0 - 4.0 * self.Q**2)
-        return 0.5*self.w0/self.Q*np.array([1.0-f, 1.0+f])
+        f = math.sqrt(1.0 - 4.0 * Q**2)
+        return 0.5*math.exp(self.log_w0)/Q*np.array([1.0-f, 1.0+f])
 
     @property
     def alpha_complex_real(self):
-        if self.Q < 0.5:
+        Q = math.exp(self.log_Q)
+        if Q < 0.5:
             return np.empty(0)
-        return np.array([self.S0 * self.w0 * self.Q])
+        return np.array([math.exp(self.log_S0 + self.log_w0) * Q])
 
     @property
     def alpha_complex_imag(self):
-        if self.Q < 0.5:
+        Q = math.exp(self.log_Q)
+        if Q < 0.5:
             return np.empty(0)
-        return np.array([self.S0*self.w0*self.Q/np.sqrt(4*self.Q**2-1.0)])
+        return np.array([math.exp(self.log_S0+self.log_w0)*Q /
+                         math.sqrt(4*Q**2-1.0)])
 
     @property
     def beta_complex_real(self):
-        if self.Q < 0.5:
+        Q = math.exp(self.log_Q)
+        if Q < 0.5:
             return np.empty(0)
-        return np.array([0.5*self.w0/self.Q])
+        return np.array([0.5*math.exp(self.log_w0)/Q])
 
     @property
     def beta_complex_imag(self):
-        if self.Q < 0.5:
+        Q = math.exp(self.log_Q)
+        if Q < 0.5:
             return np.empty(0)
-        return np.array([0.5*self.w0/self.Q*np.sqrt(4*self.Q**2-1.0)])
+        return np.array([0.5*math.exp(self.log_w0)/Q*math.sqrt(4*Q**2-1.0)])
 
 
 class Matern32Term(Kernel):
@@ -257,19 +275,19 @@ class Matern32Term(Kernel):
 
     @property
     def alpha_complex_real(self):
-        w0 = np.sqrt(3.0) * np.exp(-self.log_rho)
-        S0 = np.exp(2.0 * self.log_sigma) / w0
+        w0 = math.sqrt(3.0) * math.exp(-self.log_rho)
+        S0 = math.exp(2.0 * self.log_sigma) / w0
         return np.array([w0 * S0])
 
     @property
     def alpha_complex_imag(self):
-        w0 = np.sqrt(3.0) * np.exp(-self.log_rho)
-        S0 = np.exp(2.0 * self.log_sigma) / w0
+        w0 = math.sqrt(3.0) * math.exp(-self.log_rho)
+        S0 = math.exp(2.0 * self.log_sigma) / w0
         return np.array([w0 * S0 * w0 / self.eps])
 
     @property
     def beta_complex_real(self):
-        w0 = np.sqrt(3.0) * np.exp(-self.log_rho)
+        w0 = math.sqrt(3.0) * math.exp(-self.log_rho)
         return np.array([w0])
 
     @property

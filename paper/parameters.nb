@@ -10,10 +10,10 @@
 NotebookFileLineBreakTest
 NotebookFileLineBreakTest
 NotebookDataPosition[       158,          7]
-NotebookDataLength[     24147,        771]
-NotebookOptionsPosition[     22279,        702]
-NotebookOutlinePosition[     22632,        718]
-CellTagsIndexPosition[     22589,        715]
+NotebookDataLength[     23545,        749]
+NotebookOptionsPosition[     21789,        684]
+NotebookOutlinePosition[     22142,        700]
+CellTagsIndexPosition[     22099,        697]
 WindowFrame->Normal*)
 
 (* Beginning of Notebook Content *)
@@ -679,24 +679,6 @@ Cell[BoxData[
      SuperscriptBox["w", "2"], "-", 
      SuperscriptBox["w0", "2"]}], ")"}], "2"]]], "Output",
  CellChangeTimes->{{3.69194070390919*^9, 3.6919407215139933`*^9}}]
-}, Open  ]],
-
-Cell[CellGroupData[{
-
-Cell[BoxData[
- RowBox[{"Limit", "[", 
-  RowBox[{
-   RowBox[{"a", "*", 
-    RowBox[{
-     RowBox[{"Sin", "[", 
-      RowBox[{"d", "*", "x"}], "]"}], "/", "d"}]}], ",", 
-   RowBox[{"d", "\[Rule]", "0"}]}], "]"}]], "Input",
- CellChangeTimes->{{3.691953406691249*^9, 3.691953421969817*^9}, {
-  3.691953824285084*^9, 3.6919538252428837`*^9}}],
-
-Cell[BoxData[
- RowBox[{"a", " ", "x"}]], "Output",
- CellChangeTimes->{3.69195342236347*^9, 3.691953825914588*^9}]
 }, Open  ]]
 }, Open  ]]
 },
@@ -767,10 +749,6 @@ Cell[20749, 644, 393, 12, 81, "Output"]
 Cell[CellGroupData[{
 Cell[21179, 661, 236, 6, 28, "Input"],
 Cell[21418, 669, 343, 11, 81, "Output"]
-}, Open  ]],
-Cell[CellGroupData[{
-Cell[21798, 685, 337, 9, 28, "Input"],
-Cell[22138, 696, 113, 2, 62, "Output"]
 }, Open  ]]
 }, Open  ]]
 }
