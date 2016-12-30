@@ -5,6 +5,7 @@
 #include "genrp/poly.h"
 
 namespace genrp {
+namespace solver {
 
 int SOLVER_DIMENSION_MISMATCH = 1;
 int SOLVER_NOT_COMPUTED = 2;
@@ -212,6 +213,7 @@ T Solver<T>::dot_solve (const double* b) const {
   return dot_solve(bin);
 }
 
+};
 };
 
 #endif

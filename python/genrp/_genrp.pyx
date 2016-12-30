@@ -1,7 +1,7 @@
 # distutils: language = c++
 from __future__ import division
 
-__all__ = ["get_library_version", "GP", "Solver"]
+__all__ = ["get_library_version", "kernel_value", "kernel_psd", "Solver"]
 
 cimport cython
 
@@ -36,7 +36,6 @@ cdef extern from "Eigen/Core" namespace "Eigen":
         Map(double*, int)
 
 cdef extern from "genrp/genrp.h" namespace "genrp":
-
     cdef double get_kernel_value(
         size_t p_real,
         const double* const alpha_real, const double* const beta_real,
@@ -48,6 +47,18 @@ cdef extern from "genrp/genrp.h" namespace "genrp":
         double tau
     )
 
+    cdef double get_psd_value(
+        size_t p_real,
+        const double* const alpha_real, const double* const beta_real,
+        size_t p_complex,
+        const double* const alpha_complex_real,
+        const double* const alpha_complex_imag,
+        const double* const beta_complex_real,
+        const double* const beta_complex_imag,
+        double omega
+    )
+
+cdef extern from "genrp/genrp.h" namespace "genrp::solver":
     cdef cppclass BandSolver[T]:
         BandSolver ()
         int compute (
@@ -61,159 +72,57 @@ cdef extern from "genrp/genrp.h" namespace "genrp":
         T dot_solve (const double* b) except +
         T log_determinant () except +
 
-    cdef cppclass Kernel[T]:
-        Kernel()
-        void add_term (const T log_amp, const T log_q)
-        void add_term (const T log_amp, const T log_q, const T log_freq)
-        T value (double dt) const
-        T psd (double f) const
-        size_t p () const
-        size_t p_real () const
-        size_t p_complex () const
 
-    cdef cppclass GaussianProcess[SolverType, T]:
-        GaussianProcess (Kernel[T] kernel)
-        size_t size () const
-        const Kernel[T] kernel () const
-        SolverType solver () const
-        void compute (size_t N, const double* x, const double* yerr)
-        T log_likelihood (const double* y) const
-        T kernel_value (double dt) const
-        T kernel_psd (double w) const
-        void get_params (T* pars) const
-        void set_params (const T* const pars)
-        void get_alpha_real (T* alpha) const
-        void get_beta_real (T* alpha) const
-        void get_alpha_complex (T* alpha) const
-        void get_beta_complex_real (T* beta) const
-        void get_beta_complex_imag (T* beta) const
+def kernel_value(
+    np.ndarray[DTYPE_t, ndim=1] alpha_real,
+    np.ndarray[DTYPE_t, ndim=1] beta_real,
+    np.ndarray[DTYPE_t, ndim=1] alpha_complex_real,
+    np.ndarray[DTYPE_t, ndim=1] alpha_complex_imag,
+    np.ndarray[DTYPE_t, ndim=1] beta_complex_real,
+    np.ndarray[DTYPE_t, ndim=1] beta_complex_imag,
+    np.ndarray[DTYPE_t, ndim=1] tau,
+):
+    cdef int i
+    cdef np.ndarray[DTYPE_t, ndim=1] k = np.empty_like(tau)
+    for i in range(tau.shape[0]):
+        k[i] = get_kernel_value(
+            alpha_real.shape[0],
+            <double*>alpha_real.data,
+            <double*>beta_real.data,
+            alpha_complex_real.shape[0],
+            <double*>alpha_complex_real.data,
+            <double*>alpha_complex_imag.data,
+            <double*>beta_complex_real.data,
+            <double*>beta_complex_imag.data,
+            fabs(tau[i])
+        )
+    return k
 
 
-cdef class GP:
-
-    cdef GaussianProcess[BandSolver[double], double]* gp
-    cdef Kernel[double] kernel
-
-    cdef int _data_size
-
-    cdef object _terms
-
-    def __cinit__(self):
-        self.gp = new GaussianProcess[BandSolver[double], double](self.kernel)
-        self._data_size = -1
-        self._terms = []
-
-    def __dealloc__(self):
-        del self.gp
-
-    def __len__(self):
-        return self.gp.size()
-
-    property computed:
-        def __get__(self):
-            return self._data_size >= 0
-
-    property alpha_real:
-        def __get__(self):
-            cdef np.ndarray[DTYPE_t] a = np.empty(self.gp.kernel().p_real(), dtype=DTYPE)
-            self.gp.get_alpha_real(<double*>a.data)
-            return a
-
-    property beta_real:
-        def __get__(self):
-            cdef np.ndarray[DTYPE_t] a = np.empty(self.gp.kernel().p_real(), dtype=DTYPE)
-            self.gp.get_beta_real(<double*>a.data)
-            return a
-
-    property alpha_complex:
-        def __get__(self):
-            cdef np.ndarray[DTYPE_t] a = np.empty(self.gp.kernel().p_complex(), dtype=DTYPE)
-            self.gp.get_alpha_complex(<double*>a.data)
-            return a
-
-    property beta_complex_real:
-        def __get__(self):
-            cdef np.ndarray[DTYPE_t] a = np.empty(self.gp.kernel().p_complex(), dtype=DTYPE)
-            self.gp.get_beta_complex_real(<double*>a.data)
-            return a
-
-    property beta_complex_imag:
-        def __get__(self):
-            cdef np.ndarray[DTYPE_t] a = np.empty(self.gp.kernel().p_complex(), dtype=DTYPE)
-            self.gp.get_beta_complex_imag(<double*>a.data)
-            return a
-
-    property params:
-        def __get__(self):
-            cdef np.ndarray[DTYPE_t] p = np.empty(self.gp.size(), dtype=DTYPE)
-            self.gp.get_params(<double*>p.data)
-            return p
-
-        def __set__(self, params):
-            if len(params) != self.gp.size():
-                raise ValueError("dimension mismatch")
-
-            cdef np.ndarray[DTYPE_t, ndim=1] p = \
-                np.atleast_1d(params).astype(DTYPE)
-
-            # Set the parameters in the scalar solver
-            self.gp.set_params(<double*>p.data)
-
-            self._data_size = -1
-
-    def __getitem__(self, i):
-        return self.params[i]
-
-    def __setitem__(self, i, value):
-        params = self.params
-        params[i] = value
-        self.params = params
-
-    def add_term(self, log_a, log_q, log_f=None):
-        self.kernel.add_term(log_a, log_q, log_f)
-        self._terms.append((log_a, log_q, log_f))
-        del self.gp
-        self.gp = new GaussianProcess[BandSolver[double], double](self.kernel)
-        self._data_size = -1
-
-    def get_matrix(self, np.ndarray[DTYPE_t, ndim=1] x1, x2=None):
-        if x2 is None:
-            x2 = x1
-        cdef np.ndarray[DTYPE_t, ndim=2] K = x1[:, None] - x2[None, :]
-        cdef int i, j
-        for i in range(x1.shape[0]):
-            for j in range(x2.shape[0]):
-                K[i, j] = self.gp.kernel_value(K[i, j])
-        return K
-
-    def get_psd(self, np.ndarray[DTYPE_t, ndim=1] w):
-        cdef np.ndarray[DTYPE_t, ndim=1] psd = np.empty_like(w, dtype=DTYPE)
-        cdef int i
-        for i in range(w.shape[0]):
-            psd[i] = self.gp.kernel_psd(w[i])
-        return psd
-
-    def compute(self, np.ndarray[DTYPE_t, ndim=1] x, np.ndarray[DTYPE_t, ndim=1] yerr):
-        if x.shape[0] != yerr.shape[0]:
-            raise ValueError("dimension mismatch")
-        cdef int i
-        for i in range(x.shape[0] - 1):
-            if x[i+1] <= x[i]:
-                raise ValueError("the time series must be ordered")
-        self._data_size = x.shape[0]
-        self.gp.compute(self._data_size, <double*>x.data, <double*>yerr.data)
-
-    def log_likelihood(self, np.ndarray[DTYPE_t, ndim=1] y):
-        if not self.computed:
-            raise RuntimeError("you must call 'compute' first")
-        if y.shape[0] != self._data_size:
-            raise ValueError("dimension mismatch")
-        return self.gp.log_likelihood(<double*>y.data)
-
-    def sample(self, np.ndarray[DTYPE_t, ndim=1] x, double tiny=1e-12):
-        cdef np.ndarray[DTYPE_t, ndim=2] K = self.get_matrix(x)
-        K[np.diag_indices_from(K)] += tiny
-        return np.random.multivariate_normal(np.zeros_like(x), K)
+def kernel_psd(
+    np.ndarray[DTYPE_t, ndim=1] alpha_real,
+    np.ndarray[DTYPE_t, ndim=1] beta_real,
+    np.ndarray[DTYPE_t, ndim=1] alpha_complex_real,
+    np.ndarray[DTYPE_t, ndim=1] alpha_complex_imag,
+    np.ndarray[DTYPE_t, ndim=1] beta_complex_real,
+    np.ndarray[DTYPE_t, ndim=1] beta_complex_imag,
+    np.ndarray[DTYPE_t, ndim=1] omega,
+):
+    cdef int i
+    cdef np.ndarray[DTYPE_t, ndim=1] p = np.empty_like(omega)
+    for i in range(omega.shape[0]):
+        p[i] = get_psd_value(
+            alpha_real.shape[0],
+            <double*>alpha_real.data,
+            <double*>beta_real.data,
+            alpha_complex_real.shape[0],
+            <double*>alpha_complex_real.data,
+            <double*>alpha_complex_imag.data,
+            <double*>beta_complex_real.data,
+            <double*>beta_complex_imag.data,
+            omega[i]
+        )
+    return p
 
 
 cdef class Solver:
@@ -302,6 +211,11 @@ cdef class Solver:
     property log_determinant:
         def __get__(self):
             return self.solver.log_determinant()
+
+    def dot_solve(self, np.ndarray[DTYPE_t, ndim=1] y):
+        if y.shape[0] != self.N:
+            raise ValueError("dimension mismatch")
+        return self.solver.dot_solve(<double*>y.data)
 
     def apply_inverse(self, np.ndarray[DTYPE_t, ndim=1] y, in_place=False):
         if y.shape[0] != self.N:

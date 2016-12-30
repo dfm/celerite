@@ -7,9 +7,10 @@
 
 #include "genrp/utils.h"
 #include "genrp/banded.h"
-#include "genrp/solvers/solver.h"
+#include "genrp/solver/solver.h"
 
 namespace genrp {
+namespace solver {
 
 #define BLOCKSIZE                                      \
   size_t p_real = this->p_real_,                       \
@@ -268,6 +269,7 @@ void BandSolver<T>::solve (const Eigen::MatrixXd& b, T* x) const {
 
 #undef BLOCKSIZE
 
+};
 };
 
 #endif

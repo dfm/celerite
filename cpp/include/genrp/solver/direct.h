@@ -5,9 +5,10 @@
 #include <Eigen/Dense>
 
 #include "genrp/utils.h"
-#include "genrp/solvers/solver.h"
+#include "genrp/solver/solver.h"
 
 namespace genrp {
+namespace solver {
 
 template <typename T>
 class DirectSolver : public Solver<T> {
@@ -103,6 +104,7 @@ void DirectSolver<T>::solve (const Eigen::MatrixXd& b, T* x) const {
       x[i+j*nrhs] = result(i, j);
 }
 
+};
 };
 
 #endif
