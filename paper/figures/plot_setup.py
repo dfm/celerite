@@ -6,7 +6,7 @@ from cycler import cycler
 from matplotlib import rcParams
 from savefig import monkey_patch
 
-__all__ = ["setup", "COLORS", "SQUARE_FIGSIZE"]
+__all__ = ["setup", "COLORS", "SQUARE_FIGSIZE", "HORIZONTAL_FIGSIZE"]
 
 def setup():
     monkey_patch()
@@ -29,3 +29,4 @@ COLORS = dict(
 )
 
 SQUARE_FIGSIZE = (4, 4)
+HORIZONTAL_FIGSIZE = (8, 4)
