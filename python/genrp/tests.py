@@ -5,7 +5,7 @@ from __future__ import division, print_function
 import pytest
 import numpy as np
 
-from . import Solver, GP
+from . import Solver, GP, kernels
 
 __all__ = ["test_invalid_parameters", "test_log_determinant", "test_solve",
            "test_kernel_params", "test_build_gp", "test_log_likelihood",
@@ -231,13 +231,11 @@ def test_solve(seed=42):
 # Test whether the GP can properly handle the case where the Lorentzian has a
 # very large quality factor and the time samples are almost exactly at Nyquist
 # sampling.  This can frustrate Green's-function-based CARMA solvers.
-@pytest.mark.skip(reason="API is changing")
 def test_nyquist_singularity(seed=4220):
     np.random.seed(seed)
 
-    gp = GP()
-    amp, q, freq = 1.0, 1e-6, 1.0
-    gp.add_term(np.log(amp), np.log(q), np.log(freq))
+    kernel = kernels.ComplexTerm(1.0, np.log(1e-6), np.log(1.0))
+    gp = GP(kernel)
 
     # Samples are very close to Nyquist with f = 1.0
     ts = np.array([0.0, 0.5, 1.0, 1.5])

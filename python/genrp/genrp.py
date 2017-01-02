@@ -9,7 +9,7 @@ __all__ = ["GP"]
 
 class GP(object):
 
-    def __init__(self, kernel, log_white_noise=-12.0, fit_white_noise=False):
+    def __init__(self, kernel, log_white_noise=-20.0, fit_white_noise=False):
         self.kernel = kernel
 
         self.solver = None
@@ -72,6 +72,7 @@ class GP(object):
             return self.kernel.get_parameter(name[7:])
 
     def set_parameter(self, name, value):
+        self._computed = False
         if name == "log_white_noise":
             self.log_white_noise = value
         else:
