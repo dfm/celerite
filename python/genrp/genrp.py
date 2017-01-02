@@ -9,7 +9,7 @@ __all__ = ["GP"]
 
 class GP(object):
 
-    def __init__(self, kernel, log_white_noise=-20.0, fit_white_noise=False):
+    def __init__(self, kernel, log_white_noise=-np.inf, fit_white_noise=False):
         self.kernel = kernel
 
         self.solver = None
@@ -78,7 +78,7 @@ class GP(object):
         else:
             self.kernel.set_parameter(name[7:], value)
 
-    def compute(self, t, yerr=0.0):
+    def compute(self, t, yerr=1.123e-12):
         self._t = np.ascontiguousarray(t, dtype=float)
         self._y_var = (
             yerr*yerr +
