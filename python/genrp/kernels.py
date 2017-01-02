@@ -3,6 +3,7 @@
 from __future__ import division, print_function
 import math
 import numpy as np
+from itertools import chain
 
 from ._genrp import kernel_value, kernel_psd
 
@@ -13,8 +14,22 @@ __all__ = [
 
 class Kernel(object):
 
+    parameter_names = tuple()
+
+    def __init__(self):
+        self.unfrozen_mask = np.ones(self.full_size, dtype=bool)
+        self.dirty = True
+
     def __len__(self):
-        return 0
+        return self.vector_size
+
+    @property
+    def full_size(self):
+        return len(self.parameter_names)
+
+    @property
+    def vector_size(self):
+        return self.unfrozen_mask.sum()
 
     def get_value(self, x):
         x = np.asarray(x)
@@ -47,6 +62,45 @@ class Kernel(object):
 
     def __radd__(self, b):
         return Sum(b, self)
+
+    def get_parameter_names(self, include_frozen=False):
+        if include_frozen:
+            return self.parameter_names
+        return tuple(p
+                     for p, f in zip(self.parameter_names, self.unfrozen_mask)
+                     if f)
+
+    def get_parameter_vector(self, include_frozen=False):
+        if include_frozen:
+            return self.parameter_vector
+        return self.parameter_vector[self.unfrozen_mask]
+
+    def set_parameter_vector(self, vector, include_frozen=False):
+        v = self.parameter_vector
+        if include_frozen:
+            v[:] = vector
+        else:
+            v[self.unfrozen_mask] = vector
+        self.parameter_vector = v
+        self.dirty = True
+
+    def freeze_parameter(self, name):
+        i = self.get_parameter_names(include_frozen=True).index(name)
+        self.unfrozen_mask[i] = False
+
+    def thaw_parameter(self, name):
+        i = self.get_parameter_names(include_frozen=True).index(name)
+        self.unfrozen_mask[i] = True
+
+    def get_parameter(self, name):
+        i = self.get_parameter_names(include_frozen=True).index(name)
+        return self.get_parameter_vector(include_frozen=True)[i]
+
+    def set_parameter(self, name, value):
+        i = self.get_parameter_names(include_frozen=True).index(name)
+        v = self.get_parameter_vector(include_frozen=True)
+        v[i] = value
+        self.set_parameter_vector(v, include_frozen=True)
 
     @property
     def p_real(self):
@@ -90,8 +144,79 @@ class Sum(Kernel):
     def __repr__(self):
         return "{0} + {1}".format(self.k1, self.k2)
 
-    def __len__(self):
-        return len(self.k1) + len(self.k2)
+    def __getitem__(self, name):
+        return self.get_parameter(name)
+
+    def __setitem__(self, name, value):
+        return self.set_parameter(name, value)
+
+    @property
+    def dirty(self):
+        return self.k1.dirty or self.k2.dirty
+
+    @dirty.setter
+    def dirty(self, value):
+        self.k1.dirty = value
+        self.k2.dirty = value
+
+    @property
+    def full_size(self):
+        return self.k1.full_size + self.k2.full_size
+
+    @property
+    def vector_size(self):
+        return self.k1.vector_size + self.k2.vector_size
+
+    def get_parameter_names(self, include_frozen=False):
+        return tuple(chain(
+            map("k1:{0}".format,
+                self.k1.get_parameter_names(include_frozen=include_frozen)),
+            map("k2:{0}".format,
+                self.k2.get_parameter_names(include_frozen=include_frozen)),
+        ))
+
+    def get_parameter_vector(self, include_frozen=False):
+        return np.append(
+            self.k1.get_parameter_vector(include_frozen=include_frozen),
+            self.k2.get_parameter_vector(include_frozen=include_frozen),
+        )
+
+    def set_parameter_vector(self, vector, include_frozen=False):
+        i = self.k1.full_size if include_frozen else self.k2.vector_size
+        self.k1.set_parameter_vector(vector[:i], include_frozen=include_frozen)
+        self.k2.set_parameter_vector(vector[i:], include_frozen=include_frozen)
+
+    def freeze_parameter(self, name):
+        if name.startswith("k1:"):
+            self.k1.freeze_parameter(name[3:])
+        elif name.startswith("k2:"):
+            self.k2.freeze_parameter(name[3:])
+        else:
+            raise ValueError("unrecognized parameter '{0}'".format(name))
+
+    def thaw_parameter(self, name):
+        if name.startswith("k1:"):
+            self.k1.thaw_parameter(name[3:])
+        elif name.startswith("k2:"):
+            self.k2.thaw_parameter(name[3:])
+        else:
+            raise ValueError("unrecognized parameter '{0}'".format(name))
+
+    def get_parameter(self, name):
+        if name.startswith("k1:"):
+            return self.k1.get_parameter(name[3:])
+        elif name.startswith("k2:"):
+            return self.k2.get_parameter(name[3:])
+        else:
+            raise ValueError("unrecognized parameter '{0}'".format(name))
+
+    def set_parameter(self, name, value):
+        if name.startswith("k1:"):
+            self.k1.set_parameter(name[3:], value)
+        elif name.startswith("k2:"):
+            self.k2.set_parameter(name[3:], value)
+        else:
+            raise ValueError("unrecognized parameter '{0}'".format(name))
 
     @property
     def p_real(self):
@@ -132,15 +257,24 @@ class Sum(Kernel):
 
 class RealTerm(Kernel):
 
+    parameter_names = ("a", "log_c")
+
     def __init__(self, a, log_c):
+        super(RealTerm, self).__init__()
         self.a = a
         self.log_c = log_c
 
+    @property
+    def parameter_vector(self):
+        return np.array([self.a, self.log_c])
+
+    @parameter_vector.setter
+    def parameter_vector(self, v):
+        self.a = v[0]
+        self.log_c = v[1]
+
     def __repr__(self):
         return "RealTerm({0.a}, {0.log_c})".format(self)
-
-    def __len__(self):
-        return 2
 
     @property
     def p_real(self):
@@ -161,14 +295,38 @@ class ComplexTerm(Kernel):
         if len(args) == 3:
             a, log_c, log_d = args
             b = 0.0
+            self.fit_b = False
+            self.parameter_names = ("a", "log_c", "log_d")
         else:
             a, b, log_c, log_d = args
+            self.fit_b = True
+            self.parameter_names = ("a", "b", "log_c", "log_d")
         self.a = a
         self.b = b
         self.log_c = log_c
         self.log_d = log_d
+        super(ComplexTerm, self).__init__()
+
+    @property
+    def parameter_vector(self):
+        if self.fit_b:
+            return np.array([self.a, self.b, self.log_c, self.log_d])
+        return np.array([self.a, self.log_c, self.log_d])
+
+    @parameter_vector.setter
+    def parameter_vector(self, v):
+        self.a = v[0]
+        if self.fit_b:
+            self.b = v[1]
+            self.log_c = v[2]
+            self.log_d = v[3]
+        else:
+            self.log_c = v[1]
+            self.log_d = v[2]
 
     def __repr__(self):
+        if not self.fit_b:
+            return "ComplexTerm({0.a}, {0.log_c}, {0.log_d})".format(self)
         return "ComplexTerm({0.a}, {0.b}, {0.log_c}, {0.log_d})".format(self)
 
     @property
@@ -194,10 +352,23 @@ class ComplexTerm(Kernel):
 
 class SHOTerm(Kernel):
 
+    parameter_names = ("log_S0", "log_Q", "log_w0")
+
     def __init__(self, log_S0, log_Q, log_w0):
+        super(SHOTerm, self).__init__()
         self.log_S0 = log_S0
         self.log_Q = log_Q
         self.log_w0 = log_w0
+
+    @property
+    def parameter_vector(self):
+        return np.array([self.log_S0, self.log_Q, self.log_w0])
+
+    @parameter_vector.setter
+    def parameter_vector(self, v):
+        self.log_S0 = v[0]
+        self.log_Q = v[1]
+        self.log_w0 = v[2]
 
     def __repr__(self):
         return "SHOTerm({0.log_S0}, {0.log_Q}, {0.log_w0})".format(self)
@@ -260,10 +431,22 @@ class SHOTerm(Kernel):
 
 class Matern32Term(Kernel):
 
+    parameter_names = ("log_sigma", "log_rho")
+
     def __init__(self, log_sigma, log_rho, eps=1e-5):
+        super(Matern32Term, self).__init__()
         self.log_sigma = log_sigma
         self.log_rho = log_rho
         self.eps = eps
+
+    @property
+    def parameter_vector(self):
+        return np.array([self.log_sigma, self.log_rho])
+
+    @parameter_vector.setter
+    def parameter_vector(self, v):
+        self.log_sigma = v[0]
+        self.log_rho = v[1]
 
     def __repr__(self):
         return "Matern32Term({0.log_sigma}, {0.log_rho}, eps={0.eps})" \
