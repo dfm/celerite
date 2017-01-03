@@ -13,12 +13,12 @@ namespace genrp {
 namespace solver {
 
 #define BLOCKSIZE                                      \
-  size_t p_real = this->p_real_,                       \
-         p_complex = this->p_complex_,                 \
-         n = this->n_,                                 \
-         width = p_real + 2 * p_complex + 2,           \
-         block_size = 2 * p_real + 4 * p_complex + 1,  \
-         dim_ext = block_size * (n - 1) + 1;           \
+  int p_real = this->p_real_,                       \
+      p_complex = this->p_complex_,                 \
+      n = this->n_,                                 \
+      width = p_real + 2 * p_complex + 2,           \
+      block_size = 2 * p_real + 4 * p_complex + 1,  \
+      dim_ext = block_size * (n - 1) + 1;           \
   if (p_complex == 0) width = p_real + 1;
 
 template <typename T>
@@ -89,7 +89,7 @@ int BandSolver<T>::compute (
   this->n_ = x.rows();
 
   // Dimensions.
-  size_t j, k;
+  int j, k;
 
   BLOCKSIZE
 
@@ -232,7 +232,7 @@ int BandSolver<T>::compute (
 
   // Compute the determinant.
   T ld = T(0.0);
-  for (size_t i = 0; i < dim_ext; ++i) ld += log(abs(a_(0, i)));
+  for (int i = 0; i < dim_ext; ++i) ld += log(abs(a_(0, i)));
   this->log_det_ = ld;
   this->computed_ = true;
 
@@ -247,23 +247,23 @@ void BandSolver<T>::solve (const Eigen::MatrixXd& b, T* x) const {
   if (!(this->computed_)) {
     throw SOLVER_NOT_COMPUTED;
   }
-  size_t nrhs = b.cols();
+  int nrhs = b.cols();
 
   BLOCKSIZE
 
   // Pad the input vector to the extended size.
   Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> bex = Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>::Zero(dim_ext, nrhs);
-  for (size_t j = 0; j < nrhs; ++j)
-    for (size_t i = 0; i < this->n_; ++i)
+  for (int j = 0; j < nrhs; ++j)
+    for (int i = 0; i < this->n_; ++i)
       bex(i*block_size, j) = T(b(i, j));
 
   // Solve the extended system.
-  for (size_t i = 0; i < nrhs; ++i)
+  for (int i = 0; i < nrhs; ++i)
     banbks<T>(a_.data(), dim_ext, width, width, al_.data(), ipiv_.data(), bex.col(i).data());
 
   // Copy the output.
-  for (size_t j = 0; j < nrhs; ++j)
-    for (size_t i = 0; i < this->n_; ++i)
+  for (int j = 0; j < nrhs; ++j)
+    for (int i = 0; i < this->n_; ++i)
       x[i+j*nrhs] = bex(i*block_size, j);
 }
 

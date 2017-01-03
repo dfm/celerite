@@ -66,10 +66,10 @@ int DirectSolver<T>::compute (
   double dx;
   T v, asum = alpha_real.sum() + alpha_complex_real.sum();
   Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> K(this->n_, this->n_);
-  for (size_t i = 0; i < this->n_; ++i) {
+  for (int i = 0; i < this->n_; ++i) {
     K(i, i) = asum + diag(i);
 
-    for (size_t j = i+1; j < this->n_; ++j) {
+    for (int j = i+1; j < this->n_; ++j) {
       dx = x(j) - x(i);
       v = get_kernel_value(alpha_real, beta_real, alpha_complex_real, alpha_complex_imag, beta_complex_real, beta_complex_imag, dx);
       K(i, j) = v;
@@ -93,14 +93,14 @@ void DirectSolver<T>::solve (const Eigen::MatrixXd& b, T* x) const {
   if (!(this->computed_)) {
     throw SOLVER_NOT_COMPUTED;
   }
-  size_t nrhs = b.cols();
+  int nrhs = b.cols();
 
   Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>
     result = factor_.solve(b.cast<T>());
 
   // Copy the output.
-  for (size_t j = 0; j < nrhs; ++j)
-    for (size_t i = 0; i < this->n_; ++i)
+  for (int j = 0; j < nrhs; ++j)
+    for (int i = 0; i < this->n_; ++i)
       x[i+j*nrhs] = result(i, j);
 }
 

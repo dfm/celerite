@@ -14,7 +14,7 @@ template <typename T>
 class Solver {
 protected:
   bool computed_;
-  size_t n_, p_real_, p_complex_;
+  int n_, p_real_, p_complex_;
   T log_det_;
 
 public:
