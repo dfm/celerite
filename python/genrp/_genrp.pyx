@@ -59,15 +59,15 @@ cdef extern from "genrp/genrp.h" namespace "genrp":
         double omega
     )
 
-    cdef bool check_coefficients[T] (
+    cdef bool check_coefficients (
         size_t p_real,
-        const T* const alpha_real,
-        const T* const beta_real,
+        const double* const alpha_real,
+        const double* const beta_real,
         size_t p_complex,
-        const T* const alpha_complex_real,
-        const T* const alpha_complex_imag,
-        const T* const beta_complex_real,
-        const T* const beta_complex_imag
+        const double* const alpha_complex_real,
+        const double* const alpha_complex_imag,
+        const double* const beta_complex_real,
+        const double* const beta_complex_imag
     )
 
 cdef extern from "genrp/genrp.h" namespace "genrp::solver":
@@ -144,7 +144,7 @@ def check_parameters(
     np.ndarray[DTYPE_t, ndim=1] beta_complex_real,
     np.ndarray[DTYPE_t, ndim=1] beta_complex_imag,
 ):
-    return check_coefficients[double](
+    return check_coefficients(
         alpha_real.shape[0],
         <double*>alpha_real.data,
         <double*>beta_real.data,

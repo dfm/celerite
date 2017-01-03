@@ -31,7 +31,7 @@ bool check_coefficients (
 ) {
   using std::abs;
   typedef typename Derived::Scalar T;
-  typedef Eigen::Matrix<typename Derived::Scalar, Eigen::Dynamic, 1> vector_t;
+  typedef Eigen::Matrix<T, Eigen::Dynamic, 1> vector_t;
 
   if (alpha_real.rows() != beta_real.rows()) return false;
   if (alpha_complex_real.rows() != alpha_complex_imag.rows()) return false;
@@ -156,18 +156,18 @@ typename Derived::Scalar get_psd_value (
   return sqrt(2.0 / M_PI) * p;
 }
 
-template <typename T>
+// FIXME: I don't know why this won't compile as a template with gcc
 bool check_coefficients (
   size_t p_real,
-  const T* const alpha_real,
-  const T* const beta_real,
+  const double* const alpha_real,
+  const double* const beta_real,
   size_t p_complex,
-  const T* const alpha_complex_real,
-  const T* const alpha_complex_imag,
-  const T* const beta_complex_real,
-  const T* const beta_complex_imag
+  const double* const alpha_complex_real,
+  const double* const alpha_complex_imag,
+  const double* const beta_complex_real,
+  const double* const beta_complex_imag
 ) {
-  typedef Eigen::Map<const Eigen::Matrix<T, Eigen::Dynamic, 1> > vector_t;
+  typedef Eigen::Map<const Eigen::Matrix<double, Eigen::Dynamic, 1> > vector_t;
   return check_coefficients(
     vector_t(alpha_real, p_real, 1),
     vector_t(beta_real, p_real, 1),
