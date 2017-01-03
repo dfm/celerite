@@ -104,7 +104,7 @@ int sgn(T val) {
 // Count the positive roots of a polynomial using Sturm's theorem.
 template <typename T>
 int polycountroots (const Eigen::Matrix<T, Eigen::Dynamic, 1>& p) {
-  if (p.rows() <= 1) return 0;
+  // if (p.rows() <= 1) return 0;
 
   int n = p.rows() - 1,
       count = 0;
