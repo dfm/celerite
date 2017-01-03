@@ -88,8 +88,8 @@ bool check_coefficients (
   }
 
   // Deal with over/underflow.
-  while (poly.rows() > 1 && abs(poly[0]) < POLYTOL)
-    poly = poly.tail(poly.rows() - 1);
+  // while (poly.rows() > 1 && abs(poly[0]) < POLYTOL)
+  //   poly = poly.tail(poly.rows() - 1);
 
   if (polyval(poly, 0.0) < 0.0) return false;
 
