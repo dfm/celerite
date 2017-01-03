@@ -61,7 +61,7 @@ Eigen::Matrix<T, Eigen::Dynamic, 1> polyrem (const Eigen::Matrix<T, Eigen::Dynam
   }
   int strt;
   for (strt = 0; strt < m; ++strt) {
-    if (abs(r[strt]) >= POLYTOL) {
+    if (abs(r[strt]) >= T(POLYTOL)) {
       return r.tail(m + 1 - strt);
     }
   }
