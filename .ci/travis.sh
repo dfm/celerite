@@ -1,5 +1,7 @@
 #!/bin/bash -x
 
+set -ex
+
 # Download the requested version of Eigen
 mkdir -p eigen
 cd eigen

@@ -61,7 +61,7 @@ Eigen::Matrix<T, Eigen::Dynamic, 1> polyrem (const Eigen::Matrix<T, Eigen::Dynam
   }
   int strt;
   for (strt = 0; strt < m; ++strt) {
-    if (abs(r[strt]) >= 1e-10) {
+    if (abs(r[strt]) >= T(POLYTOL)) {
       return r.tail(m + 1 - strt);
     }
   }
@@ -104,7 +104,7 @@ int sgn(T val) {
 // Count the positive roots of a polynomial using Sturm's theorem.
 template <typename T>
 int polycountroots (const Eigen::Matrix<T, Eigen::Dynamic, 1>& p) {
-  // if (p.rows() <= 1) return 0;
+  if (p.rows() <= 1) return 0;
 
   int n = p.rows() - 1,
       count = 0;
