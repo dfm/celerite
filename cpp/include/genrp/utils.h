@@ -31,7 +31,7 @@ bool check_coefficients (
 ) {
   using std::abs;
   typedef typename Derived::Scalar T;
-  typedef Eigen::Matrix<T, Eigen::Dynamic, 1> vector_t;
+  typedef Eigen::Matrix<typename Derived::Scalar, Eigen::Dynamic, 1> vector_t;
 
   if (alpha_real.rows() != beta_real.rows()) return false;
   if (alpha_complex_real.rows() != alpha_complex_imag.rows()) return false;
@@ -78,7 +78,8 @@ bool check_coefficients (
   }
 
   // Compute the full numerator.
-  vector_t poly = vector_t::Zero(1), tmp;
+  vector_t poly(1), tmp;
+  poly.setConstant(T(0.0));
   for (int i = 0; i < n; ++i) {
     tmp = num[i];
     for (int j = 0; j < n; ++j) {

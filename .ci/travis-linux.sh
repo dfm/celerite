@@ -1,7 +1,5 @@
 #!/bin/bash -x
 
-set -ex
-
 # Install conda
 if [[ $TEST_LANG == python ]]
 then

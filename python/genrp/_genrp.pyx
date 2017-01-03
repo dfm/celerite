@@ -8,7 +8,7 @@ cimport cython
 import time
 import numpy as np
 cimport numpy as np
-#  from libcpp cimport bool
+from libcpp cimport bool
 from libc.math cimport fabs, exp, cos
 
 DTYPE = np.float64
@@ -59,16 +59,16 @@ cdef extern from "genrp/genrp.h" namespace "genrp":
         double omega
     )
 
-    #  cdef bool check_coefficients[T] (
-    #      size_t p_real,
-    #      const T* const alpha_real,
-    #      const T* const beta_real,
-    #      size_t p_complex,
-    #      const T* const alpha_complex_real,
-    #      const T* const alpha_complex_imag,
-    #      const T* const beta_complex_real,
-    #      const T* const beta_complex_imag
-    #  )
+    cdef bool check_coefficients[T] (
+        size_t p_real,
+        const T* const alpha_real,
+        const T* const beta_real,
+        size_t p_complex,
+        const T* const alpha_complex_real,
+        const T* const alpha_complex_imag,
+        const T* const beta_complex_real,
+        const T* const beta_complex_imag
+    )
 
 cdef extern from "genrp/genrp.h" namespace "genrp::solver":
     cdef cppclass BandSolver[T]:
@@ -136,24 +136,24 @@ def kernel_psd(
         )
     return p
 
-#  def check_parameters(
-#      np.ndarray[DTYPE_t, ndim=1] alpha_real,
-#      np.ndarray[DTYPE_t, ndim=1] beta_real,
-#      np.ndarray[DTYPE_t, ndim=1] alpha_complex_real,
-#      np.ndarray[DTYPE_t, ndim=1] alpha_complex_imag,
-#      np.ndarray[DTYPE_t, ndim=1] beta_complex_real,
-#      np.ndarray[DTYPE_t, ndim=1] beta_complex_imag,
-#  ):
-#      return check_coefficients[double](
-#          alpha_real.shape[0],
-#          <double*>alpha_real.data,
-#          <double*>beta_real.data,
-#          alpha_complex_real.shape[0],
-#          <double*>alpha_complex_real.data,
-#          <double*>alpha_complex_imag.data,
-#          <double*>beta_complex_real.data,
-#          <double*>beta_complex_imag.data,
-#      )
+def check_parameters(
+    np.ndarray[DTYPE_t, ndim=1] alpha_real,
+    np.ndarray[DTYPE_t, ndim=1] beta_real,
+    np.ndarray[DTYPE_t, ndim=1] alpha_complex_real,
+    np.ndarray[DTYPE_t, ndim=1] alpha_complex_imag,
+    np.ndarray[DTYPE_t, ndim=1] beta_complex_real,
+    np.ndarray[DTYPE_t, ndim=1] beta_complex_imag,
+):
+    return check_coefficients[double](
+        alpha_real.shape[0],
+        <double*>alpha_real.data,
+        <double*>beta_real.data,
+        alpha_complex_real.shape[0],
+        <double*>alpha_complex_real.data,
+        <double*>alpha_complex_imag.data,
+        <double*>beta_complex_real.data,
+        <double*>beta_complex_imag.data,
+    )
 
 
 cdef class Solver:

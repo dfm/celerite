@@ -13,7 +13,7 @@ namespace genrp {
 template <typename T>
 T polyval (const Eigen::Matrix<T, Eigen::Dynamic, 1>& p, const double x) {
   T result = T(0.0);
-  for (size_t i = 0; i < p.rows(); ++i) result = result * x + p[i];
+  for (int i = 0; i < p.rows(); ++i) result = result * x + p[i];
   return result;
 }
 
