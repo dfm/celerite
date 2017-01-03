@@ -8,6 +8,8 @@
 
 namespace genrp {
 
+#define POLYTOL 1e-10
+
 template <typename T>
 T polyval (const Eigen::Matrix<T, Eigen::Dynamic, 1>& p, const double x) {
   T result = T(0.0);
@@ -59,7 +61,7 @@ Eigen::Matrix<T, Eigen::Dynamic, 1> polyrem (const Eigen::Matrix<T, Eigen::Dynam
   }
   int strt;
   for (strt = 0; strt < m; ++strt) {
-    if (abs(r[strt]) >= 1e-8) {
+    if (abs(r[strt]) >= POLYTOL) {
       return r.tail(m + 1 - strt);
     }
   }
@@ -104,6 +106,8 @@ template <typename T>
 int polycountroots (const Eigen::Matrix<T, Eigen::Dynamic, 1>& p) {
   int n = p.rows() - 1,
       count = 0;
+
+  if (n <= 0) return 0;
 
   // Compute the initial signs and count any initial sign change.
   Eigen::Matrix<T, Eigen::Dynamic, 1> p0 = p, p1 = polyder(p0), tmp;

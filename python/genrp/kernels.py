@@ -5,7 +5,7 @@ import math
 import numpy as np
 from itertools import chain
 
-from ._genrp import kernel_value, kernel_psd
+from ._genrp import kernel_value, kernel_psd, check_parameters
 
 __all__ = [
     "Kernel", "Sum", "RealTerm", "ComplexTerm", "SHOTerm", "Matern32Term"
@@ -56,6 +56,16 @@ class Kernel(object):
             w.flatten().astype(float),
         )
         return p.reshape(w.shape)
+
+    def check_parameters(self):
+        return check_parameters(
+            self.alpha_real.astype(float),
+            self.beta_real.astype(float),
+            self.alpha_complex_real.astype(float),
+            self.alpha_complex_imag.astype(float),
+            self.beta_complex_real.astype(float),
+            self.beta_complex_imag.astype(float),
+        )
 
     def __add__(self, b):
         return Sum(self, b)
@@ -182,7 +192,7 @@ class Sum(Kernel):
         )
 
     def set_parameter_vector(self, vector, include_frozen=False):
-        i = self.k1.full_size if include_frozen else self.k2.vector_size
+        i = self.k1.full_size if include_frozen else self.k1.vector_size
         self.k1.set_parameter_vector(vector[:i], include_frozen=include_frozen)
         self.k2.set_parameter_vector(vector[i:], include_frozen=include_frozen)
 

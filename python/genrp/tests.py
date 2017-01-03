@@ -8,8 +8,7 @@ import numpy as np
 from . import Solver, GP, kernels
 
 __all__ = ["test_invalid_parameters", "test_log_determinant", "test_solve",
-           "test_kernel_params", "test_build_gp", "test_log_likelihood",
-           "test_psd", "test_nyquist_singularity"]
+           "test_nyquist_singularity"]
 
 
 def test_invalid_parameters(seed=42):
@@ -28,7 +27,7 @@ def test_invalid_parameters(seed=42):
     t = np.sort(t)
     Solver(alpha_real, beta_real, alpha_complex_real, alpha_complex_imag,
            beta_complex_real, beta_complex_imag, t)
-    alpha_complex_imag = np.array([3.0])
+    alpha_complex_real = np.array([-3.0])
     with pytest.raises(np.linalg.LinAlgError):
         Solver(alpha_real, beta_real, alpha_complex_real, alpha_complex_imag,
                beta_complex_real, beta_complex_imag, t)

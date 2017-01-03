@@ -51,7 +51,9 @@ class GP(object):
             self.log_white_noise = vector[0]
             self.kernel.set_parameter_vector(vector[1:],
                                              include_frozen=include_frozen)
-        self.kernel.set_parameter_vector(vector, include_frozen=include_frozen)
+        else:
+            self.kernel.set_parameter_vector(vector,
+                                             include_frozen=include_frozen)
 
     def freeze_parameter(self, name):
         if name == "log_white_noise":
@@ -80,11 +82,8 @@ class GP(object):
 
     def compute(self, t, yerr=1.123e-12):
         self._t = np.ascontiguousarray(t, dtype=float)
-        self._y_var = (
-            yerr*yerr +
-            np.exp(self.log_white_noise) +
-            np.zeros_like(self._t)
-        )
+        self._yerr = yerr + np.zeros_like(self._t)
+        self._y_var = yerr*yerr + np.exp(self.log_white_noise)
         self.solver = Solver(
             self.kernel.alpha_real,
             self.kernel.beta_real,

@@ -29,6 +29,7 @@ bool check_coefficients (
   const Eigen::DenseBase<Derived>& beta_complex_real,
   const Eigen::DenseBase<Derived>& beta_complex_imag
 ) {
+  using std::abs;
   typedef typename Derived::Scalar T;
   typedef Eigen::Matrix<T, Eigen::Dynamic, 1> vector_t;
 
@@ -85,6 +86,10 @@ bool check_coefficients (
     }
     poly = polyadd(poly, tmp);
   }
+
+  // Deal with over/underflow.
+  while (abs(poly[0]) < POLYTOL)
+    poly = poly.tail(poly.rows() - 1);
 
   if (polyval(poly, 0.0) < 0.0) return false;
 
