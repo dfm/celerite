@@ -81,9 +81,8 @@ class GP(object):
             self.kernel.set_parameter(name[7:], value)
 
     def compute(self, t, yerr=1.123e-12):
-        self._t = np.ascontiguousarray(t, dtype=float)
-        self._yerr = yerr + np.zeros_like(self._t)
-        self._y_var = yerr*yerr + np.exp(self.log_white_noise)
+        self._t = t
+        self._yerr = yerr
         self.solver = Solver(
             self.kernel.alpha_real,
             self.kernel.beta_real,
@@ -91,8 +90,9 @@ class GP(object):
             self.kernel.alpha_complex_imag,
             self.kernel.beta_complex_real,
             self.kernel.beta_complex_imag,
-            self._t,
-            self._y_var,
+            np.ascontiguousarray(t, dtype=np.float64),
+            np.ascontiguousarray(yerr**2 + np.exp(self.log_white_noise),
+                                 dtype=np.float64),
         )
         self._computed = True
         self.kernel.dirty = False
@@ -101,7 +101,7 @@ class GP(object):
         if not self.computed:
             if self._t is None:
                 raise RuntimeError("you must call 'compute' first")
-            self.compute(self._t, np.sqrt(self._y_var))
+            self.compute(self._t, self._y_err)
         if len(self._t) != len(y):
             raise ValueError("dimension mismatch")
         y = np.ascontiguousarray(y, dtype=float)
