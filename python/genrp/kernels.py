@@ -16,20 +16,9 @@ class Kernel(object):
 
     parameter_names = tuple()
 
-    def __init__(self, p_real=0, p_complex=0, size=None):
-        if size is None:
-            size = self.full_size
-        self.unfrozen_mask = np.ones(size, dtype=bool)
+    def __init__(self):
+        self.unfrozen_mask = np.ones(self.full_size, dtype=bool)
         self.dirty = True
-
-        self.p_real = p_real
-        self.alpha_real = np.empty(p_real, dtype=np.float64)
-        self.beta_real = np.empty(p_real, dtype=np.float64)
-        self.p_complex = p_complex
-        self.alpha_complex_real = np.empty(p_complex, dtype=np.float64)
-        self.alpha_complex_imag = np.empty(p_complex, dtype=np.float64)
-        self.beta_complex_real = np.empty(p_complex, dtype=np.float64)
-        self.beta_complex_imag = np.empty(p_complex, dtype=np.float64)
 
     def __len__(self):
         return self.vector_size
@@ -45,12 +34,12 @@ class Kernel(object):
     def get_value(self, x):
         x = np.asarray(x)
         k = kernel_value(
-            self.alpha_real,
-            self.beta_real,
-            self.alpha_complex_real,
-            self.alpha_complex_imag,
-            self.beta_complex_real,
-            self.beta_complex_imag,
+            self.alpha_real.astype(float),
+            self.beta_real.astype(float),
+            self.alpha_complex_real.astype(float),
+            self.alpha_complex_imag.astype(float),
+            self.beta_complex_real.astype(float),
+            self.beta_complex_imag.astype(float),
             x.flatten().astype(float),
         )
         return k.reshape(x.shape)
@@ -58,24 +47,24 @@ class Kernel(object):
     def get_psd(self, w):
         w = np.asarray(w)
         p = kernel_psd(
-            self.alpha_real,
-            self.beta_real,
-            self.alpha_complex_real,
-            self.alpha_complex_imag,
-            self.beta_complex_real,
-            self.beta_complex_imag,
+            self.alpha_real.astype(float),
+            self.beta_real.astype(float),
+            self.alpha_complex_real.astype(float),
+            self.alpha_complex_imag.astype(float),
+            self.beta_complex_real.astype(float),
+            self.beta_complex_imag.astype(float),
             w.flatten().astype(float),
         )
         return p.reshape(w.shape)
 
     def check_parameters(self):
         return check_parameters(
-            self.alpha_real,
-            self.beta_real,
-            self.alpha_complex_real,
-            self.alpha_complex_imag,
-            self.beta_complex_real,
-            self.beta_complex_imag,
+            self.alpha_real.astype(float),
+            self.beta_real.astype(float),
+            self.alpha_complex_real.astype(float),
+            self.alpha_complex_imag.astype(float),
+            self.beta_complex_real.astype(float),
+            self.beta_complex_imag.astype(float),
         )
 
     def __add__(self, b):
@@ -122,6 +111,38 @@ class Kernel(object):
         v = self.get_parameter_vector(include_frozen=True)
         v[i] = value
         self.set_parameter_vector(v, include_frozen=True)
+
+    @property
+    def p_real(self):
+        return 0
+
+    @property
+    def p_complex(self):
+        return 0
+
+    @property
+    def alpha_real(self):
+        return np.empty(0)
+
+    @property
+    def beta_real(self):
+        return np.empty(0)
+
+    @property
+    def alpha_complex_real(self):
+        return np.empty(0)
+
+    @property
+    def alpha_complex_imag(self):
+        return np.empty(0)
+
+    @property
+    def beta_complex_real(self):
+        return np.empty(0)
+
+    @property
+    def beta_complex_imag(self):
+        return np.empty(0)
 
 
 class Sum(Kernel):
@@ -249,25 +270,9 @@ class RealTerm(Kernel):
     parameter_names = ("a", "log_c")
 
     def __init__(self, a, log_c):
-        super(RealTerm, self).__init__(p_real=1)
+        super(RealTerm, self).__init__()
         self.a = a
         self.log_c = log_c
-
-    @property
-    def a(self):
-        return self.alpha_real[0]
-
-    @a.setter
-    def a(self, value):
-        self.alpha_real[0] = value
-
-    @property
-    def log_c(self):
-        return math.log(self.beta_real[0])
-
-    @log_c.setter
-    def log_c(self, value):
-        self.beta_real[0] = math.exp(value)
 
     @property
     def parameter_vector(self):
@@ -280,6 +285,18 @@ class RealTerm(Kernel):
 
     def __repr__(self):
         return "RealTerm({0.a}, {0.log_c})".format(self)
+
+    @property
+    def p_real(self):
+        return 1
+
+    @property
+    def alpha_real(self):
+        return np.array([self.a])
+
+    @property
+    def beta_real(self):
+        return np.array([math.exp(self.log_c)])
 
 
 class ComplexTerm(Kernel):
@@ -294,45 +311,11 @@ class ComplexTerm(Kernel):
             a, b, log_c, log_d = args
             self.fit_b = True
             self.parameter_names = ("a", "b", "log_c", "log_d")
-
-        super(ComplexTerm, self).__init__(p_complex=1)
-
         self.a = a
         self.b = b
         self.log_c = log_c
         self.log_d = log_d
-
-    @property
-    def a(self):
-        return self.alpha_complex_real[0]
-
-    @a.setter
-    def a(self, value):
-        self.alpha_complex_real[0] = value
-
-    @property
-    def b(self):
-        return self.alpha_complex_imag[0]
-
-    @b.setter
-    def b(self, value):
-        self.alpha_complex_imag[0] = value
-
-    @property
-    def log_c(self):
-        return math.log(self.beta_complex_real[0])
-
-    @log_c.setter
-    def log_c(self, value):
-        self.beta_complex_real[0] = math.exp(value)
-
-    @property
-    def log_d(self):
-        return math.log(self.beta_complex_imag[0])
-
-    @log_d.setter
-    def log_d(self, value):
-        self.beta_complex_imag[0] = math.exp(value)
+        super(ComplexTerm, self).__init__()
 
     @property
     def parameter_vector(self):
@@ -355,6 +338,26 @@ class ComplexTerm(Kernel):
         if not self.fit_b:
             return "ComplexTerm({0.a}, {0.log_c}, {0.log_d})".format(self)
         return "ComplexTerm({0.a}, {0.b}, {0.log_c}, {0.log_d})".format(self)
+
+    @property
+    def p_complex(self):
+        return 1
+
+    @property
+    def alpha_complex_real(self):
+        return np.array([self.a])
+
+    @property
+    def alpha_complex_imag(self):
+        return np.array([self.b])
+
+    @property
+    def beta_complex_real(self):
+        return np.array([math.exp(self.log_c)])
+
+    @property
+    def beta_complex_imag(self):
+        return np.array([math.exp(self.log_d)])
 
 
 class SHOTerm(Kernel):
