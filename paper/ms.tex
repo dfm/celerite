@@ -496,8 +496,18 @@ b_{j\pm} &=& 0 \\
     c_{j\pm} &=& \frac{\omega_0}{2\,Q}\,\left[1 \mp \sqrt{1-4\,Q^2}\right] \\
 d_{j\pm} &=& 0 \quad.
 \end{eqnarray}
+
+These identities yield a kernel of the form
+\begin{equation}
+k_{SHO}(\tau) = S_0 \omega_0 Q e^{-\frac{\omega_0 \tau}{2Q}} \begin{cases}
+\cosh{(\eta \omega_0 \tau)} + (2Q\eta)^{-1} \sinh{(\eta \omega_0 \tau)}, & 0 < Q < 1/2\\
+2 (1+\omega_0 \tau), & Q = 1/2\\
+\cos{(\eta \omega_0 \tau)} + (2Q\eta)^{-1} \sin{(\eta \omega_0 \tau)},& 1/2 < Q < \infty\\
+\end{cases}
+\end{equation}
+where $\eta = \vert 1-(4Q^2)^{-1}\vert$.
 It is interesting to note that, because of the damping, the characteristic
-oscillation frequency in this model $d_j$, for any finite quality factor $Q$,
+oscillation frequency in this model $d_j$, for any finite quality factor $Q > 1/2$,
 is not equal to the frequency of the undamped oscillator $\omega_0$.
 
 The power spectrum in \eq{sho-psd} has several limits of physical interest:

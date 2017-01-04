@@ -22,8 +22,10 @@ ax[:loglog](x,sho_psd(x,Q),label=L"$Q=2$",linewidth=lw)
 #ax[:loglog](x,sho_psd(x,Q),label="Q=4",linewidth=lw)
 Q = 10.0
 ax[:loglog](x,sho_psd(x,Q),label=L"$Q=10$",linewidth=lw)
-lorentz_psd(x,Q) = Q^2.* (1./ ((x - 1).^2 * (2*Q)^2 + 1) +
-                   1./ ((x + 1).^2 * (2*Q)^2 + 1))
+#lorentz_psd(x,Q) = Q^2./ ((x-sqrt(1.-1/2/Q^2)).^2.*(1-1/2/Q^2) * (2*Q)^2 + 1-1/4/Q^2)
+#lorentz_psd(x,Q) = Q^2.* (1./ ((x-sqrt(1.-1/2/Q^2)).^2 * (2*Q)^2 + 1-1/4/Q^2) +
+lorentz_psd(x,Q) = Q^2.*(1./ ((x-sqrt(1.-1/2/Q^2)).^2.*(1-1/2/Q^2) * (2*Q)^2 + 1-1/4/Q^2)
+ +1./ ((x+sqrt(1.-1/2/Q^2)).^2.*(1-1/2/Q^2) * (2*Q)^2 + 1-1/4/Q^2))
 
 #lorentzian = 1./((4-2./Q^2).*(x-sqrt(1-.5/Q^2)).^2+(1./Q^2-.25/Q^4))
 ax[:loglog](x,lorentz_psd(x,Q),label="Lorentzian",ls="dashed",linewidth=lw)
