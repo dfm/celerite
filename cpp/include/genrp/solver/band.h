@@ -75,12 +75,6 @@ int BandSolver<T>::compute (
   using std::abs;
 
   this->computed_ = false;
-  bool flag = check_coefficients(
-    alpha_real, beta_real,
-    alpha_complex_real, alpha_complex_imag,
-    beta_complex_real, beta_complex_imag
-  );
-  if (!flag) return SOLVER_NOT_COMPUTED;
   if (x.rows() != diag.rows()) return SOLVER_DIMENSION_MISMATCH;
 
   // Save the dimensions for later use

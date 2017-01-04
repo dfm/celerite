@@ -27,10 +27,6 @@ def test_invalid_parameters(seed=42):
     t = np.sort(t)
     Solver(alpha_real, beta_real, alpha_complex_real, alpha_complex_imag,
            beta_complex_real, beta_complex_imag, t)
-    alpha_complex_real = np.array([-3.0])
-    with pytest.raises(np.linalg.LinAlgError):
-        Solver(alpha_real, beta_real, alpha_complex_real, alpha_complex_imag,
-               beta_complex_real, beta_complex_imag, t)
 
 
 def test_log_determinant(seed=42):
