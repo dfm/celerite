@@ -518,7 +518,10 @@ The power spectrum in \eq{sho-psd} has several limits of physical interest:
 S(\omega) = \sqrt{\frac{2}{\pi}}\,\frac{S_0}{(\omega/\omega_0)^4+1} \quad.
 \end{eqnarray}
 A model like this has been used to model the granulation is Solar data
-\citep{Michel:2009}}
+\citep{Michel:2009}}, which has a kernel of
+\begin{equation}
+k(\tau) = S_0 \omega_0e^{-\frac{1}{\sqrt{2}}\omega_0\tau} \cos{\left(\frac{\omega_0\tau}{\sqrt{2}}-\frac{\pi}{4}\right)}.
+\end{equation}
 
 {\item Substituting $Q = 1/2$, \eq{sho-psd} becomes
 \begin{eqnarray}
@@ -575,8 +578,8 @@ in the previous section.
     oscillator (\eqalt{sho-psd}) plotted for several values of the quality
     factor $Q$.
     For comparison, the dashed line shows the Lorentzian function from
-    \eq{lorentz-psd} with $c_j = 2\,Q = 20$ and normalized so that
-    $S(d_j) = Q^2 = 100$.
+    \eq{lorentz-psd} with $\omega_0/c_j = 2\,Q = 20$ and normalized so that
+    $S(d_j)/S(0) = Q^2 = 100$.
     (right) The corresponding autocorrelation functions with the same colors.
     \figurelabel{sho}}
 \end{center}
