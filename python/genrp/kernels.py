@@ -5,7 +5,7 @@ import math
 import numpy as np
 from itertools import chain
 
-from ._genrp import kernel_value, kernel_psd, check_parameters
+from ._genrp import get_kernel_value, get_psd_value, check_coefficients
 
 __all__ = [
     "Kernel", "Sum", "RealTerm", "ComplexTerm", "SHOTerm", "Matern32Term"
@@ -33,38 +33,38 @@ class Kernel(object):
 
     def get_value(self, x):
         x = np.asarray(x)
-        k = kernel_value(
-            self.alpha_real.astype(float),
-            self.beta_real.astype(float),
-            self.alpha_complex_real.astype(float),
-            self.alpha_complex_imag.astype(float),
-            self.beta_complex_real.astype(float),
-            self.beta_complex_imag.astype(float),
-            x.flatten().astype(float),
+        k = get_kernel_value(
+            self.alpha_real,
+            self.beta_real,
+            self.alpha_complex_real,
+            self.alpha_complex_imag,
+            self.beta_complex_real,
+            self.beta_complex_imag,
+            x.flatten(),
         )
         return k.reshape(x.shape)
 
     def get_psd(self, w):
         w = np.asarray(w)
-        p = kernel_psd(
-            self.alpha_real.astype(float),
-            self.beta_real.astype(float),
-            self.alpha_complex_real.astype(float),
-            self.alpha_complex_imag.astype(float),
-            self.beta_complex_real.astype(float),
-            self.beta_complex_imag.astype(float),
-            w.flatten().astype(float),
+        p = get_psd_value(
+            self.alpha_real,
+            self.beta_real,
+            self.alpha_complex_real,
+            self.alpha_complex_imag,
+            self.beta_complex_real,
+            self.beta_complex_imag,
+            w.flatten(),
         )
         return p.reshape(w.shape)
 
     def check_parameters(self):
-        return check_parameters(
-            self.alpha_real.astype(float),
-            self.beta_real.astype(float),
-            self.alpha_complex_real.astype(float),
-            self.alpha_complex_imag.astype(float),
-            self.beta_complex_real.astype(float),
-            self.beta_complex_imag.astype(float),
+        return check_coefficients(
+            self.alpha_real,
+            self.beta_real,
+            self.alpha_complex_real,
+            self.alpha_complex_imag,
+            self.beta_complex_real,
+            self.beta_complex_imag,
         )
 
     def __add__(self, b):

@@ -82,17 +82,17 @@ class GP(object):
 
     def compute(self, t, yerr=1.123e-12):
         self._t = t
-        self._yerr = yerr
-        self.solver = Solver(
+        self._yerr = np.empty_like(self._t)
+        self._yerr[:] = yerr
+        self.solver = Solver()
+        self.solver.compute(
             self.kernel.alpha_real,
             self.kernel.beta_real,
             self.kernel.alpha_complex_real,
             self.kernel.alpha_complex_imag,
             self.kernel.beta_complex_real,
             self.kernel.beta_complex_imag,
-            np.ascontiguousarray(t, dtype=np.float64),
-            np.ascontiguousarray(yerr**2 + np.exp(self.log_white_noise),
-                                 dtype=np.float64),
+            t, self._yerr**2 + np.exp(self.log_white_noise)
         )
         self._computed = True
         self.kernel.dirty = False
@@ -106,7 +106,7 @@ class GP(object):
             raise ValueError("dimension mismatch")
         y = np.ascontiguousarray(y, dtype=float)
         return -0.5 * (self.solver.dot_solve(y) +
-                       self.solver.log_determinant +
+                       self.solver.log_determinant() +
                        len(y) * np.log(2*np.pi))
 
     @property

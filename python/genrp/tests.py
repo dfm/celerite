@@ -6,11 +6,13 @@ import pytest
 import numpy as np
 
 from . import Solver, GP, kernels
+from ._genrp import get_kernel_value
 
 __all__ = ["test_invalid_parameters", "test_log_determinant", "test_solve",
            "test_nyquist_singularity"]
 
 
+@pytest.mark.skip(reason="solver no longer checks for ordering")
 def test_invalid_parameters(seed=42):
     np.random.seed(seed)
     t = np.random.rand(50)
@@ -41,12 +43,17 @@ def test_log_determinant(seed=42):
     beta_complex_real = np.array([1.0])
     beta_complex_imag = np.array([1.0])
 
-    solver = Solver(alpha_real, beta_real,
-                    alpha_complex_real, alpha_complex_imag,
-                    beta_complex_real, beta_complex_imag,
-                    t, diag)
-    K = solver.get_matrix()
-    assert np.allclose(solver.log_determinant, np.linalg.slogdet(K)[1])
+    solver = Solver()
+    solver.compute(
+        alpha_real, beta_real, alpha_complex_real, alpha_complex_imag,
+        beta_complex_real, beta_complex_imag, t, diag
+    )
+    K = get_kernel_value(
+        alpha_real, beta_real, alpha_complex_real, alpha_complex_imag,
+        beta_complex_real, beta_complex_imag, t[:, None] - t[None, :]
+    )
+    K[np.diag_indices_from(K)] += diag
+    assert np.allclose(solver.log_determinant(), np.linalg.slogdet(K)[1])
 
 
 def test_solve(seed=42):
@@ -61,14 +68,23 @@ def test_solve(seed=42):
     beta_complex_real = np.array([1.0])
     beta_complex_imag = np.array([1.0])
 
-    solver = Solver(alpha_real, beta_real,
-                    alpha_complex_real, alpha_complex_imag,
-                    beta_complex_real, beta_complex_imag,
-                    t, diag)
-    K = solver.get_matrix()
+    solver = Solver()
+    solver.compute(
+        alpha_real, beta_real, alpha_complex_real, alpha_complex_imag,
+        beta_complex_real, beta_complex_imag, t, diag
+    )
+    K = get_kernel_value(
+        alpha_real, beta_real, alpha_complex_real, alpha_complex_imag,
+        beta_complex_real, beta_complex_imag, t[:, None] - t[None, :]
+    )
+    K[np.diag_indices_from(K)] += diag
     b = np.random.randn(len(t))
-    assert np.allclose(solver.apply_inverse(b), np.linalg.solve(K, b))
+    assert np.allclose(solver.solve(b).T, np.linalg.solve(K, b))
 
+    b = np.random.randn(len(t), 5)
+    print(b)
+    print(solver.solve(b))
+    assert np.allclose(solver.solve(b), np.linalg.solve(K, b))
 
 #  def test_kernel_params():
 #      gp = GP()

@@ -36,10 +36,11 @@ hash -r
 conda config --set always_yes yes --set changeps1 no
 conda update -q conda
 conda info -a
-conda create --yes -n test python=$PYTHON_VERSION numpy=$NUMPY_VERSION Cython setuptools pytest
+conda create --yes -n test python=$PYTHON_VERSION numpy=$NUMPY_VERSION Cython setuptools pytest pip
 source activate test
+pip install pybind11
 
 # Build the extension
 cd python
-CXX=g++ python setup.py build_ext -I../eigen --inplace
+CXX=g++-4.8 CC=gcc-4.8 python setup.py build_ext -I../eigen --inplace
 cd ..
