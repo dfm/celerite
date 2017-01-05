@@ -4,6 +4,7 @@ from __future__ import division, print_function
 import math
 import numpy as np
 from itertools import chain
+from collections import OrderedDict
 
 from ._genrp import get_kernel_value, get_psd_value, check_coefficients
 
@@ -23,6 +24,12 @@ class Kernel(object):
     def __len__(self):
         return self.vector_size
 
+    def __getitem__(self, name):
+        return self.get_parameter(name)
+
+    def __setitem__(self, name, value):
+        return self.set_parameter(name, value)
+
     @property
     def full_size(self):
         return len(self.parameter_names)
@@ -30,6 +37,10 @@ class Kernel(object):
     @property
     def vector_size(self):
         return self.unfrozen_mask.sum()
+
+    @property
+    def terms(self):
+        return [self]
 
     def get_value(self, x):
         x = np.asarray(x)
@@ -42,7 +53,7 @@ class Kernel(object):
             self.beta_complex_imag,
             x.flatten(),
         )
-        return k.reshape(x.shape)
+        return np.asarray(k).reshape(x.shape)
 
     def get_psd(self, w):
         w = np.asarray(w)
@@ -72,6 +83,12 @@ class Kernel(object):
 
     def __radd__(self, b):
         return Sum(b, self)
+
+    def get_parameter_dict(self, include_frozen=False):
+        return OrderedDict(zip(
+            self.get_parameter_names(include_frozen=include_frozen),
+            self.get_parameter_vector(include_frozen=include_frozen),
+        ))
 
     def get_parameter_names(self, include_frozen=False):
         if include_frozen:
@@ -154,11 +171,9 @@ class Sum(Kernel):
     def __repr__(self):
         return "{0} + {1}".format(self.k1, self.k2)
 
-    def __getitem__(self, name):
-        return self.get_parameter(name)
-
-    def __setitem__(self, name, value):
-        return self.set_parameter(name, value)
+    @property
+    def terms(self):
+        return self.k1.terms + self.k2.terms
 
     @property
     def dirty(self):
