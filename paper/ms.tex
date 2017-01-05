@@ -475,15 +475,15 @@ force.
 In the limit of an infinite time series and white random forcing, the PSD of
 this equation is given by \citep{Anderson:1990}
 \begin{equation}\eqlabel{sho-psd}
-S(\omega) = \sqrt{\frac{2}{\pi}}\,\frac{S_0\,\omega_0^4/Q^2}
+S(\omega) = \sqrt{\frac{2}{\pi}}\,\frac{S_0\,\omega_0^4}
     {(\omega^2-\omega_0^2)^2 + \omega_0^2\omega^2/Q^2}
 \end{equation}
 where $S_0$ is proportional to the power at $\omega = \omega_0$, $S(\omega_0)
 = \sqrt{2/\pi}\,S_0$.
 The power spectrum in \eq{sho-psd} matches \eq{genrp-psd} if
 \begin{eqnarray}
-a_j &=& \frac{S_0\,\omega_0}{Q} \\
-b_j &=& \frac{S_0\,\omega_0}{Q\,\sqrt{4\,Q^2-1}} \\
+a_j &=& S_0\,\omega_0\,Q \\
+    b_j &=& \frac{S_0\,\omega_0\,Q}{\sqrt{4\,Q^2-1}} \\
 c_j &=& \frac{\omega_0}{2\,Q}\\
 d_j &=& \frac{\omega_0}{2\,Q} \sqrt{4\,Q^2-1} \quad,
 \end{eqnarray}
@@ -491,7 +491,7 @@ for $Q \ge \frac{1}{2}$.
 For $0 < Q \le \frac{1}{2}$, \eq{sho-psd} can be captured by a pair of \genrp\
 terms with parameters
 \begin{eqnarray}
-a_{j\pm} &=& \frac{1}{2}\,\frac{S_0\,\omega_0}{Q}\,\left[ 1 \pm
+a_{j\pm} &=& \frac{1}{2}\,S_0\,\omega_0\,Q\,\left[ 1 \pm
         \frac{1}{\sqrt{1-4\,Q^2}}\right] \\
 b_{j\pm} &=& 0 \\
     c_{j\pm} &=& \frac{\omega_0}{2\,Q}\,\left[1 \mp \sqrt{1-4\,Q^2}\right] \\
@@ -500,7 +500,7 @@ d_{j\pm} &=& 0 \quad.
 
 These identities yield a kernel of the form
 \begin{equation}
-k(\tau) = \frac{S_0\,\omega_0}{Q} e^{-\frac{\omega_0\,\tau}{2Q}}\,
+k(\tau) = S_0\,\omega_0\,Q\,e^{-\frac{\omega_0\,\tau}{2Q}}\,
 \begin{cases}
     \cosh{(\eta\,\omega_0\,\tau)} +
         \frac{1}{2\,\eta\,Q}\,\sinh{(\eta\,\omega_0\,\tau)}, & 0 < Q < 1/2\\
@@ -519,26 +519,26 @@ The power spectrum in \eq{sho-psd} has several limits of physical interest:
 
 {\item For $Q = 1/\sqrt{2}$, \eq{sho-psd} simplifies to
 \begin{eqnarray}
-S(\omega) = \sqrt{\frac{2}{\pi}}\,\frac{2\,S_0}{(\omega/\omega_0)^4+1} \quad.
+S(\omega) = \sqrt{\frac{2}{\pi}}\,\frac{S_0}{(\omega/\omega_0)^4+1} \quad.
 \end{eqnarray}
 A model like this has been used to model the granulation is Solar data
 \citep{Michel:2009}}, which has a kernel of
 \begin{equation}
-k(\tau) = 2\,S_0\,\omega_0\,e^{-\frac{1}{\sqrt{2}}\,\omega_0\,\tau}\,
+k(\tau) = S_0\,\omega_0\,e^{-\frac{1}{\sqrt{2}}\,\omega_0\,\tau}\,
     \cos{\left(\frac{\omega_0\,\tau}{\sqrt{2}}-\frac{\pi}{4}\right)}.
 \end{equation}
 
 {\item Substituting $Q = 1/2$, \eq{sho-psd} becomes
 \begin{eqnarray}
 S(\omega) =
-    \sqrt{\frac{2}{\pi}}\,\frac{4\,S_0}{\left[(\omega/\omega_0)^2+1\right]^2}
+    \sqrt{\frac{2}{\pi}}\,\frac{S_0}{\left[(\omega/\omega_0)^2+1\right]^2}
 \end{eqnarray}
 with the corresponding covariance function
 \begin{eqnarray}\eqlabel{approx-matern}
 k(\tau) &=& \lim_{f \to 0}\,
-    4\,S_0\,\omega_0\,e^{-\omega_0\,\tau}\,
+    S_0\,\omega_0\,e^{-\omega_0\,\tau}\,
     \left[\cos(f\,\tau) + \frac{\omega_0}{f}\,\sin(f\,\tau)\right] \\
-&=& 4\,S_0\,\omega_0\,e^{-\omega_0\,\tau}\,[1+\omega_0\,\tau] \quad.
+&=& S_0\,\omega_0\,e^{-\omega_0\,\tau}\,[1+\omega_0\,\tau] \quad.
 \end{eqnarray}
 This covariance function is also known as the Mat\'ern-3/2 function
 \citep{Rasmussen:2006}.
@@ -551,7 +551,7 @@ caution that this could also lead to numerical issues with the solver.
     quality oscillation with frequency $\omega_0$ and covariance function
 \begin{eqnarray}
 k(\tau) \approx
-    \frac{S_0\,\omega_0}{Q}\,
+    S_0\,\omega_0\,Q\,
     \exp\left(-\frac{\omega_0\,\tau}{2\,Q}\right)\,
     \cos\left(\omega_0\,\tau\right) \quad.
 \end{eqnarray}}

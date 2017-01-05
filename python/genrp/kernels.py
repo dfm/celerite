@@ -384,58 +384,56 @@ class SHOTerm(Kernel):
         return "SHOTerm({0.log_S0}, {0.log_Q}, {0.log_w0})".format(self)
 
     @property
-    def p_real(self):
-        Q = math.exp(self.log_Q)
-        return 2 if Q < 0.5 else 0
+    def p_real(self, log_half=math.log(0.5)):
+        return 2 if self.log_Q < log_half else 0
 
     @property
-    def p_complex(self):
-        Q = math.exp(self.log_Q)
-        return 0 if Q < 0.5 else 1
+    def p_complex(self, log_half=math.log(0.5)):
+        return 0 if self.log_Q < log_half else 1
 
     @property
-    def alpha_real(self):
-        Q = math.exp(self.log_Q)
-        if Q >= 0.5:
+    def alpha_real(self, log_half=math.log(0.5)):
+        if self.log_Q >= log_half:
             return np.empty(0)
+        Q = math.exp(self.log_Q)
         f = 1.0 / math.sqrt(1.0 - 4.0 * Q**2)
         return 0.5*math.exp(self.log_S0+self.log_w0)*Q*np.array([1.0+f, 1.0-f])
 
     @property
-    def beta_real(self):
-        Q = math.exp(self.log_Q)
-        if Q >= 0.5:
+    def beta_real(self, log_half=math.log(0.5)):
+        if self.log_Q >= log_half:
             return np.empty(0)
+        Q = math.exp(self.log_Q)
         f = math.sqrt(1.0 - 4.0 * Q**2)
         return 0.5*math.exp(self.log_w0)/Q*np.array([1.0-f, 1.0+f])
 
     @property
-    def alpha_complex_real(self):
-        Q = math.exp(self.log_Q)
-        if Q < 0.5:
+    def alpha_complex_real(self, log_half=math.log(0.5)):
+        if self.log_Q < log_half:
             return np.empty(0)
+        Q = math.exp(self.log_Q)
         return np.array([math.exp(self.log_S0 + self.log_w0) * Q])
 
     @property
-    def alpha_complex_imag(self):
-        Q = math.exp(self.log_Q)
-        if Q < 0.5:
+    def alpha_complex_imag(self, log_half=math.log(0.5)):
+        if self.log_Q < log_half:
             return np.empty(0)
+        Q = math.exp(self.log_Q)
         return np.array([math.exp(self.log_S0+self.log_w0)*Q /
                          math.sqrt(4*Q**2-1.0)])
 
     @property
-    def beta_complex_real(self):
-        Q = math.exp(self.log_Q)
-        if Q < 0.5:
+    def beta_complex_real(self, log_half=math.log(0.5)):
+        if self.log_Q < log_half:
             return np.empty(0)
+        Q = math.exp(self.log_Q)
         return np.array([0.5*math.exp(self.log_w0)/Q])
 
     @property
-    def beta_complex_imag(self):
-        Q = math.exp(self.log_Q)
-        if Q < 0.5:
+    def beta_complex_imag(self, log_half=math.log(0.5)):
+        if self.log_Q < log_half:
             return np.empty(0)
+        Q = math.exp(self.log_Q)
         return np.array([0.5*math.exp(self.log_w0)/Q*math.sqrt(4*Q**2-1.0)])
 
 
