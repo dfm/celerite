@@ -9,6 +9,30 @@ __all__ = ["GP"]
 
 
 class GP(object):
+    """The main interface to the genrp Gaussian Process solver
+
+    Args:
+        kernel: An instance of a subclass of :class:`kernels.Kernel`.
+        mean (Optional): A simple mean value for the process. (default: ``0.0``)
+
+    :param fit_mean: (optional)
+        If ``True``, the parameters of the mean function will be included in
+        all the relevant methods (:func:`get_vector`,
+        :func:`grad_lnlikelihood`, etc.). (default: ``False``)
+    :param white_noise: (optional)
+        A description of the logarithm of the white noise variance added to
+        the diagonal of the covariance matrix. See :py:attr:`white_noise` for
+        more information. (default: ``log(TINY)``)
+    :param fit_white_noise: (optional)
+        If ``True``, the parameters of :py:attr:`white_noise` will be included
+        in all the relevant methods (:func:`get_vector`,
+        :func:`grad_lnlikelihood`, etc.). (default: ``False``)
+    :param solver: (optional)
+        The solver to use for linear algebra as documented in :ref:`solvers`.
+    :param kwargs: (optional)
+        Any additional arguments are passed directly to the solver's init
+        function.
+    """
 
     def __init__(self, kernel, log_white_noise=-np.inf, fit_white_noise=False):
         self.kernel = kernel
