@@ -95,7 +95,7 @@ void DirectSolver<T>::solve (const Eigen::MatrixXd& b, T* x) const {
   // Copy the output.
   for (int j = 0; j < nrhs; ++j)
     for (int i = 0; i < this->n_; ++i)
-      x[i+j*nrhs] = result(i, j);
+      x[i+j*this->n_] = result(i, j);
 }
 
 };

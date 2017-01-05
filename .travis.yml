@@ -4,13 +4,19 @@ os:
     - linux
 addons:
     apt:
+        sources:
+            - ubuntu-toolchain-r-test
         packages:
+            - gcc-4.8
+            - g++-4.8
             - cmake
 
 env:
     global:
         - EIGEN_VERSION=3.2.9
           TEST_LANG='python'
+          CXX=g++-4.8
+          CC=gcc-4.8
 
     matrix:
         - TEST_LANG='cpp'
