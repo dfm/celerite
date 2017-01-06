@@ -94,6 +94,7 @@ class Model(object):
 
 
 class ConstantModel(Model):
-    parameter_names = ("value")
+    parameter_names = ("value", )
+
     def get_value(self, x):
         return self.value + np.zeros_like(x)
