@@ -1139,10 +1139,10 @@ Q: How do we determine how many kernels to use?
 
 \section{Discussion}
 
-There are three primary applications we imagine for the \genrp formalism: 1). modeling
-astrophysical variability to infer the properties of the object that is varying; 2).
-account for astrophysical variability as a source of noise when trying to detect 
-additional phenomena; 3). interpolate or extrapolate variations to future or missing
+There are three primary applications we envision for the \genrp formalism: 1). modeling
+the variability of an astrophysical system to infer it properties; 2).
+accounting for astrophysical variability as a source of noise when trying to detect 
+additional phenomena; 3). interpolating or extrapolat variability to future or missing
 times.  Some examples of the first are determining the characteristic
 variability timescale of quasars, measuring the asteroseismic variations of stars,
 or detection of quasi-periodic variability in a high-energy source.  Examples of the
@@ -1150,15 +1150,36 @@ second are detecting transiting exoplanets and correcting for stellar activity i
 radial velocity measurements. Examples of the third are measuring time delays in 
 multiply-imaged gravitationally lensed sources and reverberation mapping of AGN.
 
-Our background is in studying transiting exoplanets, which has only recently begun
+\subsection{Application to stellar variability, transiting exoplanets}
+
+Our background is in studying transiting exoplanets, a field which has only recently begun
 to adopt full covariance matrices in analyzing the noise in transiting planet lightcurves.
-One early successful attempt at accounting for correlated noise was the wavelet approach
-of Carter \& Winn (2010).  This approach allowed for a power-law spectrum for the
+One promising early attempt at accounting for correlated noise was the wavelet approach
+of Carter \& Winn (2010).  Their technique allowed for a power-law spectrum for the
 noise scaling as $\omega^{-\alpha}$, which unfortunately is not a normalizable, nor
-physically-accurate description of stellar variability.  Their approach runs in
+physically-accurate, description of stellar variability.  Their approach runs in
 $\cal{O}(N)$ time for $\alpha=1$, which is `flicker' or pink noise;  however, this
 particular type of noise overpredicts the power spectrum at low frequency compared
 to the granulation power spectrum.  It also cannot describe quasi-periodic noise.
+
+Further progress was made by parameterizing the covariance matrix with simple,
+analytic functions that describe the autocorrelation function.  The parameters
+of these functions can then be optimized to best match the observed variability
+pattern of the residuals (after subtracting a transit model).  The disadvantage of
+this approach is that the functions used are chosen somewhat arbitrarily (e.g.\
+the exponential-squared function), and the Cholesky decomposition of the covariance
+matrix for computing the likelihood takes $\cal{O}(N^3)$ operations which prohibits 
+application of this technique to large datasets.
+
+Given the drawbacks of these approaches, the \genrp formalism allows both a fast
+computation of the likelihood in $\cal{O}(N)$ time, as well as a functional form
+that accurately describes stellar variability due to the relation to the simple
+harmonic oscillator power spectrum, which is an analog of stellar asteroseismic
+oscillations.  As higher signal-to-noise observations of transiting exoplanet systems
+are obtained, the effects of stellar variability will more dramatically impact the
+correct inference of planetary transit parameters, and so we expect that \genrp
+will be important for transit timing, transit spectroscopy, Doppler beaming,
+phase functions, and more.
 
 %\section{Prediction/interpolation}
 %
