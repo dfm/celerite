@@ -478,11 +478,12 @@ this equation is given by \citep{Anderson:1990}
 S(\omega) = \sqrt{\frac{2}{\pi}}\,\frac{S_0\,\omega_0^4}
     {(\omega^2-\omega_0^2)^2 + \omega_0^2\omega^2/Q^2}
 \end{equation}
-where $S_0$ is a normalization constant.
+where $S_0$ is proportional to the power at $\omega = \omega_0$, $S(\omega_0)
+= \sqrt{2/\pi}\,S_0$.
 The power spectrum in \eq{sho-psd} matches \eq{genrp-psd} if
 \begin{eqnarray}
 a_j &=& S_0\,\omega_0\,Q \\
-b_j &=& \frac{S_0\,\omega_0\,Q}{\sqrt{4\,Q^2-1}} \\
+    b_j &=& \frac{S_0\,\omega_0\,Q}{\sqrt{4\,Q^2-1}} \\
 c_j &=& \frac{\omega_0}{2\,Q}\\
 d_j &=& \frac{\omega_0}{2\,Q} \sqrt{4\,Q^2-1} \quad,
 \end{eqnarray}
@@ -499,13 +500,16 @@ d_{j\pm} &=& 0 \quad.
 
 These identities yield a kernel of the form
 \begin{equation}
-k(\tau) = S_0 \omega_0 Q e^{-\frac{\omega_0 \tau}{2Q}} \begin{cases}
-\cosh{(\eta \omega_0 \tau)} + \frac{1}{2\eta Q} \sinh{(\eta \omega_0 \tau)}, & 0 < Q < 1/2\\
-2 (1+\omega_0 \tau), & Q = 1/2\\
-\cos{(\eta \omega_0 \tau)} + \frac{1}{2\eta Q} \sin{(\eta \omega_0 \tau)},& 1/2 < Q < \infty\\
+k(\tau) = S_0\,\omega_0\,Q\,e^{-\frac{\omega_0\,\tau}{2Q}}\,
+\begin{cases}
+    \cosh{(\eta\,\omega_0\,\tau)} +
+        \frac{1}{2\,\eta\,Q}\,\sinh{(\eta\,\omega_0\,\tau)}, & 0 < Q < 1/2\\
+    2\,(1+\omega_0\,\tau), & Q = 1/2\\
+    \cos{(\eta\,\omega_0\,\tau)} +
+        \frac{1}{2\,\eta\,Q} \sin{(\eta\,\omega_0\,\tau)},& 1/2 < Q\\
 \end{cases}
 \end{equation}
-where $\eta = \vert 1-(4Q^2)^{-1}\vert^{1/2}$.
+where $\eta = \vert 1-(4\,Q^2)^{-1}\vert^{1/2}$.
 It is interesting to note that, because of the damping, the characteristic
 oscillation frequency in this model $d_j$, for any finite quality factor $Q > 1/2$,
 is not equal to the frequency of the undamped oscillator $\omega_0$.
@@ -520,13 +524,14 @@ S(\omega) = \sqrt{\frac{2}{\pi}}\,\frac{S_0}{(\omega/\omega_0)^4+1} \quad.
 A model like this has been used to model the granulation is Solar data
 \citep{Michel:2009}}, which has a kernel of
 \begin{equation}
-k(\tau) = S_0 \omega_0e^{-\frac{1}{\sqrt{2}}\omega_0\tau} \cos{\left(\frac{\omega_0\tau}{\sqrt{2}}-\frac{\pi}{4}\right)}.
+k(\tau) = S_0\,\omega_0\,e^{-\frac{1}{\sqrt{2}}\,\omega_0\,\tau}\,
+    \cos{\left(\frac{\omega_0\,\tau}{\sqrt{2}}-\frac{\pi}{4}\right)}.
 \end{equation}
 
 {\item Substituting $Q = 1/2$, \eq{sho-psd} becomes
 \begin{eqnarray}
 S(\omega) =
-\sqrt{\frac{2}{\pi}}\,\frac{S_0}{\left[(\omega/\omega_0)^2+1\right]^2}
+    \sqrt{\frac{2}{\pi}}\,\frac{S_0}{\left[(\omega/\omega_0)^2+1\right]^2}
 \end{eqnarray}
 with the corresponding covariance function
 \begin{eqnarray}\eqlabel{approx-matern}
@@ -578,8 +583,8 @@ in the previous section.
     oscillator (\eqalt{sho-psd}) plotted for several values of the quality
     factor $Q$.
     For comparison, the dashed line shows the Lorentzian function from
-    \eq{lorentz-psd} with $\omega_0/c_j = 2\,Q = 20$ and normalized so that
-    $S(d_j)/S(0) = Q^2 = 100$.
+    \eq{lorentz-psd} with $c_j = \omega_0/2\,Q = 1/20$ and normalized so that
+    $S(d_j)/S(0) = 100$.
     (right) The corresponding autocorrelation functions with the same colors.
     \figurelabel{sho}}
 \end{center}

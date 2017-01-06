@@ -13,6 +13,7 @@ import george
 from george import kernels
 
 import genrp
+from genrp.kernels import SHOTerm
 
 def savefig(name, fig=None):
     if fig is None:
@@ -26,39 +27,37 @@ t = np.sort(np.random.uniform(0, 5, 100))
 yerr = np.random.uniform(0.1, 0.2, len(t))
 
 true_freq = 2.0
-#  kernel = 0.5*kernels.ExpKernel(2.0)
 kernel = 0.5*kernels.ExpSquaredKernel(2.0)
-
-kernel += 1.0*kernels.ExpSquaredKernel(0.1) * \
+kernel += 1.0*kernels.ExpSquaredKernel(100.0) * \
     kernels.CosineKernel(period=1.0 / true_freq)
-#  kernel += 1.0*kernels.ExpKernel(1.0) * \
-#      kernels.CosineKernel(period=1.0 / true_freq)
 true_gp = george.GP(kernel)
 K = true_gp.get_matrix(t)
 K[np.diag_indices_from(K)] += yerr**2
 y = np.random.multivariate_normal(np.zeros_like(t), K)
 
 # Set up the fit
-fit_gp = genrp.GP()
-fit_gp.add_term(0.0, 0.0)
-fit_gp.add_term(0.0, 0.0, 0.0)
+kernel = SHOTerm(0.0, 0.0, 0.0)
+kernel += SHOTerm(0.0, 0.0, 0.0)
+kernel += SHOTerm(0.0, 0.0, 0.0)
+fit_gp = genrp.GP(kernel, log_white_noise=0.0, fit_white_noise=True)
 
 def log_likelihood(params):
-    fit_gp.params = params[1:]
-    fit_gp.compute(t, np.sqrt(yerr**2 + np.exp(params[0])))
+    fit_gp.set_parameter_vector(params)
+    fit_gp.compute(t, yerr)
     return fit_gp.log_likelihood(y)
 
-parameter_bounds = [(-8.0, 8.0) for _ in range(len(fit_gp.params) + 1)]
+npars = len(fit_gp.get_parameter_vector())
+parameter_bounds = [(-8.0, 8.0) for _ in range(npars)]
 
 # Optimize with random restarts
 nll = lambda p: -log_likelihood(p)
-best = (np.inf, fit_gp.params)
+best = (np.inf, fit_gp.get_parameter_vector())
 for i in range(10):
     p0 = np.array([np.random.uniform(*a) for a in parameter_bounds])
     r = minimize(nll, p0, method="L-BFGS-B", bounds=parameter_bounds)
     if r.fun < best[0]:
         best = (r.fun, r.x)
-fit_gp.params = best[1][1:]
+fit_gp.set_parameter_vector(best[1])
 
 # Use MCMC to sample
 def log_prob(p):
@@ -66,7 +65,7 @@ def log_prob(p):
         return -np.inf
     return log_likelihood(p)
 
-nwalkers, ndim = 24, len(fit_gp.params) + 1
+nwalkers, ndim = 24, npars
 sampler = emcee.EnsembleSampler(nwalkers, ndim, log_prob)
 
 # Burn-in
@@ -85,9 +84,9 @@ acor = np.empty((len(samples), len(tau)))
 f = np.linspace(0.1, 5, 5000)
 psd = np.empty((len(samples), len(f)))
 for i, s in enumerate(samples):
-    fit_gp.params = s[1:]
-    acor[i, :] = fit_gp.get_matrix(tau, np.array([tau[0]]))[:, 0]
-    psd[i, :] = fit_gp.get_psd(f)
+    fit_gp.set_parameter_vector(s)
+    acor[i, :] = fit_gp.kernel.get_value(tau)
+    psd[i, :] = fit_gp.kernel.get_psd(2*np.pi*f)
 
 q = np.percentile(acor, [16, 50, 84], axis=0)
 
@@ -132,6 +131,6 @@ ax.set_ylabel("y")
 savefig("data", fig)
 
 fig, ax = plt.subplots(1, 1, figsize=(5, 5))
-ax.hist(np.exp(samples[:, -1]), 50, histtype="step", color="k")
+ax.hist(np.exp(samples[:, -1])/(2*np.pi), 50, histtype="step", color="k")
 ax.axvline(true_freq, color="g", lw=2)
 savefig("fit_freq", fig)

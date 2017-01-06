@@ -75,12 +75,6 @@ int BandSolver<T>::compute (
   using std::abs;
 
   this->computed_ = false;
-  bool flag = check_coefficients(
-    alpha_real, beta_real,
-    alpha_complex_real, alpha_complex_imag,
-    beta_complex_real, beta_complex_imag
-  );
-  if (!flag) return SOLVER_NOT_COMPUTED;
   if (x.rows() != diag.rows()) return SOLVER_DIMENSION_MISMATCH;
 
   // Save the dimensions for later use
@@ -264,7 +258,7 @@ void BandSolver<T>::solve (const Eigen::MatrixXd& b, T* x) const {
   // Copy the output.
   for (int j = 0; j < nrhs; ++j)
     for (int i = 0; i < this->n_; ++i)
-      x[i+j*nrhs] = bex(i*block_size, j);
+      x[i+j*this->n_] = bex(i*block_size, j);
 }
 
 #undef BLOCKSIZE
