@@ -124,56 +124,52 @@ class Sum(Kernel):
     def vector_size(self):
         return self.k1.vector_size + self.k2.vector_size
 
-    def get_parameter_names(self, include_frozen=False):
-        return tuple(chain(
-            map("k1:{0}".format,
-                self.k1.get_parameter_names(include_frozen=include_frozen)),
-            map("k2:{0}".format,
-                self.k2.get_parameter_names(include_frozen=include_frozen)),
+    @property
+    def unfrozen_mask(self):
+        return np.concatenate((
+            self.k1.unfrozen_mask,
+            self.k2.unfrozen_mask,
         ))
 
-    def get_parameter_vector(self, include_frozen=False):
-        return np.append(
-            self.k1.get_parameter_vector(include_frozen=include_frozen),
-            self.k2.get_parameter_vector(include_frozen=include_frozen),
-        )
+    @property
+    def parameter_vector(self):
+        return np.concatenate((
+            self.k1.parameter_vector,
+            self.k2.parameter_vector
+        ))
 
-    def set_parameter_vector(self, vector, include_frozen=False):
-        i = self.k1.full_size if include_frozen else self.k1.vector_size
-        self.k1.set_parameter_vector(vector[:i], include_frozen=include_frozen)
-        self.k2.set_parameter_vector(vector[i:], include_frozen=include_frozen)
+    @parameter_vector.setter
+    def parameter_vector(self, v):
+        i = self.k1.full_size
+        self.k1.parameter_vector = v[:i]
+        self.k2.parameter_vector = v[i:]
+
+    @property
+    def parameter_names(self):
+        return tuple(chain(
+            map("k1:{0}".format, self.k1.parameter_names),
+            map("k2:{0}".format, self.k2.parameter_names),
+        ))
+
+    def _apply_to_parameter(self, func, name, *args):
+        if name.startswith("k1:"):
+            return getattr(self.k1, func)(name[3:], *args)
+        if name.startswith("k2:"):
+            return getattr(self.k2, func)(name[3:], *args)
+        raise ValueError("unrecognized parameter '{0}'".format(name))
 
     def freeze_parameter(self, name):
-        if name.startswith("k1:"):
-            self.k1.freeze_parameter(name[3:])
-        elif name.startswith("k2:"):
-            self.k2.freeze_parameter(name[3:])
-        else:
-            raise ValueError("unrecognized parameter '{0}'".format(name))
+        self._apply_to_parameter("freeze_parameter", name)
 
     def thaw_parameter(self, name):
-        if name.startswith("k1:"):
-            self.k1.thaw_parameter(name[3:])
-        elif name.startswith("k2:"):
-            self.k2.thaw_parameter(name[3:])
-        else:
-            raise ValueError("unrecognized parameter '{0}'".format(name))
+        self._apply_to_parameter("thaw_parameter", name)
 
     def get_parameter(self, name):
-        if name.startswith("k1:"):
-            return self.k1.get_parameter(name[3:])
-        elif name.startswith("k2:"):
-            return self.k2.get_parameter(name[3:])
-        else:
-            raise ValueError("unrecognized parameter '{0}'".format(name))
+        return self._apply_to_parameter("get_parameter", name)
 
     def set_parameter(self, name, value):
-        if name.startswith("k1:"):
-            self.k1.set_parameter(name[3:], value)
-        elif name.startswith("k2:"):
-            self.k2.set_parameter(name[3:], value)
-        else:
-            raise ValueError("unrecognized parameter '{0}'".format(name))
+        self.dirty = True
+        return self._apply_to_parameter("set_parameter", name, value)
 
     @property
     def p_real(self):
@@ -341,7 +337,7 @@ class Matern32Term(Kernel):
 
     parameter_names = ("log_sigma", "log_rho")
 
-    def __init__(self, log_sigma, log_rho, eps=1e-5):
+    def __init__(self, log_sigma, log_rho, eps=0.01):
         super(Matern32Term, self).__init__(log_sigma, log_rho)
         self.eps = eps
 

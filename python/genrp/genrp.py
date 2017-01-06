@@ -2,13 +2,15 @@
 
 from __future__ import division, print_function
 import numpy as np
-from collections import OrderedDict
+from itertools import chain
+
 from ._genrp import Solver
+from .modeling import Model, ConstantModel
 
 __all__ = ["GP"]
 
 
-class GP(object):
+class GP(Model):
     """The main interface to the genrp Gaussian Process solver
 
     Args:
@@ -34,95 +36,46 @@ class GP(object):
         function.
     """
 
-    def __init__(self, kernel, log_white_noise=-np.inf, fit_white_noise=False):
+    def __init__(self,
+                 kernel,
+                 mean=0.0, fit_mean=False,
+                 log_white_noise=-np.inf, fit_white_noise=False):
         self.kernel = kernel
 
         self.solver = None
         self._computed = False
         self._t = None
         self._y_var = None
-        self._log_white_noise = log_white_noise
-        self.fit_white_noise = fit_white_noise
 
-    def __len__(self):
-        return self.vector_size
-
-    @property
-    def full_size(self):
-        return self.kernel.full_size + 1
-
-    @property
-    def vector_size(self):
-        if self.fit_white_noise:
-            return self.kernel.vector_size + 1
-        return self.kernel.vector_size
-
-    def get_parameter_dict(self, include_frozen=False):
-        return OrderedDict(zip(
-            self.get_parameter_names(include_frozen=include_frozen),
-            self.get_parameter_vector(include_frozen=include_frozen),
-        ))
-
-    def get_parameter_names(self, include_frozen=False):
-        names = self.kernel.get_parameter_names(include_frozen=include_frozen)
-        names = list(map("kernel:{0}".format, names))
-        if include_frozen or self.fit_white_noise:
-            names = ["log_white_noise"] + names
-        return tuple(names)
-
-    def get_parameter_vector(self, include_frozen=False):
-        v = self.kernel.get_parameter_vector(include_frozen=include_frozen)
-        if include_frozen or self.fit_white_noise:
-            v = np.append(self.log_white_noise, v)
-        return v
-
-    def set_parameter_vector(self, vector, include_frozen=False):
-        self._computed = False
-        if include_frozen or self.fit_white_noise:
-            self.log_white_noise = vector[0]
-            self.kernel.set_parameter_vector(vector[1:],
-                                             include_frozen=include_frozen)
+        # Interpret the white noise model
+        try:
+            float(log_white_noise)
+        except TypeError:
+            self.log_white_noise = log_white_noise
         else:
-            self.kernel.set_parameter_vector(vector,
-                                             include_frozen=include_frozen)
+            self.log_white_noise = ConstantModel(float(log_white_noise))
 
-    def freeze_parameter(self, name):
-        if name == "log_white_noise":
-            self.fit_white_noise = False
+        # If this model is supposed to be constant, go through and freeze
+        # all of the parameters
+        if not fit_white_noise:
+            for k in self.log_white_noise.get_parameter_names():
+                self.log_white_noise.freeze_parameter(k)
+
+        # And the mean model
+        try:
+            float(mean)
+        except TypeError:
+            self.mean = mean
         else:
-            self.kernel.freeze_parameter(name[7:])
+            self.mean = ConstantModel(float(mean))
 
-    def thaw_parameter(self, name):
-        if name == "log_white_noise":
-            self.fit_white_noise = True
-        else:
-            self.kernel.thaw_parameter(name[7:])
-
-    def get_parameter(self, name):
-        if name == "log_white_noise":
-            return self.log_white_noise
-        else:
-            return self.kernel.get_parameter(name[7:])
-
-    def set_parameter(self, name, value):
-        self._computed = False
-        if name == "log_white_noise":
-            self.log_white_noise = value
-        else:
-            self.kernel.set_parameter(name[7:], value)
-
-    @property
-    def log_white_noise(self):
-        return self._log_white_noise
-
-    @log_white_noise.setter
-    def log_white_noise(self, value):
-        self._computed = False
-        self._log_white_noise = value
+        if not fit_mean:
+            for k in self.mean.get_parameter_names():
+                self.mean.freeze_parameter(k)
 
     @property
     def computed(self):
-        return self._computed and not self.kernel.dirty
+        return not self.dirty
 
     def compute(self, t, yerr=1.123e-12, check_sorted=True):
         t = np.atleast_1d(t)
@@ -141,13 +94,12 @@ class GP(object):
             self.kernel.alpha_complex_imag,
             self.kernel.beta_complex_real,
             self.kernel.beta_complex_imag,
-            t, self._yerr**2 + np.exp(self.log_white_noise)
+            t, self._yerr**2 + np.exp(self.log_white_noise.get_value(t))
         )
-        self._computed = True
-        self.kernel.dirty = False
+        self.dirty = False
 
     def _recompute(self):
-        if not self.computed:
+        if self.dirty:
             if self._t is None:
                 raise RuntimeError("you must call 'compute' first")
             self.compute(self._t, self._yerr, check_sorted=False)
@@ -159,10 +111,11 @@ class GP(object):
 
     def log_likelihood(self, y, _const=np.log(2*np.pi)):
         y = self._process_input(y)
+        resid = y - self.mean.get_value(self._t)
         self._recompute()
         if len(y.shape) > 1:
             raise ValueError("dimension mismatch")
-        return -0.5 * (self.solver.dot_solve(y) +
+        return -0.5 * (self.solver.dot_solve(resid) +
                        self.solver.log_determinant() +
                        len(y) * _const)
 
@@ -180,9 +133,10 @@ class GP(object):
         self._recompute()
 
         # Compute the predictive mean.
-        alpha = self.solver.solve(y).flatten()
+        resid = y - self.mean.get_value(self._t)
+        alpha = self.solver.solve(resid).flatten()
         Kxs = self.get_matrix(xs, self._t)
-        mu = np.dot(Kxs, alpha)
+        mu = self.mean.get_value(xs) + np.dot(Kxs, alpha)
         if not (return_var or return_cov):
             return mu
 
@@ -205,7 +159,8 @@ class GP(object):
             K = self._t[:, None] - self._t[None, :]
             if include_diagonal is None or include_diagonal:
                 K[np.diag_indices_from(K)] += \
-                    self._yerr**2 + np.exp(self.log_white_noise)
+                    self._yerr**2 + np.exp(self.log_white_noise
+                                           .get_value(self._t))
             return K
 
         incl = False
@@ -215,10 +170,102 @@ class GP(object):
             incl = include_diagonal is not None and include_diagonal
         K = self.kernel.get_value(x1[:, None] - x2[None, :])
         if incl:
-            K[np.diag_indices_from(K)] += np.exp(self.log_white_noise)
+            K[np.diag_indices_from(K)] += np.exp(self.log_white_noise
+                                                 .get_value(x1))
         return K
 
     def sample(self, x, tiny=1e-12, size=None):
         K = self.get_matrix(x, include_diagonal=True)
         K[np.diag_indices_from(K)] += tiny
-        return np.random.multivariate_normal(np.zeros_like(x), K, size=size)
+        sample = np.random.multivariate_normal(np.zeros_like(x), K, size=size)
+        return self.mean.get_value(x) + sample
+
+    #
+    # MODELING PROTOCOL
+    #
+    @property
+    def dirty(self):
+        return (
+            self.mean.dirty or
+            self.log_white_noise.dirty or
+            self.kernel.dirty or
+            not self._computed
+        )
+
+    @dirty.setter
+    def dirty(self, value):
+        self._computed = not value
+        self.mean.dirty = value
+        self.log_white_noise.dirty = value
+        self.kernel.dirty = value
+
+    @property
+    def full_size(self):
+        return (
+            self.mean.full_size +
+            self.log_white_noise.full_size +
+            self.kernel.full_size
+        )
+
+    @property
+    def vector_size(self):
+        return (
+            self.mean.vector_size +
+            self.log_white_noise.vector_size +
+            self.kernel.vector_size
+        )
+
+    @property
+    def unfrozen_mask(self):
+        return np.concatenate((
+            self.mean.unfrozen_mask,
+            self.log_white_noise.unfrozen_mask,
+            self.kernel.unfrozen_mask,
+        ))
+
+    @property
+    def parameter_vector(self):
+        return np.concatenate((
+            self.mean.parameter_vector,
+            self.log_white_noise.parameter_vector,
+            self.kernel.parameter_vector
+        ))
+
+    @parameter_vector.setter
+    def parameter_vector(self, v):
+        i = self.mean.full_size
+        self.mean.parameter_vector = v[:i]
+        j = i + self.log_white_noise.full_size
+        self.log_white_noise.parameter_vector = v[i:j]
+        self.kernel.parameter_vector = v[j:]
+
+    @property
+    def parameter_names(self):
+        return tuple(chain(
+            map("mean:{0}".format, self.mean.parameter_names),
+            map("log_white_noise:{0}".format,
+                self.log_white_noise.parameter_names),
+            map("kernel:{0}".format, self.kernel.parameter_names),
+        ))
+
+    def _apply_to_parameter(self, func, name, *args):
+        if name.startswith("mean:"):
+            return getattr(self.mean, func)(name[5:], *args)
+        if name.startswith("log_white_noise:"):
+            return getattr(self.log_white_noise, func)(name[16:], *args)
+        if name.startswith("kernel:"):
+            return getattr(self.kernel, func)(name[7:], *args)
+        raise ValueError("unrecognized parameter '{0}'".format(name))
+
+    def freeze_parameter(self, name):
+        self._apply_to_parameter("freeze_parameter", name)
+
+    def thaw_parameter(self, name):
+        self._apply_to_parameter("thaw_parameter", name)
+
+    def get_parameter(self, name):
+        return self._apply_to_parameter("get_parameter", name)
+
+    def set_parameter(self, name, value):
+        self.dirty = True
+        return self._apply_to_parameter("set_parameter", name, value)
