@@ -1139,12 +1139,12 @@ Q: How do we determine how many kernels to use?
 
 \section{Discussion}
 
-There are three primary applications we envision for the \genrp formalism: 1). modeling
-the variability of an astrophysical system to infer it properties; 2).
+There are three primary applications we envision for the \genrp\ formalism: 1).\ modeling
+the variability of an astrophysical system to infer it properties; 2).\
 accounting for astrophysical variability as a source of noise when trying to detect 
-additional phenomena; 3). interpolating or extrapolat variability to future or missing
+additional phenomena; 3).\ interpolating or extrapolating variability to future or missing
 times.  Some examples of the first are determining the characteristic
-variability timescale of quasars, measuring the asteroseismic variations of stars,
+variability timescale of a quasar, measuring the asteroseismic variation of a star,
 or detection of quasi-periodic variability in a high-energy source.  Examples of the
 second are detecting transiting exoplanets and correcting for stellar activity in
 radial velocity measurements. Examples of the third are measuring time delays in 
@@ -1158,7 +1158,7 @@ One promising early attempt at accounting for correlated noise was the wavelet a
 of Carter \& Winn (2010).  Their technique allowed for a power-law spectrum for the
 noise scaling as $\omega^{-\alpha}$, which unfortunately is not a normalizable, nor
 physically-accurate, description of stellar variability.  Their approach runs in
-$\cal{O}(N)$ time for $\alpha=1$, which is `flicker' or pink noise;  however, this
+${\cal O}(N)$ time for $\alpha=1$, which is `flicker' or pink noise;  however, this
 particular type of noise overpredicts the power spectrum at low frequency compared
 to the granulation power spectrum.  It also cannot describe quasi-periodic noise.
 
@@ -1168,16 +1168,16 @@ of these functions can then be optimized to best match the observed variability
 pattern of the residuals (after subtracting a transit model).  The disadvantage of
 this approach is that the functions used are chosen somewhat arbitrarily (e.g.\
 the exponential-squared function), and the Cholesky decomposition of the covariance
-matrix for computing the likelihood takes $\cal{O}(N^3)$ operations which prohibits 
+matrix for computing the likelihood takes ${\cal O}(N^3)$ operations which prohibits 
 application of this technique to large datasets.
 
-Given the drawbacks of these approaches, the \genrp formalism allows both a fast
-computation of the likelihood in $\cal{O}(N)$ time, as well as a functional form
+Given the drawbacks of these approaches, the \genrp\ formalism allows both a fast
+computation of the likelihood in ${\cal O}(N)$ time, as well as a functional form
 that accurately describes stellar variability due to the relation to the simple
 harmonic oscillator power spectrum, which is an analog of stellar asteroseismic
 oscillations.  As higher signal-to-noise observations of transiting exoplanet systems
 are obtained, the effects of stellar variability will more dramatically impact the
-correct inference of planetary transit parameters, and so we expect that \genrp
+correct inference of planetary transit parameters, and so we expect that \genrp\
 will be important for transit timing, transit spectroscopy, Doppler beaming,
 phase functions, and more.
 
@@ -1328,46 +1328,46 @@ points.
 % Reprint Ambikasaran equations (59)-(61)
 
 For the complex values with $d_j \ne 0$, the equations are modified as follows.  We introduce complex
-auxiliary vectors $l_k = l_{k}^R - i l_{k}^I$, with $k \in \{1,2,...,N\}$ and $l_1 = 0$; $r_k =
-r_k^R - i r_k^I$, with $k \in \{2,...,N\}$ and $r_{N+1} = 0$.  Note that we have defined the
+auxiliary vectors $l_n = g_n - i h_n$, with $n \in \{1,2,...,N\}$ and $l_1 = 0$; $r_n =
+u_n - i v_n$, with $n \in \{2,...,N\}$ and $r_{N+1} = 0$.  Note that we have defined the
 imaginary component as being negative for aesthetic reasons:  this yields a symmetric extended
 matrix (unfortunately the extended matrix has negative eigenvalues, making it non positive-definite,
 so that Cholesky decomposition cannot be applied; nevertheless we prefer to use a symmetric
 set of equations, and since the values of these variables are discarded in the end, their sign
-is irrelevant).  The length of the vectors $l_k$ and $r_k$
+is irrelevant).  The length of the vectors $l_n$ and $r_n$
 is the number of kernel components, $J$;  we denote the individual elements of these vectors
-as $l_{k,j}$ and $r_{k,j}$, $j \in \{1,...,J\}$.  Note that the first $J_0$ elements we take
+as $g_{n,j}+ih_{n,j}$ and $u_{n,j}+iv_{n,j}$, $j \in \{1,...,J\}$.  Note that the first $J_0$ elements we take
 to be the kernels with $d_j=0$, and for these we do not include the imaginary component
-equations, which are unnecessary and only add extra computation time.  We allow each vector $\gamma_k$ to have real and imaginary
-components as well:  $\gamma_k = \left[\exp{(-(c_1+id_1) t_{k,k+1})} ... \exp{(-(c_J+id_J) t_{k,k+1})}\right]^T
- = \gamma_k^R + i \gamma_k^I.$  These elements are given by $\gamma_{k,j}^R = e^{-c_j t_{k,k+1}}
-\cos{(d_j t_{k,k+1})}$ and $\gamma_{k,j}^I = -e^{-c_j t_{k,k+1}}\sin{(d_j t_{k,k+1})}$.
+equations, which are unnecessary and only add extra computation time.  We also define vectors $\phi$ and $\psi$ with
+complex components as well:  $\gamma_n = \phi_n + i\psi_n = \left[\exp{(-(c_1+id_1) t_{n,n+1})} ... \exp{(-(c_J+id_J) t_{n,n+1})}\right]^T
+$.  The individual elements are given by $\phi_{n,j} = e^{-c_j t_{n,n+1}}
+\cos{(d_j t_{n,n+1})}$ and $\psi_{n,j} = -e^{-c_j t_{n,n+1}}\sin{(d_j t_{n,n+1})}$.
 Equation (61) becomes:
 \begin{equation} \label{Amb61}
 % See 9/2/2016 notes
 % Use n rather than k for {1...N} - use g, h & u, v?
 % \gamma & \phi - real & imaginary 
-\sum_{j=1}^J \left(\frac{a_j}{2} l_{k,j}^R +\frac{b_j}{2} l_{k,j}^I\right)+ \frac{d}{2} x_k + \sum_{j=1}^J \left[
-\gamma_{k,j}^R r_{k+1,j}^R + \gamma_{k,j}^I r_{k+1,j}^I\right] = \frac{y_k}{2},
+\sum_{j=1}^J \left(\frac{a_j}{2} g_{n,j} +\frac{b_j}{2} h_{n,j}\right)+ \frac{d}{2} x_n + \sum_{j=1}^J \left[
+\phi_{n,j} u_{n+1,j} + \psi_{n,j} v_{n+1,j}\right] = \frac{y_n}{2},
 \end{equation}
-for $j \in \{1,...,J\}$ and $k \in \{1,...,N\}$, where $h_j$ is the $j$th data point.  There is no imaginary component to equation (61)
+for $j \in \{1,...,J\}$ and $n \in \{1,...,N\}$, where $y_j$ is the $j$th data point.  There is no imaginary component to equation (61)
 in \citet{Ambikasaran:2015}.
 
 Equation (60) in \citet{Ambikasaran:2015} has real and imaginary components:
 \begin{eqnarray} \label{Amb60}
-\gamma_{k,j}^R l_{k,j}^R +\gamma_{k,j}^I l_{k,j}^I + \gamma_{k,j}^R x_k - l_{k+1,j}^R &=& 0,\\
-\gamma_{k,j}^I l_{k,j}^R -\gamma_{k,j}^R l_{k,j}^I + \gamma_{k,j}^I x_k + l_{k+1,j}^I &=& 0,
+\phi_{n,j} g_{n,j} +\psi_{n,j} h_{n,j} + \phi_{n,j} x_n - g_{n+1,j} &=& 0,\\
+\psi_{n,j} g_{n,j} -\phi_{n,j} h_{n,j} + \psi_{n,j} x_n + h_{n+1,j} &=& 0,
 \end{eqnarray}
-with $j \in \{1,...,J\}$ and $k \in \{1,...,N-1\}$
+with $j \in \{1,...,J\}$ and $n \in \{1,...,N-1\}$
 \citep[note that we have shifted the indices of this equation by one from the indexing using in][]{Ambikasaran:2015}.
 
 Finally, equation (59) in \citet{Ambikasaran:2015} has real and imaginary components:
-\begin{align} \label{Amb59}
--&r_{k,j}^R + \frac{a_j}{2} x_k + \gamma_{k,j}^R r_{k+1,j}^R + \gamma_{k,j}^I r_{k+1,j}^I &&=0,\\
- &r_{k,j}^I + \frac{b_j}{2} x_k + \gamma_{k,j}^I r_{k+1,j}^R - \gamma_{k,j}^R r_{k+1,j}^I &&=0,
-\end{align}
-with $j \in \{1,...,J\}$ and $k \in \{2,...,N\}$.  Note that for the $J_0$ real components
-we can drop the variables $r_{k,j}^I$ and $l_{k,j}^I$ as these are zero, and we can drop the
+\begin{eqnarray} \label{Amb59}
+-u_{n,j} + \frac{a_j}{2} x_n + \phi_{n,j} u_{n+1,j} + \psi_{n,j} v_{n+1,j} &=&0,\\
+ v_{n,j} + \frac{b_j}{2} x_n + \psi_{n,j} u_{n+1,j} - \phi_{n,j} v_{n+1,j} &=&0,
+\end{eqnarray}
+with $j \in \{1,...,J\}$ and $n \in \{2,...,N\}$.  Note that for the $J_0$ real components
+we can drop the variables $v_{n,j}$ and $h_{n,j}$ as these are zero, and we can drop the
 imaginary components of equations (59) and (60) in \citet{Ambikasaran:2015} as well for these, which reduces the total number
 of equations to solve.
 
@@ -1385,8 +1385,8 @@ may be computed from the LU decomposition, and it is related to the determinant 
 factor of $2^N$ (this is due to dividing each equation by $2$ to yield a symmetric matrix).
 We arrange the auxiliary variables with the $d_j=0$
 terms first, followed by the complex variables, yielding the vector
-$x_{ex} = [x_1, \{r_{2,j}^R,l_{2,j}^R;j=1,...,J_0\}, \{r_{2,j}^R,r_{2,j}^I,l_{2,j}^R,l_{2,j}^I;j=J_0+1,...,J\},
-x_2, ..., x_N]$.  The right hand side is given by: $y_{ex} = [h_1/2, \{0; j=1,...,J_0+2(J-J_0)\}, h_2/2, ..., h_N/2]$.
+$x_{ex} = [x_1, \{u_{2,j},g_{2,j};j=1,...,J_0\}, \{u_{2,j},v_{2,j},g_{2,j},h_{2,j};j=J_0+1,...,J\},
+x_2, ..., x_N]$.  The right hand side is given by: $y_{ex} = [y_1/2, \{0; j=1,...,J_0+2(J-J_0)\}, y_2/2, ..., y_N/2]$.
 The extended matrix, $A_{ex}$, is constructed by inserting the coefficients of equations \ref{Amb61},
 \ref{Amb60}, and \ref{Amb59} into a matrix of dimensions $(2J_0+4(J-J_0)+5) \times N_{ex}$.
 The solution is found by solving $A_{ex} x_{ex} = y_{ex}$ with LU decomposition and back-substitution
