@@ -56,7 +56,8 @@ class RotationKernel(kernels.Kernel):
         return np.array([2*np.pi*np.exp(-self.log_period)])
 
 # Load the data
-data = fitsio.read("data/kplr001430163-2010355172524_llc.fits")
+data = fitsio.read("data/kplr001430163-2013011073258_llc.fits")
+# data = fitsio.read("data/kplr001430163-2010355172524_llc.fits")
 m = data["SAP_QUALITY"] == 0
 m &= np.isfinite(data["TIME"]) & np.isfinite(data["PDCSAP_FLUX"])
 t = np.ascontiguousarray(data["TIME"][m], dtype=np.float64)
@@ -102,6 +103,7 @@ for i in range(10):
         ))
 gp.set_parameter_vector(best[1])
 ml_params = np.array(best[1])
+y_samp = gp.sample(t)
 
 # Do the MCMC
 def log_prob(params):
@@ -175,7 +177,7 @@ ax.plot(f, psd, "--k", lw=1.5)
 ax.set_yscale("log")
 ax.set_xscale("log")
 ax.set_xlim(f[0], f[-1])
-ax.set_ylim(2e-4, 2e-1)
+ax.set_ylim(3e-4, 5e-1)
 ax.set_xlabel("$\omega\,[\mathrm{days}^{-1}]$")
 ax.set_ylabel("$S(\omega)$")
 ax.annotate("power spectrum", xy=(1, 1), xycoords="axes fraction",
@@ -189,7 +191,7 @@ ax.fill_between(tau, q[0], q[2], alpha=0.5, color=color, edgecolor="none")
 ax.plot(tau, q[1], color=color, lw=1.5)
 ax.plot(tau, acf, "--k", lw=1.5)
 ax.set_xlim(tau[0], tau[-1])
-ax.set_ylim(0, 0.135)
+ax.set_ylim(0, 0.155)
 ax.set_xlabel(r"$\tau\,[\mathrm{days}]$")
 ax.set_ylabel(r"$k(\tau)$")
 ax.annotate("covariance function", xy=(1, 1), xycoords="axes fraction",
@@ -198,7 +200,6 @@ ax.annotate("covariance function", xy=(1, 1), xycoords="axes fraction",
 
 # Plot a sample
 ax = axes[1, 0]
-y_samp = gp.sample(t)
 ax.plot(t, y_samp, ".k", rasterized=True)
 ax.set_xlim(t.min(), t.max())
 ax.set_ylim(-1.2, 1.2)
@@ -216,12 +217,12 @@ period_samps = np.exp(sampler.flatchain[:, 2])
 fig, ax = plt.subplots(1, 1, figsize=SQUARE_FIGSIZE)
 ax.hist(period_samps, 40, histtype="step", color=color)
 ax.yaxis.set_major_locator(plt.NullLocator())
-ax.set_xlim(2.9, 4.3)
+mu, std = np.mean(period_samps), np.std(period_samps)
+ax.set_xlim(mu - 3.5*std, mu + 3.5*std)
 ax.set_xlabel("rotation period [days]")
 fig.savefig("rotation-period.pdf", bbox_inches="tight", dpi=300)
 
 with open("rotation.tex", "w") as f:
     f.write("% Automatically generated\n")
     f.write(("\\newcommand{{\\rotationperiod}}{{\\ensuremath{{{{"
-             "{0:.2f} \pm {1:.2f} }}}}}}\n")
-            .format(np.mean(period_samps), np.std(period_samps)))
+             "{0:.2f} \pm {1:.2f} }}}}}}\n").format(mu, std))
