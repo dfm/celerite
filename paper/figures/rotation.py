@@ -125,7 +125,7 @@ while np.any(m):
 sampler = emcee.EnsembleSampler(nwalkers, ndim, log_prob)
 pos, _, _ = sampler.run_mcmc(pos, 250)
 sampler.reset()
-pos, _, _ = sampler.run_mcmc(pos, 500)
+pos, _, _ = sampler.run_mcmc(pos, 1000)
 
 # Compute the model predictions
 gp.set_parameter_vector(ml_params)
@@ -176,7 +176,7 @@ ax.set_yscale("log")
 ax.set_xscale("log")
 ax.set_xlim(f[0], f[-1])
 ax.set_ylim(2e-4, 2e-1)
-ax.set_xlabel("$\omega\,[\mathrm{day}^{-1}]$")
+ax.set_xlabel("$\omega\,[\mathrm{days}^{-1}]$")
 ax.set_ylabel("$S(\omega)$")
 ax.annotate("power spectrum", xy=(1, 1), xycoords="axes fraction",
             ha="right", va="top", xytext=(-5, -5), textcoords="offset points",
@@ -190,7 +190,7 @@ ax.plot(tau, q[1], color=color, lw=1.5)
 ax.plot(tau, acf, "--k", lw=1.5)
 ax.set_xlim(tau[0], tau[-1])
 ax.set_ylim(0, 0.135)
-ax.set_xlabel(r"$\tau\,[\mathrm{day}]$")
+ax.set_xlabel(r"$\tau\,[\mathrm{days}]$")
 ax.set_ylabel(r"$k(\tau)$")
 ax.annotate("covariance function", xy=(1, 1), xycoords="axes fraction",
             ha="right", va="top", xytext=(-5, -5), textcoords="offset points",
@@ -209,3 +209,19 @@ ax.annotate("simulated light curve", xy=(1, 1), xycoords="axes fraction",
             fontsize=12)
 
 fig.savefig("rotation.pdf", bbox_inches="tight", dpi=300)
+plt.close(fig)
+
+# Plot the period constraint
+period_samps = np.exp(sampler.flatchain[:, 2])
+fig, ax = plt.subplots(1, 1, figsize=SQUARE_FIGSIZE)
+ax.hist(period_samps, 40, histtype="step", color=color)
+ax.yaxis.set_major_locator(plt.NullLocator())
+ax.set_xlim(2.9, 4.3)
+ax.set_xlabel("rotation period [days]")
+fig.savefig("rotation-period.pdf", bbox_inches="tight", dpi=300)
+
+with open("rotation.tex", "w") as f:
+    f.write("% Automatically generated\n")
+    f.write(("\\newcommand{{\\rotationperiod}}{{\\ensuremath{{{{"
+             "{0:.2f} \pm {1:.2f} }}}}}}\n")
+            .format(np.mean(period_samps), np.std(period_samps)))
