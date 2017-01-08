@@ -518,7 +518,7 @@ The power spectrum in \eq{sho-psd} has several limits of physical interest:
 \begin{itemize}
 
 {\item For $Q = 1/\sqrt{2}$, \eq{sho-psd} simplifies to
-\begin{eqnarray}
+\begin{eqnarray}\eqlabel{granulation-psd}
 S(\omega) = \sqrt{\frac{2}{\pi}}\,\frac{S_0}{(\omega/\omega_0)^4+1} \quad.
 \end{eqnarray}
 A model like this has been used to model the granulation is Solar data
@@ -591,9 +591,7 @@ in the previous section.
 \end{figure}
 
 
-\section{Examples}
-
-\subsection{Simulated data}
+\section{Examples with simulated data}
 
 \begin{enumerate}
 \item an OU process
@@ -602,14 +600,63 @@ in the previous section.
 \item A KISS-GP process
 \end{enumerate}
 
-\subsection{Real data}
+\section{Examples with real data}
+
+\subsection{Asteroseismic oscillations}
+
+The asteroseismic oscillations of thousands of stars were measured using light
+curves from the \kepler\ mission (\dfmtodo{cite}) and asteroseismology is a
+key science driver for many of the upcoming large scale photometric surveys
+(\dfmtodo{cite}).
+Most asteroseismic analyses have been limited to relatively high
+signal-to-noise oscillations because the standard methods based on statistics
+of the empirical periodogram of the data cannot be used to formally propagate
+the measurement uncertainties to the constraints on physical parameters
+(\dfmtodo{CITE}) and more sophisticated methods are computationally expensive
+and they scale poorly to the current state-of-the-art datasets (\dfmtodo{CITE
+Brewer etc.}).
+
+\genrp\ alleviates these problems by providing a physically motivated
+probabilistic model that can be evaluated efficiently even for large datasets.
+In practice, we will model the star as a mixture of stochastically driven
+simple harmonic oscillators where the amplitudes and frequencies of the
+oscillations are computed using a physical model and evaluate the probability
+of the observed dataset using a Gaussian Process with a PSD given by a sum of
+terms given by \eq{sho-psd}.
+This gives us a method of computing the likelihood function for the parameters
+of the physical model in $\mathcal{O}(N)$ operations and this can be combined
+with standard non-linear optimization or posterior sampling methods to infer
+constraints on the parameters for the given dataset.
+
+To demonstrate this method, we will use a very simple heuristic model based on
+\dfmtodo{CITE} where the model PSD is given by a mixture of 6 components with
+amplitudes and frequencies specified by $\nu_\mathrm{max}$, $\Delta \nu$, and
+several nuisance parameters.
+The first term is used to capture the granulation ``background'' using
+\eq{granulation-psd} with two free parameters $S_g$ and $\omega_g$.
+The remaining 5 terms are given by \eq{sho-psd} where $Q$ is a nuisance
+parameter shared between terms and the frequencies are given by
+\begin{eqnarray}
+\omega_{0,\,j} = 2\,\pi\,(\nu_\mathrm{max} + j\,\Delta\nu + \epsilon)
+\end{eqnarray}
+and the amplitudes are given by
+\begin{eqnarray}
+S_{0,\,j} =
+    \frac{A}{Q^2}\,\exp\left(-\frac{[j\,\Delta\nu + \epsilon]^2}{2\,W^2}\right)
+\end{eqnarray}
+where $j$ is an integer running from $-2$ to 2 and $\epsilon$, $A$, and $W$
+are shared nuisance parameters.
+This model could be easily extended to include small frequency splitting and
+$\nu_\mathrm{max}$ and $\Delta \nu$ could be replaced by physical parameters
+like $\log g$.
+
+\dfmtodo{Add plots etc.}
 
 \begin{enumerate}
-\item AGN
-\item RR Lyrae
-\item Kepler with simulated transit
 \item Asteroseismic target
-\item Stellar rotational variability
+\item Stellar rotation variability
+\item Kepler with simulated transit
+\item AGN
 \end{enumerate}
 
 \section{Comparisons to other methods}
@@ -1141,13 +1188,13 @@ Q: How do we determine how many kernels to use?
 
 There are three primary applications we envision for the \genrp\ formalism: 1).\ modeling
 the variability of an astrophysical system to infer it properties; 2).\
-accounting for astrophysical variability as a source of noise when trying to detect 
+accounting for astrophysical variability as a source of noise when trying to detect
 additional phenomena; 3).\ interpolating or extrapolating variability to future or missing
 times.  Some examples of the first are determining the characteristic
 variability timescale of a quasar, measuring the asteroseismic variation of a star,
 or detection of quasi-periodic variability in a high-energy source.  Examples of the
 second are detecting transiting exoplanets and correcting for stellar activity in
-radial velocity measurements. Examples of the third are measuring time delays in 
+radial velocity measurements. Examples of the third are measuring time delays in
 multiply-imaged gravitationally lensed sources and reverberation mapping of AGN.
 
 \subsection{Application to stellar variability, transiting exoplanets}
@@ -1168,7 +1215,7 @@ of these functions can then be optimized to best match the observed variability
 pattern of the residuals (after subtracting a transit model).  The disadvantage of
 this approach is that the functions used are chosen somewhat arbitrarily (e.g.\
 the exponential-squared function), and the Cholesky decomposition of the covariance
-matrix for computing the likelihood takes ${\cal O}(N^3)$ operations which prohibits 
+matrix for computing the likelihood takes ${\cal O}(N^3)$ operations which prohibits
 application of this technique to large datasets.
 
 Given the drawbacks of these approaches, the \genrp\ formalism allows both a fast
@@ -1346,7 +1393,7 @@ Equation (61) becomes:
 \begin{equation} \label{Amb61}
 % See 9/2/2016 notes
 % Use n rather than k for {1...N} - use g, h & u, v?
-% \gamma & \phi - real & imaginary 
+% \gamma & \phi - real & imaginary
 \sum_{j=1}^J \left(\frac{a_j}{2} g_{n,j} +\frac{b_j}{2} h_{n,j}\right)+ \frac{d}{2} x_n + \sum_{j=1}^J \left[
 \phi_{n,j} u_{n+1,j} + \psi_{n,j} v_{n+1,j}\right] = \frac{y_n}{2},
 \end{equation}
