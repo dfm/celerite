@@ -2,7 +2,6 @@
 #define _GENRP_SOLVER_BAND_H_
 
 #include <cmath>
-#include <tuple>
 #include <iostream>
 #include <Eigen/Core>
 
