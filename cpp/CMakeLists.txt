@@ -1,7 +1,7 @@
 # Much of this is inspired by the CMake scripts from the BSD licensed
 # ceres-solver: https://github.com/ceres-solver/ceres-solver
 
-cmake_minimum_required(VERSION 2.8.0)
+cmake_minimum_required(VERSION 3.1.0)
 project(GenRP C CXX)
 
 # Make CMake aware of the cmake folder for local FindXXX scripts,

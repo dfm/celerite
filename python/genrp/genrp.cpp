@@ -7,6 +7,27 @@
 
 namespace py = pybind11;
 
+class PicklableBandSolver : public genrp::solver::BandSolver<double> {
+public:
+  auto serialize () const {
+    return std::make_tuple(this->computed_, this->n_, this->p_real_, this->p_complex_, this->log_det_,
+                           this->a_, this->al_, this->ipiv_);
+  };
+
+  void deserialize (bool computed, int n, int p_real, int p_complex, double log_det,
+                    Eigen::MatrixXd a, Eigen::MatrixXd al, Eigen::VectorXi ipiv) {
+    this->computed_ = computed;
+    this->n_ = n;
+    this->p_real_ = p_real;
+    this->p_complex_ = p_complex;
+    this->log_det_ = log_det;
+    this->a_ = a;
+    this->al_ = al;
+    this->ipiv_ = ipiv;
+  };
+
+};
+
 PYBIND11_PLUGIN(_genrp) {
   py::module m("_genrp", "GenRP extension");
 
@@ -77,12 +98,10 @@ PYBIND11_PLUGIN(_genrp) {
     }
   );
 
-  py::class_<genrp::solver::BandSolver<double> > solver(m, "Solver");
+  py::class_<PicklableBandSolver > solver(m, "Solver");
   solver.def(py::init<>());
 
-  solver.def("compute",
-    [](
-      genrp::solver::BandSolver<double>& solver,
+  solver.def("compute", [](PicklableBandSolver& solver,
       const Eigen::VectorXd& alpha_real,
       const Eigen::VectorXd& beta_real,
       const Eigen::VectorXd& alpha_complex_real,
@@ -90,46 +109,56 @@ PYBIND11_PLUGIN(_genrp) {
       const Eigen::VectorXd& beta_complex_real,
       const Eigen::VectorXd& beta_complex_imag,
       const Eigen::VectorXd& x,
-      const Eigen::VectorXd& diag
-    ) {
-      return solver.compute(
-        alpha_real,
-        beta_real,
-        alpha_complex_real,
-        alpha_complex_imag,
-        beta_complex_real,
-        beta_complex_imag,
-        x,
-        diag
-      );
-    }
-  );
+      const Eigen::VectorXd& diag) {
+    return solver.compute(
+      alpha_real,
+      beta_real,
+      alpha_complex_real,
+      alpha_complex_imag,
+      beta_complex_real,
+      beta_complex_imag,
+      x,
+      diag
+    );
+  });
 
-  solver.def("solve",
-    [](
-      genrp::solver::BandSolver<double>& solver,
-      const Eigen::MatrixXd& b
-    ) {
-      return solver.solve(b);
-    }
-  );
+  solver.def("solve", [](PicklableBandSolver& solver, const Eigen::MatrixXd& b) {
+    return solver.solve(b);
+  });
 
-  solver.def("dot_solve",
-    [](
-      genrp::solver::BandSolver<double>& solver,
-      const Eigen::MatrixXd& b
-    ) {
-      return solver.dot_solve(b);
-    }
-  );
+  solver.def("dot_solve", [](PicklableBandSolver& solver, const Eigen::MatrixXd& b) {
+    return solver.dot_solve(b);
+  });
 
-  solver.def("log_determinant",
-    [](
-      genrp::solver::BandSolver<double>& solver
-    ) {
-      return solver.log_determinant();
-    }
-  );
+  solver.def("log_determinant", [](PicklableBandSolver& solver) {
+    return solver.log_determinant();
+  });
+
+  solver.def("computed", [](PicklableBandSolver& solver) {
+      return solver.computed();
+  });
+
+  solver.def("__getstate__", [](const PicklableBandSolver& solver) {
+    return solver.serialize();
+  });
+
+  solver.def("__setstate__", [](PicklableBandSolver& solver, py::tuple t) {
+    if (t.size() != 8)
+    throw std::runtime_error("Invalid state!");
+
+    new (&solver) PicklableBandSolver();
+
+    solver.deserialize(
+      t[0].cast<bool>(),
+      t[1].cast<int>(),
+      t[2].cast<int>(),
+      t[3].cast<int>(),
+      t[4].cast<double>(),
+      t[5].cast<Eigen::MatrixXd>(),
+      t[6].cast<Eigen::MatrixXd>(),
+      t[7].cast<Eigen::VectorXi>()
+    );
+  });
 
   return m.ptr();
 }

@@ -2,7 +2,8 @@
 #define _GENRP_SOLVER_SOLVER_H_
 
 #include <Eigen/Core>
-#include "genrp/poly.h"
+
+#include "genrp/exceptions.h"
 
 namespace genrp {
 namespace solver {
@@ -35,7 +36,11 @@ public:
 
   Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> solve (const Eigen::MatrixXd& b) const;
   T dot_solve (const Eigen::VectorXd& b) const;
-  T log_determinant () const;
+  T log_determinant () const {
+    if (!(this->computed_)) throw compute_exception();
+    return log_det_;
+  };
+  bool computed () const { return computed_; };
 
   // Helpers
   int compute (
@@ -73,14 +78,10 @@ public:
 
 template <typename T>
 T Solver<T>::dot_solve (const Eigen::VectorXd& b) const {
+  if (!(this->computed_)) throw compute_exception();
   Eigen::Matrix<T, Eigen::Dynamic, 1> out(n_);
   solve(b, out.data());
   return b.transpose().cast<T>() * out;
-}
-
-template <typename T>
-T Solver<T>::log_determinant () const {
-  return log_det_;
 }
 
 template <typename T>

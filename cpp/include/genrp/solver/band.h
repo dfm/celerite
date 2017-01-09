@@ -2,10 +2,12 @@
 #define _GENRP_SOLVER_BAND_H_
 
 #include <cmath>
+#include <tuple>
 #include <iostream>
 #include <Eigen/Core>
 
 #include "genrp/utils.h"
+#include "genrp/exceptions.h"
 #include "genrp/banded.h"
 #include "genrp/solver/solver.h"
 
@@ -48,7 +50,7 @@ public:
   using Solver<T>::compute;
   using Solver<T>::solve;
 
-private:
+protected:
   Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> a_, al_;
   Eigen::VectorXi ipiv_;
 
@@ -235,12 +237,8 @@ int BandSolver<T>::compute (
 
 template <typename T>
 void BandSolver<T>::solve (const Eigen::MatrixXd& b, T* x) const {
-  if (b.rows() != this->n_) {
-    throw SOLVER_DIMENSION_MISMATCH;
-  }
-  if (!(this->computed_)) {
-    throw SOLVER_NOT_COMPUTED;
-  }
+  if (b.rows() != this->n_) throw std::domain_error("dimension mismatch");
+  if (!(this->computed_)) throw compute_exception();
   int nrhs = b.cols();
 
   BLOCKSIZE

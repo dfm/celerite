@@ -5,11 +5,16 @@ from __future__ import division, print_function
 import pytest
 import numpy as np
 
+try:
+    import cPickle as pickle
+except ImportError:
+    import pickle
+
 from . import Solver, GP, kernels
 from ._genrp import get_kernel_value
 
 __all__ = ["test_invalid_parameters", "test_log_determinant", "test_solve",
-           "test_nyquist_singularity"]
+           "test_pickle", "test_nyquist_singularity"]
 
 
 @pytest.mark.skip(reason="solver no longer checks for ordering")
@@ -60,6 +65,7 @@ def test_solve(seed=42):
     np.random.seed(seed)
     t = np.sort(np.random.rand(500))
     diag = np.random.uniform(0.1, 0.5, len(t))
+    b = np.random.randn(len(t))
 
     alpha_real = np.array([1.3, 1.5])
     beta_real = np.array([0.5, 0.2])
@@ -69,6 +75,11 @@ def test_solve(seed=42):
     beta_complex_imag = np.array([1.0])
 
     solver = Solver()
+    with pytest.raises(RuntimeError):
+        solver.log_determinant()
+    with pytest.raises(RuntimeError):
+        solver.dot_solve(b)
+
     solver.compute(
         alpha_real, beta_real, alpha_complex_real, alpha_complex_imag,
         beta_complex_real, beta_complex_imag, t, diag
@@ -78,13 +89,45 @@ def test_solve(seed=42):
         beta_complex_real, beta_complex_imag, t[:, None] - t[None, :]
     )
     K[np.diag_indices_from(K)] += diag
-    b = np.random.randn(len(t))
     assert np.allclose(solver.solve(b).T, np.linalg.solve(K, b))
 
     b = np.random.randn(len(t), 5)
-    print(b)
-    print(solver.solve(b))
     assert np.allclose(solver.solve(b), np.linalg.solve(K, b))
+
+
+def test_pickle(seed=42):
+    np.random.seed(seed)
+    t = np.sort(np.random.rand(500))
+    diag = np.random.uniform(0.1, 0.5, len(t))
+    y = np.sin(t)
+
+    alpha_real = np.array([1.3, 1.5])
+    beta_real = np.array([0.5, 0.2])
+    alpha_complex_real = np.array([1.0])
+    alpha_complex_imag = np.array([0.1])
+    beta_complex_real = np.array([1.0])
+    beta_complex_imag = np.array([1.0])
+
+    def compare(solver1, solver2):
+        assert solver1.computed() == solver2.computed()
+        if not solver1.computed():
+            return
+        assert np.allclose(solver1.log_determinant(),
+                           solver2.log_determinant())
+        assert np.allclose(solver1.dot_solve(y),
+                           solver2.dot_solve(y))
+
+    solver1 = Solver()
+    solver2 = pickle.loads(pickle.dumps(solver1, -1))
+    compare(solver1, solver2)
+
+    solver1.compute(
+        alpha_real, beta_real, alpha_complex_real, alpha_complex_imag,
+        beta_complex_real, beta_complex_imag, t, diag
+    )
+    solver2 = pickle.loads(pickle.dumps(solver1, -1))
+    compare(solver1, solver2)
+
 
 #  def test_kernel_params():
 #      gp = GP()

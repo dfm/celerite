@@ -7,6 +7,7 @@
 #include <Eigen/Dense>
 
 #include "genrp/utils.h"
+#include "genrp/exceptions.h"
 
 namespace genrp {
 namespace carma {
@@ -166,7 +167,7 @@ void predict (double yerr) {
   variance_ = yerr * yerr + tmp.real();
 
   // Check the variance value for instability.
-  if (variance_ < 0.0) throw 1;
+  if (variance_ < 0.0) throw carma_exception();
 };
 
 void update_state (double y) {

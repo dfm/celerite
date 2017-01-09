@@ -5,6 +5,7 @@
 #include <Eigen/Dense>
 
 #include "genrp/utils.h"
+#include "genrp/exceptions.h"
 #include "genrp/solver/solver.h"
 
 namespace genrp {
@@ -81,12 +82,8 @@ int DirectSolver<T>::compute (
 
 template <typename T>
 void DirectSolver<T>::solve (const Eigen::MatrixXd& b, T* x) const {
-  if (b.rows() != this->n_) {
-    throw SOLVER_DIMENSION_MISMATCH;
-  }
-  if (!(this->computed_)) {
-    throw SOLVER_NOT_COMPUTED;
-  }
+  if (b.rows() != this->n_) throw std::domain_error("dimension mismatch");
+  if (!(this->computed_)) throw compute_exception();
   int nrhs = b.cols();
 
   Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>
