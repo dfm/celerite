@@ -28,17 +28,19 @@ compile_args["include_dirs"] = [
 # Move the header files to the correct directory.
 dn = os.path.dirname
 incldir = os.path.join(dn(dn(os.path.abspath(__file__))), "cpp", "include")
-headers = (
-    glob.glob(os.path.join(incldir, "*", "*.h")) +
-    glob.glob(os.path.join(incldir, "*", "*", "*.h"))
-)
-for fn in headers:
-    dst = os.path.join(localincl, fn[len(incldir)+1:])
-    try:
-        os.makedirs(os.path.split(dst)[0])
-    except os.error:
-        pass
-    shutil.copyfile(fn, dst)
+if os.path.exists(os.path.join(incldir, "genrp", "genrp.h")):
+    print("Dev mode...")
+    headers = (
+        glob.glob(os.path.join(incldir, "*", "*.h")) +
+        glob.glob(os.path.join(incldir, "*", "*", "*.h"))
+    )
+    for fn in headers:
+        dst = os.path.join(localincl, fn[len(incldir)+1:])
+        try:
+            os.makedirs(os.path.split(dst)[0])
+        except os.error:
+            pass
+        shutil.copyfile(fn, dst)
 
 # Check to make sure that the header files are in place
 if not os.path.exists(os.path.join(localincl, "genrp", "version.h")):
@@ -69,8 +71,12 @@ setup(
     packages=["genrp"],
     install_requires=["numpy>=1.9", "pybind11>=1.7"],
     ext_modules=[ext],
-    description="",
+    description="Scalable 1D Gaussian Processes",
     long_description=open("README.rst").read(),
+    package_data={"": ["README.rst", "LICENSE",
+                       os.path.join(localincl, "*.h"),
+                       os.path.join(localincl, "*", "*.h")]},
+    include_package_data=True,
     cmdclass=dict(build_ext=build_ext),
     classifiers=[
         # "Development Status :: 5 - Production/Stable",
