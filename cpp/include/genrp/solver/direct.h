@@ -82,7 +82,7 @@ int DirectSolver<T>::compute (
 
 template <typename T>
 void DirectSolver<T>::solve (const Eigen::MatrixXd& b, T* x) const {
-  if (b.rows() != this->n_) throw std::domain_error("dimension mismatch");
+  if (b.rows() != this->n_) throw dimension_mismatch();
   if (!(this->computed_)) throw compute_exception();
   int nrhs = b.cols();
 

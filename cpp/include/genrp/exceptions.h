@@ -17,6 +17,12 @@ struct compute_exception : public std::exception {
   }
 };
 
+struct dimension_mismatch : public std::exception {
+  const char * what () const throw () {
+    return "dimension mismatch";
+  }
+};
+
 }; // namespace genrp
 
 #endif // _GENRP_EXCEPTIONS_H_
