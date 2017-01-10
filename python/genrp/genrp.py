@@ -82,13 +82,12 @@ class GP(Model):
         self._yerr[:] = yerr
         if self.solver is None:
             self.solver = Solver()
+        (alpha_real, beta_real, alpha_complex_real, alpha_complex_imag,
+         beta_complex_real, beta_complex_imag) = self.kernel.coefficients
         self.solver.compute(
-            self.kernel.alpha_real,
-            self.kernel.beta_real,
-            self.kernel.alpha_complex_real,
-            self.kernel.alpha_complex_imag,
-            self.kernel.beta_complex_real,
-            self.kernel.beta_complex_imag,
+            alpha_real, beta_real,
+            alpha_complex_real, alpha_complex_imag,
+            beta_complex_real, beta_complex_imag,
             t, self._yerr**2 + np.exp(self.log_white_noise.get_value(t))
         )
         self.dirty = False

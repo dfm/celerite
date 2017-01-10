@@ -21,39 +21,30 @@ class Kernel(Model):
 
     def get_value(self, x):
         x = np.asarray(x)
+        (alpha_real, beta_real, alpha_complex_real, alpha_complex_imag,
+         beta_complex_real, beta_complex_imag) = self.coefficients
         k = get_kernel_value(
-            self.alpha_real,
-            self.beta_real,
-            self.alpha_complex_real,
-            self.alpha_complex_imag,
-            self.beta_complex_real,
-            self.beta_complex_imag,
+            alpha_real, beta_real,
+            alpha_complex_real, alpha_complex_imag,
+            beta_complex_real, beta_complex_imag,
             x.flatten(),
         )
         return np.asarray(k).reshape(x.shape)
 
     def get_psd(self, w):
         w = np.asarray(w)
+        (alpha_real, beta_real, alpha_complex_real, alpha_complex_imag,
+         beta_complex_real, beta_complex_imag) = self.coefficients
         p = get_psd_value(
-            self.alpha_real,
-            self.beta_real,
-            self.alpha_complex_real,
-            self.alpha_complex_imag,
-            self.beta_complex_real,
-            self.beta_complex_imag,
+            alpha_real, beta_real,
+            alpha_complex_real, alpha_complex_imag,
+            beta_complex_real, beta_complex_imag,
             w.flatten(),
         )
         return p.reshape(w.shape)
 
     def check_parameters(self):
-        return check_coefficients(
-            self.alpha_real,
-            self.beta_real,
-            self.alpha_complex_real,
-            self.alpha_complex_imag,
-            self.beta_complex_real,
-            self.beta_complex_imag,
-        )
+        return check_coefficients(*(self.coefficients))
 
     def __add__(self, b):
         return Sum(self, b)
@@ -61,37 +52,31 @@ class Kernel(Model):
     def __radd__(self, b):
         return Sum(b, self)
 
-    @property
-    def p_real(self):
-        return 0
+    def get_real_coefficients(self):
+        return np.empty(0), np.empty(0)
+
+    def get_complex_coefficients(self):
+        return np.empty(0), np.empty(0), np.empty(0), np.empty(0)
+
+    def get_all_coefficients(self):
+        r = self.get_real_coefficients()
+        c = self.get_complex_coefficients()
+        if len(c) == 3:
+            c = (c[0], np.zeros_like(c[0]), c[1], c[2])
+        return list(map(np.atleast_1d, chain(r, c)))
 
     @property
-    def p_complex(self):
-        return 0
-
-    @property
-    def alpha_real(self):
-        return np.empty(0)
-
-    @property
-    def beta_real(self):
-        return np.empty(0)
-
-    @property
-    def alpha_complex_real(self):
-        return np.empty(0)
-
-    @property
-    def alpha_complex_imag(self):
-        return np.empty(0)
-
-    @property
-    def beta_complex_real(self):
-        return np.empty(0)
-
-    @property
-    def beta_complex_imag(self):
-        return np.empty(0)
+    def coefficients(self):
+        pars = self.get_all_coefficients()
+        if len(pars) != 6:
+            raise ValueError("there must be 6 coefficient blocks")
+        if any(len(p.shape) != 1 for p in pars):
+            raise ValueError("coefficient blocks must be 1D")
+        if len(pars[0]) != len(pars[1]):
+            raise ValueError("coefficient blocks must have the same shape")
+        if any(len(pars[2]) != len(p) for p in pars[3:]):
+            raise ValueError("coefficient blocks must have the same shape")
+        return pars
 
 
 class Sum(Kernel):
@@ -171,41 +156,11 @@ class Sum(Kernel):
         self.dirty = True
         return self._apply_to_parameter("set_parameter", name, value)
 
-    @property
-    def p_real(self):
-        return self.k1.p_real + self.k2.p_real
-
-    @property
-    def p_complex(self):
-        return self.k1.p_complex + self.k2.p_complex
-
-    @property
-    def alpha_real(self):
-        return np.append(self.k1.alpha_real, self.k2.alpha_real)
-
-    @property
-    def beta_real(self):
-        return np.append(self.k1.beta_real, self.k2.beta_real)
-
-    @property
-    def alpha_complex_real(self):
-        return np.append(self.k1.alpha_complex_real,
-                         self.k2.alpha_complex_real)
-
-    @property
-    def alpha_complex_imag(self):
-        return np.append(self.k1.alpha_complex_imag,
-                         self.k2.alpha_complex_imag)
-
-    @property
-    def beta_complex_real(self):
-        return np.append(self.k1.beta_complex_real,
-                         self.k2.beta_complex_real)
-
-    @property
-    def beta_complex_imag(self):
-        return np.append(self.k1.beta_complex_imag,
-                         self.k2.beta_complex_imag)
+    def get_all_coefficients(self):
+        return [np.append(a, b) for a, b in zip(
+            self.k1.get_all_coefficients(),
+            self.k2.get_all_coefficients(),
+        )]
 
 
 class RealTerm(Kernel):
@@ -215,17 +170,8 @@ class RealTerm(Kernel):
     def __repr__(self):
         return "RealTerm({0.a}, {0.log_c})".format(self)
 
-    @property
-    def p_real(self):
-        return 1
-
-    @property
-    def alpha_real(self):
-        return np.array([self.a])
-
-    @property
-    def beta_real(self):
-        return np.array([math.exp(self.log_c)])
+    def get_real_coefficients(self):
+        return self.a, math.exp(self.log_c)
 
 
 class ComplexTerm(Kernel):
@@ -251,86 +197,44 @@ class ComplexTerm(Kernel):
             return "ComplexTerm({0.a}, {0.log_c}, {0.log_d})".format(self)
         return "ComplexTerm({0.a}, {0.b}, {0.log_c}, {0.log_d})".format(self)
 
-    @property
-    def p_complex(self):
-        return 1
-
-    @property
-    def alpha_complex_real(self):
-        return np.array([self.a])
-
-    @property
-    def alpha_complex_imag(self):
-        return np.array([self.b])
-
-    @property
-    def beta_complex_real(self):
-        return np.array([math.exp(self.log_c)])
-
-    @property
-    def beta_complex_imag(self):
-        return np.array([math.exp(self.log_d)])
+    def get_complex_coefficients(self):
+        return self.a, self.b, math.exp(self.log_c), math.exp(self.log_d)
 
 
 class SHOTerm(Kernel):
 
-    parameter_names = ("log_S0", "log_Q", "log_w0")
+    parameter_names = ("log_S0", "log_Q", "log_omega0")
 
     def __repr__(self):
-        return "SHOTerm({0.log_S0}, {0.log_Q}, {0.log_w0})".format(self)
+        return "SHOTerm({0.log_S0}, {0.log_Q}, {0.log_omega0})".format(self)
 
-    @property
-    def p_real(self, log_half=math.log(0.5)):
-        return 2 if self.log_Q < log_half else 0
-
-    @property
-    def p_complex(self, log_half=math.log(0.5)):
-        return 0 if self.log_Q < log_half else 1
-
-    @property
-    def alpha_real(self, log_half=math.log(0.5)):
+    def get_real_coefficients(self, log_half=math.log(0.5)):
         if self.log_Q >= log_half:
-            return np.empty(0)
-        Q = math.exp(self.log_Q)
-        f = 1.0 / math.sqrt(1.0 - 4.0 * Q**2)
-        return 0.5*math.exp(self.log_S0+self.log_w0)*Q*np.array([1.0+f, 1.0-f])
+            return np.empty(0), np.empty(0)
 
-    @property
-    def beta_real(self, log_half=math.log(0.5)):
-        if self.log_Q >= log_half:
-            return np.empty(0)
+        S0 = math.exp(self.log_S0)
         Q = math.exp(self.log_Q)
+        w0 = math.exp(self.log_omega0)
         f = math.sqrt(1.0 - 4.0 * Q**2)
-        return 0.5*math.exp(self.log_w0)/Q*np.array([1.0-f, 1.0+f])
+        return (
+            0.5*S0*w0*Q*np.array([1.0+1.0/f, 1.0-1.0/f]),
+            0.5*w0/Q*np.array([1.0-f, 1.0+f])
+        )
 
-    @property
-    def alpha_complex_real(self, log_half=math.log(0.5)):
+    def get_complex_coefficients(self, log_half=math.log(0.5)):
         if self.log_Q < log_half:
-            return np.empty(0)
-        Q = math.exp(self.log_Q)
-        return np.array([math.exp(self.log_S0 + self.log_w0) * Q])
+            return np.empty(0), np.empty(0), np.empty(0), np.empty(0)
 
-    @property
-    def alpha_complex_imag(self, log_half=math.log(0.5)):
-        if self.log_Q < log_half:
-            return np.empty(0)
+        S0 = math.exp(self.log_S0)
         Q = math.exp(self.log_Q)
-        return np.array([math.exp(self.log_S0+self.log_w0)*Q /
-                         math.sqrt(4*Q**2-1.0)])
-
-    @property
-    def beta_complex_real(self, log_half=math.log(0.5)):
-        if self.log_Q < log_half:
-            return np.empty(0)
-        Q = math.exp(self.log_Q)
-        return np.array([0.5*math.exp(self.log_w0)/Q])
-
-    @property
-    def beta_complex_imag(self, log_half=math.log(0.5)):
-        if self.log_Q < log_half:
-            return np.empty(0)
-        Q = math.exp(self.log_Q)
-        return np.array([0.5*math.exp(self.log_w0)/Q*math.sqrt(4*Q**2-1.0)])
+        w0 = math.exp(self.log_omega0)
+        f = math.sqrt(4.0 * Q**2-1)
+        return (
+            S0 * w0 * Q,
+            S0 * w0 * Q / f,
+            0.5 * w0 / Q,
+            0.5 * w0 / Q * f,
+        )
 
 
 class Matern32Term(Kernel):
@@ -345,27 +249,7 @@ class Matern32Term(Kernel):
         return "Matern32Term({0.log_sigma}, {0.log_rho}, eps={0.eps})" \
             .format(self)
 
-    @property
-    def p_complex(self):
-        return 1
-
-    @property
-    def alpha_complex_real(self):
+    def get_complex_coefficients(self):
         w0 = math.sqrt(3.0) * math.exp(-self.log_rho)
         S0 = math.exp(2.0 * self.log_sigma) / w0
-        return np.array([w0 * S0])
-
-    @property
-    def alpha_complex_imag(self):
-        w0 = math.sqrt(3.0) * math.exp(-self.log_rho)
-        S0 = math.exp(2.0 * self.log_sigma) / w0
-        return np.array([w0 * S0 * w0 / self.eps])
-
-    @property
-    def beta_complex_real(self):
-        w0 = math.sqrt(3.0) * math.exp(-self.log_rho)
-        return np.array([w0])
-
-    @property
-    def beta_complex_imag(self):
-        return np.array([self.eps])
+        return (w0*S0, w0*w0*S0/self.eps, w0, self.eps)
