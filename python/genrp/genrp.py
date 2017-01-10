@@ -103,6 +103,14 @@ class GP(Model):
             raise ValueError("dimension mismatch")
         return np.ascontiguousarray(y, dtype=float)
 
+    def log_prior(self):
+        lp = (
+            self.mean.log_prior() +
+            self.log_white_noise.log_prior() +
+            self.kernel.log_prior()
+        )
+        return lp if np.isfinite(lp) else -np.inf
+
     def log_likelihood(self, y, _const=np.log(2*np.pi)):
         y = self._process_input(y)
         resid = y - self.mean.get_value(self._t)
@@ -225,6 +233,14 @@ class GP(Model):
             self.kernel.parameter_vector
         ))
 
+    @property
+    def parameter_bounds(self):
+        return list(chain(
+            self.mean.parameter_bounds,
+            self.log_white_noise.parameter_bounds,
+            self.kernel.parameter_bounds
+        ))
+
     @parameter_vector.setter
     def parameter_vector(self, v):
         i = self.mean.full_size
@@ -256,6 +272,16 @@ class GP(Model):
 
     def thaw_parameter(self, name):
         self._apply_to_parameter("thaw_parameter", name)
+
+    def freeze_all_parameters(self):
+        self.mean.freeze_all_parameters()
+        self.log_white_noise.freeze_all_parameters()
+        self.kernel.freeze_all_parameters()
+
+    def thaw_all_parameters(self):
+        self.mean.thaw_all_parameters()
+        self.log_white_noise.thaw_all_parameters()
+        self.kernel.thaw_all_parameters()
 
     def get_parameter(self, name):
         return self._apply_to_parameter("get_parameter", name)

@@ -11,11 +11,16 @@ class Model(object):
 
     parameter_names = tuple()
 
-    def __init__(self, *args):
+    def __init__(self, *args, **kwargs):
         self.unfrozen_mask = np.ones(self.full_size, dtype=bool)
         self.dirty = True
         if len(args):
             self.parameter_vector = args
+        self.parameter_bounds = kwargs.get(
+            "bounds", [(None, None) for _ in range(self.full_size)])
+        if len(self.parameter_bounds) != self.full_size:
+            raise ValueError("the number of bounds must equal the number of "
+                             "parameters")
 
     def get_value(self, x):
         raise NotImplementedError("overloaded by subclasses")
@@ -60,6 +65,13 @@ class Model(object):
                      for p, f in zip(self.parameter_names, self.unfrozen_mask)
                      if f)
 
+    def get_parameter_bounds(self, include_frozen=False):
+        if include_frozen:
+            return self.parameter_bounds
+        return list(p
+                    for p, f in zip(self.parameter_bounds, self.unfrozen_mask)
+                    if f)
+
     def get_parameter_vector(self, include_frozen=False):
         if include_frozen:
             return self.parameter_vector
@@ -82,6 +94,12 @@ class Model(object):
         i = self.get_parameter_names(include_frozen=True).index(name)
         self.unfrozen_mask[i] = True
 
+    def freeze_all_parameters(self):
+        self.unfrozen_mask[:] = False
+
+    def thaw_all_parameters(self):
+        self.unfrozen_mask[:] = True
+
     def get_parameter(self, name):
         i = self.get_parameter_names(include_frozen=True).index(name)
         return self.get_parameter_vector(include_frozen=True)[i]
@@ -91,6 +109,14 @@ class Model(object):
         v = self.get_parameter_vector(include_frozen=True)
         v[i] = value
         self.set_parameter_vector(v, include_frozen=True)
+
+    def log_prior(self):
+        for p, b in zip(self.parameter_vector, self.parameter_bounds):
+            if b[0] is not None and p < b[0]:
+                return -np.inf
+            if b[1] is not None and p > b[1]:
+                return -np.inf
+        return 0.0
 
 
 class ConstantModel(Model):

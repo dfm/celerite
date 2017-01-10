@@ -14,7 +14,7 @@ from plot_setup import setup, SQUARE_FIGSIZE, COLORS
 import genrp
 from genrp import terms
 
-np.random.seed(42)
+np.random.seed(123)
 setup()
 
 # Define the custom kernel
@@ -53,7 +53,13 @@ yerr *= 1e3 / mean
 
 # Set up the GP model
 kernel = RotationTerm(
-    np.log(np.var(y)), np.log(10), np.log(2.0), np.log(1.0)
+    np.log(np.var(y)), np.log(10), np.log(2.0), np.log(1.0),
+    bounds=[
+        np.log(np.var(y) * np.array([0.01, 100])),
+        np.log([np.max(np.diff(t)), (t.max() - t.min())]),
+        np.log([3*np.median(np.diff(t)), 0.5*(t.max() - t.min())]),
+        [-5.0, np.log(5.0)],
+    ]
 )
 gp = genrp.GP(kernel, mean=np.median(y))
 gp.compute(t, yerr)
@@ -65,12 +71,7 @@ def neg_log_like(params, y, gp):
 
 # Optimize with random restarts
 initial_params = gp.get_parameter_vector()
-bounds = [
-    np.log(np.var(y) * np.array([0.01, 100])),
-    np.log([np.max(np.diff(t)), (t.max() - t.min())]),
-    np.log([3*np.median(np.diff(t)), 0.5*(t.max() - t.min())]),
-    [-5.0, np.log(5.0)],
-]
+bounds = gp.get_parameter_bounds()
 best = (np.inf, initial_params)
 for i in range(10):
     p0 = np.array([np.random.uniform(*b) for b in bounds])
