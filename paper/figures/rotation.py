@@ -12,52 +12,33 @@ from scipy.optimize import minimize
 from plot_setup import setup, SQUARE_FIGSIZE, COLORS
 
 import genrp
-from genrp import kernels
+from genrp import terms
 
 np.random.seed(42)
 setup()
 
 # Define the custom kernel
-class RotationKernel(kernels.Kernel):
+class RotationTerm(terms.Term):
     parameter_names = ("log_amp", "log_timescale", "log_period", "log_factor")
 
-    @property
-    def p_real(self):
-        return 1
-
-    @property
-    def p_complex(self):
-        return 1
-
-    @property
-    def alpha_real(self):
+    def get_real_coefficients(self):
         f = np.exp(self.log_factor)
-        return np.array([np.exp(self.log_amp) * (1.0 + f) / (2.0 + f)])
+        return (
+            np.exp(self.log_amp) * (1.0 + f) / (2.0 + f),
+            np.exp(-self.log_timescale),
+        )
 
-    @property
-    def beta_real(self):
-        return np.array([np.exp(-self.log_timescale)])
-
-    @property
-    def alpha_complex_real(self):
+    def get_complex_coefficients(self):
         f = np.exp(self.log_factor)
-        return np.array([np.exp(self.log_amp) / (2.0 + f)])
-
-    @property
-    def alpha_complex_imag(self):
-        return np.array([0.0])
-
-    @property
-    def beta_complex_real(self):
-        return np.array([np.exp(-self.log_timescale)])
-
-    @property
-    def beta_complex_imag(self):
-        return np.array([2*np.pi*np.exp(-self.log_period)])
+        return (
+            np.exp(self.log_amp) / (2.0 + f),
+            0.0,
+            np.exp(-self.log_timescale),
+            2*np.pi*np.exp(-self.log_period),
+        )
 
 # Load the data
 data = fitsio.read("data/kplr001430163-2013011073258_llc.fits")
-# data = fitsio.read("data/kplr001430163-2010355172524_llc.fits")
 m = data["SAP_QUALITY"] == 0
 m &= np.isfinite(data["TIME"]) & np.isfinite(data["PDCSAP_FLUX"])
 t = np.ascontiguousarray(data["TIME"][m], dtype=np.float64)
@@ -71,7 +52,7 @@ y = (y / mean - 1.0) * 1e3
 yerr *= 1e3 / mean
 
 # Set up the GP model
-kernel = RotationKernel(
+kernel = RotationTerm(
     np.log(np.var(y)), np.log(10), np.log(2.0), np.log(1.0)
 )
 gp = genrp.GP(kernel, mean=np.median(y))
