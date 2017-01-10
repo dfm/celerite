@@ -98,7 +98,7 @@ PYBIND11_PLUGIN(_genrp) {
     }
   );
 
-  py::class_<PicklableBandSolver > solver(m, "Solver");
+  py::class_<PicklableBandSolver> solver(m, "Solver");
   solver.def(py::init<>());
 
   solver.def("compute", [](PicklableBandSolver& solver,
