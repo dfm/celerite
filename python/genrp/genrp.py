@@ -80,7 +80,8 @@ class GP(Model):
         self._t = t
         self._yerr = np.empty_like(self._t)
         self._yerr[:] = yerr
-        self.solver = Solver()
+        if self.solver is None:
+            self.solver = Solver()
         self.solver.compute(
             self.kernel.alpha_real,
             self.kernel.beta_real,
