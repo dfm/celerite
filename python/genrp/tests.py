@@ -10,7 +10,7 @@ try:
 except ImportError:
     import pickle
 
-from . import Solver, GP, kernels
+from . import Solver, GP, terms
 from ._genrp import get_kernel_value
 
 __all__ = ["test_invalid_parameters", "test_log_determinant", "test_solve",
@@ -288,7 +288,7 @@ def test_pickle(seed=42):
 def test_nyquist_singularity(seed=4220):
     np.random.seed(seed)
 
-    kernel = kernels.ComplexTerm(1.0, np.log(1e-6), np.log(1.0))
+    kernel = terms.ComplexTerm(1.0, np.log(1e-6), np.log(1.0))
     gp = GP(kernel)
 
     # Samples are very close to Nyquist with f = 1.0

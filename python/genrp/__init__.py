@@ -8,9 +8,9 @@ except NameError:
     __GENRP_SETUP__ = False
 
 if not __GENRP_SETUP__:
-    __all__ = ["Solver", "GP", "kernels"]
+    __all__ = ["Solver", "GP", "terms"]
 
-    from . import kernels
+    from . import terms
     from .genrp import GP
     from ._genrp import Solver, get_library_version
 

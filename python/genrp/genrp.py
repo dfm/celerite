@@ -14,7 +14,7 @@ class GP(Model):
     """The main interface to the genrp Gaussian Process solver
 
     Args:
-        kernel: An instance of a subclass of :class:`kernels.Kernel`.
+        kernel: An instance of a subclass of :class:`terms.Kernel`.
         mean (Optional): A simple mean value for the process. This can either
             be a ``float`` or a subclass of :class:`Model`. (default: ``0.0``)
         fit_mean (optional): If ``False``, all of the parameters of ``mean``

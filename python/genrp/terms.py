@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from __future__ import division, print_function
+import re
 import math
 import numpy as np
 from itertools import chain
@@ -9,11 +10,11 @@ from .modeling import Model
 from ._genrp import get_kernel_value, get_psd_value, check_coefficients
 
 __all__ = [
-    "Kernel", "Sum", "RealTerm", "ComplexTerm", "SHOTerm", "Matern32Term"
+    "Term", "TermSum", "RealTerm", "ComplexTerm", "SHOTerm", "Matern32Term"
 ]
 
 
-class Kernel(Model):
+class Term(Model):
 
     @property
     def terms(self):
@@ -47,10 +48,10 @@ class Kernel(Model):
         return check_coefficients(*(self.coefficients))
 
     def __add__(self, b):
-        return Sum(self, b)
+        return TermSum(self, b)
 
     def __radd__(self, b):
-        return Sum(b, self)
+        return TermSum(b, self)
 
     def get_real_coefficients(self):
         return np.empty(0), np.empty(0)
@@ -79,69 +80,70 @@ class Kernel(Model):
         return pars
 
 
-class Sum(Kernel):
+class TermSum(Term):
 
-    def __init__(self, k1, k2):
-        self.k1 = k1
-        self.k2 = k2
+    def __init__(self, *terms):
+        self._terms = []
+        for term in terms:
+            self._terms += term.terms
 
     def __repr__(self):
-        return "{0} + {1}".format(self.k1, self.k2)
+        return " + ".join(map("{0}".format, self.terms))
 
     @property
     def terms(self):
-        return self.k1.terms + self.k2.terms
+        return self._terms
 
     @property
     def dirty(self):
-        return self.k1.dirty or self.k2.dirty
+        return any(t.dirty for t in self._terms)
 
     @dirty.setter
     def dirty(self, value):
-        self.k1.dirty = value
-        self.k2.dirty = value
+        for t in self._terms:
+            t.dirty = True
 
     @property
     def full_size(self):
-        return self.k1.full_size + self.k2.full_size
+        return sum(t.full_size for t in self._terms)
 
     @property
     def vector_size(self):
-        return self.k1.vector_size + self.k2.vector_size
+        return sum(t.vector_size for t in self._terms)
 
     @property
     def unfrozen_mask(self):
-        return np.concatenate((
-            self.k1.unfrozen_mask,
-            self.k2.unfrozen_mask,
-        ))
+        return np.concatenate([
+            t.unfrozen_mask for t in self._terms
+        ])
 
     @property
     def parameter_vector(self):
-        return np.concatenate((
-            self.k1.parameter_vector,
-            self.k2.parameter_vector
-        ))
+        return np.concatenate([
+            t.parameter_vector for t in self._terms
+        ])
 
     @parameter_vector.setter
     def parameter_vector(self, v):
-        i = self.k1.full_size
-        self.k1.parameter_vector = v[:i]
-        self.k2.parameter_vector = v[i:]
+        i = 0
+        for t in self._terms:
+            l = self.k1.full_size
+            t.parameter_vector = v[i:i+l]
+            i += l
 
     @property
     def parameter_names(self):
-        return tuple(chain(
-            map("k1:{0}".format, self.k1.parameter_names),
-            map("k2:{0}".format, self.k2.parameter_names),
-        ))
+        return tuple(chain(*(
+            map("term[{0}]:{{0}}".format(i).format, t.parameter_names)
+            for i, t in enumerate(self._terms)
+        )))
 
     def _apply_to_parameter(self, func, name, *args):
-        if name.startswith("k1:"):
-            return getattr(self.k1, func)(name[3:], *args)
-        if name.startswith("k2:"):
-            return getattr(self.k2, func)(name[3:], *args)
-        raise ValueError("unrecognized parameter '{0}'".format(name))
+        groups = re.findall(r"^term\[([0-9]+)\]:(.*)", name)
+        if not len(groups):
+            raise ValueError("unrecognized parameter '{0}'".format(name))
+        index, subname = groups[0]
+        return getattr(self._terms[int(index)], func)(subname, *args)
 
     def freeze_parameter(self, name):
         self._apply_to_parameter("freeze_parameter", name)
@@ -157,13 +159,12 @@ class Sum(Kernel):
         return self._apply_to_parameter("set_parameter", name, value)
 
     def get_all_coefficients(self):
-        return [np.append(a, b) for a, b in zip(
-            self.k1.get_all_coefficients(),
-            self.k2.get_all_coefficients(),
-        )]
+        return [np.append(a, b) for a, b in zip(*(
+            t.get_all_coefficients() for t in self._terms
+        ))]
 
 
-class RealTerm(Kernel):
+class RealTerm(Term):
 
     parameter_names = ("a", "log_c")
 
@@ -174,7 +175,7 @@ class RealTerm(Kernel):
         return self.a, math.exp(self.log_c)
 
 
-class ComplexTerm(Kernel):
+class ComplexTerm(Term):
 
     def __init__(self, *args):
         if len(args) == 3:
@@ -201,7 +202,7 @@ class ComplexTerm(Kernel):
         return self.a, self.b, math.exp(self.log_c), math.exp(self.log_d)
 
 
-class SHOTerm(Kernel):
+class SHOTerm(Term):
 
     parameter_names = ("log_S0", "log_Q", "log_omega0")
 
@@ -237,7 +238,7 @@ class SHOTerm(Kernel):
         )
 
 
-class Matern32Term(Kernel):
+class Matern32Term(Term):
 
     parameter_names = ("log_sigma", "log_rho")
 
