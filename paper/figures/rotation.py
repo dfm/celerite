@@ -3,13 +3,13 @@
 
 from __future__ import division, print_function
 
-import emcee
+import emcee3
 import fitsio
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.optimize import minimize
 
-from plot_setup import setup, SQUARE_FIGSIZE, COLORS
+from plot_setup import setup, get_figsize, COLORS
 
 import genrp
 from genrp import terms
@@ -70,6 +70,7 @@ def neg_log_like(params, y, gp):
     return -gp.log_likelihood(y)
 
 # Optimize with random restarts
+print("Running optimization with randomized restarts...")
 initial_params = gp.get_parameter_vector()
 bounds = gp.get_parameter_bounds()
 best = (np.inf, initial_params)
@@ -85,7 +86,6 @@ for i in range(10):
         ))
 gp.set_parameter_vector(best[1])
 ml_params = np.array(best[1])
-y_samp = gp.sample(t)
 
 # Do the MCMC
 def log_prob(params):
@@ -95,6 +95,7 @@ def log_prob(params):
     return gp.log_likelihood(y)
 
 # Initialize
+print("Running MCMC sampling...")
 ndim = len(ml_params)
 nwalkers = 32
 pos = ml_params + 1e-5 * np.random.randn(nwalkers, ndim)
@@ -106,10 +107,9 @@ while np.any(m):
     m = ~np.isfinite(lp)
 
 # Sample
-sampler = emcee.EnsembleSampler(nwalkers, ndim, log_prob)
-pos, _, _ = sampler.run_mcmc(pos, 250)
-sampler.reset()
-pos, _, _ = sampler.run_mcmc(pos, 1000)
+sampler = emcee3.Sampler()
+ensemble = emcee3.Ensemble(emcee3.SimpleModel(log_prob), pos)
+sampler.run(ensemble, 1250, progress=True)
 
 # Compute the model predictions
 gp.set_parameter_vector(ml_params)
@@ -122,20 +122,21 @@ tau = np.linspace(0, 4*period, 5000)
 acf = gp.kernel.get_value(tau)
 
 # Compute the sample predictions
-samples = sampler.flatchain
-samples = samples[np.random.randint(len(samples), size=1000)]
-psds = np.empty((len(samples), len(omega)))
-acfs = np.empty((len(samples), len(tau)))
-for i, s in enumerate(samples):
+print("Making plots...")
+samples = sampler.get_coords(flat=True, discard=250)
+subsamples = samples[np.random.randint(len(samples), size=1000)]
+psds = np.empty((len(subsamples), len(omega)))
+acfs = np.empty((len(subsamples), len(tau)))
+for i, s in enumerate(subsamples):
     gp.set_parameter_vector(s)
     psds[i] = gp.kernel.get_psd(omega)
     acfs[i] = gp.kernel.get_value(tau)
 
 # Set up the figure
-fig, axes = plt.subplots(2, 2, figsize=2*np.array(SQUARE_FIGSIZE))
+fig, axes = plt.subplots(1, 3, figsize=get_figsize(1, 3))
 
 # Plot the data
-ax = axes[0, 0]
+ax = axes[0]
 color = COLORS["MODEL_1"]
 ax.errorbar(t, y, yerr=yerr, fmt=".k", capsize=0, rasterized=True)
 ax.plot(x, mu, color=color)
@@ -150,7 +151,7 @@ ax.annotate("Kepler light curve", xy=(1, 1), xycoords="axes fraction",
             fontsize=12)
 
 # Plot the PSD
-ax = axes[0, 1]
+ax = axes[1]
 f = omega / (2*np.pi)
 q = np.percentile(psds, [16, 50, 84], axis=0)
 ax.fill_between(f, q[0], q[2], alpha=0.5, color=color, edgecolor="none")
@@ -167,7 +168,7 @@ ax.annotate("power spectrum", xy=(1, 1), xycoords="axes fraction",
             fontsize=12)
 
 # Plot the ACF
-ax = axes[1, 1]
+ax = axes[2]
 q = np.percentile(acfs, [16, 50, 84], axis=0)
 ax.fill_between(tau, q[0], q[2], alpha=0.5, color=color, edgecolor="none")
 ax.plot(tau, q[1], color=color, lw=1.5)
@@ -180,23 +181,12 @@ ax.annotate("covariance function", xy=(1, 1), xycoords="axes fraction",
             ha="right", va="top", xytext=(-5, -5), textcoords="offset points",
             fontsize=12)
 
-# Plot a sample
-ax = axes[1, 0]
-ax.plot(t, y_samp, ".k", rasterized=True)
-ax.set_xlim(t.min(), t.max())
-ax.set_ylim(-1.2, 1.2)
-ax.set_xlabel("time [days]")
-ax.set_ylabel("relative flux [ppt]")
-ax.annotate("simulated light curve", xy=(1, 1), xycoords="axes fraction",
-            ha="right", va="top", xytext=(-5, -5), textcoords="offset points",
-            fontsize=12)
-
 fig.savefig("rotation.pdf", bbox_inches="tight", dpi=300)
 plt.close(fig)
 
 # Plot the period constraint
-period_samps = np.exp(sampler.flatchain[:, 2])
-fig, ax = plt.subplots(1, 1, figsize=SQUARE_FIGSIZE)
+period_samps = np.exp(samples[:, 2])
+fig, ax = plt.subplots(1, 1, figsize=get_figsize())
 ax.hist(period_samps, 40, histtype="step", color=color)
 ax.yaxis.set_major_locator(plt.NullLocator())
 mu, std = np.mean(period_samps), np.std(period_samps)
