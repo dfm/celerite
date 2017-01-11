@@ -644,13 +644,31 @@ and the amplitudes are given by
 S_{0,\,j} =
     \frac{A}{Q^2}\,\exp\left(-\frac{[j\,\Delta\nu + \epsilon]^2}{2\,W^2}\right)
 \end{eqnarray}
-where $j$ is an integer running from $-2$ to 2 and $\epsilon$, $A$, and $W$
+where $j$ is an integer running from $-3$ to 3 and $\epsilon$, $A$, and $W$
 are shared nuisance parameters.
 This model could be easily extended to include small frequency splitting and
 $\nu_\mathrm{max}$ and $\Delta \nu$ could be replaced by physical parameters
 like $\log g$.
 
 \dfmtodo{Add plots etc.}
+
+\begin{figure}[!htbp]
+\begin{center}
+\includegraphics[width=0.9\textwidth]{figures/astero-11615890-comparisons.pdf}
+\caption{A comparison between the empirical PSD and the posterior inference of
+the PSD as a mixture of stochastically driven simple harmonic oscillators.
+(top) The periodogram of the \kepler\ light curve for KIC~11615890 computed
+    on the full four year baseline of the mission.
+    The light gray curve shows the raw periodogram and the black curve has
+    been smoothed with a Gaussian filter with \dfmtodo{SOME WIDTH}.
+(middle) The same periodogram computed using about a month of data.
+(bottom) The inferred power spectrum under the mixture of SHOs model described
+    in the text.
+    The black line shows the median of posterior PSD and the gray contours
+    show the 68\% credible region.
+    \figurelabel{astero}}
+\end{center}
+\end{figure}
 
 \subsection{Stellar rotation}
 
