@@ -4,13 +4,14 @@
 from __future__ import division, print_function
 
 import os
+import sys
 import kplr
+import pickle
 import corner
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.optimize import minimize
 from scipy.ndimage.filters import gaussian_filter
-
 
 import emcee3
 from emcee3 import autocorr
@@ -20,8 +21,10 @@ from astropy.stats import LombScargle
 import genrp
 from genrp import terms, modeling
 
+from astero_term import AsteroTerm
 from plot_setup import setup, get_figsize, COLORS
 
+setup()
 
 def format_filename(name):
     base = "astero-{0}-".format(kicid)
@@ -146,12 +149,12 @@ for name, ps in zip(("subset of data", "all data"),
     # Plot the smoothed power spectrum and autocorrelation function
     fig, axes = plt.subplots(1, 2, figsize=get_figsize(1, 2))
     axes[0].plot(freq_uHz, smoothed_ps, "k")
-    axes[0].axvline(nu_max, color="g")
+    axes[0].axvline(nu_max, color=COLORS["MODEL_1"])
     axes[0].set_ylabel("smoothed power spectrum")
     axes[0].set_xlabel("frequency [$\mu$Hz]")
 
     axes[1].plot(lags, acor_func, "k")
-    axes[1].axvline(delta_nu, color="g")
+    axes[1].axvline(delta_nu, color=COLORS["MODEL_1"])
     axes[1].set_ylabel("autocorrelation function")
     axes[1].set_xlabel("frequency spacing [$\mu$Hz]")
     axes[1].set_xlim(0, 30)
@@ -164,39 +167,6 @@ for name, ps in zip(("subset of data", "all data"),
     fig.savefig(format_filename("numax_deltanu_"+name.split()[0]),
                 bbox_inches="tight")
     plt.close(fig)
-
-# Set up the Gaussian Process model and find the maximum likelihood parameters:
-class AsteroTerm(terms.Term):
-
-    parameter_names = (
-        "log_S_g", "log_omega_g", "log_nu_max", "log_delta_nu",
-        "epsilon", "log_A", "log_Q", "log_W",
-    )
-
-    def __init__(self, *args, **kwargs):
-        self.nterms = int(kwargs.pop("nterms", 2))
-        super(AsteroTerm, self).__init__(*args, **kwargs)
-
-    def get_complex_coefficients(self):
-        alpha = np.exp(self.log_S_g + self.log_omega_g) / np.sqrt(2.0)
-        beta = np.exp(self.log_omega_g) / np.sqrt(2.0)
-        Q = 0.5 + np.exp(self.log_Q)
-        j = np.arange(-self.nterms, self.nterms+1, 1)
-        delta = j*np.exp(self.log_delta_nu) + self.epsilon
-        omega = 2*np.pi * (np.exp(self.log_nu_max) + delta)
-        S = np.exp(self.log_A - 0.5*delta**2*np.exp(2*self.log_W)) / Q**2
-        return (
-            np.append(alpha, S*omega*Q),
-            np.append(alpha, S*omega*Q/np.sqrt(4*Q*Q-1)),
-            np.append(beta, 0.5*omega/Q),
-            np.append(beta, 0.5*omega/Q*np.sqrt(4*Q*Q-1)),
-        )
-
-    def log_prior(self):
-        lp = super(AsteroTerm, self).log_prior()
-        if not np.isfinite(lp):
-            return lp
-        return lp - 0.5 * self.epsilon**2
 
 # Factor to convert between day^-1 and uHz
 uHz_conv = 1e-6 * 24 * 60 * 60
@@ -255,11 +225,10 @@ def get_ml_params(log_nu_max):
     gp.set_parameter_vector(r.x)
     return r.fun, r.x
 
-pool = emcee3.pools.InterruptiblePool()
-results = list(sorted(pool.map(
-    get_ml_params, gp.kernel.log_nu_max + np.linspace(-0.05, 0.05, 5)
-), key=lambda o: o[0]))
-print(results)
+with emcee3.pools.InterruptiblePool() as pool:
+    results = list(sorted(pool.map(
+        get_ml_params, gp.kernel.log_nu_max + np.linspace(-0.05, 0.05, 5)
+    ), key=lambda o: o[0]))
 gp.set_parameter_vector(results[0][1])
 
 # Use more modes in the MCMC:
@@ -267,7 +236,7 @@ gp.kernel.nterms = 3
 
 fig, ax = plt.subplots(1, 1, figsize=get_figsize())
 ax.plot(freq_uHz, np.sqrt(power_all), "k", alpha=0.8, rasterized=True)
-ax.plot(freq_uHz, gp.kernel.get_psd(2*np.pi*freq), "g", alpha=0.5,
+ax.plot(freq_uHz, gp.kernel.get_psd(2*np.pi*freq), alpha=0.5,
         rasterized=True)
 ax.set_xlabel("frequency [$\mu$Hz]")
 ax.set_ylabel("power")
@@ -275,7 +244,7 @@ ax.set_yscale("log")
 fig.savefig(format_filename("initial_psd"), bbox_inches="tight", dpi=300)
 
 # Set up the probabilistic model for sampling
-def lnprob(p):
+def log_prob(p):
     gp.set_parameter_vector(p)
     lp = gp.log_prior()
     if not np.isfinite(lp):
@@ -291,6 +260,17 @@ initial_samples = \
     gp.get_parameter_vector() + 1e-5 * np.random.randn(nwalkers, ndim)
 gp.kernel.parameter_bounds[2] = np.log(nu_max*uHz_conv) + np.array([-1, 1])
 gp.kernel.parameter_bounds[3] = np.log(delta_nu*uHz_conv) + np.array([-1, 1])
+
+# Save the current state of the GP and data
+with open("astero-{0}.pkl".format(kicid), "wb") as f:
+    pickle.dump((
+        gp, fit_y, freq, power_all, power_some,
+    ), f, -1)
+
+if os.path.exists("astero-{0}.h5".format(kicid)):
+    result = input("MCMC save file exists. Overwrite? (type 'yes'): ")
+    if result.lower() != "yes":
+        sys.exit(0)
 
 # Define a custom proposal
 def astero_move(rng, x0):
@@ -308,9 +288,10 @@ sampler = emcee3.Sampler([
 ], backend=emcee3.backends.HDFBackend("astero-{0}.h5".format(kicid)))
 
 # Sample!
-ensemble = emcee3.Ensemble(emcee3.SimpleModel(lnprob), initial_samples,
-                           pool=pool)
-ensemble = sampler.run(ensemble, 60, progress=True)
+with emcee3.pools.InterruptiblePool() as pool:
+    ensemble = emcee3.Ensemble(emcee3.SimpleModel(log_prob), initial_samples,
+                               pool=pool)
+    ensemble = sampler.run(ensemble, 10000, progress=True)
 print(sampler.acceptance_fraction)
 assert 0
 
