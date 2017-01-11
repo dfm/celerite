@@ -3,27 +3,18 @@
 
 from __future__ import division, print_function
 
-import os
-import sys
-import kplr
 import pickle
 import corner
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.optimize import minimize
 from scipy.ndimage.filters import gaussian_filter
 
 import emcee3
-from emcee3 import autocorr
-
-from astropy.stats import LombScargle
-
-import genrp
-from genrp import terms, modeling
 
 from plot_setup import setup, get_figsize, COLORS
 
 setup()
+np.random.seed(42)
 
 # Helpers
 def format_filename(name):
@@ -37,136 +28,119 @@ uHz_conv = 1e-6 * 24 * 60 * 60
 with open("astero-{0}.pkl".format(kicid), "rb") as f:
     gp, fit_y, freq, power_all, power_some = pickle.load(f)
 
+backend = emcee3.backends.HDFBackend("astero-{0}.h5".format(kicid))
 
-assert 0
+# Compute the relevant autocorrelation times
+samples = backend.get_coords()
+mean_traces = np.mean(samples[:, :, 3:5], axis=1)
+tau = emcee3.autocorr.integrated_time(mean_traces, c=3, axis=0)
+tau = np.max(tau)
+burnin = int(10 * tau)
 
-if os.path.exists("astero-{0}.h5".format(kicid)):
-    result = input("MCMC save file exists. Overwrite? (type 'yes'): ")
-    if result.lower() != "yes":
-        sys.exit(0)
+tau2 = emcee3.autocorr.integrated_time(mean_traces[burnin:], c=3, axis=0)
+print("tau: {0}".format(tau2))
+print("N_ind: {0}".format(np.prod(samples.shape[:2]) / tau2))
 
-# Define a custom proposal
-def astero_move(rng, x0):
-    x = np.array(x0)
-    f = 2.0 * (rng.rand(len(x)) < 0.5) - 1.0
-    x[:, 3] = np.log(np.exp(x[:, 3]) + f * np.exp(x[:, 4]))
-    return x, np.zeros(len(x))
+# Plot the traces
+names = list(gp.get_parameter_names())
+for i in range(len(names)):
+    name = names[i].split(":")[-1]
+    if name.startswith("log"):
+        name = "log("+name[4:]+")"
+    names[i] = name.replace("_", " ")
+fig, axes = plt.subplots(samples.shape[-1] + 1, 1, sharex=True,
+                         figsize=get_figsize(samples.shape[-1]//2, 2))
+for i in range(samples.shape[-1]):
+    axes[i].plot(samples[:, :, i], color="k", alpha=0.3, rasterized=True)
+    axes[i].set_ylabel(names[i])
+    axes[i].yaxis.set_major_locator(plt.MaxNLocator(5))
+    axes[i].axvline(burnin, color=COLORS["MODEL_1"])
 
-# The sampler will use a mixture of proposals
-sampler = emcee3.Sampler([
-    emcee3.moves.StretchMove(),
-    emcee3.moves.DEMove(1e-3),
-    emcee3.moves.KDEMove(),
-    emcee3.moves.MHMove(astero_move),
-], backend=emcee3.backends.HDFBackend("astero-{0}.h5".format(kicid)))
+axes[-1].plot(backend.get_log_probability(), color="k", alpha=0.3,
+              rasterized=True)
+axes[-1].set_ylabel("log(prob)")
+axes[-1].yaxis.set_major_locator(plt.MaxNLocator(5))
+axes[-1].axvline(burnin, color=COLORS["MODEL_1"])
 
-# Sample!
-with emcee3.pools.InterruptiblePool() as pool:
-    ensemble = emcee3.Ensemble(emcee3.SimpleModel(log_prob), initial_samples,
-                               pool=pool)
-    ensemble = sampler.run(ensemble, 10000, progress=True)
-print(sampler.acceptance_fraction)
-assert 0
+fig.savefig(format_filename("trace"))
+plt.close(fig)
 
+# Trim the burnin
+samples = backend.get_coords(discard=burnin, flat=True)
 
-# In[ ]:
-
-plt.plot(sampler.get_coords()[:, :, 3], color="k", alpha=0.3);
-
-
-# In[ ]:
-
-autocorr.integrated_time(np.mean(sampler.get_coords(discard=1000), axis=1), c=1)
-
-
-# In[113]:
-
+# Compute the model predictions
 time_grid = np.linspace(0, 1.4, 5000)
-psds = []
-acors = []
-envs = []
-samples = sampler.get_coords(discard=1000, flat=True)
-for s in samples[np.random.randint(len(samples), size=1000)]:
-#     s = np.array(s)
-#     s[7] = 2*s[4]
+n = 1000
+psds = np.empty((n, len(freq)))
+acors = np.empty((n, len(time_grid)))
+for i, j in enumerate(np.random.randint(len(samples), size=n)):
+    s = samples[j]
     gp.set_parameter_vector(s)
-    psds.append(gp.kernel.get_psd(2*np.pi*freq))
-    acors.append(gp.kernel.get_value(time_grid))
-    envs.append(0.5*np.log(2./np.pi) + s[5] - 0.5*(freq - np.exp(s[3]))**2 * np.exp(-s[7]))
+    psds[i] = gp.kernel.get_psd(2*np.pi*freq)
+    acors[i] = gp.kernel.get_value(time_grid)
 
-
-# In[114]:
-
-q = np.percentile(acors, [16, 50, 84], axis=0)
-plt.fill_between(time_grid * 24, q[0], q[2], color="k", alpha=0.3)
-plt.plot(time_grid * 24, q[1], "k", alpha=0.8)
-plt.xlabel(r"$\tau$ [hours]")
-plt.ylabel(r"$C(\tau)$")
-plt.savefig(format_filename("acor"), bbox_inches="tight")
-
-
-# In[115]:
+# Plot the predictions
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=get_figsize(1, 2))
 
 q = np.percentile(psds, [16, 50, 84], axis=0)
-plt.fill_between(freq_uHz, q[0], q[2], color="k", alpha=0.3)
-plt.plot(freq_uHz, q[1], "k", alpha=0.8)
-plt.yscale("log")
-ylim = plt.gca().get_ylim()
+ax1.fill_between(freq / uHz_conv, q[0], q[2], color="k", alpha=0.3)
+ax1.plot(freq / uHz_conv, q[1], "k", alpha=0.8)
+ax1.set_yscale("log")
+ax1.set_xlabel(r"$f\,[\mu \mathrm{Hz}]$")
+ax1.set_ylabel(r"$S(f)$")
 
-# q = np.percentile(np.exp(envs), [16, 50, 84], axis=0)
-# plt.fill_between(freq_uHz, q[0], q[2], color="g", alpha=0.3)
-# plt.plot(freq_uHz, q[1], "g", alpha=0.8)
-plt.ylim(ylim)
+q = np.percentile(acors, [16, 50, 84], axis=0)
+ax2.fill_between(time_grid * 24, q[0], q[2], color="k", alpha=0.3)
+ax2.plot(time_grid * 24, q[1], "k", alpha=0.8)
+ax2.set_xlabel(r"$\tau$ [hours]")
+ax2.set_ylabel(r"$k(\tau)$")
 
+fig.savefig(format_filename("model"))
+plt.close(fig)
 
-# In[116]:
-
+# Plot constraints on nu-max and delta-nu
 s = np.exp(samples[:, 3:5])/uHz_conv
 nu_max_pub = 171.94, 3.62
 delta_nu_pub = 13.28, 0.29
-fig = corner.corner(s, smooth=0.7, smooth1d=1.0);
-fig.axes[2].errorbar(nu_max_pub[0], delta_nu_pub[0], xerr=nu_max_pub[1], yerr=delta_nu_pub[1],
-                     fmt=".", color="r", capsize=0, lw=2, mec="none")
+fig = corner.corner(s, smooth=0.7, smooth1d=1.0,
+                    labels=[r"$\nu_\mathrm{max}$", r"$\Delta \nu$"])
+fig.axes[2].errorbar(nu_max_pub[0], delta_nu_pub[0],
+                     xerr=nu_max_pub[1], yerr=delta_nu_pub[1],
+                     fmt=".", color=COLORS["MODEL_1"], capsize=0,
+                     lw=2, mec="none")
 fig.savefig(format_filename("numax_deltanu_corner"), bbox_inches="tight")
+plt.close(fig)
 
+# Plot full corner plot
+fig = corner.corner(samples, smooth=0.7, smooth1d=1.0, labels=names)
+fig.savefig(format_filename("full_corner"), bbox_inches="tight")
+plt.close(fig)
 
-# In[117]:
+# Make comparison plot
+fig, axes = plt.subplots(3, 1, sharex=True, figsize=get_figsize(2.5, 2))
 
-corner.corner(samples);
+freq_uHz = freq / uHz_conv
+axes[0].plot(freq_uHz, np.sqrt(power_all), "k", alpha=0.3, rasterized=True)
+axes[0].plot(freq_uHz, np.sqrt(gaussian_filter(power_all, 5)), "k",
+             rasterized=True)
 
-
-# In[118]:
-
-fig, axes = plt.subplots(3, 1, sharex=True, figsize=(5, 8))
-
-axes[0].plot(freq_uHz, np.sqrt(power_all), "k", alpha=0.3)
-axes[0].plot(freq_uHz, np.sqrt(gaussian_filter(power_all, 5)), "k")
-
-axes[1].plot(freq_uHz, np.sqrt(power_some), "k", alpha=0.3)
-axes[1].plot(freq_uHz, np.sqrt(gaussian_filter(power_some, 5)), "k")
+axes[1].plot(freq_uHz, np.sqrt(power_some), "k", alpha=0.3, rasterized=True)
+axes[1].plot(freq_uHz, np.sqrt(gaussian_filter(power_some, 5)), "k",
+             rasterized=True)
 
 q = np.percentile(psds, [16, 50, 84], axis=0)
-axes[2].fill_between(freq_uHz, q[0], q[2], color="k", alpha=0.3)
-axes[2].plot(freq_uHz, q[1], "k", alpha=0.8)
+axes[2].fill_between(freq_uHz, q[0], q[2], color="k", alpha=0.3,
+                     rasterized=True)
+axes[2].plot(freq_uHz, q[1], "k", alpha=0.8, rasterized=True)
 
 for ax in axes:
     ax.set_yscale("log")
+    ax.set_ylim(2.0, 1e4)
 
-frac = 100 * len(fit_x) / len(x)
 axes[0].set_ylabel("periodogram; all data")
-axes[1].set_ylabel("periodogram; {0:.0f}\% of data".format(frac))
-axes[2].set_ylabel("posterior psd; {0:.0f}\% of data".format(frac))
+axes[1].set_ylabel("periodogram; 3\% of data")
+axes[2].set_ylabel("posterior psd; 3\% of data")
 axes[2].set_xlabel("frequency [$\mu$Hz]")
 
-fig.savefig(format_filename("comparisons"), bbox_inches="tight")
-
-
-# In[ ]:
-
-
-
-
-# In[ ]:
-
-
-
+fig.savefig(format_filename("comparisons"), bbox_inches="tight", dpi=300)
+plt.close(fig)
