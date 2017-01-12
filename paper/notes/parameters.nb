@@ -10,18 +10,19 @@
 NotebookFileLineBreakTest
 NotebookFileLineBreakTest
 NotebookDataPosition[       158,          7]
-NotebookDataLength[     23545,        749]
-NotebookOptionsPosition[     21789,        684]
-NotebookOutlinePosition[     22142,        700]
-CellTagsIndexPosition[     22099,        697]
+NotebookDataLength[     23599,        750]
+NotebookOptionsPosition[     21843,        685]
+NotebookOutlinePosition[     22196,        701]
+CellTagsIndexPosition[     22153,        698]
 WindowFrame->Normal*)
 
 (* Beginning of Notebook Content *)
 Notebook[{
 
 Cell[CellGroupData[{
-Cell["The genrp model", "Section",
- CellChangeTimes->{{3.6919366026416492`*^9, 3.691936617787841*^9}}],
+Cell["The celerite model", "Section",
+ CellChangeTimes->{{3.6919366026416492`*^9, 3.691936617787841*^9}, {
+  3.6932444266932173`*^9, 3.693244428654402*^9}}],
 
 Cell["\<\
 Compute the power spectrum as the Fourier transform of the autocorrelation \
@@ -700,55 +701,55 @@ CellTagsIndex->{}
 (*NotebookFileOutline
 Notebook[{
 Cell[CellGroupData[{
-Cell[580, 22, 102, 1, 64, "Section"],
-Cell[685, 25, 176, 4, 30, "Text"],
+Cell[580, 22, 156, 2, 64, "Section"],
+Cell[739, 26, 176, 4, 30, "Text"],
 Cell[CellGroupData[{
-Cell[886, 33, 1403, 33, 63, "Input"],
-Cell[2292, 68, 1333, 37, 81, "Output"]
+Cell[940, 34, 1403, 33, 63, "Input"],
+Cell[2346, 69, 1333, 37, 81, "Output"]
 }, Open  ]],
-Cell[3640, 108, 181, 4, 30, "Text"],
+Cell[3694, 109, 181, 4, 30, "Text"],
 Cell[CellGroupData[{
-Cell[3846, 116, 1862, 49, 97, "Input"],
-Cell[5711, 167, 1398, 38, 38, "Print"],
-Cell[7112, 207, 424, 6, 28, "Output"]
+Cell[3900, 117, 1862, 49, 97, "Input"],
+Cell[5765, 168, 1398, 38, 38, "Print"],
+Cell[7166, 208, 424, 6, 28, "Output"]
 }, Open  ]],
-Cell[7551, 216, 193, 2, 30, "Text"],
+Cell[7605, 217, 193, 2, 30, "Text"],
 Cell[CellGroupData[{
-Cell[7769, 222, 1536, 46, 80, "Input"],
-Cell[9308, 270, 1576, 48, 71, "Print"],
-Cell[10887, 320, 189, 3, 28, "Output"]
+Cell[7823, 223, 1536, 46, 80, "Input"],
+Cell[9362, 271, 1576, 48, 71, "Print"],
+Cell[10941, 321, 189, 3, 28, "Output"]
 }, Open  ]],
-Cell[11091, 326, 119, 1, 30, "Text"],
+Cell[11145, 327, 119, 1, 30, "Text"],
 Cell[CellGroupData[{
-Cell[11235, 331, 1095, 36, 63, "Input"],
-Cell[12333, 369, 1033, 31, 82, "Print"],
-Cell[13369, 402, 70, 1, 28, "Output"]
-}, Open  ]],
-Cell[CellGroupData[{
-Cell[13476, 408, 792, 25, 63, "Input"],
-Cell[14271, 435, 552, 17, 78, "Print"],
-Cell[14826, 454, 70, 1, 28, "Output"]
-}, Open  ]],
-Cell[14911, 458, 130, 1, 30, "Text"],
-Cell[CellGroupData[{
-Cell[15066, 463, 1854, 56, 97, "Input"],
-Cell[16923, 521, 173, 3, 28, "Output"]
+Cell[11289, 332, 1095, 36, 63, "Input"],
+Cell[12387, 370, 1033, 31, 82, "Print"],
+Cell[13423, 403, 70, 1, 28, "Output"]
 }, Open  ]],
 Cell[CellGroupData[{
-Cell[17133, 529, 2448, 72, 97, "Input"],
-Cell[19584, 603, 267, 4, 28, "Output"]
+Cell[13530, 409, 792, 25, 63, "Input"],
+Cell[14325, 436, 552, 17, 78, "Print"],
+Cell[14880, 455, 70, 1, 28, "Output"]
+}, Open  ]],
+Cell[14965, 459, 130, 1, 30, "Text"],
+Cell[CellGroupData[{
+Cell[15120, 464, 1854, 56, 97, "Input"],
+Cell[16977, 522, 173, 3, 28, "Output"]
 }, Open  ]],
 Cell[CellGroupData[{
-Cell[19888, 612, 269, 7, 28, "Input"],
-Cell[20160, 621, 266, 9, 75, "Output"]
+Cell[17187, 530, 2448, 72, 97, "Input"],
+Cell[19638, 604, 267, 4, 28, "Output"]
 }, Open  ]],
 Cell[CellGroupData[{
-Cell[20463, 635, 283, 7, 28, "Input"],
-Cell[20749, 644, 393, 12, 81, "Output"]
+Cell[19942, 613, 269, 7, 28, "Input"],
+Cell[20214, 622, 266, 9, 75, "Output"]
 }, Open  ]],
 Cell[CellGroupData[{
-Cell[21179, 661, 236, 6, 28, "Input"],
-Cell[21418, 669, 343, 11, 81, "Output"]
+Cell[20517, 636, 283, 7, 28, "Input"],
+Cell[20803, 645, 393, 12, 81, "Output"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[21233, 662, 236, 6, 28, "Input"],
+Cell[21472, 670, 343, 11, 81, "Output"]
 }, Open  ]]
 }, Open  ]]
 }

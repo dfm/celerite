@@ -3,7 +3,7 @@
 from __future__ import division, print_function
 
 import numpy as np
-from genrp import terms
+from celerite import terms
 
 __all__ = ["AsteroTerm"]
 

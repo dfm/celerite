@@ -17,8 +17,8 @@ from emcee3 import autocorr
 
 from astropy.stats import LombScargle
 
-import genrp
-from genrp import modeling
+import celerite
+from celerite import modeling
 
 from astero_term import AsteroTerm
 from plot_setup import setup, get_figsize, COLORS
@@ -191,7 +191,7 @@ log_white_noise = modeling.ConstantModel(
     2.0*np.log(np.median(np.abs(np.diff(fit_y)))),
     bounds=[(-15, 15)]
 )
-gp = genrp.GP(kernel, log_white_noise=log_white_noise)
+gp = celerite.GP(kernel, log_white_noise=log_white_noise)
 gp.compute(fit_x, fit_yerr)
 print("Initial log-likelihood: {0}".format(gp.log_likelihood(fit_y)))
 print(gp.get_parameter_dict(include_frozen=True))

@@ -11,8 +11,8 @@ from scipy.optimize import minimize
 
 from plot_setup import setup, get_figsize, COLORS
 
-import genrp
-from genrp import terms
+import celerite
+from celerite import terms
 
 np.random.seed(123)
 setup()
@@ -61,7 +61,7 @@ kernel = RotationTerm(
         [-5.0, np.log(5.0)],
     ]
 )
-gp = genrp.GP(kernel, mean=np.median(y))
+gp = celerite.GP(kernel, mean=np.median(y))
 gp.compute(t, yerr)
 
 # Define the model
