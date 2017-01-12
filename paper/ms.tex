@@ -662,17 +662,91 @@ the PSD as a mixture of stochastically driven simple harmonic oscillators.
     The light gray curve shows the raw periodogram and the black curve has
     been smoothed with a Gaussian filter with \dfmtodo{SOME WIDTH}.
 (middle) The same periodogram computed using about a month of data.
-(bottom) The inferred power spectrum under the mixture of SHOs model described
-    in the text.
+(bottom) The power spectrum inferred using the mixture of SHOs model described
+    in the text and only one month of \kepler\ data.
     The black line shows the median of posterior PSD and the gray contours
     show the 68\% credible region.
     \figurelabel{astero}}
 \end{center}
 \end{figure}
 
+\begin{figure}[!htbp]
+\begin{center}
+\includegraphics[width=0.8\textwidth]{figures/astero-11615890-numax_deltanu_corner.pdf}
+\caption{The probabilistic constraints on $\nu_\mathrm{max}$ and $\Delta \nu$
+    from the inference shown in \Figure{astero} compared to the published
+    value (error bar) based on the full \kepler\ dataset \dfmtodo{CITE}.
+    \figurelabel{astero-corner}}
+\end{center}
+\end{figure}
+
 \subsection{Stellar rotation}
 
-For many stars it is possible
+Another source of variability that can be measured from time series
+measurements of stars is rotation.
+The inhomogeneous surface of the star (spots, plage, \etc) imprints itself as
+quasiperiodic variations in photometric or spectroscopic observations
+(\dfmtodo{CITE}).
+It has been demonstrated that for light curves with nearly uniform sampling,
+the empirical autocorrelation function provides a reliable estimate of the
+rotation period of a star (\dfmtodo{CITE}) and that a GP model with a
+quasiperiodic covariance function can be used to make probabilistic
+measurements even with sparsely sampled data (R.~Angus, \etal\ in prep.).
+The covariance function used for this type of analysis has the form
+\begin{eqnarray}\eqlabel{sine2}
+k(\tau) = A\,\exp\left(-\frac{\tau^2}{2\,\ell^2} -
+    \Gamma\,\sin^2\left(\frac{\pi\,\tau}{P} \right) \right)
+\end{eqnarray}
+where $P$ is the period of the oscillation.
+The key difference between this function and other quasiperiodic kernels is
+that it is everywhere positive.
+We can construct a simple \genrp\ covariance function with similar properties
+as follows
+\begin{eqnarray}\eqlabel{rot-kernel}
+k(\tau) = \frac{a}{2+b}\,e^{-c\,\tau}\,\left[
+    \cos\left(\frac{2\,\pi\,\tau}{P}\right) + (1 + b)
+\right]
+\end{eqnarray}
+for $a>0$, $b>0$, and $c>0$.
+The covariance function in \eq{rot-kernel} cannot exactly reproduce \eq{sine2}
+but, since \eq{sine2} is only an effective model, \eq{rot-kernel} can be used
+as a drop-in replacement for a substantial gain in computational efficiency.
+
+\begin{figure}[!htbp]
+\begin{center}
+\includegraphics[width=\textwidth]{figures/rotation.pdf}
+\caption{Inferred constraints on a quasiperiodic GP model using the covariance
+    function in \eq{rot-kernel} and one quarter of \kepler\ data.
+(left) The \kepler\ data (black points) and the maximum likelihood model
+    prediction (blue curve).
+    The solid blue line shows the predictive mean and the blue contours show
+    the predictive standard deviation.
+(center) Inferred constraints on the model PSD.
+    The dashed line shows the maximum likelihood PSD, the blue solid line
+    shows the median of posterior PSD, and the blue contours show the 68\%
+    credible region.
+(right) Inferred constraints on the model covariance function from
+    \eq{rot-kernel}.
+    The dashed line shows the maximum likelihood model, the blue solid line
+    shows the median of posterior, and the blue contours show the 68\%
+    credible region.
+    \figurelabel{rotation}}
+\end{center}
+\end{figure}
+
+\begin{figure}[!htbp]
+\begin{center}
+\includegraphics[width=0.5\textwidth]{figures/rotation-period.pdf}
+\caption{The posterior constraint on the rotation period of KIC~1430163 using
+    the dataset and model from \Figure{rotation}.
+    The period is the parameter $P$ in \eq{rot-kernel} and this figure shows
+    the posterior distribution marginalized over all other nuisance parameters
+    in \eq{rot-kernel}.
+    This is consistent with the published rotation period made using the
+    autocorrelation function and the full \kepler\ data (\dfmtodo{CITE}).
+    \figurelabel{rotation-period}}
+\end{center}
+\end{figure}
 
 \begin{enumerate}
 \item Asteroseismic target
