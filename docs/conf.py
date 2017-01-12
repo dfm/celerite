@@ -5,7 +5,7 @@ import os
 import sys
 
 import mock
-MOCK_MODULES = ["numpy", "celerite._celerite"]
+MOCK_MODULES = ["celerite._celerite"]
 for mod_name in MOCK_MODULES:
     sys.modules[mod_name] = mock.Mock()
 
