@@ -1,9 +1,9 @@
-#ifndef _GENRP_BANDED_H_
-#define _GENRP_BANDED_H_
+#ifndef _CERERITE_BANDED_H_
+#define _CERERITE_BANDED_H_
 
 #include <cmath>
 
-namespace genrp {
+namespace celerite {
 
 #define SWAP(a,b) {dum=(a);(a)=(b);(b)=dum;}
 #define TINY 1.0e-20

@@ -1,7 +1,7 @@
 #include <iostream>
 #include <Eigen/Core>
 #include <unsupported/Eigen/AutoDiff>
-#include "genrp/solvers/band.h"
+#include "celerite/solvers/band.h"
 
 #define DO_TEST(FUNC, VAR1, VAR2)                            \
 {                                                            \
@@ -90,8 +90,8 @@ int main (int argc, char* argv[])
     beta_complex_imag_grad(i) = ad_t(beta_complex_imag(i), nparams, par++);
   }
 
-  genrp::BandSolver<double> solver;
-  genrp::BandSolver<ad_t> grad_solver;
+  celerite::BandSolver<double> solver;
+  celerite::BandSolver<ad_t> grad_solver;
   grad_solver.compute(alpha_real_grad, beta_real_grad,
       alpha_complex_grad, beta_complex_real_grad, beta_complex_imag_grad,
       x, yerr2_grad);

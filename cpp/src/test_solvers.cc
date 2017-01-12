@@ -1,8 +1,8 @@
 #include <iostream>
 #include <Eigen/Core>
 
-#include "genrp/solver/direct.h"
-#include "genrp/solver/band.h"
+#include "celerite/solver/direct.h"
+#include "celerite/solver/band.h"
 
 #define DO_TEST(NAME, VAR1, VAR2)                            \
 {                                                            \
@@ -57,8 +57,8 @@ int main (int argc, char* argv[])
   // Compute the y values.
   y = sin(x.array());
 
-  genrp::solver::DirectSolver<double> direct;
-  genrp::solver::BandSolver<double> band;
+  celerite::solver::DirectSolver<double> direct;
+  celerite::solver::BandSolver<double> band;
 
   direct.compute(alpha_real, beta_real, x, yerr2);
   band.compute(alpha_real, beta_real, x, yerr2);

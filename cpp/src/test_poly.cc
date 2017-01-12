@@ -2,7 +2,7 @@
 #include <iostream>
 #include <Eigen/Core>
 
-#include "genrp/poly.h"
+#include "celerite/poly.h"
 
 using Eigen::VectorXd;
 
@@ -32,21 +32,21 @@ int main (int argc, char* argv[])
   a << 3.0, 2.0, 1.0;
   b << -2.0, -1.0;
   c << -6.0, -7.0, -4.0, -1.0;
-  d = genrp::polymul(a, b);
+  d = celerite::polymul(a, b);
   ASSERT_ALL_CLOSE("polymul1", c, d);
-  d = genrp::polymul(b, a);
+  d = celerite::polymul(b, a);
   ASSERT_ALL_CLOSE("polymul2", c, d);
 
   // Polyadd
   c.resize(3);
   c << 3.0, 0.0, 0.0;
-  d = genrp::polyadd(a, b);
+  d = celerite::polyadd(a, b);
   ASSERT_ALL_CLOSE("polyadd1", c, d);
-  d = genrp::polyadd(b, a);
+  d = celerite::polyadd(b, a);
   ASSERT_ALL_CLOSE("polyadd2", c, d);
 
   // Polyval
-  double v = genrp::polyval(a, 0.5);
+  double v = celerite::polyval(a, 0.5);
   if (std::abs(v - 2.75) > 1e-10) {
     std::cerr << "Test failed: \"polyval\"" << std::endl;
     return 1;
@@ -57,26 +57,26 @@ int main (int argc, char* argv[])
   // Polyrem
   c.resize(1);
   c << 0.75;
-  d = genrp::polyrem(a, b);
+  d = celerite::polyrem(a, b);
   std::cout << c.transpose() << std::endl << d.transpose() << std::endl;
   ASSERT_ALL_CLOSE("polyrem1", c, d);
-  d = genrp::polyrem(b, a);
+  d = celerite::polyrem(b, a);
   ASSERT_ALL_CLOSE("polyrem2", b, d);
 
   // Polyder
   c.resize(2);
   c << 6.0, 2.0;
-  d = genrp::polyder(a);
+  d = celerite::polyder(a);
   ASSERT_ALL_CLOSE("polyder1", c, d);
   c.resize(1);
   c << -2.0;
-  d = genrp::polyder(b);
+  d = celerite::polyder(b);
   ASSERT_ALL_CLOSE("polyder2", c, d);
 
   // Polyder
   a.resize(5);
   a << 1.0, 1.0, 0.0, -1.0, -1.0;
-  std::vector<VectorXd> sturm = genrp::polysturm(a);
+  std::vector<VectorXd> sturm = celerite::polysturm(a);
   if (sturm.size() != 5) {
     std::cerr << "Test failed: \"sturmshape\"" << std::endl;
     return 1;
@@ -98,9 +98,9 @@ int main (int argc, char* argv[])
   ASSERT_ALL_CLOSE("sturm5", c, sturm[4]);
 
   // Count roots
-  int nroots = genrp::polycountroots(a);
+  int nroots = celerite::polycountroots(a);
   a *= -1.0;
-  nroots += genrp::polycountroots(a);
+  nroots += celerite::polycountroots(a);
   if (nroots != 2) {
     std::cerr << "Test failed: \"countroots\"" << std::endl;
     return 1;

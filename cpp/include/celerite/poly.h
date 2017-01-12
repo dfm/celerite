@@ -1,12 +1,12 @@
-#ifndef _GENRP_POLY_H_
-#define _GENRP_POLY_H_
+#ifndef _CELERITE_POLY_H_
+#define _CELERITE_POLY_H_
 
 #include <cmath>
 #include <cfloat>
 #include <vector>
 #include <Eigen/Core>
 
-namespace genrp {
+namespace celerite {
 
 #define POLYTOL 1e-10
 
