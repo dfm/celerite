@@ -31,50 +31,50 @@
 # Original author for ceres: alexs.mac@gmail.com (Alex Stewart)
 #
 
-macro(read_genrp_version_from_source GENRP_SOURCE_ROOT)
-    set(GENRP_VERSION_FILE ${GENRP_SOURCE_ROOT}/include/genrp/version.h)
-    if (NOT EXISTS ${GENRP_VERSION_FILE})
-    message(FATAL_ERROR "Cannot find genrp version.h file in specified "
-        "GenRP source directory: ${GENRP_SOURCE_ROOT}, it is not here: "
-        "${GENRP_VERSION_FILE}")
+macro(read_celerite_version_from_source CELERITE_SOURCE_ROOT)
+    set(CELERITE_VERSION_FILE ${CELERITE_SOURCE_ROOT}/include/celerite/version.h)
+    if (NOT EXISTS ${CELERITE_VERSION_FILE})
+    message(FATAL_ERROR "Cannot find celerite version.h file in specified "
+        "Celerite source directory: ${CELERITE_SOURCE_ROOT}, it is not here: "
+        "${CELERITE_VERSION_FILE}")
   endif()
 
-  file(READ ${GENRP_VERSION_FILE} GENRP_VERSION_FILE_CONTENTS)
+  file(READ ${CELERITE_VERSION_FILE} CELERITE_VERSION_FILE_CONTENTS)
 
-  string(REGEX MATCH "#define GENRP_VERSION_MAJOR [0-9]+"
-      GENRP_VERSION_MAJOR "${GENRP_VERSION_FILE_CONTENTS}")
-  string(REGEX REPLACE "#define GENRP_VERSION_MAJOR ([0-9]+)" "\\1"
-      GENRP_VERSION_MAJOR "${GENRP_VERSION_MAJOR}")
+  string(REGEX MATCH "#define CELERITE_VERSION_MAJOR [0-9]+"
+      CELERITE_VERSION_MAJOR "${CELERITE_VERSION_FILE_CONTENTS}")
+  string(REGEX REPLACE "#define CELERITE_VERSION_MAJOR ([0-9]+)" "\\1"
+      CELERITE_VERSION_MAJOR "${CELERITE_VERSION_MAJOR}")
   # NOTE: if (VAR) is FALSE if VAR is numeric and <= 0, as such we cannot use
   #       it for testing version numbers, which might well be zero, at least
   #       for the patch version, hence check for empty string explicitly.
-  if ("${GENRP_VERSION_MAJOR}" STREQUAL "")
-      message(FATAL_ERROR "Failed to extract GenRP major version from "
-        "${GENRP_VERSION_FILE}")
+  if ("${CELERITE_VERSION_MAJOR}" STREQUAL "")
+      message(FATAL_ERROR "Failed to extract Celerite major version from "
+        "${CELERITE_VERSION_FILE}")
   endif()
 
-  string(REGEX MATCH "#define GENRP_VERSION_MINOR [0-9]+"
-      GENRP_VERSION_MINOR "${GENRP_VERSION_FILE_CONTENTS}")
-  string(REGEX REPLACE "#define GENRP_VERSION_MINOR ([0-9]+)" "\\1"
-      GENRP_VERSION_MINOR "${GENRP_VERSION_MINOR}")
-  if ("${GENRP_VERSION_MINOR}" STREQUAL "")
-      message(FATAL_ERROR "Failed to extract GenRP minor version from "
-        "${GENRP_VERSION_FILE}")
+  string(REGEX MATCH "#define CELERITE_VERSION_MINOR [0-9]+"
+      CELERITE_VERSION_MINOR "${CELERITE_VERSION_FILE_CONTENTS}")
+  string(REGEX REPLACE "#define CELERITE_VERSION_MINOR ([0-9]+)" "\\1"
+      CELERITE_VERSION_MINOR "${CELERITE_VERSION_MINOR}")
+  if ("${CELERITE_VERSION_MINOR}" STREQUAL "")
+      message(FATAL_ERROR "Failed to extract Celerite minor version from "
+        "${CELERITE_VERSION_FILE}")
   endif()
 
-  string(REGEX MATCH "#define GENRP_VERSION_REVISION [0-9]+"
-      GENRP_VERSION_PATCH "${GENRP_VERSION_FILE_CONTENTS}")
-  string(REGEX REPLACE "#define GENRP_VERSION_REVISION ([0-9]+)" "\\1"
-      GENRP_VERSION_PATCH "${GENRP_VERSION_PATCH}")
-  if ("${GENRP_VERSION_PATCH}" STREQUAL "")
-      message(FATAL_ERROR "Failed to extract GenRP patch version from "
-        "${GENRP_VERSION_FILE}")
+  string(REGEX MATCH "#define CELERITE_VERSION_REVISION [0-9]+"
+      CELERITE_VERSION_PATCH "${CELERITE_VERSION_FILE_CONTENTS}")
+  string(REGEX REPLACE "#define CELERITE_VERSION_REVISION ([0-9]+)" "\\1"
+      CELERITE_VERSION_PATCH "${CELERITE_VERSION_PATCH}")
+  if ("${CELERITE_VERSION_PATCH}" STREQUAL "")
+      message(FATAL_ERROR "Failed to extract Celerite patch version from "
+        "${CELERITE_VERSION_FILE}")
   endif()
 
   # This is on a single line s/t CMake does not interpret it as a list of
   # elements and insert ';' separators which would result in 3.;2.;0 nonsense.
-  set(GENRP_VERSION "${GENRP_VERSION_MAJOR}.${GENRP_VERSION_MINOR}.${GENRP_VERSION_PATCH}")
+  set(CELERITE_VERSION "${CELERITE_VERSION_MAJOR}.${CELERITE_VERSION_MINOR}.${CELERITE_VERSION_PATCH}")
 
-  message(STATUS "Detected GenRP version: ${GENRP_VERSION} from "
-      "${GENRP_VERSION_FILE}")
+  message(STATUS "Detected Celerite version: ${CELERITE_VERSION} from "
+      "${CELERITE_VERSION_FILE}")
 endmacro()
