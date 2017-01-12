@@ -1,7 +1,14 @@
-[![Build Status](http://img.shields.io/travis/dfm/GenRP/master.svg?style=flat)](https://travis-ci.org/dfm/GenRP)
-[![MIT License](http://img.shields.io/badge/license-MIT-blue.svg?style=flat)](https://github.com/dfm/GenRP/blob/master/LICENSE
+**celerite** <br>
+\se.le.ʁi.te\ <br>
+*noun, archaic literary* <br>
+A scalable method for Gaussian Process regression. From French *célérité*. 
+
+--
+
+[![Build Status](http://img.shields.io/travis/dfm/celerite/master.svg?style=flat)](https://travis-ci.org/dfm/celerite)
+[![MIT License](http://img.shields.io/badge/license-MIT-blue.svg?style=flat)](https://github.com/dfm/celerite/blob/master/LICENSE
 )
-[![Latest PDF](https://img.shields.io/badge/PDF-latest-orange.svg)](https://github.com/dfm/GenRP/blob/master-pdf/paper/ms.pdf)
+[![Latest PDF](https://img.shields.io/badge/PDF-latest-orange.svg)](https://github.com/dfm/celerite/blob/master-pdf/paper/ms.pdf)
 
 Implementations of the Generalized Rybicki Press method in C++, Python, and Julia.
 This method is an `O(N)` algorithm for solving matrices of the form
@@ -24,4 +31,4 @@ Authors & License
 
 Copyright 2016, 2017 Dan Foreman-Mackey, Eric Agol, and contributors.
 
-GenRP is free software made available under the MIT License. For details see the LICENSE file.
+celerite is free software made available under the MIT License. For details see the LICENSE file.
