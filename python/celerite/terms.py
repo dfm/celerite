@@ -138,6 +138,12 @@ class TermSum(Term):
             for i, t in enumerate(self._terms)
         )))
 
+    @property
+    def parameter_bounds(self):
+        return list(chain(*(
+            t.parameter_bounds for t in self._terms
+        )))
+
     def _apply_to_parameter(self, func, name, *args):
         groups = re.findall(r"^term\[([0-9]+)\]:(.*)", name)
         if not len(groups):

@@ -15,31 +15,29 @@ ALLSPHINXOPTS   = -d $(BUILDDIR)/doctrees $(PAPEROPT_$(PAPER)) $(SPHINXOPTS) .
 I18NSPHINXOPTS  = $(PAPEROPT_$(PAPER)) $(SPHINXOPTS) .
 
 default: dirhtml
-TUTORIALS = tutorials/hyper.rst tutorials/model.rst tutorials/new-kernel.rst \
-			tutorials/first.rst tutorials/scaling.rst \
-			tutorials/advanced-kernels.rst
+TUTORIALS = tutorials/getting_started.rst
 
-tutorials/%.rst: _static/notebooks/%.ipynb
-	cd tutorials;ipython nbconvert --template tutorial_rst --to rst ../$<
+tutorials/%.rst: _static/notebooks/%.ipynb tutorials/tutorial_rst.tpl
+	jupyter nbconvert --template tutorials/tutorial_rst --to rst $< --output-dir tutorials
 
 .PHONY: clean
 clean:
 	rm -rf $(BUILDDIR)/* $(TUTORIALS)
 
 .PHONY: html
-html:
+html: $(TUTORIALS)
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
 	@echo
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)/html."
 
 .PHONY: dirhtml
-dirhtml:
+dirhtml: $(TUTORIALS)
 	$(SPHINXBUILD) -b dirhtml $(ALLSPHINXOPTS) $(BUILDDIR)/dirhtml
 	@echo
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)/dirhtml."
 
 .PHONY: singlehtml
-singlehtml:
+singlehtml: $(TUTORIALS)
 	$(SPHINXBUILD) -b singlehtml $(ALLSPHINXOPTS) $(BUILDDIR)/singlehtml
 	@echo
 	@echo "Build finished. The HTML page is in $(BUILDDIR)/singlehtml."

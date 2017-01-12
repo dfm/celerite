@@ -21,27 +21,18 @@ celerite is being actively developed in `a public repository on GitHub
 <https://github.com/dfm/celerite>`_ so if you have any trouble, `open an issue
 <https://github.com/dfm/celerite/issues>`_ there.
 
-.. toctree::
-   :maxdepth: 2
-   :caption: User Guide
-
-   user/quickstart
-   user/upgrade
-   user/kernels
-   user/gp
-   user/solvers
-   user/modeling
+.. .. toctree::
+..    :maxdepth: 2
+..    :caption: User Guide
+..
+..    user/quickstart
 
 
 .. toctree::
    :maxdepth: 1
    :caption: Tutorials
 
-   tutorials/first
-   tutorials/model
-   tutorials/hyper
-   tutorials/scaling
-   tutorials/new_kernel
+   tutorials/getting_started
 
 Contributors
 ------------
