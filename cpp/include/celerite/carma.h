@@ -1,15 +1,15 @@
-#ifndef _GENRP_CARMA_H_
-#define _GENRP_CARMA_H_
+#ifndef _CELERITE_CARMA_H_
+#define _CELERITE_CARMA_H_
 
 #include <cmath>
 #include <cfloat>
 #include <complex>
 #include <Eigen/Dense>
 
-#include "genrp/utils.h"
-#include "genrp/exceptions.h"
+#include "celerite/utils.h"
+#include "celerite/exceptions.h"
 
-namespace genrp {
+namespace celerite {
 namespace carma {
 
 Eigen::VectorXcd roots_from_params (const Eigen::VectorXd& params) {
@@ -65,7 +65,7 @@ CARMASolver (double log_sigma, Eigen::VectorXd arpars, Eigen::VectorXd mapars)
   beta_ /= beta_(0);
 };
 
-void get_genrp_coeffs (
+void get_celerite_coeffs (
     Eigen::VectorXd& alpha_real, Eigen::VectorXd& beta_real,
     Eigen::VectorXd& alpha_complex_real, Eigen::VectorXd& alpha_complex_imag,
     Eigen::VectorXd& beta_complex_real, Eigen::VectorXd& beta_complex_imag
@@ -252,6 +252,6 @@ private:
 }; // class CARMASolver
 
 }; // namespace carma
-}; // namespace genrp
+}; // namespace celerite
 
-#endif // _GENRP_CARMA_H_
+#endif // _CELERITE_CARMA_H_

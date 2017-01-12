@@ -1,6 +1,6 @@
 *.cpp
 *.egg-info
-genrp/include
+celerite/include
 dist
 scratch
 build

@@ -1,11 +1,11 @@
-#ifndef _GENRP_SOLVER_SOLVER_H_
-#define _GENRP_SOLVER_SOLVER_H_
+#ifndef _CELERITE_SOLVER_SOLVER_H_
+#define _CELERITE_SOLVER_SOLVER_H_
 
 #include <Eigen/Core>
 
-#include "genrp/exceptions.h"
+#include "celerite/exceptions.h"
 
-namespace genrp {
+namespace celerite {
 namespace solver {
 
 int SOLVER_DIMENSION_MISMATCH = 1;

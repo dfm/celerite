@@ -4,9 +4,9 @@
 #include <sys/time.h>
 #include <Eigen/Core>
 
-#include "genrp/genrp.h"
-#include "genrp/carma.h"
-#include "genrp/utils.h"
+#include "celerite/celerite.h"
+#include "celerite/carma.h"
+#include "celerite/utils.h"
 
 // Timer for the benchmark.
 double get_timestamp ()
@@ -39,7 +39,7 @@ int main (int argc, char* argv[])
   std::sort(x.data(), x.data() + x.size());
   y = sin(x.array());
 
-  double carma_ll, genrp_ll, strt;
+  double carma_ll, celerite_ll, strt;
   Eigen::MatrixXd compute_times(max_terms, 3);
   compute_times.setConstant(0.0);
   for (size_t nterms = 1; nterms <= max_terms; ++nterms) {
@@ -59,42 +59,42 @@ int main (int argc, char* argv[])
       carma_maparams.array() += 1.0;
       carma_arparams.array() /= 2.0 * nterms;
       carma_maparams.array() /= 2.0 * nterms;
-      genrp::carma::CARMASolver carma_solver(0.0, carma_arparams, carma_maparams);
-      carma_solver.get_genrp_coeffs(alpha_real, beta_real,
+      celerite::carma::CARMASolver carma_solver(0.0, carma_arparams, carma_maparams);
+      carma_solver.get_celerite_coeffs(alpha_real, beta_real,
         alpha_complex_real, alpha_complex_imag, beta_complex_real, beta_complex_imag);
 
-      is_ok = genrp::check_coefficients(alpha_real, beta_real, alpha_complex_real, alpha_complex_imag, beta_complex_real, beta_complex_imag);
+      is_ok = celerite::check_coefficients(alpha_real, beta_real, alpha_complex_real, alpha_complex_imag, beta_complex_real, beta_complex_imag);
     }
 
     // Compute using the CARMA model.
     strt = get_timestamp();
     for (size_t i = 0; i < niter; ++i) {
-      genrp::carma::CARMASolver carma_solver(0.0, carma_arparams, carma_maparams);
+      celerite::carma::CARMASolver carma_solver(0.0, carma_arparams, carma_maparams);
       carma_solver.setup();
       carma_ll = carma_solver.log_likelihood(x, y, yerr);
     }
     compute_times(nterms - 1, 1) = (get_timestamp() - strt) / niter;
 
-    // Get the GenRP parameters for the CARMA model.
-    genrp::carma::CARMASolver carma_solver(0.0, carma_arparams, carma_maparams);
-    carma_solver.get_genrp_coeffs(alpha_real, beta_real,
+    // Get the celerite parameters for the CARMA model.
+    celerite::carma::CARMASolver carma_solver(0.0, carma_arparams, carma_maparams);
+    carma_solver.get_celerite_coeffs(alpha_real, beta_real,
       alpha_complex_real, alpha_complex_imag, beta_complex_real, beta_complex_imag);
 
-    // Compute using the genrp model.
-    genrp::solver::BandSolver<double> solver;
+    // Compute using the celerite model.
+    celerite::solver::BandSolver<double> solver;
     int flag = -1;
     strt = get_timestamp();
     for (size_t i = 0; i < niter; ++i) {
       flag = solver.compute(alpha_real, beta_real, alpha_complex_real, alpha_complex_imag, beta_complex_real, beta_complex_imag, x, diag);
       if (flag) {
-        genrp_ll = NAN;
+        celerite_ll = NAN;
         break;
       }
-      genrp_ll = -0.5*(solver.dot_solve(y) + solver.log_determinant() + x.rows() * log(2.0 * M_PI));
+      celerite_ll = -0.5*(solver.dot_solve(y) + solver.log_determinant() + x.rows() * log(2.0 * M_PI));
     }
     double direct_ll = NAN;
     if (!flag) {
-      genrp::solver::DirectSolver<double> dsolver;
+      celerite::solver::DirectSolver<double> dsolver;
       dsolver.compute(alpha_real, beta_real, alpha_complex_real, alpha_complex_imag, beta_complex_real, beta_complex_imag, x, diag);
       direct_ll = -0.5*(dsolver.dot_solve(y) + dsolver.log_determinant() + x.rows() * log(2.0 * M_PI));
 
@@ -104,7 +104,7 @@ int main (int argc, char* argv[])
     }
 
 
-    std::cerr << nterms << " " << direct_ll << " " << carma_ll << " " << genrp_ll << std::endl;
+    std::cerr << nterms << " " << direct_ll << " " << carma_ll << " " << celerite_ll << std::endl;
 
     // if (flag) {
     //   std::cerr << "alpha_real: " << alpha_real.transpose() << std::endl;
@@ -116,7 +116,7 @@ int main (int argc, char* argv[])
     //   std::cerr << std::endl;
 
     //   for (double t = 0.0; t <= 5000.0; t += 0.01) {
-    //     double p = genrp::get_psd_value(alpha_real, beta_real, alpha_complex_real, alpha_complex_imag, beta_complex_real, beta_complex_imag, t);
+    //     double p = celerite::get_psd_value(alpha_real, beta_real, alpha_complex_real, alpha_complex_imag, beta_complex_real, beta_complex_imag, t);
     //     if (p < 0.0) {
     //       std::cerr << t << " " << p << std::endl;
     //     }
@@ -166,7 +166,7 @@ int main (int argc, char* argv[])
 //   // Compute the y values.
 //   y0 = sin(x0.array());
 //
-//   genrp::BandSolver<double> solver;
+//   celerite::BandSolver<double> solver;
 //
 //   for (size_t N = 64; N <= N_max; N *= 2) {
 //     Eigen::VectorXd x = x0.topRows(N),
@@ -190,7 +190,7 @@ int main (int argc, char* argv[])
 //
 //     for (size_t i = 0; i < niter; ++i) {
 //       strt = get_timestamp();
-//       genrp::carma::CARMASolver carma_solver(0.0, carma_arparams, carma_maparams);
+//       celerite::carma::CARMASolver carma_solver(0.0, carma_arparams, carma_maparams);
 //       carma_solver.setup();
 //       carma_solver.log_likelihood(x, y, yerr);
 //       carma_time += get_timestamp() - strt;

@@ -67,7 +67,7 @@
 % Projects:
 \newcommand{\project}[1]{\textsf{#1}}
 \newcommand{\kepler}{\project{Kepler}}
-\newcommand{\genrp}{\project{genrp}}
+\newcommand{\celerite}{\project{celerite}}
 
 \newcommand{\foreign}[1]{\emph{#1}}
 \newcommand{\etal}{\foreign{et\,al.}}
@@ -199,7 +199,7 @@ Alongside this paper, we have released efficient and well-tested
 implementations of this method written in \project{C++}, \project{Python}, and
 \project{Julia}.
 These implementations are available online at \project{GitHub}
-\url{https://github.com/dfm/GenRP} and \project{Zenodo} \dfmtodo{add zenodo
+\url{https://github.com/dfm/celerite} and \project{Zenodo} \dfmtodo{add zenodo
 archive}.
 
 %
@@ -218,7 +218,7 @@ archive}.
 %   - Scaling with N and M
 %   - Description of APIs
 % 4. Examples
-%   - Simulated data: a simple exact GenRP simulation, a GenRP simulation with
+%   - Simulated data: a simple exact celerite simulation, a celerite simulation with
 %     structure, a few standard kernels, a AGW kernel
 %   - An AGN light curve
 %   - An RR Lyrae
@@ -285,21 +285,21 @@ In this case, standard non-linear optimization or MCMC will no longer be
 practical inference methods.
 
 In the following Section, we present a method of improving this scaling that
-we call the \genrp\ method.
-The \genrp\ method requires using a specific model for the covariance
+we call the \celerite\ method.
+The \celerite\ method requires using a specific model for the covariance
 $k_\bvec{\alpha}(\bvec{x}_n,\,\bvec{x}_m)$ and it has several limitations.
 The method can only be applied to one-dimensional datasets.
 When we say ``one-dimensional'' here, it means that the \emph{input
 coordinates} $\bvec{x}_n$ are scalar, $\bvec{x}_n \equiv t_n$.\footnote{We are
 using $t$ as the input coordinate because one-dimensional GPs are often
-applied to time series data but this isn't a real restriction and the \genrp\
+applied to time series data but this isn't a real restriction and the \celerite\
 method can be applied to \emph{any} one-dimensional dataset.}
-Furthermore, the covariance function for the \genrp\ method is ``stationary''.
+Furthermore, the covariance function for the \celerite\ method is ``stationary''.
 This means that the function $k_\bvec{\alpha}(t_n,\,t_m)$ is only a function
 of $\tau_{nm} \equiv |t_n - t_m|$.
 
 
-\section{The genrp model}
+\section{The celerite model}
 
 To scale GP models to larger datasets, \citet{Rybicki:1995} presented a method
 of computing \eq{gp-likelihood} in $\mathcal{O}(N)$ when the covariance
@@ -325,7 +325,7 @@ components in the mixture and $N$ is still the number of data points.
 It turns out that this kernel function can be made even more general by
 introducing complex parameters $a_j \to a_j+i\,b_j$ and $c_j \to c_j+i\,d_j$.
 In this case, the covariance function becomes
-\begin{eqnarray}\eqlabel{genrp-kernel-complex}
+\begin{eqnarray}\eqlabel{celerite-kernel-complex}
 k_\bvec{\alpha}(\tau_{nm}) = \sigma_n^2\,\delta_{nm} +
     \sum_{j=1}^J &&\left[
     \frac{1}{2}(a_j + i\,b_j)\,\exp\left(-(c_j+i\,d_j)\,\tau_{nm}\right)
@@ -339,8 +339,8 @@ $\mathcal{O}(J^2\,N)$ operations.
 The details of this method and a few implementation considerations are
 discussed in \app{implementation}.
 
-\eq{genrp-kernel-complex} can also be expressed as
-\begin{eqnarray}\eqlabel{genrp-kernel}
+\eq{celerite-kernel-complex} can also be expressed as
+\begin{eqnarray}\eqlabel{celerite-kernel}
 k_\bvec{\alpha}(\tau_{nm}) = \sigma_n^2\,\delta_{nm} +
     \sum_{j=1}^J &&\left[
     a_j\,\exp\left(-c_j\,\tau_{nm}\right)\,\cos\left(d_j\,\tau_{nm}\right)
@@ -351,7 +351,7 @@ k_\bvec{\alpha}(\tau_{nm}) = \sigma_n^2\,\delta_{nm} +
 \end{eqnarray}
 The Fourier transform of this covariance function is the power spectral
 density (PSD) of the model and it is given by
-\begin{eqnarray}\eqlabel{genrp-psd}
+\begin{eqnarray}\eqlabel{celerite-psd}
 S(\omega) = \sum_{j=1}^J \sqrt{\frac{2}{\pi}}
 \frac{(a_j\,c_j+b_j\,d_j)\,({c_j}^2+{d_j}^2)+(a_j\,c_j-b_j\,d_j)\,\omega^2}
 {\omega^4+2\,({c_j}^2-{d_j}^2)\,\omega^2+({c_j}^2+{d_j}^2)^2}\quad.
@@ -361,7 +361,7 @@ will return to a more general discussion of the physical intuition in a moment
 but we can start with a discussion of some useful special cases of this model.
 
 If we set the imaginary amplitude $b_j$ for some component $j$ to zero, that
-term of \eq{genrp-kernel} becomes
+term of \eq{celerite-kernel} becomes
 \begin{eqnarray}
 k_j(\tau_{nm}) =
     a_j\,\exp\left(-c_j\,\tau_{nm}\right)\,\cos\left(d_j\,\tau_{nm}\right)
@@ -464,9 +464,9 @@ likelihood may be set to zero.
 
 \subsection{Parameterization \& API}
 
-\section{Genrp as a model of stellar variations}
+\section{celerite as a model of stellar variations}
 
-Another special case of the \genrp\ model of great physical interest is a
+Another special case of the \celerite\ model of great physical interest is a
 stochastically-driven simple harmonic oscillator.
 The differential equation for this system is
 \begin{equation}
@@ -484,7 +484,7 @@ S(\omega) = \sqrt{\frac{2}{\pi}}\,\frac{S_0\,\omega_0^4}
 \end{equation}
 where $S_0$ is proportional to the power at $\omega = \omega_0$, $S(\omega_0)
 = \sqrt{2/\pi}\,S_0$.
-The power spectrum in \eq{sho-psd} matches \eq{genrp-psd} if
+The power spectrum in \eq{sho-psd} matches \eq{celerite-psd} if
 \begin{eqnarray}
 a_j &=& S_0\,\omega_0\,Q \\
     b_j &=& \frac{S_0\,\omega_0\,Q}{\sqrt{4\,Q^2-1}} \\
@@ -492,7 +492,7 @@ c_j &=& \frac{\omega_0}{2\,Q}\\
 d_j &=& \frac{\omega_0}{2\,Q} \sqrt{4\,Q^2-1} \quad,
 \end{eqnarray}
 for $Q \ge \frac{1}{2}$.
-For $0 < Q \le \frac{1}{2}$, \eq{sho-psd} can be captured by a pair of \genrp\
+For $0 < Q \le \frac{1}{2}$, \eq{sho-psd} can be captured by a pair of \celerite\
 terms with parameters
 \begin{eqnarray}
 a_{j\pm} &=& \frac{1}{2}\,S_0\,\omega_0\,Q\,\left[ 1 \pm
@@ -547,7 +547,7 @@ k(\tau) &=& \lim_{f \to 0}\,
 This covariance function is also known as the Mat\'ern-3/2 function
 \citep{Rasmussen:2006}.
 This suggests that the Mat\'ern-3/2 covariance can be well approximated using
-the \genrp\ framework with a small value of $f$ in \eq{approx-matern} but we
+the \celerite\ framework with a small value of $f$ in \eq{approx-matern} but we
 caution that this could also lead to numerical issues with the solver.
 }
 
@@ -577,7 +577,7 @@ $S_0$, and $\omega_0$ to give a sufficient accounting of the power spectrum
 stellar time series.
 Since this kernel is exactly described by the exponential kernel, the
 likelihood (\eqalt{gp-likelihood}) can be evaluated for a time series with $N$
-measurements in $\mathcal{O}(N)$ operations using the \genrp\ method described
+measurements in $\mathcal{O}(N)$ operations using the \celerite\ method described
 in the previous section.
 
 \begin{figure}[!htbp]
@@ -599,7 +599,7 @@ in the previous section.
 
 \begin{enumerate}
 \item an OU process
-\item a full GenRP process
+\item a full celerite process
 \item Some standard kernels: Matern, Exp-squared, etc.
 \item A KISS-GP process
 \end{enumerate}
@@ -620,7 +620,7 @@ the measurement uncertainties to the constraints on physical parameters
 and they scale poorly to the current state-of-the-art datasets (\dfmtodo{CITE
 Brewer etc.}).
 
-\genrp\ alleviates these problems by providing a physically motivated
+\celerite\ alleviates these problems by providing a physically motivated
 probabilistic model that can be evaluated efficiently even for large datasets.
 In practice, we will model the star as a mixture of stochastically driven
 simple harmonic oscillators where the amplitudes and frequencies of the
@@ -710,7 +710,7 @@ k(\tau) = A\,\exp\left(-\frac{\tau^2}{2\,\ell^2} -
 where $P$ is the period of the oscillation.
 The key difference between this function and other quasiperiodic kernels is
 that it is everywhere positive.
-We can construct a simple \genrp\ covariance function with similar properties
+We can construct a simple \celerite\ covariance function with similar properties
 as follows
 \begin{eqnarray}\eqlabel{rot-kernel}
 k(\tau) = \frac{a}{2+b}\,e^{-c\,\tau}\,\left[
@@ -769,7 +769,7 @@ as a drop-in replacement for a substantial gain in computational efficiency.
 
 Toeplitz, KISS-GP, CARMA, HODLR.
 
-Limitations of GenRP: one-dimension, stationary, etc.
+Limitations of celerite: one-dimension, stationary, etc.
 
 
 \section{Summary}
@@ -841,13 +841,13 @@ Limitations of GenRP: one-dimension, stationary, etc.
 % arbitrary number of exponential kernels by utilizing the fact that the elements of
 % such matrices can be written in terms of the products of components of two vectors,
 % which are so-called semi-separable matrices \citep{Ambikasaran:2015}.  This `Generalized
-% Rybicki-Press' (\texttt{GenRP}) approach
+% Rybicki-Press' (\texttt{celerite}) approach
 % has many advantages:  the computation time and storage both scale as $O(N_{time})$,
 % the coefficients of the kernels need not be stationary, the computation of the
 % likelihood is exact, and the algorithm is simple to implement, and thus is robust.
 % Unlike the \texttt{CARMA} model, there is no restriction on the relation between
 % the coefficients (except that the kernel needs to be positive definite).  Unlike
-% \texttt{HODLR} and \texttt{KISS-GP},  the \texttt{GenRP} method is exact.  The main drawback
+% \texttt{HODLR} and \texttt{KISS-GP},  the \texttt{celerite} method is exact.  The main drawback
 % of this approach is that the sum of exponential kernels with real coefficients can
 % only represent a limited range of power spectra of auto-correlated time series:
 % those which can be expressed the sum of Lorentzians that peak at zero frequency.
@@ -861,7 +861,7 @@ Limitations of GenRP: one-dimension, stationary, etc.
 % Lorentzians \citep{Harvey:1985}, the asteroseismic oscillations may be expressed as non-zero frequency
 % Lorentzians \citep{1990ApJ...364..699A,Gruberbauer:2009}, and stellar rotation may be
 % parameterized this way as well.  In this paper
-% we extend the \texttt{GenRP} approach to kernels with complex exponentials, which when
+% we extend the \texttt{celerite} approach to kernels with complex exponentials, which when
 % combined with the complex conjugate leads to damped harmonic auto-correlation functions
 % which are flexible enough to describe a wide range of variability, and may still
 % be solved in $O(N_{time}$ operations.
@@ -987,7 +987,7 @@ $m(\mathbf{t};\bvec{\theta})$.
 %but otherwise the mathematical form of the extended matrix is identical, but with twice as many
 %exponential kernel components as the real case.
 
-Although the complex kernel is a straightforward extension to the \texttt{GenRP} formalism, there is a disadvantage
+Although the complex kernel is a straightforward extension to the \texttt{celerite} formalism, there is a disadvantage
 in computational speed:  complex arithmetic requires $\approx 3$ times as many operations as real
 arithmetic.  In addition, it turns out that the complex conjugate component, $(c_j+id_j)^* = c_j - id_j$, in
 the extended matrix gives a solution which, not surprisingly, is the complex conjugate of the
@@ -1277,7 +1277,7 @@ Outside of astronomy, this technique may have application to seismology
 
 \vspace{1.5em}
 All of the code used in this project is available from
-\url{https://github.com/dfm/GenRP} under the MIT open-source software
+\url{https://github.com/dfm/celerite} under the MIT open-source software
 license.
 This code (plus some dependencies) can be run to re-generate all of the
 figures and results in this paper; this version of the paper was generated
@@ -1296,7 +1296,7 @@ Q: How do we determine how many kernels to use?
 
 \section{Discussion}
 
-There are three primary applications we envision for the \genrp\ formalism: 1).\ modeling
+There are three primary applications we envision for the \celerite\ formalism: 1).\ modeling
 the variability of an astrophysical system to infer it properties; 2).\
 accounting for astrophysical variability as a source of noise when trying to detect
 additional phenomena; 3).\ interpolating or extrapolating variability to future or missing
@@ -1328,13 +1328,13 @@ the exponential-squared function), and the Cholesky decomposition of the covaria
 matrix for computing the likelihood takes ${\cal O}(N^3)$ operations which prohibits
 application of this technique to large datasets.
 
-Given the drawbacks of these approaches, the \genrp\ formalism allows both a fast
+Given the drawbacks of these approaches, the \celerite\ formalism allows both a fast
 computation of the likelihood in ${\cal O}(N)$ time, as well as a functional form
 that accurately describes stellar variability due to the relation to the simple
 harmonic oscillator power spectrum, which is an analog of stellar asteroseismic
 oscillations.  As higher signal-to-noise observations of transiting exoplanet systems
 are obtained, the effects of stellar variability will more dramatically impact the
-correct inference of planetary transit parameters, and so we expect that \genrp\
+correct inference of planetary transit parameters, and so we expect that \celerite\
 will be important for transit timing, transit spectroscopy, Doppler beaming,
 phase functions, and more.
 
@@ -1569,6 +1569,6 @@ the example shown in \citet{Ambikasaran:2015}.}
 
 {\bf Should I give some examples of this?  Some pseudocode?}
 
-\bibliography{genrp}
+\bibliography{celerite}
 
 \end{document}

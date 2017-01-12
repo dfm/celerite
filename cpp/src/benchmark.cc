@@ -2,7 +2,7 @@
 #include <sys/time.h>
 #include <Eigen/Core>
 
-#include "genrp/genrp.h"
+#include "celerite/celerite.h"
 
 // Timer for the benchmark.
 double get_timestamp ()
@@ -48,7 +48,7 @@ int main (int argc, char* argv[])
   // Compute the y values.
   y0 = sin(x0.array());
 
-  genrp::solver::BandSolver<double> solver;
+  celerite::solver::BandSolver<double> solver;
 
   for (size_t N = 64; N <= N_max; N *= 2) {
     Eigen::VectorXd x = x0.topRows(N),

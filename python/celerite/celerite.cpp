@@ -3,11 +3,11 @@
 
 #include <Eigen/Core>
 
-#include "genrp/genrp.h"
+#include "celerite/celerite.h"
 
 namespace py = pybind11;
 
-class PicklableBandSolver : public genrp::solver::BandSolver<double> {
+class PicklableBandSolver : public celerite::solver::BandSolver<double> {
 public:
   auto serialize () const {
     return std::make_tuple(this->computed_, this->n_, this->p_real_, this->p_complex_, this->log_det_,
@@ -28,11 +28,11 @@ public:
 
 };
 
-PYBIND11_PLUGIN(_genrp) {
-  py::module m("_genrp", "GenRP extension");
+PYBIND11_PLUGIN(_celerite) {
+  py::module m("_celerite", "celerite extension");
 
   m.def("get_library_version", []() {
-      return GENRP_VERSION_STRING;
+      return CELERITE_VERSION_STRING;
     }
   );
 
@@ -49,7 +49,7 @@ PYBIND11_PLUGIN(_genrp) {
       auto get_kernel_value_closure = [
         alpha_real, beta_real, alpha_complex_real, alpha_complex_imag, beta_complex_real, beta_complex_imag
       ] (double t) {
-        return genrp::get_kernel_value(
+        return celerite::get_kernel_value(
           alpha_real, beta_real, alpha_complex_real, alpha_complex_imag, beta_complex_real, beta_complex_imag, t
         );
       };
@@ -70,7 +70,7 @@ PYBIND11_PLUGIN(_genrp) {
       auto get_psd_value_closure = [
         alpha_real, beta_real, alpha_complex_real, alpha_complex_imag, beta_complex_real, beta_complex_imag
       ] (double t) {
-        return genrp::get_psd_value(
+        return celerite::get_psd_value(
           alpha_real, beta_real, alpha_complex_real, alpha_complex_imag, beta_complex_real, beta_complex_imag, t
         );
       };
@@ -87,7 +87,7 @@ PYBIND11_PLUGIN(_genrp) {
       const Eigen::VectorXd& beta_complex_real,
       const Eigen::VectorXd& beta_complex_imag
     ) {
-      return genrp::check_coefficients(
+      return celerite::check_coefficients(
         alpha_real,
         beta_real,
         alpha_complex_real,

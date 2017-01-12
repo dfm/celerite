@@ -19,7 +19,7 @@ compile_args = dict(libraries=[], define_macros=[("NDEBUG", None)])
 if os.name == "posix":
     compile_args["libraries"].append("m")
 
-localincl = os.path.join("genrp", "include")
+localincl = os.path.join("celerite", "include")
 compile_args["include_dirs"] = [
     localincl,
     numpy.get_include(),
@@ -28,7 +28,7 @@ compile_args["include_dirs"] = [
 # Move the header files to the correct directory.
 dn = os.path.dirname
 incldir = os.path.join(dn(dn(os.path.abspath(__file__))), "cpp", "include")
-if os.path.exists(os.path.join(incldir, "genrp", "genrp.h")):
+if os.path.exists(os.path.join(incldir, "celerite", "celerite.h")):
     print("Dev mode...")
     headers = (
         glob.glob(os.path.join(incldir, "*", "*.h")) +
@@ -43,11 +43,11 @@ if os.path.exists(os.path.join(incldir, "genrp", "genrp.h")):
         shutil.copyfile(fn, dst)
 
 # Check to make sure that the header files are in place
-if not os.path.exists(os.path.join(localincl, "genrp", "version.h")):
-    raise RuntimeError("couldn't find genrp headers")
+if not os.path.exists(os.path.join(localincl, "celerite", "version.h")):
+    raise RuntimeError("couldn't find celerite headers")
 
-ext = Extension("genrp._genrp",
-                sources=[os.path.join("genrp", "genrp.cpp")],
+ext = Extension("celerite._celerite",
+                sources=[os.path.join("celerite", "celerite.cpp")],
                 language="c++",
                 **compile_args)
 
@@ -57,18 +57,18 @@ if sys.version_info[0] < 3:
     import __builtin__ as builtins
 else:
     import builtins
-builtins.__GENRP_SETUP__ = True
-import genrp  # NOQA
-from genrp.build import build_ext  # NOQA
+builtins.__CELERITE_SETUP__ = True
+import celerite  # NOQA
+from celerite.build import build_ext  # NOQA
 
 setup(
-    name="genrp",
-    version=genrp.__version__,
+    name="celerite",
+    version=celerite.__version__,
     author="Daniel Foreman-Mackey",
     author_email="foreman.mackey@gmail.com",
-    url="https://github.com/dfm/genrp",
+    url="https://github.com/dfm/celerite",
     license="MIT",
-    packages=["genrp"],
+    packages=["celerite"],
     install_requires=["numpy>=1.9", "pybind11>=1.7"],
     ext_modules=[ext],
     description="Scalable 1D Gaussian Processes",

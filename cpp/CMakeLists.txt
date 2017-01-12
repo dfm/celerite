@@ -2,7 +2,7 @@
 # ceres-solver: https://github.com/ceres-solver/ceres-solver
 
 cmake_minimum_required(VERSION 2.8.0)
-project(GenRP C CXX)
+project(celerite C CXX)
 
 # Make CMake aware of the cmake folder for local FindXXX scripts,
 # append rather than set in case the user has passed their own
@@ -29,12 +29,12 @@ endif()
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
-include(ReadGenRPVersionFromSource)
-read_genrp_version_from_source(${CMAKE_SOURCE_DIR})
+include(ReadCeleriteVersionFromSource)
+read_celerite_version_from_source(${CMAKE_SOURCE_DIR})
 
 find_package(Eigen REQUIRED)
 if (EIGEN_VERSION VERSION_LESS 3.1.0)
-message(FATAL_ERROR "-- GenRP requires Eigen version >= 3.1.0 in order "
+message(FATAL_ERROR "-- celerite requires Eigen version >= 3.1.0 in order "
     "that Eigen/SparseCore be available, detected version of Eigen is: "
     "${EIGEN_VERSION}")
 endif (EIGEN_VERSION VERSION_LESS 3.1.0)
@@ -52,5 +52,5 @@ add_definitions(-DNDEBUG)
 add_subdirectory(src)
 
 # Setup installation of public headers.
-file(GLOB GENRP_HDRS ${CMAKE_SOURCE_DIR}/include/genrp/*.h)
-install(FILES ${GENRP_HDRS} DESTINATION include/genrp)
+file(GLOB CELERITE_HDRS ${CMAKE_SOURCE_DIR}/include/celerite/*.h)
+install(FILES ${CELERITE_HDRS} DESTINATION include/celerite)

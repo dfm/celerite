@@ -1,16 +1,16 @@
-#ifndef _GENRP_SOLVER_BAND_H_
-#define _GENRP_SOLVER_BAND_H_
+#ifndef _CELERITE_SOLVER_BAND_H_
+#define _CELERITE_SOLVER_BAND_H_
 
 #include <cmath>
 #include <iostream>
 #include <Eigen/Core>
 
-#include "genrp/utils.h"
-#include "genrp/exceptions.h"
-#include "genrp/banded.h"
-#include "genrp/solver/solver.h"
+#include "celerite/utils.h"
+#include "celerite/exceptions.h"
+#include "celerite/banded.h"
+#include "celerite/solver/solver.h"
 
-namespace genrp {
+namespace celerite {
 namespace solver {
 
 #define BLOCKSIZE                                      \

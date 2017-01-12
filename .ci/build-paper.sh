@@ -1,6 +1,6 @@
 #!/bin/bash -x
 
-if [[ $GENRP_BUILDING_PAPER == false ]]; then
+if [[ $CELERITE_BUILDING_PAPER == false ]]; then
   return
 fi
 

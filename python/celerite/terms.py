@@ -7,7 +7,7 @@ import numpy as np
 from itertools import chain
 
 from .modeling import Model
-from ._genrp import get_kernel_value, get_psd_value, check_coefficients
+from ._celerite import get_kernel_value, get_psd_value, check_coefficients
 
 __all__ = [
     "Term", "TermSum", "RealTerm", "ComplexTerm", "SHOTerm", "Matern32Term"
@@ -101,7 +101,7 @@ class TermSum(Term):
     @dirty.setter
     def dirty(self, value):
         for t in self._terms:
-            t.dirty = True
+            t.dirty = value
 
     @property
     def full_size(self):
@@ -127,7 +127,7 @@ class TermSum(Term):
     def parameter_vector(self, v):
         i = 0
         for t in self._terms:
-            l = self.k1.full_size
+            l = t.full_size
             t.parameter_vector = v[i:i+l]
             i += l
 

@@ -1,9 +1,9 @@
-#ifndef _GENRP_EXCEPTIONS_H_
-#define _GENRP_EXCEPTIONS_H_
+#ifndef _CELERITE_EXCEPTIONS_H_
+#define _CELERITE_EXCEPTIONS_H_
 
 #include <exception>
 
-namespace genrp {
+namespace celerite {
 
 struct carma_exception : public std::exception {
   const char * what () const throw () {
@@ -23,6 +23,6 @@ struct dimension_mismatch : public std::exception {
   }
 };
 
-}; // namespace genrp
+}; // namespace celerite
 
-#endif // _GENRP_EXCEPTIONS_H_
+#endif // _CELERITE_EXCEPTIONS_H_

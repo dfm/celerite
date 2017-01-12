@@ -1,14 +1,14 @@
-#ifndef _GENRP_SOLVER_DIRECT_H_
-#define _GENRP_SOLVER_DIRECT_H_
+#ifndef _CELERITE_SOLVER_DIRECT_H_
+#define _CELERITE_SOLVER_DIRECT_H_
 
 #include <cmath>
 #include <Eigen/Dense>
 
-#include "genrp/utils.h"
-#include "genrp/exceptions.h"
-#include "genrp/solver/solver.h"
+#include "celerite/utils.h"
+#include "celerite/exceptions.h"
+#include "celerite/solver/solver.h"
 
-namespace genrp {
+namespace celerite {
 namespace solver {
 
 template <typename T>

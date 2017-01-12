@@ -1,13 +1,13 @@
-#ifndef _GENRP_UTILS_H_
-#define _GENRP_UTILS_H_
+#ifndef _CELERITE_UTILS_H_
+#define _CELERITE_UTILS_H_
 
 #include <cmath>
 #include <vector>
 #include <Eigen/Core>
 
-#include "genrp/poly.h"
+#include "celerite/poly.h"
 
-namespace genrp {
+namespace celerite {
 
 template <typename T1, typename T2>
 inline bool isclose (const T1& a, const T2& b) {
