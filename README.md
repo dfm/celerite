@@ -22,6 +22,6 @@ The method was developed by [Sivaram Ambikasaran](https://github.com/sivaramambi
 Authors & License
 -----------------
 
-Copyright 2016 Dan Foreman-Mackey, Eric Agol, and contributors.
+Copyright 2016, 2017 Dan Foreman-Mackey, Eric Agol, and contributors.
 
 GenRP is free software made available under the MIT License. For details see the LICENSE file.
