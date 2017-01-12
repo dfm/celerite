@@ -101,7 +101,7 @@ class TermSum(Term):
     @dirty.setter
     def dirty(self, value):
         for t in self._terms:
-            t.dirty = True
+            t.dirty = value
 
     @property
     def full_size(self):

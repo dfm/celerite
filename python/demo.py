@@ -15,9 +15,9 @@ import numpy as np
 import matplotlib.pyplot as pl
 from scipy.linalg import cho_factor
 
-from genrp import kernels, GP
+from celerite import terms, GP
 
-kernel = kernels.RealTerm(1.0, 0.1) + kernels.ComplexTerm(0.1, 2.0, 1.6)
+kernel = terms.RealTerm(1.0, 0.1) + terms.ComplexTerm(0.1, 2.0, 1.6)
 gp = GP(kernel)
 
 N = 2**np.arange(6, 20)
