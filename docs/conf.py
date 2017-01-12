@@ -4,9 +4,14 @@
 import os
 import sys
 
+import mock
+MOCK_MODULES = ["numpy", "celerite._celerite"]
+for mod_name in MOCK_MODULES:
+    sys.modules[mod_name] = mock.Mock()
+
 d = os.path.dirname
-sys.path.insert(0, d(d(os.path.abspath(__file__))))
-import genrp  # NOQA
+sys.path.insert(0, os.path.join(d(d(os.path.abspath(__file__))), "python"))
+import celerite  # NOQA
 
 extensions = [
     "sphinx.ext.autodoc",
@@ -26,12 +31,12 @@ source_suffix = ".rst"
 master_doc = "index"
 
 # General information about the project.
-project = "GenRP"
+project = "celerite"
 author = "Dan Foreman-Mackey, Eric Agol, & contributors"
-copyright = "2016, " + author
+copyright = "2016, 2017, " + author
 
-version = genrp.__version__
-release = genrp.__version__
+version = celerite.__version__
+release = celerite.__version__
 
 exclude_patterns = ["_build"]
 pygments_style = "sphinx"
@@ -46,17 +51,9 @@ if not on_rtd:
 html_context = dict(
     display_github=True,
     github_user="dfm",
-    github_repo="GenRP",
+    github_repo="celerite",
     github_version="master",
     conf_py_path="/docs/",
-    # script_files=[
-    #     "_static/jquery.js",
-    #     "_static/underscore.js",
-    #     "_static/doctools.js",
-    #     "//cdn.mathjax.org/mathjax/latest/MathJax.js"
-    #     "?config=TeX-AMS-MML_HTMLorMML",
-    #     "_static/js/analytics.js",
-    # ],
 )
 html_static_path = ["_static"]
 html_show_sourcelink = False

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from __future__ import division, print_function
+import math
 import numpy as np
 from itertools import chain
 
@@ -23,7 +24,7 @@ class GP(Model):
         log_white_noise (Optional): A white noise model for the process. The
             ``exp`` of this will be added to the diagonal of the matrix in
             :func:`GP.compute`. This can either be a ``float`` or a subclass
-            of :class:`Model`. (default: ``-np.inf``)
+            of :class:`Model`. (default: ``-inf``)
         fit_white_noise (optional): If ``False``, all of the parameters of
             ``log_white_noise`` will be frozen. Otherwise, the parameter
             states are unaffected. (default: ``False``)
@@ -33,7 +34,7 @@ class GP(Model):
     def __init__(self,
                  kernel,
                  mean=0.0, fit_mean=False,
-                 log_white_noise=-np.inf, fit_white_noise=False):
+                 log_white_noise=-float("inf"), fit_white_noise=False):
         self.kernel = kernel
 
         self.solver = None
@@ -113,7 +114,7 @@ class GP(Model):
         )
         return lp if np.isfinite(lp) else -np.inf
 
-    def log_likelihood(self, y, _const=np.log(2*np.pi)):
+    def log_likelihood(self, y, _const=math.log(2.0*math.pi)):
         y = self._process_input(y)
         resid = y - self.mean.get_value(self._t)
         self._recompute()
