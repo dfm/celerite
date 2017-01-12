@@ -1,4 +1,6 @@
-**celerite** \se.le.ʁi.te\ *n.* <br>
+**celerite** <br>
+\se.le.ʁi.te\ <br>
+*noun, archaic literary* <br>
 A scalable method for Gaussian Process regression. From French *célérité*. 
 
 --
