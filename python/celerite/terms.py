@@ -7,7 +7,7 @@ import numpy as np
 from itertools import chain
 
 from .modeling import Model
-from ._genrp import get_kernel_value, get_psd_value, check_coefficients
+from ._celerite import get_kernel_value, get_psd_value, check_coefficients
 
 __all__ = [
     "Term", "TermSum", "RealTerm", "ComplexTerm", "SHOTerm", "Matern32Term"

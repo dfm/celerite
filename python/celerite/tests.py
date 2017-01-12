@@ -11,7 +11,7 @@ except ImportError:
     import pickle
 
 from . import Solver, GP, terms
-from ._genrp import get_kernel_value
+from ._celerite import get_kernel_value
 
 __all__ = ["test_invalid_parameters", "test_log_determinant", "test_solve",
            "test_pickle", "test_nyquist_singularity"]

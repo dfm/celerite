@@ -4,14 +4,14 @@ from __future__ import division, print_function
 import numpy as np
 from itertools import chain
 
-from ._genrp import Solver
+from ._celerite import Solver
 from .modeling import Model, ConstantModel
 
 __all__ = ["GP"]
 
 
 class GP(Model):
-    """The main interface to the genrp Gaussian Process solver
+    """The main interface to the celerite Gaussian Process solver
 
     Args:
         kernel: An instance of a subclass of :class:`terms.Kernel`.
