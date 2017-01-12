@@ -399,17 +399,21 @@ Banded vs.\ sparse.
 
 \subsection{Ensuring positive definiteness: Sturm's theorem}
 
-The power spectrum is computed from taking the square of the Fourier transform of the data
-time series; hence, the power-spectrum must be non-negative.  In constructing a kernel,
-if any of the parameters $a_j$ or $b_j$ are negative, then it is possible for the power
-spectrum to go negative, which violates the definition of the power spectrum.  Consequently,
-if any of these coefficients is negative, it is necessary to check that the power spectrum
-is still non-negative.  Note that a non-negative power-spectrum does not require the auto-correlation
-function to be positive for all $\tau$.  The positive power spectrum is related to the
-positive eigenvalues of the covariance matrix which are necessary for a positive-definite matrix
-in limiting cases \citep{messerschmitt2006autocorrelation}.  We find empirically that requiring an everywhere
-positive power spectrum results in positive eigenvalues for the covariance matrix, and
-so we describe here how to ensure a positive power spectrum using Sturm's theorem.
+The power spectrum is computed from taking the square of the Fourier transform
+of the data time series; hence, the power-spectrum must be non-negative.  In
+constructing a kernel, if any of the parameters $a_j$ or $b_j$ are negative,
+then it is possible for the power spectrum to go negative, which violates the
+definition of the power spectrum.
+Consequently, if any of these coefficients is negative, it is necessary to
+check that the power spectrum is still non-negative.  Note that a non-negative
+power-spectrum does not require the auto-correlation
+function to be positive for all $\tau$.  The positive power spectrum is
+related to the positive eigenvalues of the covariance matrix which are
+necessary for a positive-definite matrix in limiting cases
+\citep{Messerschmitt:2006}.  We find empirically that requiring an everywhere
+positive power spectrum results in positive eigenvalues for the covariance
+matrix, and so we describe here how to ensure a positive power spectrum using
+Sturm's theorem.
 %Relation of positive power spectrum to positive definite covariance matrix.
 %Power spectrum of a sum of kernels.
 
@@ -432,7 +436,7 @@ P_0(z) = \sum_{j=1}^J (q_j z + r_j)\Pi_{k \ne j}\left(z^2+s_kz + t_k\right) = 0,
 which is a polynomial with order $p_{ord}=2(J-1)+1$.  With $J=2$, this yields a cubic equation
 which may be solved exactly for the roots.
 
-A procedure based upon Sturm's theorem \citep{Dorrie1965} allows one to determine whether there are any
+A procedure based upon Sturm's theorem \citep{Dorrie:1965} allows one to determine whether there are any
 real roots within the range $(0,\infty]$. We first construct $P_0(z)$ and it's derivative
 $P_1(z) = P^\prime(z)$, and then loop from $k=2$ to $k=p_{ord}$, computing
 $P_k(z) = -{\rm rem}(P_{k-2},P_{k-1})$.  The function ${\rm rem}(p,q)$ is the remainder polynomial after dividing $p(z)$ by $q(z)$.
@@ -650,6 +654,12 @@ This model could be easily extended to include small frequency splitting and
 $\nu_\mathrm{max}$ and $\Delta \nu$ could be replaced by physical parameters
 like $\log g$.
 
+KIC~11615890 \citep{Pinsonneault:2014}
+\begin{eqnarray}
+    \nu_\mathrm{max} = 171.94 \pm 3.62 \,\mu\mathrm{Hz} \quad\mathrm{and}\quad
+    \Delta\nu = 13.28 \pm 0.29 \,\mu\mathrm{Hz}
+\end{eqnarray}
+
 \dfmtodo{Add plots etc.}
 
 \begin{figure}[!htbp]
@@ -776,7 +786,7 @@ Limitations of GenRP: one-dimension, stationary, etc.
 % flux variability and spectral variations.
 
 % A promising technique for addressing both of these goals is the Gaussian Process formalism
-% \citep{Rasmussen2006,Gibson2012}.  The basis of this method is to assume that stellar variability
+% \citep{Rasmussen2006,Gibson:2012}.  The basis of this method is to assume that stellar variability
 % is random, Gaussian noise, but that the random variability is correlated in time, and the nature of the
 % correlations is completely specified by a correlation matrix.  In its simplest form, the
 % correlation matrix is modeled with a time-independent autocorrelation function (although
@@ -786,7 +796,8 @@ Limitations of GenRP: one-dimension, stationary, etc.
 % `hyper-parameters.'  The goal of spectral analysis is to measure the parameters which
 % describe the autocorrelation function, thus inferring properties of the stellar variabilty
 % which may be used to characterize properties of the star, such as the rotation period,
-% the asteroseismic frequencies, or granulation noise known as `flicker' \citep{Aerts2010,Noyes1984,Bastien2013}.
+% the asteroseismic frequencies, or granulation noise known as `flicker'
+% \citep{Aerts2010,Noyes:1984,Bastien:2013}.
 % The goals of planet detection include measuring the Doppler shift of the star, measuring
 % the decrement of flux as a planet transits a star, and/or measuring the times of transit to
 % look for dynamical interactions between planets.  To properly account for the impact of
@@ -806,15 +817,15 @@ Limitations of GenRP: one-dimension, stationary, etc.
 % One promising solution is to use approximate techiques based upon the fact that correlation
 % matrices display a great deal of symmetry.  This `hierarchical off-diagonal low-rank' (\texttt{HODLR})
 % algorithm can make the storage and operations both scale in proportion to $N_{time}$, although the
-% solver is only approximate \citep{Ambikasaran2013,Ambikasaran2016}.  In addition, the
+% solver is only approximate \citep{Ambikasaran:2013,Ambikasaran:2016}.  In addition, the
 % solver is complicated and can be challenging to use with general choices of kernel.  Another
 % promising approximate technique is to use a uniform resampling of the dataset, and then
 % rely on the structure of Toeplitz matrices, which require uniformly space time series,
-% to obtain approximate solutions of the likelihood function \citep{WilsonNickisch2015},
+% to obtain approximate solutions of the likelihood function \citep{Wilson:2015},
 % the `Kernel Interpolation for Scalable Structured Gaussian Processes' (\texttt{KISS-GP});
 % this approach has the drawback of being approximate.  A third approach is to use a kernel
 % based upon stochastic differential equations:  the `continuous auto-regressive moving-average'
-% model \citep[aka \texttt{CARMA};][]{Kelly2014}.  This approach can model a stationary power-spectrum that
+% model \citep[aka \texttt{CARMA};][]{Kelly:2014}.  This approach can model a stationary power-spectrum that
 % is the combination of a number of Lorentzians, but has the disadvantage that the amplitudes
 % of the Lorentzians are required to have a specific relation.  In addition, these
 % techniques require a stationary kernel. {\color{red} Is this true for GEORGE?}
@@ -847,8 +858,8 @@ Limitations of GenRP: one-dimension, stationary, etc.
 % importantly allowing for quasi-periodic kernels.  It turns out that the sum of Lorentzian
 % components is a {\it very} good approximation of stellar variability spectra:  the
 % activity and granulation noise due to stellar convection may be expressed in terms of zero-frequency
-% Lorentzians \citep{1985ESASP.235..199H}, the asteroseismic oscillations may be expressed as non-zero frequency
-% Lorentzians \citep{1990ApJ...364..699A,Gruberbauer2009}, and stellar rotation may be
+% Lorentzians \citep{Harvey:1985}, the asteroseismic oscillations may be expressed as non-zero frequency
+% Lorentzians \citep{1990ApJ...364..699A,Gruberbauer:2009}, and stellar rotation may be
 % parameterized this way as well.  In this paper
 % we extend the \texttt{GenRP} approach to kernels with complex exponentials, which when
 % combined with the complex conjugate leads to damped harmonic auto-correlation functions
@@ -872,10 +883,10 @@ Limitations of GenRP: one-dimension, stationary, etc.
 %\item Problem: can't handle large datasets - e.g. entire Kepler long-cadence; Spitzer light
 %   curves; Solar curves; short-cadence.
 %\item Solution(s):\\
-%  a). HODLR \citep{Ambikasaran2013,Ambikasaran2016}\\
-%  b). CARMA (Lorentzian power spectra, but with limitations) \citep{Kelly2014}\\
+%  a). HODLR \citep{Ambikasaran:2013,Ambikasaran:2016}\\
+%  b). CARMA (Lorentzian power spectra, but with limitations) \citep{Kelly:2014}\\
 %  c). Tri-diagonal (Press \& Rybicki) \citep{Rybicki:1995}
-%  d). KISS-GP \citep{WilsonNickisch2015} %Kernel Interpolation for Scalable Structured Gaussian Processes (KISS-GP) Andrew Wilson, Hannes Nickisch Proceedings of The 32nd International Conference on Machine Learning, pp. 1775-1784, 2015
+%  d). KISS-GP \citep{Wilson:2015} %Kernel Interpolation for Scalable Structured Gaussian Processes (KISS-GP) Andrew Wilson, Hannes Nickisch Proceedings of The 32nd International Conference on Machine Learning, pp. 1775-1784, 2015
 %\item Problem: HODLR is tricky to use; CARMA requires certain relations between
 %  coefficients of Lorentzians (right?); P\&R only works for up to 2 components + white noise
 %\item Solution: Ambikasaran \citep{Ambikasaran:2015} shows how sum of exponential kernels can be solved in order
@@ -920,7 +931,7 @@ Limitations of GenRP: one-dimension, stationary, etc.
 %   c). Analysis of solar data?
 
 % \item Possible future applications:\\
-%   a). Inference of asteroseismic variability - ala Andrew Gordon Wilson \citep{2013arXiv1302.4245W}, but
+%   a). Inference of asteroseismic variability - ala Andrew Gordon Wilson \citep{Wilson:2013}, but
 %       with Lorentzians, not Gaussians.\\
 %   b). Multi-waveband GPs.\\
 %   c). RV interpolation.\\
@@ -1112,9 +1123,10 @@ have this property, which leads to qualitatively different noise properties on s
 timescales due to the sharpness of the exponential kernel at $\tau=0$.  The Mat\'ern 3/2 kernel
 turns out to be similar to the observed properties of stellar activity and granulation, and thus the approximate
 formula is simultaneously physically relevant and computationally convenient.
-The power spectrum of a single exponential scales as $f^{-2}$ at high frequency,
-while the Mat\'ern kernel scales as $f^{-4}$ which more closely matches the power
-spectrum due to activity and granulation in the Sun \citep{2004A&A...414.1139A,Michel:2009}.
+The power spectrum of a single exponential scales as $f^{-2}$ at high
+frequency, while the Mat\'ern kernel scales as $f^{-4}$ which more
+closely matches the power spectrum due to activity and granulation in
+the Sun \citep{Aigrain:2004,Michel:2009}.
 \item {\bf Mat\'ern 5/2 kernel.}  The Mat\'ern 5/2 kernel is given by
 \begin{equation}
 k_{5/2}(t) = C_{5/2}(y) = \sigma^2 (1+y+y^2/3)e^{-y},
@@ -1251,14 +1263,16 @@ the method is general for one-dimensional GP problems, and may be applied to
 other problems.    Within astrophysics, correlated noise (due to the environment,
 detector, or modeling uncertainty) may be present in
 gravitational wave time series, and so Gaussian processes may be a way to address
-this problem \citep{Moore2016}.  Accreting black holes show time series which
-may be modeled by correlated noise \citep{Kelly2014};  indeed, this was the
-motivation for the original technique developed by Rybicki \& Press \citep{1992ApJ...398..169R,Rybicki:1995}.
-This approach may be broadly used for characterizing quasar variability \citep{2010ApJ...721.1014M},
-measuring time lags with reverberation mapping \citep{2011ApJ...735...80Z},
-and modeling time delays in multiply-imaged gravitationally-lensed systems \citep{1998ApJ...507..108P}.
+this problem \citep{Moore:2016}.  Accreting black holes show time series which
+may be modeled by correlated noise \citep{Kelly:2014};  indeed, this was the
+motivation for the original technique developed by Rybicki \& Press \citep{Rybicki:1992,Rybicki:1995}.
+This approach may be broadly used for characterizing quasar variability
+\citep{MacLeod:2010}, measuring time lags with reverberation mapping
+\citep{Zu:2011}, and modeling time delays in multiply-imaged
+gravitationally-lensed systems \citep{Press:1998}.
 
-Outside of astronomy, this technique may have application to seismology \citep{Robinson1967},
+Outside of astronomy, this technique may have application to seismology
+\citep{Robinson:1967},
 
 
 \vspace{1.5em}
@@ -1418,7 +1432,7 @@ NNX13AC07G and by other grants and contracts.
     % \project{ceres} \citep{Agarwal:2016},
     % \project{corner.py} \citep{Foreman-Mackey:2016},
     % \project{emcee} \citep{Foreman-Mackey:2013},
-    % \project{george} \citep{Ambikasaran2016},
+    % \project{george} \citep{Ambikasaran:2016},
 	% \project{matplotlib} \citep{Hunter:2007},
 	% \project{numpy} \citep{Van-Der-Walt:2011},
 	% \project{scipy} \citep{Jones:2001}.
@@ -1523,7 +1537,7 @@ that $d_j=0$, the off-diagonal components revert to $J+1$
 above and below the diagonal, giving a bandwidth of $2J+3$ (the same as the GRP algorithm).
 
 As with the GRP method, we can build an extended matrix which is real and symmetric, and which may be
-solved with a banded solver, as in \citet{NumericalRecipes}.  The determinant of this extended matrix
+solved with a banded solver, as in \citet{Press:1992}.  The determinant of this extended matrix
 may be computed from the LU decomposition, and it is related to the determinant of the kernel by a
 factor of $2^N$ (this is due to dividing each equation by $2$ to yield a symmetric matrix).
 We arrange the auxiliary variables with the $d_j=0$
