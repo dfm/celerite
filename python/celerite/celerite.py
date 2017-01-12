@@ -99,6 +99,8 @@ class GP(Model):
             self.compute(self._t, self._yerr, check_sorted=False)
 
     def _process_input(self, y):
+        if self._t is None:
+            raise RuntimeError("you must call 'compute' first")
         if len(self._t) != len(y):
             raise ValueError("dimension mismatch")
         return np.ascontiguousarray(y, dtype=float)
@@ -158,7 +160,7 @@ class GP(Model):
         if x1 is None and x2 is None:
             if self._t is None or not self.computed:
                 raise RuntimeError("you must call 'compute' first")
-            K = self._t[:, None] - self._t[None, :]
+            K = self.kernel.get_value(self._t[:, None] - self._t[None, :])
             if include_diagonal is None or include_diagonal:
                 K[np.diag_indices_from(K)] += \
                     self._yerr**2 + np.exp(self.log_white_noise

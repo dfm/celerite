@@ -13,27 +13,9 @@ except ImportError:
 from . import Solver, GP, terms
 from ._celerite import get_kernel_value
 
-__all__ = ["test_invalid_parameters", "test_log_determinant", "test_solve",
-           "test_pickle", "test_nyquist_singularity"]
-
-
-@pytest.mark.skip(reason="solver no longer checks for ordering")
-def test_invalid_parameters(seed=42):
-    np.random.seed(seed)
-    t = np.random.rand(50)
-
-    alpha_real = np.array([1.0, 2.0])
-    beta_real = np.array([1.0, 0.5])
-    alpha_complex_real = np.array([1.0])
-    alpha_complex_imag = np.array([0.0])
-    beta_complex_real = np.array([1.0])
-    beta_complex_imag = np.array([1.0])
-    with pytest.raises(ValueError):
-        Solver(alpha_real, beta_real, alpha_complex_real, alpha_complex_imag,
-               beta_complex_real, beta_complex_imag, t)
-    t = np.sort(t)
-    Solver(alpha_real, beta_real, alpha_complex_real, alpha_complex_imag,
-           beta_complex_real, beta_complex_imag, t)
+__all__ = ["test_log_determinant", "test_solve", "test_pickle",
+           "test_build_gp", "test_log_likelihood",
+           "test_nyquist_singularity"]
 
 
 def test_log_determinant(seed=42):
@@ -128,36 +110,6 @@ def test_pickle(seed=42):
     solver2 = pickle.loads(pickle.dumps(solver1, -1))
     compare(solver1, solver2)
 
-
-#  def test_kernel_params():
-#      gp = GP()
-#      terms = [(-0.5, 0.1), (-0.6, 0.7, 1.0)]
-#      for term in terms:
-#          gp.add_term(*term)
-
-#      alpha_real = []
-#      beta_real = []
-#      alpha_complex = []
-#      beta_complex_real = []
-#      beta_complex_imag = []
-#      for term in terms:
-#          if len(term) == 2:
-#              a, q = np.exp(term)
-#              alpha_real.append(4.0 * np.pi**2 * a * q)
-#              beta_real.append(2.0 * np.pi * q)
-#              continue
-#          a, q, f = np.exp(term)
-#          alpha_complex.append(4.0 * np.pi**2 * a * q)
-#          beta_complex_real.append(2.0 * np.pi * q)
-#          beta_complex_imag.append(2.0 * np.pi * f)
-
-#      assert np.allclose(gp.alpha_real, alpha_real)
-#      assert np.allclose(gp.beta_real, beta_real)
-#      assert np.allclose(gp.alpha_complex, alpha_complex)
-#      assert np.allclose(gp.beta_complex_real, beta_complex_real)
-#      assert np.allclose(gp.beta_complex_imag, beta_complex_imag)
-
-
 #  def test_kernel_value(seed=42):
 #      gp = GP()
 #      terms = [(-0.3, 0.1), (-0.5, 0.1), (-0.7, 0.1),
@@ -194,93 +146,75 @@ def test_pickle(seed=42):
 #      assert np.allclose(K, K0)
 
 
-#  def test_build_gp(seed=42):
-#      gp = GP()
-#      terms = [(-0.5, 0.1), (-0.6, 0.7, 1.0)]
-#      for term in terms:
-#          gp.add_term(*term)
+def test_build_gp(seed=42):
+    kernel = terms.RealTerm(0.5, 0.1)
+    kernel += terms.ComplexTerm(0.6, 0.7, 1.0)
+    gp = GP(kernel)
 
-#      # assert len(gp.terms) == len(terms)
-#      # assert all(np.allclose(t1, t2) for t1, t2 in zip(gp.terms, terms))
-#      assert len(gp) == 5
-#      assert np.allclose(gp.params, [-0.5, 0.1, -0.6, 0.7, 1.0])
+    assert gp.vector_size == 5
+    p = gp.get_parameter_vector()
+    assert np.allclose(p, [0.5, 0.1, 0.6, 0.7, 1.0])
 
-#      gp.params = [0.5, 0.8, -0.6, 0.7, 2.0]
-#      assert np.allclose(gp.params, [0.5, 0.8, -0.6, 0.7, 2.0])
+    gp.set_parameter_vector([0.5, 0.8, 0.6, 0.7, 2.0])
+    p = gp.get_parameter_vector()
+    assert np.allclose(p, [0.5, 0.8, 0.6, 0.7, 2.0])
 
-#      with pytest.raises(ValueError):
-#          gp.params = [0.5, 0.8, -0.6]
+    with pytest.raises(ValueError):
+        gp.set_parameter_vector([0.5, 0.8, -0.6])
 
-#      with pytest.raises(ValueError):
-#          gp.params = "face"
+    with pytest.raises(ValueError):
+        gp.set_parameter_vector("face1")
 
-#  def test_log_likelihood(seed=42):
-#      np.random.seed(seed)
-#      x = np.sort(np.random.rand(10))
-#      yerr = np.random.uniform(0.1, 0.5, len(x))
-#      y = np.sin(x)
+def test_log_likelihood(seed=42):
+    np.random.seed(seed)
+    x = np.sort(np.random.rand(10))
+    yerr = np.random.uniform(0.1, 0.5, len(x))
+    y = np.sin(x)
 
-#      gp = GP()
-#      with pytest.raises(RuntimeError):
-#          gp.log_likelihood(y)
-#      for term in [(-0.5, 0.1), (-0.6, 0.7, 1.0)]:
-#          gp.add_term(*term)
+    kernel = terms.RealTerm(0.1, 0.5)
+    gp = GP(kernel)
+    with pytest.raises(RuntimeError):
+        gp.log_likelihood(y)
 
-#          assert gp.computed is False
+    for term in [(0.6, 0.7, 1.0)]:
+        kernel += terms.ComplexTerm(*term)
+        gp = GP(kernel)
 
-#          with pytest.raises(ValueError):
-#              gp.compute(np.random.rand(len(x)), yerr)
+        assert gp.computed is False
 
-#          gp.compute(x, yerr)
-#          assert gp.computed is True
+        with pytest.raises(ValueError):
+            gp.compute(np.random.rand(len(x)), yerr)
 
-#          ll = gp.log_likelihood(y)
-#          K = gp.get_matrix(x)
-#          K[np.diag_indices_from(K)] += yerr**2
-#          ll0 = -0.5 * np.dot(y, np.linalg.solve(K, y))
-#          ll0 -= 0.5 * np.linalg.slogdet(K)[1]
-#          ll0 -= 0.5 * len(x) * np.log(2*np.pi)
-#          assert np.allclose(ll, ll0)
+        gp.compute(x, yerr)
+        assert gp.computed is True
+        assert gp.dirty is False
 
-#      # Check that changing the parameters "un-computes" the likelihood.
-#      gp.params = gp.params
-#      with pytest.raises(RuntimeError):
-#          gp.log_likelihood(y)
+        ll = gp.log_likelihood(y)
+        K = gp.get_matrix(include_diagonal=True)
+        ll0 = -0.5 * np.dot(y, np.linalg.solve(K, y))
+        ll0 -= 0.5 * np.linalg.slogdet(K)[1]
+        ll0 -= 0.5 * len(x) * np.log(2*np.pi)
+        assert np.allclose(ll, ll0)
 
-#      # Check that changing the parameters changes the likelihood.
-#      gp.compute(x, yerr)
-#      ll1 = gp.log_likelihood(y)
-#      params = gp.params
-#      params[0] += 0.1
-#      gp.params = params
-#      gp.compute(x, yerr)
-#      ll2 = gp.log_likelihood(y)
-#      assert not np.allclose(ll1, ll2)
+    # Check that changing the parameters "un-computes" the likelihood.
+    gp.set_parameter_vector(gp.get_parameter_vector())
+    assert gp.dirty is True
+    assert gp.computed is False
 
-#      gp[1] += 0.1
-#      gp.compute(x, yerr)
-#      ll3 = gp.log_likelihood(y)
-#      assert not np.allclose(ll2, ll3)
+    # Check that changing the parameters changes the likelihood.
+    gp.compute(x, yerr)
+    ll1 = gp.log_likelihood(y)
+    params = gp.get_parameter_vector()
+    params[0] += 0.1
+    gp.set_parameter_vector(params)
+    gp.compute(x, yerr)
+    ll2 = gp.log_likelihood(y)
+    assert not np.allclose(ll1, ll2)
 
-
-#  def test_psd():
-#      gp = GP()
-#      terms = [(-0.5, 0.1), (-0.6, 0.7, 1.0)]
-#      for term in terms:
-#          gp.add_term(*term)
-
-#      freqs = np.exp(np.linspace(np.log(0.1), np.log(10), 1000))
-#      psd0 = np.zeros_like(freqs)
-#      for term in terms:
-#          if len(term) == 2:
-#              amp, q = np.exp(term)
-#              psd0 += 2.0 * amp / (1 + (freqs/q)**2)
-#              continue
-#          amp, q, f = np.exp(term)
-#          psd0 += amp / (1 + ((freqs - f)/q)**2)
-#          psd0 += amp / (1 + ((freqs + f)/q)**2)
-
-#      assert np.allclose(psd0, gp.get_psd(freqs))
+    gp[1] += 0.1
+    gp.compute(x, yerr)
+    ll3 = gp.log_likelihood(y)
+    assert not np.allclose(ll2, ll3)
 
 # Test whether the GP can properly handle the case where the Lorentzian has a
 # very large quality factor and the time samples are almost exactly at Nyquist

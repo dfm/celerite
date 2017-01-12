@@ -127,7 +127,7 @@ class TermSum(Term):
     def parameter_vector(self, v):
         i = 0
         for t in self._terms:
-            l = self.k1.full_size
+            l = t.full_size
             t.parameter_vector = v[i:i+l]
             i += l
 

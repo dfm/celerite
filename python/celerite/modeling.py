@@ -28,11 +28,18 @@ class Model(object):
     def __len__(self):
         return self.vector_size
 
-    def __getitem__(self, name):
-        return self.get_parameter(name)
+    def _get_name(self, name_or_index):
+        try:
+            int(name_or_index)
+        except TypeError:
+            return name_or_index
+        return self.get_parameter_names()[int(name_or_index)]
 
-    def __setitem__(self, name, value):
-        return self.set_parameter(name, value)
+    def __getitem__(self, name_or_index):
+        return self.get_parameter(self._get_name(name_or_index))
+
+    def __setitem__(self, name_or_index, value):
+        return self.set_parameter(self._get_name(name_or_index), value)
 
     @property
     def full_size(self):
