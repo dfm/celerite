@@ -6,6 +6,7 @@ A scalable method for Gaussian Process regression. From French *célérité*.
 --
 
 [![Build Status](http://img.shields.io/travis/dfm/celerite/master.svg?style=flat)](https://travis-ci.org/dfm/celerite)
+[![Documentation Status](https://readthedocs.org/projects/celerite/badge/?version=latest&style=flat)](http://celerite.readthedocs.io/en/latest/?badge=latest)
 [![MIT License](http://img.shields.io/badge/license-MIT-blue.svg?style=flat)](https://github.com/dfm/celerite/blob/master/LICENSE
 )
 [![Latest PDF](https://img.shields.io/badge/PDF-latest-orange.svg)](https://github.com/dfm/celerite/blob/master-pdf/paper/ms.pdf)
