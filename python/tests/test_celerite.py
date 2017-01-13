@@ -10,8 +10,8 @@ try:
 except ImportError:
     import pickle
 
-from . import Solver, GP, terms
-from ._celerite import get_kernel_value
+from celerite import Solver, GP, terms
+from celerite._celerite import get_kernel_value
 
 __all__ = ["test_log_determinant", "test_solve", "test_pickle",
            "test_build_gp", "test_log_likelihood",

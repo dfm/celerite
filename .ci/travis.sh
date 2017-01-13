@@ -42,5 +42,5 @@ pip install pybind11
 
 # Build the extension
 cd python
-CXX=g++-4.8 CC=gcc-4.8 python setup.py build_ext -I../eigen --inplace
+CXX=g++-4.8 CC=gcc-4.8 python setup.py build_ext -I../eigen install
 cd ..

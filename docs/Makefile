@@ -15,7 +15,7 @@ ALLSPHINXOPTS   = -d $(BUILDDIR)/doctrees $(PAPEROPT_$(PAPER)) $(SPHINXOPTS) .
 I18NSPHINXOPTS  = $(PAPEROPT_$(PAPER)) $(SPHINXOPTS) .
 
 default: dirhtml
-TUTORIALS = tutorials/getting_started.rst
+TUTORIALS = tutorials/first.rst
 
 tutorials/%.rst: _static/notebooks/%.ipynb tutorials/tutorial_rst.tpl
 	jupyter nbconvert --template tutorials/tutorial_rst --to rst $< --output-dir tutorials

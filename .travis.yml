@@ -57,5 +57,5 @@ script: |
     elif [[ $TEST_LANG == python ]]
     then
       cd python
-      py.test -v celerite/tests.py
+      py.test -v
     fi

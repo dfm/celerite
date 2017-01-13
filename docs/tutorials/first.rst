@@ -2,13 +2,13 @@
 .. module:: celerite
 
 .. note:: This tutorial was generated from an IPython notebook that can be
-          downloaded `here <../../_static/notebooks/getting_started.ipynb>`_.
+          downloaded `here <../../_static/notebooks/first.ipynb>`_.
 
-.. _getting_started:
+.. _first:
 
 
-Getting started
-===============
+First steps
+===========
 
 For this tutorial, we're going to fit a Gaussian Process (GP) model to a
 simulated dataset with quasiperiodic oscillations. We're also going to
@@ -42,7 +42,7 @@ To start, here's some code to simulate the dataset:
 
 
 
-.. image:: getting_started_files/getting_started_2_0.png
+.. image:: first_files/first_2_0.png
 
 
 This plot shows the simulated data as black points with error bars and
@@ -230,7 +230,7 @@ function.
 
 
 
-.. image:: getting_started_files/getting_started_18_0.png
+.. image:: first_files/first_18_0.png
 
 
 In this figure, the 1-sigma prediction is shown as an orange band and
@@ -261,6 +261,6 @@ components.
 
 
 
-.. image:: getting_started_files/getting_started_20_0.png
+.. image:: first_files/first_20_0.png
 
 
