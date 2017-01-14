@@ -134,7 +134,7 @@ class TermSum(Term):
     @property
     def parameter_names(self):
         return tuple(chain(*(
-            map("term[{0}]:{{0}}".format(i).format, t.parameter_names)
+            map("terms[{0}]:{{0}}".format(i).format, t.parameter_names)
             for i, t in enumerate(self._terms)
         )))
 
@@ -145,7 +145,7 @@ class TermSum(Term):
         )))
 
     def _apply_to_parameter(self, func, name, *args):
-        groups = re.findall(r"^term\[([0-9]+)\]:(.*)", name)
+        groups = re.findall(r"^terms\[([0-9]+)\]:(.*)", name)
         if not len(groups):
             raise ValueError("unrecognized parameter '{0}'".format(name))
         index, subname = groups[0]
@@ -165,7 +165,7 @@ class TermSum(Term):
         return self._apply_to_parameter("set_parameter", name, value)
 
     def get_all_coefficients(self):
-        return [np.append(a, b) for a, b in zip(*(
+        return [np.concatenate(a) for a in zip(*(
             t.get_all_coefficients() for t in self._terms
         ))]
 
