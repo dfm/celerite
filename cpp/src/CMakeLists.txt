@@ -12,4 +12,3 @@ endmacro (CELERITE_TEST)
 
 celerite_test(test_solvers)
 celerite_test(test_poly)
-celerite_test(test_band)
