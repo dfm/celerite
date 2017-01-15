@@ -8,7 +8,8 @@
 \usepackage{microtype}
 
 \usepackage{url}
-\usepackage{amssymb,amsmath}
+\usepackage{amsmath}
+\usepackage{amssymb}
 \usepackage{natbib}
 \usepackage{multirow}
 \bibliographystyle{aasjournal}
@@ -16,6 +17,18 @@
 % ----------------------------------- %
 % start of AASTeX mods by DWH and DFM %
 % ----------------------------------- %
+
+% Matrix fix:
+% http://tex.stackexchange.com/questions/317824/letter-c-appearing-inside-pmatrix-environment-with-aastex
+\makeatletter
+\def\env@matrix{\hskip -\arraycolsep % taken from amsmath.sty lines 895ff
+  \let\@ifnextchar\new@ifnextchar
+  \array{*{\c@MaxMatrixCols}c}}
+\makeatother
+
+% Column spacing in matrix
+% http://tex.stackexchange.com/questions/275725/adjusting-separation-between-matrix-entries
+\setlength\arraycolsep{25pt}
 
 \setlength{\voffset}{0in}
 \setlength{\hoffset}{0in}
@@ -304,7 +317,7 @@ of $\tau_{nm} \equiv |t_n - t_m|$.
 To scale GP models to larger datasets, \citet{Rybicki:1995} presented a method
 of computing \eq{gp-likelihood} in $\mathcal{O}(N)$ when the covariance
 function is
-\begin{eqnarray}
+\begin{eqnarray}\eqlabel{kernel-simple}
 k_\bvec{\alpha}(\tau_{nm}) = \sigma_n^2\,\delta_{nm} + a\,\exp(-c\,\tau_{nm})
 \end{eqnarray}
 where $\{{\sigma_n}^2\}_{n=1}^N$ are the measurement uncertainties,
@@ -391,6 +404,84 @@ S_j(\omega) = \sqrt{\frac{2}{\pi}}\,\frac{a_j}{c_j}\,
 \end{eqnarray}
 
 \section{Implementation \& performance}
+
+\citet{Rybicki:1995} demonstrated that the inverse of a matrix $K$ where the
+elements are given by
+\begin{eqnarray}
+K_{nm} = k(\tau_{nm})
+\end{eqnarray}
+for $k(\tau_{nm})$ given by equation \eq{kernel-simple} could be computed
+efficiently by taking advantage of the structure of this covariance function
+and \citet{Ambikasaran:2015} generalized this computation to apply to the full
+mixture of $J$ terms in \eq{celerite-kernel-complex} and derived an equally
+efficient method for computing the determinant of $K$.
+
+\subsection{The algorithm}
+
+To provide some insight for this method, we will start by working through the
+simplest possible example.
+In this case, we'll assume that we have three data points
+$\{y_1,\,y_2,\,y_3\}$ observed at times $\{t_1,\,t_2,\,t_3\}$ with
+uncertainties $\{{\sigma_1}^2,\,{\sigma_2}^2,\,{\sigma_3}^2\}$ and we would
+like to compute the likelihood of these data under a GP model with the
+covariance function
+\begin{eqnarray}
+k(\tau_{nm}) = \sigma_n^2\,\delta_{nm} + a\,\exp(-c\,\tau_{nm})\quad.
+\end{eqnarray}
+This function is identical to \eq{celerite-kernel-complex} with $J=1$, $b=0$,
+and $d=0$.
+To demonstrate motivate this method, we will write out the full system of
+equations that we must solve to apply the inverse of $K$.
+In matrix notation, this can be written as
+\begin{eqnarray}
+K\,\bvec{x} &=& \bvec{y} \\
+\begin{pmatrix}
+    a+{\sigma_1}^2 & a\,e^{-c\,\tau_{2,1}} & a\,e^{-c\,\tau_{3,1}}\\
+    a\,e^{-c\,\tau_{2,1}} & a+{\sigma_2}^2 & a\,e^{-c\,\tau_{3,2}}\\
+    a\,e^{-c\,\tau_{3,1}} & a\,e^{-c\,\tau_{3,2}} & a+{\sigma_3}^2
+\end{pmatrix}\,
+\begin{pmatrix}
+    x_1 \\ x_2 \\ x_3
+\end{pmatrix} &=&
+\begin{pmatrix}
+    y_1 \\ y_2 \\ y_3
+\end{pmatrix} \quad.
+\end{eqnarray}
+Now, if we introduce the variables
+\begin{eqnarray}
+    u_n = e^{-c\,\tau_{n+2,n+1}}\,u_{n+1} + a\,x_{n+1}
+\end{eqnarray}
+where $u_{N} = 0$, and
+\begin{eqnarray}\eqlabel{algo-first}
+    g_n = e^{-c\,\tau_{n+1,n}}\,g_{n-1} + e^{-c\,\tau_{n+1,n}}\,x_{n}
+\end{eqnarray}
+where $g_{0} = 0$,
+the system of equations can be rewritten as
+\begin{eqnarray}
+(a+{\sigma_1}^2)\,x_1 + e^{c\,\tau_{2,1}}\,u_1 &=& y_1 \\
+a\,g_1 + (a+{\sigma_2}^2)\,x_2 + e^{c\,t_2}\,u_2 &=& y_2 \\
+a\,g_2 + (a+{\sigma_3}^2)\,x_3 &=& y_3 \quad. \eqlabel{algo-last}
+\end{eqnarray}
+The system defined by \eq{algo-first} through \eq{algo-last} can be
+rewritten as a matrix equation to show the benefit that this seemingly trivial
+reformulation provides:
+\begin{eqnarray}
+\begin{pmatrix}
+    a+{\sigma_1}^2 & e^{c\,t_1} & 0 & 0 & 0 & 0 & 0 \\
+    e^{c\,t_1} & 0 & -1 & 0 & 0 & 0 & 0 \\
+    0 & -1 & 0 & e^{-c\,t_2} & a & 0 & 0 \\
+    0 & 0 & e^{-c\,t_2} & a+{\sigma_2}^2 & e^{c\,t_2} & 0 & 0 \\
+    0 & 0 & a & e^{c\,t_2} & 0 & -1 & 0 \\
+    0 & 0 & 0 & 0 & -1 & 0 & e^{-c\,t_3} \\
+    0 & 0 & 0 & 0 & 0 & e^{-c\,t_3} & a+{\sigma_3}^2 \\
+\end{pmatrix}\,
+\begin{pmatrix}
+    x_1 \\ u_1 \\ g_1 \\ x_2 \\ u_2 \\ g_2 \\ x_3
+\end{pmatrix} &=&
+\begin{pmatrix}
+    y_1 \\ 0 \\ 0 \\ y_2 \\ 0 \\ 0 \\ y_3
+\end{pmatrix} \quad.
+\end{eqnarray}
 
 \subsection{Implementation considerations}
 
