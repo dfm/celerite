@@ -416,7 +416,8 @@ and \citet{Ambikasaran:2015} generalized this computation to apply to the full
 mixture of $J$ terms in \eq{celerite-kernel-complex} and derived an equally
 efficient method for computing the determinant of $K$.
 
-\subsection{The algorithm}
+
+\subsection{An example}
 
 To provide some insight for this method, we will start by working through the
 simplest possible example.
@@ -433,7 +434,7 @@ and $d=0$.
 To demonstrate motivate this method, we will write out the full system of
 equations that we must solve to apply the inverse of $K$.
 In matrix notation, this can be written as
-\begin{eqnarray}
+\begin{eqnarray}\eqlabel{impl-matrix}
 K\,\bvec{x} &=& \bvec{y} \\
 \begin{pmatrix}
     a+{\sigma_1}^2 & a\,e^{-c\,\tau_{2,1}} & a\,e^{-c\,\tau_{3,1}}\\
@@ -480,8 +481,52 @@ reformulation provides:
 \end{pmatrix} &=&
 \begin{pmatrix}
     y_1 \\ 0 \\ 0 \\ y_2 \\ 0 \\ 0 \\ y_3
-\end{pmatrix} \quad.
+\end{pmatrix}\nonumber
 \end{eqnarray}
+where we will follow \citet{Ambikasaran:2015} and call this the ``extended''
+system and rewrite \eq{impl-matrix} as
+\begin{eqnarray}
+    K_\mathrm{ext}\,\bvec{x}_\mathrm{ext} &=& \bvec{y}_\mathrm{ext} \quad.
+\end{eqnarray}
+Even though $K_\mathrm{ext}$ is a larger matrix than the original $K$ that we
+started with, it is now has a sparse banded structure that can be exploited to
+solve the system efficiently.
+In particular, band matrix solvers are available that can perform an
+LU-decomposition of banded matrices like this in $\mathcal{O}(N)$
+operations~--~instead of the $\mathcal{O}(N^3)$ that would be required in
+general~--~and we can take advantage of these algorithms to solve our system
+exactly because the target vector $\bvec{x}$ is a subset of the elements of
+$\bvec{x}_\mathrm{ext}$.
+
+In the following section, we will discuss this method more generally but it's
+worth noting a few important facts that can already be seen in this example.
+First, the fundamental reason why this matrix $K$ can be solved efficiently is
+the following property of exponentials
+\begin{eqnarray}
+    e^{-c\,(t_3 - t_2)} \, e^{-c\,(t_2 - t_1)} =
+    e^{-c\,(t_3 - t_2 + t_2 - t_1)} =
+    e^{-c\,(t_3 - t_1)}
+\end{eqnarray}
+and it is important to note that this property does not extend to other common
+covariance functions like the ``exponential-squared'' function
+\begin{eqnarray}
+    k(\tau) \propto e^{-c\,\tau^2} \quad.
+\end{eqnarray}
+Furthermore, our derivation of the extended matrix requires that the data
+points be monotonically sorted in time.
+Neither of these properties will be satisfied in general for multidimensional
+inputs and all of our following discussion will assume a sorted
+one-dimensional dataset.
+
+\subsection{The algorithm}
+
+\citet{Ambikasaran:2015} demonstrated two key facts that allow us to use this
+extended matrix formalism in practice.
+First, even if the covariance function is a mixture of exponentials, the
+extended matrix will still be banded with bandwidth \dfmtodo{check}.
+Second, \citet{Ambikasaran:2015} proved that the determinant of
+$K_\mathrm{ext}$ is equal to the determinant of $K$ up to a sign.
+
 
 \subsection{Implementation considerations}
 
