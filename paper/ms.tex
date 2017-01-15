@@ -458,8 +458,8 @@ where $u_{N} = 0$, and
 where $g_{0} = 0$,
 the system of equations can be rewritten as
 \begin{eqnarray}
-(a+{\sigma_1}^2)\,x_1 + e^{c\,\tau_{2,1}}\,u_1 &=& y_1 \\
-a\,g_1 + (a+{\sigma_2}^2)\,x_2 + e^{c\,t_2}\,u_2 &=& y_2 \\
+(a+{\sigma_1}^2)\,x_1 + e^{-c\,\tau_{2,1}}\,u_1 &=& y_1 \\
+a\,g_1 + (a+{\sigma_2}^2)\,x_2 + e^{-c\,\tau_{3,2}}\,u_2 &=& y_2 \\
 a\,g_2 + (a+{\sigma_3}^2)\,x_3 &=& y_3 \quad. \eqlabel{algo-last}
 \end{eqnarray}
 The system defined by \eq{algo-first} through \eq{algo-last} can be
@@ -467,13 +467,13 @@ rewritten as a matrix equation to show the benefit that this seemingly trivial
 reformulation provides:
 \begin{eqnarray}
 \begin{pmatrix}
-    a+{\sigma_1}^2 & e^{c\,t_1} & 0 & 0 & 0 & 0 & 0 \\
-    e^{c\,t_1} & 0 & -1 & 0 & 0 & 0 & 0 \\
-    0 & -1 & 0 & e^{-c\,t_2} & a & 0 & 0 \\
-    0 & 0 & e^{-c\,t_2} & a+{\sigma_2}^2 & e^{c\,t_2} & 0 & 0 \\
-    0 & 0 & a & e^{c\,t_2} & 0 & -1 & 0 \\
-    0 & 0 & 0 & 0 & -1 & 0 & e^{-c\,t_3} \\
-    0 & 0 & 0 & 0 & 0 & e^{-c\,t_3} & a+{\sigma_3}^2 \\
+    a+{\sigma_1}^2 & e^{-c\,\tau_{2,1}} & 0 & 0 & 0 & 0 & 0 \\
+    e^{-c\,\tau_{2,1}} & 0 & -1 & 0 & 0 & 0 & 0 \\
+    0 & -1 & 0 & a & e^{-c\,\tau_{3,2}} & 0 & 0 \\
+    0 & 0 & a & a+{\sigma_2}^2 & e^{-c\,\tau_{3,2}} & 0 & 0 \\
+    0 & 0 & e^{-c\,\tau_{3,2}} & e^{-c\,\tau_{3,2}} & 0 & -1 & 0 \\
+    0 & 0 & 0 & 0 & -1 & 0 & a \\
+    0 & 0 & 0 & 0 & 0 & a & a+{\sigma_3}^2 \\
 \end{pmatrix}\,
 \begin{pmatrix}
     x_1 \\ u_1 \\ g_1 \\ x_2 \\ u_2 \\ g_2 \\ x_3
