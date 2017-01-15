@@ -11,7 +11,5 @@ macro (CELERITE_TEST NAME)
 endmacro (CELERITE_TEST)
 
 celerite_test(test_solvers)
-# celerite_test(test_gp)
-# celerite_test(test_gp_grad)
-# celerite_test(test_grad)
 celerite_test(test_poly)
+celerite_test(test_band)
