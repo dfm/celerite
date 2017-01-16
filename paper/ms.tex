@@ -539,9 +539,9 @@ treatment of complex parameters.
 \phi_{n,j} &=& e^{-c_j\,\tau_{n+1,n}}\,\cos\left(d_j\,\tau_{n+1,n}\right)\\
 \psi_{n,j} &=& -e^{-c_j\,\tau_{n+1,n}}\,\sin\left(d_j\,\tau_{n+1,n}\right)\\
 g_{n,j} &=& \phi_{n,j}\,g_{n-1,j} + \phi_{n,j}\,x_n + \psi_{n,j}\,h_{n-1,j}\\
-h_{n,j} &=& \phi_{n,j}\,g_{n-1,j} - \psi_{n,j}\,x_n - \psi_{n,j}\,h_{n-1,j}\\
+h_{n,j} &=& \phi_{n,j}\,h_{n-1,j} - \psi_{n,j}\,x_n - \psi_{n,j}\,g_{n-1,j}\\
 u_{n,j} &=& \phi_{n+1,j}\,u_{n+1,j} + \frac{a_j}{2}\,x_n + \psi_{n+1,j}\,v_{n+1,j}\\
-v_{n,j} &=& \phi_{n+1,j}\,u_{n+1,j} - \frac{b_j}{2}\,x_n - \psi_{n+1,j}\,v_{n+1,j}
+v_{n,j} &=& \phi_{n+1,j}\,v_{n+1,j} - \frac{b_j}{2}\,x_n - \psi_{n+1,j}\,u_{n+1,j}
 \end{eqnarray}
 
 \begin{eqnarray}
