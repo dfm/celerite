@@ -128,12 +128,12 @@ int BandSolver<T>::compute (
     for (j = 0; j < p_complex; ++j) {
       a = block_id;
       b = start_b + 2*j;
-      value = 2.0 * gamma_complex_real(j);
+      value = gamma_complex_real(j);
       get_band_element(a_, width, b-a, a) = value;
       get_band_element(a_, width, a-b, a) = value;
 
       b = start_b + 2*j + 1;
-      value = 2.0 * gamma_complex_imag(j);
+      value = gamma_complex_imag(j);
       get_band_element(a_, width, b-a, a) = value;
       get_band_element(a_, width, a-b, a) = value;
     }
@@ -186,12 +186,12 @@ int BandSolver<T>::compute (
     for (j = 0; j < p_complex; ++j) {
       a = start_a + 2*j;
       b = start_b;
-      value = 0.5 * alpha_complex_real(j);
+      value = alpha_complex_real(j);
       get_band_element(a_, width, b-a, a) = value;
       get_band_element(a_, width, a-b, a) = value;
 
       a += 1;
-      value = 0.5 * alpha_complex_imag(j);
+      value = alpha_complex_imag(j);
       get_band_element(a_, width, b-a, a) = value;
       get_band_element(a_, width, a-b, a) = value;
       a -= 1;
