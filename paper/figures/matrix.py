@@ -4,8 +4,11 @@
 from __future__ import division, print_function
 
 import numpy as np
+from itertools import product
+
 import matplotlib
 import matplotlib.pyplot as plt
+
 from plot_setup import setup, get_figsize
 
 setup()
@@ -84,6 +87,13 @@ c = [(0.89411765336990356, 0.10196078568696976, 0.10980392247438431),
 cmap = matplotlib.colors.ListedColormap(["white"] + list(c), name="cmap")
 fig, ax = plt.subplots(1, 1, figsize=get_figsize(2, 2))
 ax.pcolor(full, cmap=cmap, vmin=0, vmax=len(c))
+
+# Plot the edges
+for i, j in product(range(full_dim), range(full_dim)):
+    if full[i, j] == 0:
+        continue
+    ax.plot((j, j, j+1, j+1, j), (i, i+1, i+1, i, i), "k", lw=0.5)
+
 ax.set_ylim(full_dim, 0)
 ax.set_xlim(0, full_dim)
 ax.set_frame_on(False)
