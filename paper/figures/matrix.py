@@ -92,8 +92,8 @@ ax.set_yticks([])
 
 names = [
     r"${\sigma_n}^2 + \sum a_j$",
-    r"$a_j / 2$",
-    r"$b_j / 2$",
+    r"$a_j$",
+    r"$b_j$",
     r"$\phi_{n,j}$",
     r"$\psi_{n,j}$",
     r"$-\phi_{n,j}$",
