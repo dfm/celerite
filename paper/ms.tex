@@ -531,11 +531,14 @@ marginalized likelihood in $\mathcal{O}(N\,J^2)$ operations.
 \subsection{The algorithm}
 
 In this section, we generalize the method from the previous section to the
-covariance function given by \eq{celerite-kernel-complex}.
+covariance function given by \eq{celerite-kernel}.
 This derivation follows \citet{Ambikasaran:2015} but it includes explicit
 treatment of complex parameters.
 
-\begin{eqnarray}
+In the case of the full \celerite\ covariance function
+(\eqalt{celerite-kernel}), we introduce the following auxiliary variables in
+analogy to the $u_n$ and $g_n$ that we introduced in the previous section
+\begin{eqnarray}\eqlabel{full-system-first}
 \phi_{n,j} &=& e^{-c_j\,\tau_{n+1,n}}\,\cos\left(d_j\,\tau_{n+1,n}\right)\\
 \psi_{n,j} &=& -e^{-c_j\,\tau_{n+1,n}}\,\sin\left(d_j\,\tau_{n+1,n}\right)\\
 g_{n,j} &=& \phi_{n,j}\,g_{n-1,j} + \phi_{n,j}\,x_n + \psi_{n,j}\,h_{n-1,j}\\
@@ -543,18 +546,65 @@ h_{n,j} &=& \phi_{n,j}\,h_{n-1,j} - \psi_{n,j}\,x_n - \psi_{n,j}\,g_{n-1,j}\\
 u_{n,j} &=& \phi_{n+1,j}\,u_{n+1,j} + a_j\,x_{n+1} + \psi_{n+1,j}\,v_{n+1,j}\\
 v_{n,j} &=& \phi_{n+1,j}\,v_{n+1,j} - b_j\,x_{n+1} - \psi_{n+1,j}\,u_{n+1,j}
 \end{eqnarray}
-
+with the boundary conditions
 \begin{eqnarray}
+    g_{0,j} = 0 \quad, \quad
+    h_{0,j} = 0 \quad, \quad
+    u_{N,j} = 0 \quad, \quad\mathrm{and}\quad
+    v_{N,j} = 0
+\end{eqnarray}
+for all $j$.
+Using these variables and some algebra, we find that the following expression
+\begin{eqnarray}\eqlabel{full-system-last}
 \sum_{j=1}^J \left[a_j\,g_{n,j}+b_j\,h_{n,j}\right]
 + \left[{\sigma_n}^2+\sum_{j=1}^J a_j\right]
 + \sum_{j=1}^J \left[\phi_{n,j}\,u_{n,j}+\psi_{n,j}\,v_{n,j}\right]
     &=& y_n
 \end{eqnarray}
+is equivalent to the target matrix equation
+\begin{eqnarray}
+K\,\bvec{x} &=& \bvec{y} \quad.
+\end{eqnarray}
+\eq{full-system-first} through \eq{full-system-last} define a banded matrix
+equation in the ``extended'' space and, as before, this can be used to solve
+for $K^{-1}\,\bvec{y}$ and $\det K$ in $\mathcal{O}(J^2\,N)$ operations.
+\Figure{matrix} shows a pictorial representation of the sparsity pattern of
+the extended matrix $K_\mathrm{ext}$.
+Given that definition of $K_\mathrm{ext}$, the corresponding extended vectors
+$\bvec{x}_\mathrm{ext}$ and $\bvec{y}_\mathrm{ext}$ are defined schematically
+as
+\begin{eqnarray}
+{\bvec{x}_\mathrm{ext}} ^\T =
+\left(\begin{array}{cccccccccc}
+    x_1 & u_{1,j} & v_{1,j} & g_{1,j} & h_{1,j} & x_2 & u_{2,j} & \cdots &
+    h_{N-1,j} & x_N
+\end{array}\right)
+\end{eqnarray}
+and
+\begin{eqnarray}
+{\bvec{y}_\mathrm{ext}} ^\T =
+\left(\begin{array}{cccccccccc}
+    y_1 & 0 & 0 & 0 & 0 & y_2 & 0 & \cdots &
+    0 & y_N
+\end{array}\right) \quad.
+\end{eqnarray}
+
+After constructing the extended matrix (using a compact storage format), the
+extended matrix can be factorized using a LU-decomposition\footnote{Even
+though $K_\mathrm{ext}$ is symmetric, it is not positive definite so a
+Cholesky solver cannot be used for increased efficiency.} routine optimized
+for band matrices.
+This decomposition can be used to compute the determinant of $K$ and to solve
+$K^{-1}\,\bvec{y}$.
 
 \begin{figure}[!htbp]
 \begin{center}
 \includegraphics[width=0.7\textwidth]{figures/matrix.pdf}
-\caption{\figurelabel{matrix}}
+\caption{A pictorial representation of the sparse extended matrix
+$K_\mathrm{ext}$ with $N=5$ and $J=2$.
+Each colored block corresponds to a non-zero entry in the matrix as described
+in the legend.
+    \figurelabel{matrix}}
 \end{center}
 \end{figure}
 

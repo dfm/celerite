@@ -1,0 +1,181 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+from __future__ import division, print_function
+
+import os
+import sys
+import corner
+import emcee3
+import pickle
+import fitsio
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.optimize import minimize
+
+import celerite
+from plot_setup import setup, get_figsize
+from transit_model import RotationTerm, TransitModel
+
+setup()
+np.random.seed(42)
+
+data, hdr = fitsio.read("data/kplr001430163-2013011073258_llc.fits",
+                        header=True)
+texp = float(hdr["INT_TIME"] * hdr["NUM_FRM"]) / 60. / 60. / 24.
+
+N = 500
+m = data["SAP_QUALITY"] == 0
+m &= np.isfinite(data["TIME"])
+m &= np.isfinite(data["PDCSAP_FLUX"])
+t = np.ascontiguousarray(data["TIME"][m], dtype=np.float64)[:N]
+y = np.ascontiguousarray(data["PDCSAP_FLUX"][m], dtype=np.float64)[:N]
+yerr = np.ascontiguousarray(data["PDCSAP_FLUX_ERR"][m], dtype=np.float64)[:N]
+t -= t.min()
+
+# Build the true model
+true_model = TransitModel(
+    texp,
+    0.0,
+    np.log(4.0),    # period
+    np.log(0.015),  # Rp / Rs
+    np.log(0.5),    # duration
+    0.5*t.max(),    # t_0
+    0.5,            # impact
+    0.5,            # q_1
+    0.5,            # q_2
+)
+true_params = np.array(true_model.get_parameter_vector())
+
+# Inject the transit into the data
+true_transit = 1e-3*true_model.get_value(t) + 1.0
+y *= true_transit
+
+# Normalize the data
+med = np.median(y)
+y = (y / med - 1.0) * 1e3
+yerr *= 1e3 / med
+
+# Set up the GP model
+mean = TransitModel(
+    texp,
+    0.0,
+    np.log(4.0),
+    np.log(0.015),
+    np.log(0.5),
+    0.5*t.max(),
+    0.5,
+    0.5,
+    0.5,
+    bounds=[
+        (-0.5, 0.5),
+        np.log([3.9, 4.1]),
+        (np.log(0.005), np.log(0.1)),
+        (np.log(0.4), np.log(0.6)),
+        0.5*t.max() + np.array([-0.1, 0.1]),
+        (0, 1.0), (1e-5, 1-1e-5), (1e-5, 1-1e-5)
+    ]
+)
+
+kernel = RotationTerm(
+    np.log(np.var(y)), np.log(0.5*t.max()), np.log(4.5), 0.0,
+    bounds=[
+        np.log(np.var(y) * np.array([0.01, 100])),
+        np.log([np.max(np.diff(t)), (t.max() - t.min())]),
+        np.log([3*np.median(np.diff(t)), 0.5*(t.max() - t.min())]),
+        [-8.0, np.log(5.0)],
+    ]
+)
+
+gp = celerite.GP(kernel, mean=mean, fit_mean=True,
+                 log_white_noise=2*np.log(0.5*yerr.min()),
+                 fit_white_noise=True)
+gp.compute(t, yerr)
+print("Initial log-likelihood: {0}".format(gp.log_likelihood(y)))
+
+# Define the model
+def neg_log_like(params, y, gp):
+    gp.set_parameter_vector(params)
+    return -gp.log_likelihood(y)
+
+# Optimize with random restarts
+p0 = gp.get_parameter_vector()
+bounds = gp.get_parameter_bounds()
+r = minimize(neg_log_like, p0, method="L-BFGS-B", bounds=bounds, args=(y, gp))
+gp.set_parameter_vector(r.x)
+ml_params = np.array(r.x)
+print("Maximum log-likelihood: {0}".format(gp.log_likelihood(y)))
+
+# Compute the maximum likelihood predictions
+x = np.linspace(t.min(), t.max(), 5000)
+trend = gp.predict(y, t, return_cov=False)
+trend -= gp.mean.get_value(t) - gp.mean.mean_flux
+mu, var = gp.predict(y, x, return_var=True)
+std = np.sqrt(var)
+mean_mu = gp.mean.get_value(x)
+mu -= mean_mu
+wn = np.exp(gp.log_white_noise.value)
+ml_yerr = np.sqrt(yerr**2 + wn)
+
+# Plot the maximum likelihood predictions
+fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True, figsize=get_figsize(1, 2))
+ax1.errorbar(t, y, yerr=ml_yerr, fmt=".k", capsize=0)
+ax1.plot(x, mu)
+ax1.set_ylim(-0.65, 0.65)
+ax1.yaxis.set_major_locator(plt.MaxNLocator(5))
+ax1.set_ylabel("raw [ppt]")
+
+ax2.errorbar(t, y-trend, yerr=ml_yerr, fmt=".k", capsize=0)
+ax2.plot(x, mean_mu - gp.mean.mean_flux)
+ax2.set_xlim(t.min(), t.max())
+ax2.set_ylim(-0.35, 0.08)
+ax2.yaxis.set_major_locator(plt.MaxNLocator(5))
+ax2.set_ylabel("de-trended [ppt]")
+ax2.set_xlabel("time [days]")
+fig.savefig("transit-ml.pdf")
+
+# Save the current state of the GP and data
+with open("transit.pkl", "wb") as f:
+    pickle.dump((gp, y), f, -1)
+
+if os.path.exists("transit.h5"):
+    result = input("MCMC save file exists. Overwrite? (type 'yes'): ")
+    if result.lower() != "yes":
+        sys.exit(0)
+
+# Do the MCMC
+def log_prob(params):
+    gp.set_parameter_vector(params)
+    lp = gp.log_prior()
+    if not np.isfinite(lp):
+        return -np.inf
+    return gp.log_likelihood(y) + lp
+
+# Initialize
+print("Running MCMC sampling...")
+ndim = len(ml_params)
+nwalkers = 32
+pos = ml_params + 1e-5 * np.random.randn(nwalkers, ndim)
+lp = np.array(list(map(log_prob, pos)))
+m = ~np.isfinite(lp)
+while np.any(m):
+    pos[m] = ml_params + 1e-5 * np.random.randn(m.sum(), ndim)
+    lp[m] = np.array(list(map(log_prob, pos[m])))
+    m = ~np.isfinite(lp)
+
+# Sample
+sampler = emcee3.Sampler(backend=emcee3.backends.HDFBackend("transit.h5"))
+with emcee3.pools.InterruptiblePool() as pool:
+    ensemble = emcee3.Ensemble(emcee3.SimpleModel(log_prob), pos, pool=pool)
+    sampler.run(ensemble, 8000, progress=True)
+
+# Plot the parameter constraints
+samples = np.array(sampler.get_coords(discard=3000, flat=True, thin=13))
+samples = samples[:, 1:5]
+samples[:, :3] = np.exp(samples[:, :3])
+truths = np.array(true_params[1:5])
+truths[:3] = np.exp(truths[:3])
+fig = corner.corner(samples, truths=truths,
+                    labels=[r"period", r"$R_\mathrm{P}/R_\star$", r"duration",
+                            r"$t_0$"])
+fig.savefig("transit-corner.pdf")
