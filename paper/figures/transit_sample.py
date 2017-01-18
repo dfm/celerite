@@ -24,23 +24,23 @@ data, hdr = fitsio.read("data/kplr001430163-2013011073258_llc.fits",
                         header=True)
 texp = float(hdr["INT_TIME"] * hdr["NUM_FRM"]) / 60. / 60. / 24.
 
-N = 500
+N = 1000
 m = data["SAP_QUALITY"] == 0
 m &= np.isfinite(data["TIME"])
 m &= np.isfinite(data["PDCSAP_FLUX"])
 t = np.ascontiguousarray(data["TIME"][m], dtype=np.float64)[:N]
 y = np.ascontiguousarray(data["PDCSAP_FLUX"][m], dtype=np.float64)[:N]
 yerr = np.ascontiguousarray(data["PDCSAP_FLUX_ERR"][m], dtype=np.float64)[:N]
-t -= t.min()
+t -= 0.5 * (t.min() + t.max())
 
 # Build the true model
 true_model = TransitModel(
     texp,
     0.0,
-    np.log(4.0),    # period
+    np.log(8.0),    # period
     np.log(0.015),  # Rp / Rs
     np.log(0.5),    # duration
-    0.5*t.max(),    # t_0
+    0.0,            # t_0
     0.5,            # impact
     0.5,            # q_1
     0.5,            # q_2
@@ -60,19 +60,19 @@ yerr *= 1e3 / med
 mean = TransitModel(
     texp,
     0.0,
-    np.log(4.0),
+    np.log(8.0),
     np.log(0.015),
     np.log(0.5),
-    0.5*t.max(),
+    0.0,
     0.5,
     0.5,
     0.5,
     bounds=[
         (-0.5, 0.5),
-        np.log([3.9, 4.1]),
+        np.log([7.9, 8.1]),
         (np.log(0.005), np.log(0.1)),
         (np.log(0.4), np.log(0.6)),
-        0.5*t.max() + np.array([-0.1, 0.1]),
+        (-0.1, 0.1),
         (0, 1.0), (1e-5, 1-1e-5), (1e-5, 1-1e-5)
     ]
 )
@@ -119,16 +119,16 @@ ml_yerr = np.sqrt(yerr**2 + wn)
 
 # Plot the maximum likelihood predictions
 fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True, figsize=get_figsize(1, 2))
-ax1.errorbar(t, y, yerr=ml_yerr, fmt=".k", capsize=0)
-ax1.plot(x, mu)
-ax1.set_ylim(-0.65, 0.65)
+ax1.errorbar(t - t.min(), y, yerr=ml_yerr, fmt=".k", capsize=0)
+ax1.plot(x - t.min(), mu)
+ax1.set_ylim(-0.72, 0.72)
 ax1.yaxis.set_major_locator(plt.MaxNLocator(5))
 ax1.set_ylabel("raw [ppt]")
 
-ax2.errorbar(t, y-trend, yerr=ml_yerr, fmt=".k", capsize=0)
-ax2.plot(x, mean_mu - gp.mean.mean_flux)
-ax2.set_xlim(t.min(), t.max())
-ax2.set_ylim(-0.35, 0.08)
+ax2.errorbar(t - t.min(), y-trend, yerr=ml_yerr, fmt=".k", capsize=0)
+ax2.plot(x - t.min(), mean_mu - gp.mean.mean_flux)
+ax2.set_xlim(0, t.max()-t.min())
+ax2.set_ylim(-0.41, 0.1)
 ax2.yaxis.set_major_locator(plt.MaxNLocator(5))
 ax2.set_ylabel("de-trended [ppt]")
 ax2.set_xlabel("time [days]")
@@ -167,10 +167,10 @@ while np.any(m):
 sampler = emcee3.Sampler(backend=emcee3.backends.HDFBackend("transit.h5"))
 with emcee3.pools.InterruptiblePool() as pool:
     ensemble = emcee3.Ensemble(emcee3.SimpleModel(log_prob), pos, pool=pool)
-    sampler.run(ensemble, 8000, progress=True)
+    sampler.run(ensemble, 15000, progress=True)
 
 # Plot the parameter constraints
-samples = np.array(sampler.get_coords(discard=3000, flat=True, thin=13))
+samples = np.array(sampler.get_coords(discard=5000, flat=True, thin=13))
 samples = samples[:, 1:5]
 samples[:, :3] = np.exp(samples[:, :3])
 truths = np.array(true_params[1:5])
