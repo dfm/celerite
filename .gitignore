@@ -7,3 +7,5 @@ paper/ms.aux
 paper/ms.bbl
 paper/ms.blg
 paper/images/
+*.o
+__pycache__
