@@ -711,12 +711,13 @@ d_j &=& \frac{\omega_0}{2\,Q} \sqrt{4\,Q^2-1} \quad,
 for $Q \ge \frac{1}{2}$.
 For $0 < Q \le \frac{1}{2}$, \eq{sho-psd} can be captured by a pair of \celerite\
 terms with parameters
-\begin{eqnarray}
+\begin{eqnarray}\eqlabel{sho-real}
 a_{j\pm} &=& \frac{1}{2}\,S_0\,\omega_0\,Q\,\left[ 1 \pm
         \frac{1}{\sqrt{1-4\,Q^2}}\right] \\
-b_{j\pm} &=& 0 \\
-    c_{j\pm} &=& \frac{\omega_0}{2\,Q}\,\left[1 \mp \sqrt{1-4\,Q^2}\right] \\
-d_{j\pm} &=& 0 \quad.
+b_{j\pm} &=& 0 \nonumber\\
+    c_{j\pm} &=& \frac{\omega_0}{2\,Q}\,\left[1 \mp \sqrt{1-4\,Q^2}\right]
+    \nonumber\\
+d_{j\pm} &=& 0 \quad. \nonumber
 \end{eqnarray}
 
 These identities yield a kernel of the form
@@ -754,11 +755,14 @@ k(\tau) = S_0\,\omega_0\,e^{-\frac{1}{\sqrt{2}}\,\omega_0\,\tau}\,
 S(\omega) =
     \sqrt{\frac{2}{\pi}}\,\frac{S_0}{\left[(\omega/\omega_0)^2+1\right]^2}
 \end{eqnarray}
-with the corresponding covariance function
+with the corresponding covariance function (using
+\eqalt{celerite-kernel-complex} and \eqalt{sho-real})
 \begin{eqnarray}\eqlabel{approx-matern}
 k(\tau) &=& \lim_{f \to 0}\,
-    S_0\,\omega_0\,e^{-\omega_0\,\tau}\,
-    \left[\cos(f\,\tau) + \frac{\omega_0}{f}\,\sin(f\,\tau)\right] \\
+    \frac{1}{2}\,S_0\,\omega_0\,
+    \left[\left(1+1/f\right)\,e^{-\omega_0\,(1-f)\,\tau} +
+          \left(1-1/f\right)\,e^{-\omega_0\,(1+f)\,\tau}
+    \right] \\
 &=& S_0\,\omega_0\,e^{-\omega_0\,\tau}\,[1+\omega_0\,\tau] \quad.
 \end{eqnarray}
 This covariance function is also known as the Mat\'ern-3/2 function
