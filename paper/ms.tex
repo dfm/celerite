@@ -336,7 +336,8 @@ evaluated in $\mathcal{O}(J^2\,N)$ operations where $J$ is the number of
 components in the mixture and $N$ is still the number of data points.
 
 It turns out that this kernel function can be made even more general by
-introducing complex parameters $a_j \to a_j+i\,b_j$ and $c_j \to c_j+i\,d_j$.
+introducing complex parameters $a_j \to a_j+i\,b_j$ and $c_j \to c_j+i\,d_j$,
+and taking the real component of this complex kernel.
 In this case, the covariance function becomes
 \begin{eqnarray}\eqlabel{celerite-kernel-complex}
 k_\bvec{\alpha}(\tau_{nm}) = \sigma_n^2\,\delta_{nm} +
@@ -423,7 +424,7 @@ To provide some insight for this method, we will start by working through the
 simplest possible example.
 In this case, we'll assume that we have three data points
 $\{y_1,\,y_2,\,y_3\}$ observed at times $\{t_1,\,t_2,\,t_3\}$ with
-uncertainties $\{{\sigma_1}^2,\,{\sigma_2}^2,\,{\sigma_3}^2\}$ and we would
+variances $\{{\sigma_1}^2,\,{\sigma_2}^2,\,{\sigma_3}^2\}$ and we would
 like to compute the likelihood of these data under a GP model with the
 covariance function
 \begin{eqnarray}
@@ -435,7 +436,7 @@ To demonstrate motivate this method, we will write out the full system of
 equations that we must solve to apply the inverse of $K$.
 In matrix notation, this can be written as
 \begin{eqnarray}\eqlabel{impl-matrix}
-K\,\bvec{x} &=& \bvec{y} \\
+K\,\bvec{x} &=& \bvec{y}, \\
 \begin{pmatrix}
     a+{\sigma_1}^2 & a\,e^{-c\,\tau_{2,1}} & a\,e^{-c\,\tau_{3,1}}\\
     a\,e^{-c\,\tau_{2,1}} & a+{\sigma_2}^2 & a\,e^{-c\,\tau_{3,2}}\\
@@ -526,14 +527,14 @@ with the number of components $J$.
 Second, \citet{Ambikasaran:2015} proved that the determinant of
 $K_\mathrm{ext}$ is equal to the determinant of $K$ up to a sign.
 This means that we can use this extended matrix formalism to compute the
-marginalized likelihood in $\mathcal{O}(N\,J^2)$ operations.
+marginalized likelihood in $\mathcal{O}(J^2\,N)$ operations.
 
 \subsection{The algorithm}
 
 In this section, we generalize the method from the previous section to the
 covariance function given by \eq{celerite-kernel}.
 This derivation follows \citet{Ambikasaran:2015} but it includes explicit
-treatment of complex parameters.
+treatment of complex parameters, and their complex conjugates.
 
 In the case of the full \celerite\ covariance function
 (\eqalt{celerite-kernel}), we introduce the following auxiliary variables in
