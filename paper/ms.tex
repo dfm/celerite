@@ -702,9 +702,9 @@ S(\omega) = \sqrt{\frac{2}{\pi}}\,\frac{S_0\,\omega_0^4}
 where $S_0$ is proportional to the power at $\omega = \omega_0$, $S(\omega_0)
 = \sqrt{2/\pi}\,S_0$.
 The power spectrum in \eq{sho-psd} matches \eq{celerite-psd} if
-\begin{eqnarray}
+\begin{eqnarray}\eqlabel{sho-complex}
 a_j &=& S_0\,\omega_0\,Q \\
-    b_j &=& \frac{S_0\,\omega_0\,Q}{\sqrt{4\,Q^2-1}} \\
+b_j &=& \frac{S_0\,\omega_0\,Q}{\sqrt{4\,Q^2-1}} \\
 c_j &=& \frac{\omega_0}{2\,Q}\\
 d_j &=& \frac{\omega_0}{2\,Q} \sqrt{4\,Q^2-1} \quad,
 \end{eqnarray}
@@ -756,13 +756,20 @@ S(\omega) =
     \sqrt{\frac{2}{\pi}}\,\frac{S_0}{\left[(\omega/\omega_0)^2+1\right]^2}
 \end{eqnarray}
 with the corresponding covariance function (using
-\eqalt{celerite-kernel-complex} and \eqalt{sho-real})
+\eqalt{celerite-kernel} and \eqalt{sho-real})
 \begin{eqnarray}\eqlabel{approx-matern}
 k(\tau) &=& \lim_{f \to 0}\,
     \frac{1}{2}\,S_0\,\omega_0\,
     \left[\left(1+1/f\right)\,e^{-\omega_0\,(1-f)\,\tau} +
           \left(1-1/f\right)\,e^{-\omega_0\,(1+f)\,\tau}
     \right] \\
+&=& S_0\,\omega_0\,e^{-\omega_0\,\tau}\,[1+\omega_0\,\tau]
+\end{eqnarray}
+or equivalently (using \eqalt{celerite-kernel} and \eqalt{sho-complex})
+\begin{eqnarray}\eqlabel{approx-matern}
+k(\tau) &=& \lim_{f \to 0}\,
+    S_0\,\omega_0\,e^{-\omega_0\,\tau}\,
+    \left[\cos(f\,\tau) + \frac{\omega_0}{f}\,\sin(f\,\tau)\right] \\
 &=& S_0\,\omega_0\,e^{-\omega_0\,\tau}\,[1+\omega_0\,\tau] \quad.
 \end{eqnarray}
 This covariance function is also known as the Mat\'ern-3/2 function
