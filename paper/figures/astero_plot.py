@@ -27,6 +27,7 @@ uHz_conv = 1e-6 * 24 * 60 * 60
 # Save the current state of the GP and data
 with open("astero-{0}.pkl".format(kicid), "rb") as f:
     gp, fit_y, freq, power_all, power_some = pickle.load(f)
+measurement_var = np.median(gp._yerr**2)
 
 backend = emcee3.backends.HDFBackend("astero-{0}.h5".format(kicid))
 
@@ -67,6 +68,7 @@ plt.close(fig)
 
 # Trim the burnin
 samples = backend.get_coords(discard=burnin, flat=True)
+log_probs = backend.get_log_probability(discard=burnin, flat=True)
 
 # Compute the model predictions
 time_grid = np.linspace(0, 1.4, 5000)
@@ -78,6 +80,10 @@ for i, j in enumerate(np.random.randint(len(samples), size=n)):
     gp.set_parameter_vector(s)
     psds[i] = gp.kernel.get_psd(2*np.pi*freq)
     acors[i] = gp.kernel.get_value(time_grid)
+
+# Get the median modes
+gp.set_parameter_vector(samples[np.argmax(log_probs)])
+peak_freqs = gp.kernel.get_freqs()
 
 # Plot the predictions
 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=get_figsize(1, 2))
@@ -119,23 +125,27 @@ plt.close(fig)
 # Make comparison plot
 fig, axes = plt.subplots(3, 1, sharex=True, figsize=get_figsize(2.5, 2))
 
+factor = 1.  # / (2*np.pi)**2
 freq_uHz = freq / uHz_conv
-axes[0].plot(freq_uHz, np.sqrt(power_all), "k", alpha=0.3, rasterized=True)
-axes[0].plot(freq_uHz, np.sqrt(gaussian_filter(power_all, 5)), "k",
+axes[0].plot(freq_uHz, power_all * factor, "k", alpha=0.3, rasterized=True)
+axes[0].plot(freq_uHz, gaussian_filter(power_all, 5) * factor, "k",
              rasterized=True)
 
-axes[1].plot(freq_uHz, np.sqrt(power_some), "k", alpha=0.3, rasterized=True)
-axes[1].plot(freq_uHz, np.sqrt(gaussian_filter(power_some, 5)), "k",
+axes[1].plot(freq_uHz, power_some * factor, "k", alpha=0.3, rasterized=True)
+axes[1].plot(freq_uHz, gaussian_filter(power_some, 5) * factor, "k",
              rasterized=True)
 
-q = np.percentile(psds, [16, 50, 84], axis=0)
+q = np.percentile((4*np.pi)**2 * psds, [16, 50, 84], axis=0)
 axes[2].fill_between(freq_uHz, q[0], q[2], color="k", alpha=0.3,
                      rasterized=True)
 axes[2].plot(freq_uHz, q[1], "k", alpha=0.8, rasterized=True)
 
 for ax in axes:
     ax.set_yscale("log")
-    ax.set_ylim(2.0, 1e4)
+    ax.set_ylim(70.0, 1.5e7)
+    ax.axhline(measurement_var, color="k", ls="dashed")
+    # for f in peak_freqs / uHz_conv:
+    #     ax.plot([f, f], [5e6, 1e7], "k", lw=0.5)
 
 axes[0].set_ylabel("periodogram; all data")
 axes[1].set_ylabel("periodogram; 3\% of data")

@@ -34,6 +34,11 @@ class AsteroTerm(terms.Term):
             np.append(beta, 0.5*omega/Q*np.sqrt(4*Q*Q-1)),
         )
 
+    def get_freqs(self):
+        j = np.arange(-self.nterms, self.nterms+1, 1)
+        delta = j*np.exp(self.log_delta_nu) + self.epsilon
+        return np.exp(self.log_nu_max) + delta
+
     def log_prior(self):
         lp = super(AsteroTerm, self).log_prior()
         if not np.isfinite(lp):

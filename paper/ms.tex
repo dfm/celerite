@@ -336,8 +336,8 @@ evaluated in $\mathcal{O}(J^2\,N)$ operations where $J$ is the number of
 components in the mixture and $N$ is still the number of data points.
 
 It turns out that this kernel function can be made even more general by
-introducing complex parameters $a_j \to a_j+i\,b_j$ and $c_j \to c_j+i\,d_j$,
-and taking the real component of this complex kernel.
+introducing complex parameters $a_j \to a_j\pm i\,b_j$ and
+$c_j \to c_j\pm i\,d_j$.
 In this case, the covariance function becomes
 \begin{eqnarray}\eqlabel{celerite-kernel-complex}
 k_\bvec{\alpha}(\tau_{nm}) = \sigma_n^2\,\delta_{nm} +
