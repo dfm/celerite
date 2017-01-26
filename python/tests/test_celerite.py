@@ -237,7 +237,10 @@ def test_log_likelihood(seed=42):
     ll2 = gp.log_likelihood(y)
     assert not np.allclose(ll1, ll2)
 
+    print(gp.get_parameter_dict())
     gp[1] += 0.1
+    print(gp.get_parameter_dict())
+    assert gp.dirty is True
     gp.compute(x, yerr)
     ll3 = gp.log_likelihood(y)
     assert not np.allclose(ll2, ll3)

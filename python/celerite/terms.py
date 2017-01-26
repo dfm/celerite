@@ -5,7 +5,7 @@ import re
 import numpy as np
 from itertools import chain
 
-from .modeling import Model
+from .modeling import Model, ModelSet
 from ._celerite import get_kernel_value, get_psd_value, check_coefficients
 
 __all__ = [
@@ -79,93 +79,25 @@ class Term(Model):
         return pars
 
 
-class TermSum(Term):
+class TermSum(Term, ModelSet):
 
     def __init__(self, *terms):
-        self._terms = []
+        models = []
         for term in terms:
-            self._terms += term.terms
+            models += term.terms
+        super(TermSum, self).__init__([("term[{0}]".format(i), t)
+                                       for i, t in enumerate(models)])
 
     def __repr__(self):
         return " + ".join(map("{0}".format, self.terms))
 
     @property
     def terms(self):
-        return self._terms
-
-    @property
-    def dirty(self):
-        return any(t.dirty for t in self._terms)
-
-    @dirty.setter
-    def dirty(self, value):
-        for t in self._terms:
-            t.dirty = value
-
-    @property
-    def full_size(self):
-        return sum(t.full_size for t in self._terms)
-
-    @property
-    def vector_size(self):
-        return sum(t.vector_size for t in self._terms)
-
-    @property
-    def unfrozen_mask(self):
-        return np.concatenate([
-            t.unfrozen_mask for t in self._terms
-        ])
-
-    @property
-    def parameter_vector(self):
-        return np.concatenate([
-            t.parameter_vector for t in self._terms
-        ])
-
-    @parameter_vector.setter
-    def parameter_vector(self, v):
-        i = 0
-        for t in self._terms:
-            l = t.full_size
-            t.parameter_vector = v[i:i+l]
-            i += l
-
-    @property
-    def parameter_names(self):
-        return tuple(chain(*(
-            map("terms[{0}]:{{0}}".format(i).format, t.parameter_names)
-            for i, t in enumerate(self._terms)
-        )))
-
-    @property
-    def parameter_bounds(self):
-        return list(chain(*(
-            t.parameter_bounds for t in self._terms
-        )))
-
-    def _apply_to_parameter(self, func, name, *args):
-        groups = re.findall(r"^terms\[([0-9]+)\]:(.*)", name)
-        if not len(groups):
-            raise ValueError("unrecognized parameter '{0}'".format(name))
-        index, subname = groups[0]
-        return getattr(self._terms[int(index)], func)(subname, *args)
-
-    def freeze_parameter(self, name):
-        self._apply_to_parameter("freeze_parameter", name)
-
-    def thaw_parameter(self, name):
-        self._apply_to_parameter("thaw_parameter", name)
-
-    def get_parameter(self, name):
-        return self._apply_to_parameter("get_parameter", name)
-
-    def set_parameter(self, name, value):
-        self.dirty = True
-        return self._apply_to_parameter("set_parameter", name, value)
+        return list(self.models.values())
 
     def get_all_coefficients(self):
         return [np.concatenate(a) for a in zip(*(
-            t.get_all_coefficients() for t in self._terms
+            t.get_all_coefficients() for t in self.models.values()
         ))]
 
 
@@ -182,8 +114,8 @@ class RealTerm(Term):
 
 class ComplexTerm(Term):
 
-    def __init__(self, *args):
-        if len(args) == 3:
+    def __init__(self, *args, **kwargs):
+        if len(args) == 3 and "log_b" not in kwargs:
             log_a, log_c, log_d = args
             log_b = -np.inf
             self.fit_b = False
@@ -192,11 +124,7 @@ class ComplexTerm(Term):
             log_a, log_b, log_c, log_d = args
             self.fit_b = True
             self.parameter_names = ("log_a", "log_b", "log_c", "log_d")
-        self.log_a = log_a
-        self.log_b = log_b
-        self.log_c = log_c
-        self.log_d = log_d
-        super(ComplexTerm, self).__init__()
+        super(ComplexTerm, self).__init__(*args, **kwargs)
 
     def __repr__(self):
         if not self.fit_b:
@@ -262,8 +190,9 @@ class Matern32Term(Term):
 
     parameter_names = ("log_sigma", "log_rho")
 
-    def __init__(self, log_sigma, log_rho, eps=0.01):
-        super(Matern32Term, self).__init__(log_sigma, log_rho)
+    def __init__(self, *args, **kwargs):
+        eps = kwargs.pop("eps", 0.01)
+        super(Matern32Term, self).__init__(*args, **kwargs)
         self.eps = eps
 
     def __repr__(self):

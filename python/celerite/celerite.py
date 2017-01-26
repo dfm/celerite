@@ -3,15 +3,14 @@
 from __future__ import division, print_function
 import math
 import numpy as np
-from itertools import chain
 
 from ._celerite import Solver
-from .modeling import Model, ConstantModel
+from .modeling import ModelSet, ConstantModel
 
 __all__ = ["GP"]
 
 
-class GP(Model):
+class GP(ModelSet):
     """The main interface to the celerite Gaussian Process solver
 
     Args:
@@ -35,38 +34,65 @@ class GP(Model):
                  kernel,
                  mean=0.0, fit_mean=False,
                  log_white_noise=-float("inf"), fit_white_noise=False):
-        self.kernel = kernel
-
         self.solver = None
         self._computed = False
         self._t = None
         self._y_var = None
 
+        # Build up a list of models for the ModelSet
+        models = [("kernel", kernel)]
+
         # Interpret the white noise model
         try:
             float(log_white_noise)
         except TypeError:
-            self.log_white_noise = log_white_noise
+            pass
         else:
-            self.log_white_noise = ConstantModel(float(log_white_noise))
+            log_white_noise = ConstantModel(float(log_white_noise))
 
         # If this model is supposed to be constant, go through and freeze
         # all of the parameters
         if not fit_white_noise:
-            for k in self.log_white_noise.get_parameter_names():
-                self.log_white_noise.freeze_parameter(k)
+            for k in log_white_noise.get_parameter_names():
+                log_white_noise.freeze_parameter(k)
+        models += [("log_white_noise", log_white_noise)]
 
         # And the mean model
         try:
             float(mean)
         except TypeError:
-            self.mean = mean
+            pass
         else:
-            self.mean = ConstantModel(float(mean))
+            mean = ConstantModel(float(mean))
 
         if not fit_mean:
-            for k in self.mean.get_parameter_names():
-                self.mean.freeze_parameter(k)
+            for k in mean.get_parameter_names():
+                mean.freeze_parameter(k)
+        models += [("mean", mean)]
+
+        # Init the superclass
+        super(GP, self).__init__(models)
+
+    @property
+    def mean(self):
+        return self.models["mean"]
+
+    @property
+    def log_white_noise(self):
+        return self.models["log_white_noise"]
+
+    @property
+    def kernel(self):
+        return self.models["kernel"]
+
+    @property
+    def dirty(self):
+        return super(GP, self).dirty or not self._computed
+
+    @dirty.setter
+    def dirty(self, value):
+        self._computed = not value
+        super(GP, self.__class__).dirty.fset(self, value)
 
     @property
     def computed(self):
@@ -105,14 +131,6 @@ class GP(Model):
         if len(self._t) != len(y):
             raise ValueError("dimension mismatch")
         return np.ascontiguousarray(y, dtype=float)
-
-    def log_prior(self):
-        lp = (
-            self.mean.log_prior() +
-            self.log_white_noise.log_prior() +
-            self.kernel.log_prior()
-        )
-        return lp if np.isfinite(lp) else -np.inf
 
     def log_likelihood(self, y, _const=math.log(2.0*math.pi)):
         y = self._process_input(y)
@@ -212,111 +230,3 @@ class GP(Model):
         K[np.diag_indices_from(K)] += tiny
         sample = np.random.multivariate_normal(np.zeros_like(x), K, size=size)
         return self.mean.get_value(x) + sample
-
-    #
-    # MODELING PROTOCOL
-    #
-    @property
-    def dirty(self):
-        return (
-            self.mean.dirty or
-            self.log_white_noise.dirty or
-            self.kernel.dirty or
-            not self._computed
-        )
-
-    @dirty.setter
-    def dirty(self, value):
-        self._computed = not value
-        self.mean.dirty = value
-        self.log_white_noise.dirty = value
-        self.kernel.dirty = value
-
-    @property
-    def full_size(self):
-        return (
-            self.mean.full_size +
-            self.log_white_noise.full_size +
-            self.kernel.full_size
-        )
-
-    @property
-    def vector_size(self):
-        return (
-            self.mean.vector_size +
-            self.log_white_noise.vector_size +
-            self.kernel.vector_size
-        )
-
-    @property
-    def unfrozen_mask(self):
-        return np.concatenate((
-            self.mean.unfrozen_mask,
-            self.log_white_noise.unfrozen_mask,
-            self.kernel.unfrozen_mask,
-        ))
-
-    @property
-    def parameter_vector(self):
-        return np.concatenate((
-            self.mean.parameter_vector,
-            self.log_white_noise.parameter_vector,
-            self.kernel.parameter_vector
-        ))
-
-    @property
-    def parameter_bounds(self):
-        return list(chain(
-            self.mean.parameter_bounds,
-            self.log_white_noise.parameter_bounds,
-            self.kernel.parameter_bounds
-        ))
-
-    @parameter_vector.setter
-    def parameter_vector(self, v):
-        i = self.mean.full_size
-        self.mean.parameter_vector = v[:i]
-        j = i + self.log_white_noise.full_size
-        self.log_white_noise.parameter_vector = v[i:j]
-        self.kernel.parameter_vector = v[j:]
-
-    @property
-    def parameter_names(self):
-        return tuple(chain(
-            map("mean:{0}".format, self.mean.parameter_names),
-            map("log_white_noise:{0}".format,
-                self.log_white_noise.parameter_names),
-            map("kernel:{0}".format, self.kernel.parameter_names),
-        ))
-
-    def _apply_to_parameter(self, func, name, *args):
-        if name.startswith("mean:"):
-            return getattr(self.mean, func)(name[5:], *args)
-        if name.startswith("log_white_noise:"):
-            return getattr(self.log_white_noise, func)(name[16:], *args)
-        if name.startswith("kernel:"):
-            return getattr(self.kernel, func)(name[7:], *args)
-        raise ValueError("unrecognized parameter '{0}'".format(name))
-
-    def freeze_parameter(self, name):
-        self._apply_to_parameter("freeze_parameter", name)
-
-    def thaw_parameter(self, name):
-        self._apply_to_parameter("thaw_parameter", name)
-
-    def freeze_all_parameters(self):
-        self.mean.freeze_all_parameters()
-        self.log_white_noise.freeze_all_parameters()
-        self.kernel.freeze_all_parameters()
-
-    def thaw_all_parameters(self):
-        self.mean.thaw_all_parameters()
-        self.log_white_noise.thaw_all_parameters()
-        self.kernel.thaw_all_parameters()
-
-    def get_parameter(self, name):
-        return self._apply_to_parameter("get_parameter", name)
-
-    def set_parameter(self, name, value):
-        self.dirty = True
-        return self._apply_to_parameter("set_parameter", name, value)
