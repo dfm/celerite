@@ -89,7 +89,7 @@ class GP(Model):
             alpha_real, beta_real,
             alpha_complex_real, alpha_complex_imag,
             beta_complex_real, beta_complex_imag,
-            t, self._yerr**2 + np.exp(self.log_white_noise.get_value(t))
+            t, self._get_diag()
         )
         self.dirty = False
 
@@ -156,15 +156,15 @@ class GP(Model):
 
         # Compute the predictive mean.
         resid = y - self.mean.get_value(self._t)
-        alpha = self.solver.solve(resid)
+        alpha = self.solver.solve(resid).flatten()
 
         if t is None:
-            alpha = self.dot(alpha)
+            alpha = y - self._get_diag() * alpha
         else:
             Kxs = self.get_matrix(xs, self._t)
             alpha = np.dot(Kxs, alpha)
 
-        mu = self.mean.get_value(xs) + alpha.flatten()
+        mu = self.mean.get_value(xs) + alpha
         if not (return_var or return_cov):
             return mu
 
@@ -182,15 +182,17 @@ class GP(Model):
         cov -= np.dot(Kxs, self.apply_inverse(KxsT))
         return mu, cov
 
+    def _get_diag(self):
+        return self._yerr**2 + np.exp(self.log_white_noise
+                                      .get_value(self._t))
+
     def get_matrix(self, x1=None, x2=None, include_diagonal=None):
         if x1 is None and x2 is None:
             if self._t is None or not self.computed:
                 raise RuntimeError("you must call 'compute' first")
             K = self.kernel.get_value(self._t[:, None] - self._t[None, :])
             if include_diagonal is None or include_diagonal:
-                K[np.diag_indices_from(K)] += \
-                    self._yerr**2 + np.exp(self.log_white_noise
-                                           .get_value(self._t))
+                K[np.diag_indices_from(K)] += self._get_diag()
             return K
 
         incl = False
