@@ -85,7 +85,7 @@ class TermSum(Term, ModelSet):
         models = []
         for term in terms:
             models += term.terms
-        super(TermSum, self).__init__([("term[{0}]".format(i), t)
+        super(TermSum, self).__init__([("terms[{0}]".format(i), t)
                                        for i, t in enumerate(models)])
 
     def __repr__(self):
@@ -116,12 +116,9 @@ class ComplexTerm(Term):
 
     def __init__(self, *args, **kwargs):
         if len(args) == 3 and "log_b" not in kwargs:
-            log_a, log_c, log_d = args
-            log_b = -np.inf
             self.fit_b = False
             self.parameter_names = ("log_a", "log_c", "log_d")
         else:
-            log_a, log_b, log_c, log_d = args
             self.fit_b = True
             self.parameter_names = ("log_a", "log_b", "log_c", "log_d")
         super(ComplexTerm, self).__init__(*args, **kwargs)
