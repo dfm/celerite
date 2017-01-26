@@ -128,10 +128,11 @@ class GP(Model):
         self._recompute()
         return self.solver.solve(self._process_input(y))
 
-    def dot(self, y):
-        self._recompute()
+    def dot(self, y, kernel=None):
+        if kernel is None:
+            kernel = self.kernel
         (alpha_real, beta_real, alpha_complex_real, alpha_complex_imag,
-         beta_complex_real, beta_complex_imag) = self.kernel.coefficients
+         beta_complex_real, beta_complex_imag) = kernel.coefficients
         return self.solver.dot(
             alpha_real, beta_real,
             alpha_complex_real, alpha_complex_imag,

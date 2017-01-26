@@ -2,7 +2,6 @@
 
 from __future__ import division, print_function
 import re
-import math
 import numpy as np
 from itertools import chain
 
@@ -172,40 +171,55 @@ class TermSum(Term):
 
 class RealTerm(Term):
 
-    parameter_names = ("a", "log_c")
+    parameter_names = ("log_a", "log_c")
 
     def __repr__(self):
-        return "RealTerm({0.a}, {0.log_c})".format(self)
+        return "RealTerm({0.log_a}, {0.log_c})".format(self)
 
     def get_real_coefficients(self):
-        return self.a, math.exp(self.log_c)
+        return np.exp(self.log_a), np.exp(self.log_c)
 
 
 class ComplexTerm(Term):
 
     def __init__(self, *args):
         if len(args) == 3:
-            a, log_c, log_d = args
-            b = 0.0
+            log_a, log_c, log_d = args
+            log_b = -np.inf
             self.fit_b = False
-            self.parameter_names = ("a", "log_c", "log_d")
+            self.parameter_names = ("log_a", "log_c", "log_d")
         else:
-            a, b, log_c, log_d = args
+            log_a, log_b, log_c, log_d = args
             self.fit_b = True
-            self.parameter_names = ("a", "b", "log_c", "log_d")
-        self.a = a
-        self.b = b
+            self.parameter_names = ("log_a", "log_b", "log_c", "log_d")
+        self.log_a = log_a
+        self.log_b = log_b
         self.log_c = log_c
         self.log_d = log_d
         super(ComplexTerm, self).__init__()
 
     def __repr__(self):
         if not self.fit_b:
-            return "ComplexTerm({0.a}, {0.log_c}, {0.log_d})".format(self)
-        return "ComplexTerm({0.a}, {0.b}, {0.log_c}, {0.log_d})".format(self)
+            return "ComplexTerm({0.log_a}, {0.log_c}, {0.log_d})".format(self)
+        return ("ComplexTerm({0.log_a}, {0.log_b}, {0.log_c}, {0.log_d})"
+                .format(self))
 
     def get_complex_coefficients(self):
-        return self.a, self.b, math.exp(self.log_c), math.exp(self.log_d)
+        if not self.fit_b:
+            return (
+                np.exp(self.log_a), 0.0, np.exp(self.log_c), np.exp(self.log_d)
+            )
+        return (
+            np.exp(self.log_a), np.exp(self.log_b),
+            np.exp(self.log_c), np.exp(self.log_d)
+        )
+
+    def log_prior(self):
+        # Constraint required for term to be positive definite. Can be relaxed
+        # with multiple terms but must be treated carefully.
+        if self.log_a + self.log_c < self.log_b + self.log_d:
+            return -np.inf
+        return super(ComplexTerm, self).log_prior()
 
 
 class SHOTerm(Term):
@@ -215,27 +229,27 @@ class SHOTerm(Term):
     def __repr__(self):
         return "SHOTerm({0.log_S0}, {0.log_Q}, {0.log_omega0})".format(self)
 
-    def get_real_coefficients(self, log_half=math.log(0.5)):
-        if self.log_Q >= log_half:
+    def get_real_coefficients(self):
+        Q = np.exp(self.log_Q)
+        if Q >= 0.5:
             return np.empty(0), np.empty(0)
 
-        S0 = math.exp(self.log_S0)
-        Q = math.exp(self.log_Q)
-        w0 = math.exp(self.log_omega0)
-        f = math.sqrt(1.0 - 4.0 * Q**2)
+        S0 = np.exp(self.log_S0)
+        w0 = np.exp(self.log_omega0)
+        f = np.sqrt(1.0 - 4.0 * Q**2)
         return (
             0.5*S0*w0*Q*np.array([1.0+1.0/f, 1.0-1.0/f]),
             0.5*w0/Q*np.array([1.0-f, 1.0+f])
         )
 
-    def get_complex_coefficients(self, log_half=math.log(0.5)):
-        if self.log_Q < log_half:
+    def get_complex_coefficients(self):
+        Q = np.exp(self.log_Q)
+        if Q < 0.5:
             return np.empty(0), np.empty(0), np.empty(0), np.empty(0)
 
-        S0 = math.exp(self.log_S0)
-        Q = math.exp(self.log_Q)
-        w0 = math.exp(self.log_omega0)
-        f = math.sqrt(4.0 * Q**2-1)
+        S0 = np.exp(self.log_S0)
+        w0 = np.exp(self.log_omega0)
+        f = np.sqrt(4.0 * Q**2-1)
         return (
             S0 * w0 * Q,
             S0 * w0 * Q / f,
@@ -257,6 +271,6 @@ class Matern32Term(Term):
             .format(self)
 
     def get_complex_coefficients(self):
-        w0 = math.sqrt(3.0) * math.exp(-self.log_rho)
-        S0 = math.exp(2.0 * self.log_sigma) / w0
+        w0 = np.sqrt(3.0) * np.exp(-self.log_rho)
+        S0 = np.exp(2.0 * self.log_sigma) / w0
         return (w0*S0, w0*w0*S0/self.eps, w0, self.eps)
