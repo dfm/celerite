@@ -128,24 +128,49 @@ class GP(Model):
         self._recompute()
         return self.solver.solve(self._process_input(y))
 
-    def predict(self, y, t, return_cov=True, return_var=False):
+    def dot(self, y):
+        self._recompute()
+        (alpha_real, beta_real, alpha_complex_real, alpha_complex_imag,
+         beta_complex_real, beta_complex_imag) = self.kernel.coefficients
+        return self.solver.dot(
+            alpha_real, beta_real,
+            alpha_complex_real, alpha_complex_imag,
+            beta_complex_real, beta_complex_imag,
+            self._t, self._process_input(y)
+        )
+
+    def predict(self, y, t=None, return_cov=True, return_var=False):
         y = self._process_input(y)
-        xs = np.ascontiguousarray(t, dtype=float)
-        if len(xs.shape) > 1 or len(y.shape) > 1:
+        if len(y.shape) > 1:
             raise ValueError("dimension mismatch")
+
+        if t is None:
+            xs = self._t
+        else:
+            xs = np.ascontiguousarray(t, dtype=float)
+            if len(xs.shape) > 1:
+                raise ValueError("dimension mismatch")
 
         # Make sure that the model is computed
         self._recompute()
 
         # Compute the predictive mean.
         resid = y - self.mean.get_value(self._t)
-        alpha = self.solver.solve(resid).flatten()
-        Kxs = self.get_matrix(xs, self._t)
-        mu = self.mean.get_value(xs) + np.dot(Kxs, alpha)
+        alpha = self.solver.solve(resid)
+
+        if t is None:
+            alpha = self.dot(alpha)
+        else:
+            Kxs = self.get_matrix(xs, self._t)
+            alpha = np.dot(Kxs, alpha)
+
+        mu = self.mean.get_value(xs) + alpha.flatten()
         if not (return_var or return_cov):
             return mu
 
         # Predictive variance.
+        if t is None:
+            Kxs = self.get_matrix(xs, self._t)
         KxsT = np.ascontiguousarray(Kxs.T, dtype=np.float64)
         if return_var:
             var = -np.sum(KxsT*self.apply_inverse(KxsT), axis=0)

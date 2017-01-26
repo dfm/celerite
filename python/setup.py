@@ -15,7 +15,10 @@ if "publish" in sys.argv[-1]:
     sys.exit()
 
 # Default compile arguments.
-compile_args = dict(libraries=[], define_macros=[("NDEBUG", None)])
+compile_args = dict(
+    libraries=[],
+    define_macros=[("NDEBUG", None)],
+)
 if os.name == "posix":
     compile_args["libraries"].append("m")
 

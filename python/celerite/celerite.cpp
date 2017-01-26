@@ -126,6 +126,27 @@ PYBIND11_PLUGIN(_celerite) {
     return solver.solve(b);
   });
 
+  solver.def("dot", [](PicklableBandSolver& solver,
+      const Eigen::VectorXd& alpha_real,
+      const Eigen::VectorXd& beta_real,
+      const Eigen::VectorXd& alpha_complex_real,
+      const Eigen::VectorXd& alpha_complex_imag,
+      const Eigen::VectorXd& beta_complex_real,
+      const Eigen::VectorXd& beta_complex_imag,
+      const Eigen::VectorXd& x,
+      const Eigen::MatrixXd& b) {
+    return solver.dot(
+      alpha_real,
+      beta_real,
+      alpha_complex_real,
+      alpha_complex_imag,
+      beta_complex_real,
+      beta_complex_imag,
+      x,
+      b
+    );
+  });
+
   solver.def("dot_solve", [](PicklableBandSolver& solver, const Eigen::MatrixXd& b) {
     return solver.dot_solve(b);
   });

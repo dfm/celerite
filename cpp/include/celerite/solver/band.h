@@ -2,7 +2,6 @@
 #define _CELERITE_SOLVER_BAND_H_
 
 #include <cmath>
-#include <iostream>
 #include <Eigen/Core>
 
 #include "celerite/utils.h"
@@ -13,14 +12,17 @@
 namespace celerite {
 namespace solver {
 
-#define BLOCKSIZE                                      \
-  int p_real = this->p_real_,                       \
-      p_complex = this->p_complex_,                 \
-      n = this->n_,                                 \
-      width = p_real + 2 * p_complex + 2,           \
+#define BLOCKSIZE_BASE                              \
+  int width = p_real + 2 * p_complex + 2,           \
       block_size = 2 * p_real + 4 * p_complex + 1,  \
       dim_ext = block_size * (n - 1) + 1;           \
   if (p_complex == 0) width = p_real + 1;
+
+#define BLOCKSIZE                                   \
+  int p_real = this->p_real_,                       \
+      p_complex = this->p_complex_,                 \
+      n = this->n_;                                 \
+  BLOCKSIZE_BASE
 
 template <typename T>
 class BandSolver : public Solver<T> {
@@ -28,6 +30,16 @@ public:
   BandSolver () : Solver<T>() {};
   ~BandSolver () {};
 
+  void build_matrix (
+    const Eigen::Matrix<T, Eigen::Dynamic, 1>& alpha_real,
+    const Eigen::Matrix<T, Eigen::Dynamic, 1>& beta_real,
+    const Eigen::Matrix<T, Eigen::Dynamic, 1>& alpha_complex_real,
+    const Eigen::Matrix<T, Eigen::Dynamic, 1>& alpha_complex_imag,
+    const Eigen::Matrix<T, Eigen::Dynamic, 1>& beta_complex_real,
+    const Eigen::Matrix<T, Eigen::Dynamic, 1>& beta_complex_imag,
+    const Eigen::VectorXd& x,
+    Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>& A
+  );
   int compute (
     const Eigen::Matrix<T, Eigen::Dynamic, 1>& alpha_real,
     const Eigen::Matrix<T, Eigen::Dynamic, 1>& beta_real,
@@ -39,6 +51,16 @@ public:
     const Eigen::Matrix<T, Eigen::Dynamic, 1>& diag
   );
   void solve (const Eigen::MatrixXd& b, T* x) const;
+  Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> dot (
+    const Eigen::Matrix<T, Eigen::Dynamic, 1>& alpha_real,
+    const Eigen::Matrix<T, Eigen::Dynamic, 1>& beta_real,
+    const Eigen::Matrix<T, Eigen::Dynamic, 1>& alpha_complex_real,
+    const Eigen::Matrix<T, Eigen::Dynamic, 1>& alpha_complex_imag,
+    const Eigen::Matrix<T, Eigen::Dynamic, 1>& beta_complex_real,
+    const Eigen::Matrix<T, Eigen::Dynamic, 1>& beta_complex_imag,
+    const Eigen::VectorXd& x,
+    const Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>& b_in
+  );
 
   size_t dim_ext () const {
     BLOCKSIZE
@@ -62,7 +84,7 @@ inline T& get_band_element (Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>& m,
 }
 
 template <typename T>
-int BandSolver<T>::compute (
+void BandSolver<T>::build_matrix (
   const Eigen::Matrix<T, Eigen::Dynamic, 1>& alpha_real,
   const Eigen::Matrix<T, Eigen::Dynamic, 1>& beta_real,
   const Eigen::Matrix<T, Eigen::Dynamic, 1>& alpha_complex_real,
@@ -70,34 +92,23 @@ int BandSolver<T>::compute (
   const Eigen::Matrix<T, Eigen::Dynamic, 1>& beta_complex_real,
   const Eigen::Matrix<T, Eigen::Dynamic, 1>& beta_complex_imag,
   const Eigen::VectorXd& x,
-  const Eigen::Matrix<T, Eigen::Dynamic, 1>& diag
-)
-{
-  using std::abs;
-
-  this->computed_ = false;
-  if (x.rows() != diag.rows()) return SOLVER_DIMENSION_MISMATCH;
-
-  // Save the dimensions for later use
-  this->p_real_ = alpha_real.rows();
-  this->p_complex_ = alpha_complex_real.rows();
-  this->n_ = x.rows();
-
+  Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>& A
+) {
   // Dimensions.
   int j, k;
-
-  BLOCKSIZE
+  int p_real = alpha_real.rows(),
+      p_complex = alpha_complex_real.rows(),
+      n = x.rows();
+  BLOCKSIZE_BASE
 
   // Set up the extended matrix.
-  a_.resize(1+2*width, dim_ext);
-  a_.setConstant(T(0.0));
-  al_.resize(width, dim_ext);
-  ipiv_.resize(dim_ext);
+  A.resize(1+2*width, dim_ext);
+  A.setConstant(T(0.0));
 
   // Start with the diagonal.
   T sum_alpha = alpha_real.sum() + alpha_complex_real.sum();
   for (k = 0; k < n; ++k)
-    get_band_element(a_, width, 0, k*block_size) = diag(k) + sum_alpha;
+    get_band_element(A, width, 0, k*block_size) = sum_alpha;
 
   // Fill in all but the last block.
   int block_id, start_a, start_b, a, b;
@@ -121,21 +132,21 @@ int BandSolver<T>::compute (
       a = block_id;
       b = start_b + j;
       value = gamma_real(j);
-      get_band_element(a_, width, b-a, a) = value;
-      get_band_element(a_, width, a-b, a) = value;
+      get_band_element(A, width, b-a, a) = value;
+      get_band_element(A, width, a-b, a) = value;
     }
     start_b += p_real;
     for (j = 0; j < p_complex; ++j) {
       a = block_id;
       b = start_b + 2*j;
       value = gamma_complex_real(j);
-      get_band_element(a_, width, b-a, a) = value;
-      get_band_element(a_, width, a-b, a) = value;
+      get_band_element(A, width, b-a, a) = value;
+      get_band_element(A, width, a-b, a) = value;
 
       b = start_b + 2*j + 1;
       value = gamma_complex_imag(j);
-      get_band_element(a_, width, b-a, a) = value;
-      get_band_element(a_, width, a-b, a) = value;
+      get_band_element(A, width, b-a, a) = value;
+      get_band_element(A, width, a-b, a) = value;
     }
 
     // Equations for the ls:
@@ -145,8 +156,8 @@ int BandSolver<T>::compute (
       a = start_a + j;
       b = start_b + j;
       value = -1.0;
-      get_band_element(a_, width, b-a, a) = value;
-      get_band_element(a_, width, a-b, a) = value;
+      get_band_element(A, width, b-a, a) = value;
+      get_band_element(A, width, a-b, a) = value;
     }
     start_a += p_real;
     start_b += p_real;
@@ -154,14 +165,14 @@ int BandSolver<T>::compute (
       a = start_a + 2*j;
       b = start_b + 2*j;
       value = -1.0;
-      get_band_element(a_, width, b-a, a) = value;
-      get_band_element(a_, width, a-b, a) = value;
+      get_band_element(A, width, b-a, a) = value;
+      get_band_element(A, width, a-b, a) = value;
 
       a += 1;
       b += 1;
       value = 1.0;
-      get_band_element(a_, width, b-a, a) = value;
-      get_band_element(a_, width, a-b, a) = value;
+      get_band_element(A, width, b-a, a) = value;
+      get_band_element(A, width, a-b, a) = value;
     }
 
     // Equations for the k+1 terms:
@@ -171,15 +182,15 @@ int BandSolver<T>::compute (
       a = start_a + j;
       b = start_b;
       value = alpha_real(j);
-      get_band_element(a_, width, b-a, a) = value;
-      get_band_element(a_, width, a-b, a) = value;
+      get_band_element(A, width, b-a, a) = value;
+      get_band_element(A, width, a-b, a) = value;
 
       if (k > 0) {
         a -= block_size;
         b = start_b + 1 + j - block_size;
         value = gamma_real(j);
-        get_band_element(a_, width, b-a, a) = value;
-        get_band_element(a_, width, a-b, a) = value;
+        get_band_element(A, width, b-a, a) = value;
+        get_band_element(A, width, a-b, a) = value;
       }
     }
     start_a += p_real;
@@ -187,45 +198,81 @@ int BandSolver<T>::compute (
       a = start_a + 2*j;
       b = start_b;
       value = alpha_complex_real(j);
-      get_band_element(a_, width, b-a, a) = value;
-      get_band_element(a_, width, a-b, a) = value;
+      get_band_element(A, width, b-a, a) = value;
+      get_band_element(A, width, a-b, a) = value;
 
       a += 1;
       value = alpha_complex_imag(j);
-      get_band_element(a_, width, b-a, a) = value;
-      get_band_element(a_, width, a-b, a) = value;
+      get_band_element(A, width, b-a, a) = value;
+      get_band_element(A, width, a-b, a) = value;
       a -= 1;
 
       if (k > 0) {
         a -= block_size;
         b = start_b + 1 + p_real + 2*j - block_size;
         value = gamma_complex_real(j);
-        get_band_element(a_, width, b-a, a) = value;
-        get_band_element(a_, width, a-b, a) = value;
+        get_band_element(A, width, b-a, a) = value;
+        get_band_element(A, width, a-b, a) = value;
 
         b += 1;
         value = gamma_complex_imag(j);
-        get_band_element(a_, width, b-a, a) = value;
-        get_band_element(a_, width, a-b, a) = value;
+        get_band_element(A, width, b-a, a) = value;
+        get_band_element(A, width, a-b, a) = value;
 
         a += 1;
         b -= 1;
-        get_band_element(a_, width, b-a, a) = value;
-        get_band_element(a_, width, a-b, a) = value;
+        get_band_element(A, width, b-a, a) = value;
+        get_band_element(A, width, a-b, a) = value;
 
         b += 1;
         value = -gamma_complex_real(j);
-        get_band_element(a_, width, b-a, a) = value;
-        get_band_element(a_, width, a-b, a) = value;
+        get_band_element(A, width, b-a, a) = value;
+        get_band_element(A, width, a-b, a) = value;
       }
     }
   }
+};
 
-  // Build and factorize the sparse matrix.
+template <typename T>
+int BandSolver<T>::compute (
+  const Eigen::Matrix<T, Eigen::Dynamic, 1>& alpha_real,
+  const Eigen::Matrix<T, Eigen::Dynamic, 1>& beta_real,
+  const Eigen::Matrix<T, Eigen::Dynamic, 1>& alpha_complex_real,
+  const Eigen::Matrix<T, Eigen::Dynamic, 1>& alpha_complex_imag,
+  const Eigen::Matrix<T, Eigen::Dynamic, 1>& beta_complex_real,
+  const Eigen::Matrix<T, Eigen::Dynamic, 1>& beta_complex_imag,
+  const Eigen::VectorXd& x,
+  const Eigen::Matrix<T, Eigen::Dynamic, 1>& diag
+)
+{
+  using std::abs;
+
+  this->computed_ = false;
+  if (x.rows() != diag.rows()) return SOLVER_DIMENSION_MISMATCH;
+
+  // Build the extended matrix.
+  build_matrix(alpha_real, beta_real, alpha_complex_real, alpha_complex_imag,
+               beta_complex_real, beta_complex_imag, x, a_);
+
+  // Save the dimensions for later use
+  this->p_real_ = alpha_real.rows();
+  this->p_complex_ = alpha_complex_real.rows();
+  this->n_ = x.rows();
+  BLOCKSIZE
+
+  // Add the diagonal component
+  for (int k = 0; k < this->n_; ++k)
+    get_band_element(a_, width, 0, k*block_size) += diag(k);
+
+  // Reshape the working arrays
+  al_.resize(width, dim_ext);
+  ipiv_.resize(dim_ext);
+
+  // Factorize the sparse matrix
   int nothing;
   bandec<T>(a_.data(), dim_ext, width, width, al_.data(), ipiv_.data(), &nothing);
 
-  // Compute the determinant.
+  // Compute the determinant
   T ld = T(0.0);
   for (int i = 0; i < dim_ext; ++i) ld += log(abs(a_(0, i)));
   this->log_det_ = ld;
@@ -258,7 +305,118 @@ void BandSolver<T>::solve (const Eigen::MatrixXd& b, T* x) const {
       x[i+j*this->n_] = bex(i*block_size, j);
 }
 
+template <typename T>
+Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> BandSolver<T>::dot (
+  const Eigen::Matrix<T, Eigen::Dynamic, 1>& alpha_real,
+  const Eigen::Matrix<T, Eigen::Dynamic, 1>& beta_real,
+  const Eigen::Matrix<T, Eigen::Dynamic, 1>& alpha_complex_real,
+  const Eigen::Matrix<T, Eigen::Dynamic, 1>& alpha_complex_imag,
+  const Eigen::Matrix<T, Eigen::Dynamic, 1>& beta_complex_real,
+  const Eigen::Matrix<T, Eigen::Dynamic, 1>& beta_complex_imag,
+  const Eigen::VectorXd& t,
+  const Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>& b_in
+) {
+  if (b_in.rows() != t.rows()) throw dimension_mismatch();
+  int nrhs = b_in.cols();
+
+  int p_real = alpha_real.rows(),
+      p_complex = alpha_complex_real.rows(),
+      n = t.rows();
+  BLOCKSIZE_BASE
+
+  // Build the extended matrix
+  Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> A;
+  build_matrix(alpha_real, beta_real, alpha_complex_real, alpha_complex_imag,
+               beta_complex_real, beta_complex_imag, t, A);
+
+  // Pad the input vector to the extended size.
+  Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> bex = Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>::Zero(dim_ext, nrhs);
+
+  int ind, strt;
+  T phi, psi, tau;
+  Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>
+    gm1_real(p_real, nrhs),
+    up1_real(p_real, nrhs),
+    gm1_comp(p_complex, nrhs),
+    hm1_comp(p_complex, nrhs),
+    up1_comp(p_complex, nrhs),
+    vp1_comp(p_complex, nrhs);
+  gm1_real.setConstant(T(0.0));
+  up1_real.setConstant(T(0.0));
+  gm1_comp.setConstant(T(0.0));
+  hm1_comp.setConstant(T(0.0));
+  up1_comp.setConstant(T(0.0));
+  vp1_comp.setConstant(T(0.0));
+
+  for (int m = 0; m < n - 1; ++m) {
+    bex.row(m*block_size) = b_in.row(m);
+
+    // g
+    tau = t(m+1) - t(m);
+    strt = m*block_size + 1 + p_real + 2*p_complex;
+    for (int j = 0; j < p_real; ++j) {
+      phi = exp(-beta_real(j) * tau);
+      ind = strt + j;
+      bex.row(ind) = (gm1_real.row(j) + b_in.row(m)) * phi;
+      gm1_real.row(j) = bex.row(ind);
+    }
+
+    strt += p_real;
+    for (int j = 0; j < p_complex; ++j) {
+      phi = exp(-beta_complex_real(j) * tau) * cos(beta_complex_imag(j) * tau);
+      psi = -exp(-beta_complex_real(j) * tau) * sin(beta_complex_imag(j) * tau);
+      ind = strt + 2*j;
+      bex.row(ind) = gm1_comp.row(j) * phi + b_in.row(m) * phi + psi * hm1_comp.row(j);
+      bex.row(ind+1) = hm1_comp.row(j) * phi - b_in.row(m) * psi - psi * gm1_comp.row(j);
+      gm1_comp.row(j) = bex.row(ind);
+      hm1_comp.row(j) = bex.row(ind+1);
+    }
+  }
+
+  // The final x
+  bex.row((n-1)*block_size) = b_in.row(n-1);
+
+  for (int m = n - 2; m >= 0; --m) {
+    if (m < n - 2) tau = t(m+2) - t(m+1);
+    else tau = T(0.0);
+
+    // u
+    strt = m*block_size + 1;
+    for (int j = 0; j < p_real; ++j) {
+      phi = exp(-beta_real(j) * tau);
+      ind = strt + j;
+      bex.row(ind) = up1_real.row(j) * phi + b_in.row(m + 1) * alpha_real(j);
+      up1_real.row(j) = bex.row(ind);
+    }
+
+    strt += p_real;
+    for (int j = 0; j < p_complex; ++j) {
+      phi = exp(-beta_complex_real(j) * tau) * cos(beta_complex_imag(j) * tau);
+      psi = -exp(-beta_complex_real(j) * tau) * sin(beta_complex_imag(j) * tau);
+      ind = strt + 2*j;
+      bex.row(ind) = up1_comp.row(j) * phi + b_in.row(m + 1) * alpha_complex_real(j) + psi * vp1_comp.row(j);
+      bex.row(ind+1) = vp1_comp.row(j) * phi - b_in.row(m + 1) * alpha_complex_imag(j) - psi * up1_comp.row(j);
+      up1_comp.row(j) = bex.row(ind);
+      vp1_comp.row(j) = bex.row(ind+1);
+    }
+  }
+
+  // Do the dot product - WARNING: this assumes symmetry!
+  Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> b_out(b_in.rows(), b_in.cols());
+  for (int j = 0; j < nrhs; ++j) {
+    for (int i = 0; i < n; ++i) {
+      int k = block_size * i;
+      b_out(i, j) = 0.0;
+      for (int kp = std::max(0, width - k); kp < std::min(2*width+1, dim_ext + width - k); ++kp)
+        b_out(i, j) += A(kp, k) * bex(k + kp - width, j);
+    }
+  }
+
+  return b_out;
+}
+
 #undef BLOCKSIZE
+#undef BLOCKSIZE_BASE
 
 };
 };

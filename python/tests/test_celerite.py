@@ -13,8 +13,8 @@ except ImportError:
 from celerite import Solver, GP, terms
 from celerite._celerite import get_kernel_value
 
-__all__ = ["test_log_determinant", "test_solve", "test_pickle",
-           "test_build_gp", "test_log_likelihood",
+__all__ = ["test_log_determinant", "test_solve", "test_dot", "test_pickle",
+           "test_build_gp", "test_log_likelihood", "test_predict",
            "test_nyquist_singularity"]
 
 
@@ -75,6 +75,32 @@ def test_solve(seed=42):
 
     b = np.random.randn(len(t), 5)
     assert np.allclose(solver.solve(b), np.linalg.solve(K, b))
+
+
+def test_dot(seed=42):
+    np.random.seed(seed)
+    t = np.sort(np.random.rand(300))
+    b = np.random.randn(len(t), 5)
+
+    alpha_real = np.array([1.3, 0.2])
+    beta_real = np.array([0.5, 0.8])
+    alpha_complex_real = np.array([0.1])
+    alpha_complex_imag = np.array([0.3])
+    beta_complex_real = np.array([0.5])
+    beta_complex_imag = np.array([3.0])
+
+    K = get_kernel_value(
+        alpha_real, beta_real, alpha_complex_real, alpha_complex_imag,
+        beta_complex_real, beta_complex_imag, t[:, None] - t[None, :]
+    )
+    x0 = np.dot(K, b)
+
+    solver = Solver()
+    x = solver.dot(
+        alpha_real, beta_real, alpha_complex_real, alpha_complex_imag,
+        beta_complex_real, beta_complex_imag, t, b
+    )
+    assert np.allclose(x0, x)
 
 
 def test_pickle(seed=42):
@@ -215,6 +241,23 @@ def test_log_likelihood(seed=42):
     gp.compute(x, yerr)
     ll3 = gp.log_likelihood(y)
     assert not np.allclose(ll2, ll3)
+
+def test_predict(seed=42):
+    np.random.seed(seed)
+    x = np.sort(np.random.rand(10))
+    yerr = np.random.uniform(0.1, 0.5, len(x))
+    y = np.sin(x)
+
+    kernel = terms.RealTerm(0.1, 0.5)
+    for term in [(0.6, 0.7, 1.0)]:
+        kernel += terms.ComplexTerm(*term)
+    gp = GP(kernel)
+    gp.compute(x, yerr)
+
+    mu0, cov0 = gp.predict(y, x)
+    mu, cov = gp.predict(y)
+    assert np.allclose(mu0, mu)
+    assert np.allclose(cov0, cov)
 
 # Test whether the GP can properly handle the case where the Lorentzian has a
 # very large quality factor and the time samples are almost exactly at Nyquist

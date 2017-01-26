@@ -135,7 +135,7 @@ axes[1].plot(freq_uHz, power_some * factor, "k", alpha=0.3, rasterized=True)
 axes[1].plot(freq_uHz, gaussian_filter(power_some, 5) * factor, "k",
              rasterized=True)
 
-q = np.percentile(len(fit_y)*psds/2, [16, 50, 84], axis=0)
+q = np.percentile(np.sqrt(len(fit_y))*psds, [16, 50, 84], axis=0)
 axes[2].fill_between(freq_uHz, q[0], q[2], color="k", alpha=0.3,
                      rasterized=True)
 axes[2].plot(freq_uHz, q[1], "k", alpha=0.8, rasterized=True)
