@@ -19,6 +19,9 @@ def find_eigen(hint=None):
     """
     # List the standard locations including a user supplied hint.
     search_dirs = [] if hint is None else hint
+    if "CONDA_PREFIX" in os.environ:
+        search_dirs.append(os.path.join(
+            os.environ["CONDA_PREFIX"], "include", "eigen3"))
     search_dirs += [
         "/usr/local/include/eigen3",
         "/usr/local/homebrew/include/eigen3",
@@ -49,19 +52,6 @@ def find_eigen(hint=None):
             print("Found Eigen version {0} in: {1}".format(v, d))
             return d
     return None
-
-def has_include(compiler, include):
-    """Return a boolean indicating whether a flag name is supported on
-    the specified compiler.
-    """
-    with tempfile.NamedTemporaryFile('w', suffix='.cpp') as f:
-        f.write('#include {0}\nint main (int argc, char **argv) {{return 0;}}'
-                .format(include))
-        try:
-            compiler.compile([f.name])
-        except setuptools.distutils.errors.CompileError:
-            return False
-    return True
 
 def has_flag(compiler, flagname):
     """Return a boolean indicating whether a flag name is supported on
@@ -109,8 +99,7 @@ class build_ext(_build_ext):
         for ext in self.extensions:
             dirs += ext.include_dirs
         eigen_include = find_eigen(hint=dirs)
-        if eigen_include is None and not has_include(self.compiler,
-                                                     "<Eigen/Core>"):
+        if eigen_include is None:
             raise RuntimeError("Required library Eigen 3 not found. "
                                "Check the documentation for solutions.")
         include_dirs = [eigen_include]
