@@ -1,6 +1,0 @@
-*.cpp
-*.egg-info
-celerite/include
-dist
-scratch
-build

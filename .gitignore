@@ -1,11 +1,8 @@
+*.o
 *.so
 .cache
-paper/references/
-paper/ms.pdf
-paper/ms.log
-paper/ms.aux
-paper/ms.bbl
-paper/ms.blg
-paper/images/
-*.o
+scratch
 __pycache__
+*.egg-info
+dist
+build

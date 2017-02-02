@@ -3,9 +3,7 @@
 
 import os
 import sys
-import glob
 import numpy
-import shutil
 
 from setuptools import setup, Extension
 
@@ -27,23 +25,6 @@ compile_args["include_dirs"] = [
     localincl,
     numpy.get_include(),
 ]
-
-# Move the header files to the correct directory.
-# dn = os.path.dirname
-# incldir = os.path.join(dn(dn(os.path.abspath(__file__))), "cpp", "include")
-# if os.path.exists(os.path.join(incldir, "celerite", "celerite.h")):
-#     print("Dev mode...")
-#     headers = (
-#         glob.glob(os.path.join(incldir, "*", "*.h")) +
-#         glob.glob(os.path.join(incldir, "*", "*", "*.h"))
-#     )
-#     for fn in headers:
-#         dst = os.path.join(localincl, fn[len(incldir)+1:])
-#         try:
-#             os.makedirs(os.path.split(dst)[0])
-#         except os.error:
-#             pass
-#         shutil.copyfile(fn, dst)
 
 # Check to make sure that the header files are in place
 if not os.path.exists(os.path.join(localincl, "celerite", "version.h")):

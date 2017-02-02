@@ -5,6 +5,7 @@ from __future__ import division, print_function
 import os
 import re
 import sys
+import tempfile
 
 import setuptools
 from setuptools.command.build_ext import build_ext as _build_ext
@@ -49,11 +50,23 @@ def find_eigen(hint=None):
             return d
     return None
 
+def has_include(compiler, include):
+    """Return a boolean indicating whether a flag name is supported on
+    the specified compiler.
+    """
+    with tempfile.NamedTemporaryFile('w', suffix='.cpp') as f:
+        f.write('#include {0}\nint main (int argc, char **argv) {{return 0;}}'
+                .format(include))
+        try:
+            compiler.compile([f.name])
+        except setuptools.distutils.errors.CompileError:
+            return False
+    return True
+
 def has_flag(compiler, flagname):
     """Return a boolean indicating whether a flag name is supported on
     the specified compiler.
     """
-    import tempfile
     with tempfile.NamedTemporaryFile('w', suffix='.cpp') as f:
         f.write('int main (int argc, char **argv) { return 0; }')
         try:
@@ -96,7 +109,8 @@ class build_ext(_build_ext):
         for ext in self.extensions:
             dirs += ext.include_dirs
         eigen_include = find_eigen(hint=dirs)
-        if eigen_include is None:
+        if eigen_include is None and not has_include(self.compiler,
+                                                     "<Eigen/Core>"):
             raise RuntimeError("Required library Eigen 3 not found. "
                                "Check the documentation for solutions.")
         include_dirs = [eigen_include]
