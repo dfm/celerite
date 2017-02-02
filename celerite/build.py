@@ -5,6 +5,7 @@ from __future__ import division, print_function
 import os
 import re
 import sys
+import logging
 import tempfile
 
 import setuptools
@@ -32,6 +33,7 @@ def find_eigen(hint=None):
         "/usr/include",
         "/usr/local/include",
     ]
+    print(search_dirs)
 
     # Loop over search paths and check for the existence of the Eigen/Dense
     # header.
@@ -100,9 +102,11 @@ class build_ext(_build_ext):
             dirs += ext.include_dirs
         eigen_include = find_eigen(hint=dirs)
         if eigen_include is None:
-            raise RuntimeError("Required library Eigen 3 not found. "
-                               "Check the documentation for solutions.")
-        include_dirs = [eigen_include]
+            logging.warn("Required library Eigen 3 not found.")
+            # raise RuntimeError("Required library Eigen 3 not found. "
+            #                    "Check the documentation for solutions.")
+        else:
+            include_dirs = [eigen_include]
 
         # Add the pybind11 include directory
         import pybind11
