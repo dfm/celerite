@@ -4,10 +4,10 @@
 import os
 import sys
 
-import mock
-MOCK_MODULES = ["celerite._celerite"]
-for mod_name in MOCK_MODULES:
-    sys.modules[mod_name] = mock.Mock()
+# import mock
+# MOCK_MODULES = ["celerite._celerite"]
+# for mod_name in MOCK_MODULES:
+#     sys.modules[mod_name] = mock.Mock()
 
 d = os.path.dirname
 sys.path.insert(0, os.path.join(d(d(os.path.abspath(__file__))), "python"))

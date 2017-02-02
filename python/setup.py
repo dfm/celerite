@@ -49,8 +49,8 @@ if os.path.exists(os.path.join(incldir, "celerite", "celerite.h")):
 if not os.path.exists(os.path.join(localincl, "celerite", "version.h")):
     raise RuntimeError("couldn't find celerite headers")
 
-ext = Extension("celerite._celerite",
-                sources=[os.path.join("celerite", "celerite.cpp")],
+ext = Extension("celerite.solver",
+                sources=[os.path.join("celerite", "solver.cpp")],
                 language="c++",
                 **compile_args)
 

@@ -7,6 +7,13 @@
 
 namespace py = pybind11;
 
+//
+// By sub-classing BandSolver here, we can make it picklable but not make C++11 a requirement for the C++ library.
+//
+// The pybind11 pickle docs are here: http://pybind11.readthedocs.io/en/master/advanced/classes.html#pickling-support
+// but the gist is that class just needs to expose __getstate__ and __setstate__. These will just directly call
+// serialize and deserialize below.
+//
 class PicklableBandSolver : public celerite::solver::BandSolver<double> {
 public:
   auto serialize () const {
@@ -25,11 +32,13 @@ public:
     this->al_ = al;
     this->ipiv_ = ipiv;
   };
-
 };
 
-PYBIND11_PLUGIN(_celerite) {
-  py::module m("_celerite", "celerite extension");
+//
+// Below is the boilerplate code for the pybind11 extension module.
+//
+PYBIND11_PLUGIN(solver) {
+  py::module m("solver", "celerite extension");
 
   m.def("get_library_version", []() {
       return CELERITE_VERSION_STRING;

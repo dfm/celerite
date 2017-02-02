@@ -12,6 +12,6 @@ if not __CELERITE_SETUP__:
 
     from . import terms
     from .celerite import GP
-    from ._celerite import Solver, get_library_version
+    from .solver import Solver, get_library_version
 
     __library_version__ = get_library_version()

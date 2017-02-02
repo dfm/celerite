@@ -1,5 +1,10 @@
 name: celerite
 
+channels:
+  - conda-forge
+
 dependencies:
   - python=3.5
   - numpy
+  - eigen
+  - pybind11

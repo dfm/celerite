@@ -34,6 +34,13 @@ celerite is being actively developed in `a public repository on GitHub
 
    tutorials/first
 
+
+.. toctree::
+   :maxdepth: 1
+   :caption: API
+
+   api
+
 Contributors
 ------------
 

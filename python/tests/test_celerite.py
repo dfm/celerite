@@ -11,7 +11,7 @@ except ImportError:
     import pickle
 
 from celerite import Solver, GP, terms
-from celerite._celerite import get_kernel_value
+from celerite.solver import get_kernel_value
 
 __all__ = ["test_log_determinant", "test_solve", "test_dot", "test_pickle",
            "test_build_gp", "test_log_likelihood", "test_predict",

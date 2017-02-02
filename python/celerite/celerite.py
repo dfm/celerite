@@ -4,7 +4,7 @@ from __future__ import division, print_function
 import math
 import numpy as np
 
-from ._celerite import Solver
+from .solver import Solver
 from .modeling import ModelSet, ConstantModel
 
 __all__ = ["GP"]
