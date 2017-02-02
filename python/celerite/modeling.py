@@ -222,6 +222,14 @@ class ModelSet(Model):
     def thaw_parameter(self, name):
         self._apply_to_parameter("thaw_parameter", name)
 
+    def freeze_all_parameters(self):
+        for model in self.models.values():
+            model.freeze_all_parameters()
+
+    def thaw_all_parameters(self):
+        for model in self.models.values():
+            model.thaw_all_parameters()
+
     def get_parameter(self, name):
         return self._apply_to_parameter("get_parameter", name)
 

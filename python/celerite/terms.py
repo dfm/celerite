@@ -142,7 +142,7 @@ class ComplexTerm(Term):
     def log_prior(self):
         # Constraint required for term to be positive definite. Can be relaxed
         # with multiple terms but must be treated carefully.
-        if self.log_a + self.log_c < self.log_b + self.log_d:
+        if self.fit_b and self.log_a + self.log_c < self.log_b + self.log_d:
             return -np.inf
         return super(ComplexTerm, self).log_prior()
 
