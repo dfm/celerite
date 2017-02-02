@@ -8,3 +8,5 @@ dependencies:
   - numpy
   - eigen
   - pybind11
+  - pip:
+    - ./python/
