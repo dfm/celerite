@@ -22,7 +22,7 @@ compile_args = dict(
 if os.name == "posix":
     compile_args["libraries"].append("m")
 
-localincl = os.path.join("celerite", "include")
+localincl = os.path.join("cpp", "include")
 compile_args["include_dirs"] = [
     localincl,
     numpy.get_include(),
@@ -75,7 +75,7 @@ setup(
     install_requires=["numpy>=1.9", "pybind11>=1.7"],
     ext_modules=[ext],
     description="Scalable 1D Gaussian Processes",
-    long_description=open("README.rst").read(),
+    long_description=open("python/README.rst").read(),
     package_data={"": ["README.rst", "LICENSE",
                        os.path.join(localincl, "*.h"),
                        os.path.join(localincl, "*", "*.h")]},
