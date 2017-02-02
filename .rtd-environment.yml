@@ -9,4 +9,4 @@ dependencies:
   - eigen
   - pybind11
   - pip:
-    - ./python/
+    - /home/docs/checkouts/readthedocs.org/user_builds/celerite/checkouts/latest/python/
