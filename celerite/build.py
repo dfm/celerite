@@ -100,13 +100,14 @@ class build_ext(_build_ext):
         dirs = self.compiler.include_dirs
         for ext in self.extensions:
             dirs += ext.include_dirs
+        include_dirs = []
         eigen_include = find_eigen(hint=dirs)
         if eigen_include is None:
             logging.warn("Required library Eigen 3 not found.")
             # raise RuntimeError("Required library Eigen 3 not found. "
             #                    "Check the documentation for solutions.")
         else:
-            include_dirs = [eigen_include]
+            include_dirs += [eigen_include]
 
         # Add the pybind11 include directory
         import pybind11
