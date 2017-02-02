@@ -19,7 +19,7 @@ def find_eigen(hint=None):
     ``None`` on failure.
     """
     # List the standard locations including a user supplied hint.
-    search_dirs = [] if hint is None else hint
+    search_dirs = [] if hint is None else list(hint)
     if "CONDA_PREFIX" in os.environ:
         search_dirs.append(os.path.join(
             os.environ["CONDA_PREFIX"], "include", "eigen3"))
@@ -32,6 +32,7 @@ def find_eigen(hint=None):
         "/usr/include/local",
         "/usr/include",
         "/usr/local/include",
+        "/home/docs/checkouts/readthedocs.org/user_builds/celerite/conda/latest/include/eigen3",
     ]
     print(search_dirs)
 
