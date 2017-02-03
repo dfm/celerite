@@ -249,6 +249,10 @@ int BandSolver<T>::compute (
 
   this->computed_ = false;
   if (x.rows() != diag.rows()) return SOLVER_DIMENSION_MISMATCH;
+  if (alpha_real.rows() != beta_real.rows()) return SOLVER_DIMENSION_MISMATCH;
+  if (alpha_complex_real.rows() != alpha_complex_imag.rows()) return SOLVER_DIMENSION_MISMATCH;
+  if (alpha_complex_real.rows() != beta_complex_real.rows()) return SOLVER_DIMENSION_MISMATCH;
+  if (alpha_complex_real.rows() != beta_complex_imag.rows()) return SOLVER_DIMENSION_MISMATCH;
 
   // Build the extended matrix.
   build_matrix(alpha_real, beta_real, alpha_complex_real, alpha_complex_imag,

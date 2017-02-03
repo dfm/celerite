@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 from __future__ import division, print_function
-import re
 import numpy as np
 from itertools import chain
 
@@ -14,25 +13,57 @@ __all__ = [
 
 
 class Term(Model):
+    """
+    The abstract base "term" that is the superclass of all other terms
+
+    Subclasses should overload the :func:`terms.Term.get_real_coefficients`
+    and :func:`terms.Term.get_complex_coefficients` methods.
+
+    """
 
     @property
     def terms(self):
+        """A list of all the terms included in a sum of terms"""
         return [self]
 
-    def get_value(self, x):
-        x = np.asarray(x)
+    def get_value(self, tau):
+        """
+        Compute the value of the term for an array of lags
+
+        Args:
+            tau (array[...]): An array of lags where the term should be
+                evaluated.
+
+        Returns:
+            The value of the term for each ``tau``. This will have the same
+            shape as ``tau``.
+
+        """
+        tau = np.asarray(tau)
         (alpha_real, beta_real, alpha_complex_real, alpha_complex_imag,
          beta_complex_real, beta_complex_imag) = self.coefficients
         k = get_kernel_value(
             alpha_real, beta_real,
             alpha_complex_real, alpha_complex_imag,
             beta_complex_real, beta_complex_imag,
-            x.flatten(),
+            tau.flatten(),
         )
-        return np.asarray(k).reshape(x.shape)
+        return np.asarray(k).reshape(tau.shape)
 
-    def get_psd(self, w):
-        w = np.asarray(w)
+    def get_psd(self, omega):
+        """
+        Compute the PSD of the term for an array of angular frequencies
+
+        Args:
+            omega (array[...]): An array of frequencies where the PSD should
+                be evaluated.
+
+        Returns:
+            The value of the PSD for each ``omega``. This will have the same
+            shape as ``omega``.
+
+        """
+        w = np.asarray(omega)
         (alpha_real, beta_real, alpha_complex_real, alpha_complex_imag,
          beta_complex_real, beta_complex_imag) = self.coefficients
         p = get_psd_value(
@@ -44,6 +75,13 @@ class Term(Model):
         return p.reshape(w.shape)
 
     def check_parameters(self):
+        """
+        Check for negative power in the PSD using Sturm's theorem
+
+        Returns:
+            ``True`` for valid parameters.
+
+        """
         return check_coefficients(*(self.coefficients))
 
     def __add__(self, b):
@@ -53,9 +91,37 @@ class Term(Model):
         return TermSum(b, self)
 
     def get_real_coefficients(self):
+        """
+        Get the arrays ``alpha_real`` and ``beta_real``
+
+        This method should be overloaded by subclasses to return the arrays
+        ``alpha_real`` and ``beta_real`` given the current parameter settings.
+        By default, this term is empty.
+
+        Returns:
+            (array[j_real], array[j_real]): ``alpha_real`` and ``beta_real``
+            as described above.
+
+        """
         return np.empty(0), np.empty(0)
 
     def get_complex_coefficients(self):
+        """
+        Get the arrays ``alpha_complex_*`` and ``beta_complex_*``
+
+        This method should be overloaded by subclasses to return the arrays
+        ``alpha_complex_real``, ``alpha_complex_imag``, ``beta_complex_real``,
+        and ``beta_complex_imag`` given the current parameter settings. By
+        default, this term is empty.
+
+        Returns:
+            (array[j_complex], array[j_complex], array[j_complex],
+            array[j_complex]): ``alpha_complex_real``, ``alpha_complex_imag``,
+            ``beta_complex_real``, and ``beta_complex_imag`` as described
+            above. ``alpha_complex_imag`` can be omitted and it will be
+            assumed to be zero.
+
+        """
         return np.empty(0), np.empty(0), np.empty(0), np.empty(0)
 
     def get_all_coefficients(self):
@@ -67,6 +133,26 @@ class Term(Model):
 
     @property
     def coefficients(self):
+        """
+        All of the coefficient arrays
+
+        This property is the concatenation of the results from
+        :func:`terms.Term.get_real_coefficients` and
+        :func:`terms.Term.get_complex_coefficients` but it will always return
+        a tuple of length 6, even if ``alpha_complex_imag`` was omitted from
+        ``get_complex_coefficients``.
+
+        Returns:
+            (array[j_real], array[j_real], array[j_complex], array[j_complex],
+            array[j_complex], array[j_complex]): ``alpha_real``, ``beta_real``,
+            ``alpha_complex_real``, ``alpha_complex_imag``,
+            ``beta_complex_real``, and ``beta_complex_imag`` as described
+            above.
+
+        Raises:
+            ValueError: For invalid dimensions for the coefficients.
+
+        """
         pars = self.get_all_coefficients()
         if len(pars) != 6:
             raise ValueError("there must be 6 coefficient blocks")
@@ -102,6 +188,28 @@ class TermSum(Term, ModelSet):
 
 
 class RealTerm(Term):
+    r"""
+    The simplest celerite term
+
+    This term has the form
+
+    .. math::
+
+        k(\tau) = a_j\,e^{-c_j\,\tau}
+
+    with the parameters ``log_a`` and ``log_c``.
+
+    Strictly speaking, for a sum of terms, the parameter ``a`` could be
+    allowed to go negative but since it is somewhat subtle to ensure positive
+    definiteness, we require that the amplitude be positive through this
+    interface. Advanced users can build a custom term that has negative
+    coefficients but care should be taken to ensure positivity.
+
+    Args:
+        log_a (float): The log of the amplitude of the term.
+        log_c (float): The log of the exponent of the term.
+
+    """
 
     parameter_names = ("log_a", "log_c")
 
@@ -113,6 +221,30 @@ class RealTerm(Term):
 
 
 class ComplexTerm(Term):
+    r"""
+    A general celerite term
+
+    This term has the form
+
+    .. math::
+
+        k(\tau) = \frac{1}{2}\,\left[(a_j + b_j)\,e^{-(c_j+d_j)\,\tau}
+         + (a_j - b_j)\,e^{-(c_j-d_j)\,\tau}\right]
+
+    with the parameters ``log_a``, ``log_b``, ``log_c``, and ``log_d``.
+    The parameter ``log_b`` can be omitted and it will be assumed to be zero.
+
+    This term will only correspond to a positive definite kernel (on its own)
+    if :math:`a_j\,c_j \ge b_j\,d_j` and the ``log_prior`` method checks for
+    this constraint.
+
+    Args:
+        log_a (float): The log of the real part of amplitude.
+        log_b (float): The log of the imaginary part of amplitude.
+        log_c (float): The log of the real part of the exponent.
+        log_d (float): The log of the imaginary part of exponent.
+
+    """
 
     def __init__(self, *args, **kwargs):
         if len(args) == 3 and "log_b" not in kwargs:
@@ -148,6 +280,24 @@ class ComplexTerm(Term):
 
 
 class SHOTerm(Term):
+    r"""
+    A term representing a stochastically-driven, damped harmonic oscillator
+
+    The PSD of this term is
+
+    .. math::
+
+        S(\omega) = \sqrt{\frac{2}{\pi}} \frac{S_0\,\omega_0^4}
+        {(\omega^2-{\omega_0}^2)^2 + {\omega_0}^2\,\omega^2/Q^2}
+
+    with the parameters ``log_S0``, ``log_Q``, and ``log_omega0``.
+
+    Args:
+        log_S0 (float): The log of the parameter :math:`S_0`.
+        log_Q (float): The log of the parameter :math:`Q`.
+        log_omega0 (float): The log of the parameter :math:`\omega_0`.
+
+    """
 
     parameter_names = ("log_S0", "log_Q", "log_omega0")
 
@@ -184,6 +334,35 @@ class SHOTerm(Term):
 
 
 class Matern32Term(Term):
+    r"""
+    A term that approximates a Matern-3/2 function
+
+    This term is defined as
+
+    .. math::
+
+        k(\tau) = \sigma^2\,\left[
+            \left(1+1/\epsilon\right)\,e^{-(1-\epsilon)\sqrt{3}\,\tau/\rho}
+            \left(1-1/\epsilon\right)\,e^{-(1+\epsilon)\sqrt{3}\,\tau/\rho}
+        \right]
+
+    with the parameters ``log_sigma`` and ``log_rho``. The parameter ``eps``
+    controls the quality of the approximation since, in the limit
+    :math:`\epsilon \to 0` this becomes the Matern-3/2 function
+
+    .. math::
+
+        \lim_{\eps \to 0} k(\tau) = \simga^2\,\left(1+
+        \frac{\sqrt{3}\,\tau}{\rho}\right)\,
+        \exp\left(-\frac{\sqrt{3}\,\tau}{\rho}\right)
+
+    Args:
+        log_sigma (float): The log of the parameter :math:`\sigma`.
+        log_rho (float): The log of the parameter :math:`\rho`.
+        eps (Optional[float]): The value of the parameter :math:`epsilon`.
+            (default: `0.01`)
+
+    """
 
     parameter_names = ("log_sigma", "log_rho")
 

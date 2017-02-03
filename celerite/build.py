@@ -28,7 +28,7 @@ def find_eigen(hint=None):
             os.environ["CONDA_PREFIX"], "include", "eigen3"))
 
     # Another hack to find conda include directory if the environment variable
-    # doesn't exist.
+    # doesn't exist. This seems to be necessary for RTD.
     for d in search_dirs:
         el = os.path.split(d)
         if len(re.findall(r"python[0-9\.].+m", el[-1])):
@@ -36,7 +36,7 @@ def find_eigen(hint=None):
                 os.path.join(os.path.join(*el[:-1]), "include", "eigen3")
             ]
 
-    # Some other common installation locations
+    # Some other common installation locations.
     search_dirs += [
         "/usr/local/include/eigen3",
         "/usr/local/homebrew/include/eigen3",
@@ -46,28 +46,28 @@ def find_eigen(hint=None):
         "/usr/include/local",
         "/usr/include",
         "/usr/local/include",
-        "/home/docs/checkouts/readthedocs.org/user_builds/celerite/conda/latest/include/eigen3",
     ]
-    print(search_dirs)
 
     # Loop over search paths and check for the existence of the Eigen/Dense
     # header.
     for d in search_dirs:
         path = os.path.join(d, "Eigen", "Dense")
-        if os.path.exists(path):
-            # Determine the version.
-            vf = os.path.join(d, "Eigen", "src", "Core", "util", "Macros.h")
-            if not os.path.exists(vf):
-                continue
-            src = open(vf, "r").read()
-            v1 = re.findall("#define EIGEN_WORLD_VERSION (.+)", src)
-            v2 = re.findall("#define EIGEN_MAJOR_VERSION (.+)", src)
-            v3 = re.findall("#define EIGEN_MINOR_VERSION (.+)", src)
-            if not len(v1) or not len(v2) or not len(v3):
-                continue
-            v = "{0}.{1}.{2}".format(v1[0], v2[0], v3[0])
-            print("Found Eigen version {0} in: {1}".format(v, d))
-            return d
+        if not os.path.exists(path):
+            continue
+
+        # Determine the version.
+        vf = os.path.join(d, "Eigen", "src", "Core", "util", "Macros.h")
+        if not os.path.exists(vf):
+            continue
+        src = open(vf, "r").read()
+        v1 = re.findall("#define EIGEN_WORLD_VERSION (.+)", src)
+        v2 = re.findall("#define EIGEN_MAJOR_VERSION (.+)", src)
+        v3 = re.findall("#define EIGEN_MINOR_VERSION (.+)", src)
+        if not len(v1) or not len(v2) or not len(v3):
+            continue
+        v = "{0}.{1}.{2}".format(v1[0], v2[0], v3[0])
+        print("Found Eigen version {0} in: {1}".format(v, d))
+        return d
     return None
 
 def has_flag(compiler, flagname):
