@@ -33,7 +33,7 @@ def find_eigen(hint=None):
         el = os.path.split(d)
         if len(re.findall(r"python[0-9\.].+m", el[-1])):
             search_dirs += [
-                os.path.join(os.path.join(*el[:-1]), "include", "eigen3")
+                os.path.join(os.path.join(*el[:-1]), "eigen3")
             ]
 
     # Some other common installation locations.
