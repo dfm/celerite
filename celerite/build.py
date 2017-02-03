@@ -20,9 +20,23 @@ def find_eigen(hint=None):
     """
     # List the standard locations including a user supplied hint.
     search_dirs = [] if hint is None else list(hint)
+
+    # Look in the conda include directory in case eigen was installed using
+    # conda.
     if "CONDA_PREFIX" in os.environ:
         search_dirs.append(os.path.join(
             os.environ["CONDA_PREFIX"], "include", "eigen3"))
+
+    # Another hack to find conda include directory if the environment variable
+    # doesn't exist.
+    for d in search_dirs:
+        el = os.path.split(d)
+        if len(re.findall(r"python[0-9\.].+m", el[-1])):
+            search_dirs += [
+                os.path.join(os.path.join(*el[:-1]), "include", "eigen3")
+            ]
+
+    # Some other common installation locations
     search_dirs += [
         "/usr/local/include/eigen3",
         "/usr/local/homebrew/include/eigen3",
