@@ -45,6 +45,7 @@ celerite is being actively developed in `a public repository on GitHub
 .. image:: https://img.shields.io/badge/ArXiv-TBD-orange.svg?style=flat
     :target: https://arxiv.org
 
+
 .. toctree::
    :maxdepth: 2
    :caption: Python Usage

@@ -56,7 +56,7 @@ setup(
     install_requires=["numpy>=1.9", "pybind11>=1.7"],
     ext_modules=[ext],
     description="Scalable 1D Gaussian Processes",
-    long_description=open("python/README.rst").read(),
+    long_description=open("README.rst").read(),
     package_data={"": ["README.rst", "LICENSE",
                        os.path.join(localincl, "*.h"),
                        os.path.join(localincl, "*", "*.h")]},
