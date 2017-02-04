@@ -1,4 +1,22 @@
 # -*- coding: utf-8 -*-
+"""
+.. module:: celerite
+
+The main interface to the celerite solver is through the :class:`GP` class.
+This main purpose of this class is to exposes methods for efficiently
+computing the marginalized likelihood of a Gaussian Process (GP) model.
+The covariance matrix for the GP will be specified by a kernel function as
+described in the :ref:`kernel` section.
+
+The :class:`GP` class implements the :ref:`modeling` with submodels called
+``kernel``, ``mean``, and ``log_white_noise`` so the modeling language can be
+used to fit for parameters for each of these models.
+
+Below, the methods of the :class:`GP` object are described in detail but the
+most important methods to look at are probably :func:`GP.compute`,
+:func:`GP.log_likelihood`, and :func:`GP.predict`.
+
+"""
 
 from __future__ import division, print_function
 import math
@@ -14,16 +32,19 @@ class GP(ModelSet):
     """The main interface to the celerite Gaussian Process solver
 
     Args:
-        kernel: An instance of a subclass of :class:`terms.Kernel`.
+        kernel: An instance of a subclass of :class:`terms.Term`.
         mean (Optional): A simple mean value for the process. This can either
-            be a ``float`` or a subclass of :class:`Model`. (default: ``0.0``)
+            be a ``float`` or a subclass of :class:`modeling.Model`.
+            (default: ``0.0``)
         fit_mean (optional): If ``False``, all of the parameters of ``mean``
             will be frozen. Otherwise, the parameter states are unaffected.
             (default: ``False``)
         log_white_noise (Optional): A white noise model for the process. The
             ``exp`` of this will be added to the diagonal of the matrix in
-            :func:`GP.compute`. This can either be a ``float`` or a subclass
-            of :class:`Model`. (default: ``-inf``)
+            :func:`GP.compute`. In other words this model should be for the
+            log of the _variance_ of the white noise. This can either be a
+            ``float`` or a subclass of :class:`modeling.Model`.
+            (default: ``-inf``)
         fit_white_noise (optional): If ``False``, all of the parameters of
             ``log_white_noise`` will be frozen. Otherwise, the parameter
             states are unaffected. (default: ``False``)
@@ -75,10 +96,12 @@ class GP(ModelSet):
 
     @property
     def mean(self):
+        """The mean :class:`modeling.Model`"""
         return self.models["mean"]
 
     @property
     def log_white_noise(self):
+        """The white noise :class:`modeling.Model`"""
         return self.models["log_white_noise"]
 
     @property
@@ -99,6 +122,24 @@ class GP(ModelSet):
         return not self.dirty
 
     def compute(self, t, yerr=1.123e-12, check_sorted=True):
+        """
+        Compute the extended form of the covariance matrix and factorize
+
+        Args:
+            x (array[n]): The independent coordinates of the data points.
+                This array must be _sorted_ in ascending order.
+            yerr (Optional[float or array[n]]): The measurement uncertainties
+                for the data points at coordinates ``x``. These values will be
+                added in quadrature to the diagonal of the covariance matrix.
+                (default: ``1.123e-12``)
+            check_sorted (bool): If ``True``, ``x`` will be checked to make
+                sure that it is properly sorted. If ``False``, the coordinates
+                will be assumed to be in the correct order.
+
+        Raises:
+            ValueError: For un-sorted data or mismatched dimensions.
+
+        """
         t = np.atleast_1d(t)
         if check_sorted and np.any(np.diff(t) < 0.0):
             raise ValueError("the input coordinates must be sorted")
@@ -133,6 +174,23 @@ class GP(ModelSet):
         return np.ascontiguousarray(y, dtype=float)
 
     def log_likelihood(self, y, _const=math.log(2.0*math.pi)):
+        """
+        Compute the marginalized likelihood of the GP model
+
+        The factorized matrix from the previous call to :func:`GP.compute` is
+        used so ``compute`` must be called first.
+
+        Args:
+            y (array[n]): The observations at coordinates ``x`` from
+                :func:`GP.compute`.
+
+        Returns:
+            float: The marginalized likelihood of the GP model.
+
+        Raises:
+            ValueError: For mismatched dimensions.
+
+        """
         y = self._process_input(y)
         resid = y - self.mean.get_value(self._t)
         self._recompute()
@@ -143,10 +201,50 @@ class GP(ModelSet):
                        len(y) * _const)
 
     def apply_inverse(self, y):
+        """
+        Apply the inverse of the covariance matrix to a vector or matrix
+
+        Solve ``K.x = y`` for ``x`` where ``K`` is the covariance matrix of
+        the GP with the white noise and ``yerr`` components included on the
+        diagonal.
+
+        Args:
+            y (array[n] or array[n, nrhs]): The vector or matrix ``y``
+            described above.
+
+        Returns:
+            array[n] or array[n, nrhs]: The solution to the linear system.
+            This will have the same shape as ``y``.
+
+        Raises:
+            ValueError: For mismatched dimensions.
+
+        """
         self._recompute()
         return self.solver.solve(self._process_input(y))
 
     def dot(self, y, kernel=None):
+        """
+        Dot the covariance matrix into a vector or matrix
+
+        Compute ``K.y`` where ``K`` is the covariance matrix of the GP without
+        the white noise or ``yerr`` values on the diagonal.
+
+        Args:
+            y (array[n] or array[n, nrhs]): The vector or matrix ``y``
+                described above.
+            kernel (Optional[terms.Term]): A different kernel can optionally
+                be provided to compute the matrix ``K`` from a different
+                kernel than the ``kernel`` property on this object.
+
+        Returns:
+            array[n] or array[n, nrhs]: The dot product ``K.y`` as described
+            above. This will have the same shape as ``y``.
+
+        Raises:
+            ValueError: For mismatched dimensions.
+
+        """
         if kernel is None:
             kernel = self.kernel
         (alpha_real, beta_real, alpha_complex_real, alpha_complex_imag,
@@ -159,6 +257,39 @@ class GP(ModelSet):
         )
 
     def predict(self, y, t=None, return_cov=True, return_var=False):
+        """
+        Compute the conditional predictive distribution of the model
+
+        You must call :func:`GP.compute` before this method.
+
+        Args:
+            y (array[n]): The observations at coordinates ``x`` from
+                :func:`GP.compute`.
+        t (Optional[array[ntest]]): The independent coordinates where the
+            prediction should be made. If this is omitted the coordinates will
+            be assumed to be ``x`` from :func:`GP.compute` and an efficient
+            method will be used to compute the prediction.
+        return_cov (Optional[bool]): If ``True``, the full covariance matrix
+            is computed and returned. Otherwise, only the mean prediction is
+            computed. (default: ``True``)
+        return_var (Optional[bool]): If ``True``, only return the diagonal of
+            the predictive covariance; this will be faster to compute than the
+            full covariance matrix. This overrides ``return_cov`` so, if both
+            are set to ``True``, only the diagonal is computed.
+            (default: ``False``)
+
+        Returns:
+            ``mu``, ``(mu, cov)``, or ``(mu, var)`` depending on the values of
+            ``return_cov`` and ``return_var``. These output values are:
+            (a) **mu** ``(ntest,)``: mean of the predictive distribution,
+            (b) **cov** ``(ntest, ntest)``: the predictive covariance matrix,
+            and
+            (c) **var** ``(ntest,)``: the diagonal elements of ``cov``.
+
+        Raises:
+            ValueError: For mismatched dimensions.
+
+        """
         y = self._process_input(y)
         if len(y.shape) > 1:
             raise ValueError("dimension mismatch")
@@ -206,6 +337,21 @@ class GP(ModelSet):
                                       .get_value(self._t))
 
     def get_matrix(self, x1=None, x2=None, include_diagonal=None):
+        """
+        Get the covariance matrix at given independent coordinates
+
+        Args:
+            x1 (Optional[array[n1]]): The first set of independent coordinates.
+                If this is omitted, ``x1`` will be assumed to be equal to ``x``
+                from a previous call to :func:`GP.compute`.
+            x2 (Optional[array[n2]]): The second set of independent
+                coordinates. If this is omitted, ``x2`` will be assumed to be
+                ``x1``.
+            include_diagonal (Optional[bool]): Should the white noise and
+                ``yerr`` terms be included on the diagonal?
+                (default: ``False``)
+
+        """
         if x1 is None and x2 is None:
             if self._t is None or not self.computed:
                 raise RuntimeError("you must call 'compute' first")
@@ -226,6 +372,19 @@ class GP(ModelSet):
         return K
 
     def sample(self, x, tiny=1e-12, size=None):
+        """
+        Sample from the prior distribution over datasets
+
+        Args:
+            x (array[n]): The independent coordinates where the observations
+                should be made.
+            size (Optional[int]): The number of samples to draw.
+
+        Returns:
+            array[n] or array[size, n]: The samples from the prior
+            distribution over datasets.
+
+        """
         K = self.get_matrix(x, include_diagonal=True)
         K[np.diag_indices_from(K)] += tiny
         sample = np.random.multivariate_normal(np.zeros_like(x), K, size=size)

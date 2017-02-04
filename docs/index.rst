@@ -23,10 +23,13 @@ celerite is being actively developed in `a public repository on GitHub
 
 .. toctree::
    :maxdepth: 2
-   :caption: User Guide
+   :caption: Python Usage
 
-   user/install
-   api
+   python/install
+   python/gp
+   python/kernel
+   python/modeling
+   python/solver
 
 
 .. toctree::
