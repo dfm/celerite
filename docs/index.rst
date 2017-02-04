@@ -1,6 +1,17 @@
 celerite
 ========
 
+.. raw:: html
+
+    <div style="color: #555; border-left: 8px solid #ddd; padding: 5px 15px 8px; margin: 20px 0">
+    <strong>celerite</strong> &nbsp; &nbsp;
+    \se.le.ʁi.te\ &nbsp; &nbsp;
+    <i>noun, archaic literary</i><br>
+    A scalable method for Gaussian Process regression. From French
+    <i>célérité</i>.
+    </div>
+
+
 celerite is a library for fast and scalable Gaussian Process (GP) Regression
 in one dimension with implementations in C++, Python, and Julia. The Python
 implementation is the most stable and it exposes the most features but it
@@ -20,6 +31,19 @@ or `posterior inference <http://dfm.io/emcee>`_ library for the best results.
 celerite is being actively developed in `a public repository on GitHub
 <https://github.com/dfm/celerite>`_ so if you have any trouble, `open an issue
 <https://github.com/dfm/celerite/issues>`_ there.
+
+.. image:: https://img.shields.io/badge/GitHub-dfm%2Fcelerite-blue.svg?style=flat
+    :target: https://github.com/dfm/celerite
+.. image:: http://img.shields.io/badge/license-MIT-blue.svg?style=flat
+    :target: https://github.com/dfm/celerite/blob/master/LICENSE
+.. image:: http://img.shields.io/travis/dfm/celerite/master.svg?style=flat
+    :target: https://travis-ci.org/dfm/celerite
+.. image:: https://readthedocs.org/projects/celerite/badge/?version=latest&style=flat
+    :target: http://celerite.readthedocs.io/en/latest/?badge=latest
+.. image:: https://img.shields.io/badge/PDF-latest-orange.svg?style=flat
+    :target: https://github.com/dfm/celerite/blob/master-pdf/paper/ms.pdf
+.. image:: https://img.shields.io/badge/ArXiv-TBD-orange.svg?style=flat
+    :target: https://arxiv.org
 
 .. toctree::
    :maxdepth: 2
