@@ -17,6 +17,9 @@ I18NSPHINXOPTS  = $(PAPEROPT_$(PAPER)) $(SPHINXOPTS) .
 default: dirhtml
 TUTORIALS = tutorials/first.rst
 
+xml/index.xml: ../cpp/include/celerite/*.h ../cpp/include/celerite/solver/*.h
+	doxygen Doxyfile
+
 tutorials/%.rst: _static/notebooks/%.ipynb tutorials/tutorial_rst.tpl
 	jupyter nbconvert --template tutorials/tutorial_rst --to rst $< --output-dir tutorials
 
@@ -25,19 +28,19 @@ clean:
 	rm -rf $(BUILDDIR)/* $(TUTORIALS)
 
 .PHONY: html
-html: $(TUTORIALS)
+html: $(TUTORIALS) xml/index.xml
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
 	@echo
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)/html."
 
 .PHONY: dirhtml
-dirhtml: $(TUTORIALS)
+dirhtml: $(TUTORIALS) xml/index.xml
 	$(SPHINXBUILD) -b dirhtml $(ALLSPHINXOPTS) $(BUILDDIR)/dirhtml
 	@echo
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)/dirhtml."
 
 .PHONY: singlehtml
-singlehtml: $(TUTORIALS)
+singlehtml: $(TUTORIALS) xml/index.xml
 	$(SPHINXBUILD) -b singlehtml $(ALLSPHINXOPTS) $(BUILDDIR)/singlehtml
 	@echo
 	@echo "Build finished. The HTML page is in $(BUILDDIR)/singlehtml."

@@ -9,6 +9,7 @@ extensions = [
     "sphinx.ext.intersphinx",
     "sphinx.ext.napoleon",
     "sphinx.ext.mathjax",
+    "breathe",
 ]
 intersphinx_mapping = {
     'python': ('https://docs.python.org/3/', None),
@@ -17,6 +18,9 @@ intersphinx_mapping = {
     'astropy': ('http://docs.astropy.org/en/stable/', None),
     'emcee': ('http://dan.iel.fm/emcee/current/', None)
 }
+
+breathe_projects = {"celerite": "xml"}
+breathe_default_project = "celerite"
 
 templates_path = ["_templates"]
 source_suffix = ".rst"
@@ -35,7 +39,10 @@ pygments_style = "sphinx"
 
 # Readthedocs.
 on_rtd = os.environ.get("READTHEDOCS", None) == "True"
-if not on_rtd:
+if on_rtd:
+    import subprocess
+    subprocess.call("doxygen Doxyfile", shell=True)
+else:
     import sphinx_rtd_theme
     html_theme = "sphinx_rtd_theme"
     html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]

@@ -63,6 +63,7 @@ celerite is being actively developed in `a public repository on GitHub
 
    cpp/install
    cpp/start
+   cpp/api
 
 
 .. toctree::

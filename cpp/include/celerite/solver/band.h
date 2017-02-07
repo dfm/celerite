@@ -24,6 +24,10 @@ namespace solver {
       n = this->n_;                                 \
   BLOCKSIZE_BASE
 
+/// The class provides all of the computation power for the fast GP solver
+///
+/// The `celerite::solver::BandSolver::compute` method must be called before
+/// most of the other methods.
 template <typename T>
 class BandSolver : public Solver<T> {
 public:
@@ -40,6 +44,21 @@ public:
     const Eigen::VectorXd& x,
     Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>& A
   );
+
+  /// Compute the extended matrix and perform the banded LU decomposition
+  ///
+  /// @param alpha_real The coefficients of the real terms.
+  /// @param beta_real The exponents of the real terms.
+  /// @param alpha_complex_real The real part of the coefficients of the complex terms.
+  /// @param alpha_complex_imag The imaginary part of the of the complex terms.
+  /// @param beta_complex_real The real part of the exponents of the complex terms.
+  /// @param beta_complex_imag The imaginary part of the exponents of the complex terms.
+  /// @param x The _sorted_ array of input coordinates.
+  /// @param diag An array that should be added to the diagonal of the matrix.
+  ///             This often corresponds to measurement uncertainties and in that case,
+  ///             ``diag`` should be the measurement _variance_ (i.e. sigma^2).
+  ///
+  /// @return ``0`` on success. ``1`` for mismatched dimensions.
   int compute (
     const Eigen::Matrix<T, Eigen::Dynamic, 1>& alpha_real,
     const Eigen::Matrix<T, Eigen::Dynamic, 1>& beta_real,
@@ -50,7 +69,31 @@ public:
     const Eigen::VectorXd& x,
     const Eigen::Matrix<T, Eigen::Dynamic, 1>& diag
   );
+
+  /// Solve a linear system for the matrix defined in ``compute``
+  ///
+  /// A previous call to `solver.Solver.compute` defines a matrix ``A``
+  /// and this method solves for ``x`` in the matrix equation ``A.x = b``.
+  ///
+  /// @param b The right hand side of the linear system.
+  /// @param x A pointer that will be overwritten with the result.
   void solve (const Eigen::MatrixXd& b, T* x) const;
+
+  /// Compute the dot product of a ``celerite`` matrix and another arbitrary matrix
+  ///
+  /// This method computes ``A.b`` where ``A`` is defined by the parameters and
+  /// ``b`` is an arbitrary matrix of the correct shape.
+  ///
+  /// @param alpha_real The coefficients of the real terms.
+  /// @param beta_real The exponents of the real terms.
+  /// @param alpha_complex_real The real part of the coefficients of the complex terms.
+  /// @param alpha_complex_imag The imaginary part of the of the complex terms.
+  /// @param beta_complex_real The real part of the exponents of the complex terms.
+  /// @param beta_complex_imag The imaginary part of the exponents of the complex terms.
+  /// @param x The _sorted_ array of input coordinates.
+  /// @param b_in The matrix ``b`` described above.
+  ///
+  /// @return The matrix ``A.b``.
   Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> dot (
     const Eigen::Matrix<T, Eigen::Dynamic, 1>& alpha_real,
     const Eigen::Matrix<T, Eigen::Dynamic, 1>& beta_real,
