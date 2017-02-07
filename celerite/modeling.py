@@ -9,6 +9,27 @@ __all__ = ["Model", "ModelSet", "ConstantModel"]
 
 
 class Model(object):
+    """
+    An abstract class implementing the skeleton of the modeling protocol
+
+    Initial parameter values can either be provided as arguments in the same
+    order as ``parameter_names`` or by name as keyword arguments.
+
+    A minimal subclass of this would have the form:
+
+    .. code-block:: python
+
+        class CustomModel(Model):
+            parameter_names = ("parameter_1", "parameter_2")
+
+            def get_value(self, x):
+                return self.parameter_1 + self.parameter_2 + x
+
+        model = CustomModel(parameter_1=1.0, parameter_2=2.0)
+        # or...
+        model = CustomModel(1.0, 2.0)
+
+    """
 
     parameter_names = tuple()
 
@@ -47,7 +68,14 @@ class Model(object):
                 raise ValueError("unrecognized parameter(s) '{0}'"
                                  .format(list(kwargs.keys())))
 
-    def get_value(self, x):
+    def get_value(self, *args, **kwargs):
+        """
+        Compute the "value" of the model for the current parameters
+
+        This method should be overloaded by subclasses to implement the actual
+        functionality of the model.
+
+        """
         raise NotImplementedError("overloaded by subclasses")
 
     def __len__(self):
@@ -68,14 +96,17 @@ class Model(object):
 
     @property
     def full_size(self):
+        """The total number of parameters (including frozen parameters)"""
         return len(self.parameter_names)
 
     @property
     def vector_size(self):
+        """The number of active (or unfrozen) parameters"""
         return self.unfrozen_mask.sum()
 
     @property
     def parameter_vector(self):
+        """An array of all parameters (including frozen parameters)"""
         return np.array([getattr(self, k) for k in self.parameter_names])
 
     @parameter_vector.setter
@@ -87,12 +118,28 @@ class Model(object):
         self.dirty = True
 
     def get_parameter_dict(self, include_frozen=False):
+        """
+        Get an ordered dictionary of the parameters
+
+        Args:
+            include_frozen (Optional[bool]): Should the frozen parameters be
+                included in the returned value? (default: ``False``)
+
+        """
         return OrderedDict(zip(
             self.get_parameter_names(include_frozen=include_frozen),
             self.get_parameter_vector(include_frozen=include_frozen),
         ))
 
     def get_parameter_names(self, include_frozen=False):
+        """
+        Get a list of the parameter names
+
+        Args:
+            include_frozen (Optional[bool]): Should the frozen parameters be
+                included in the returned value? (default: ``False``)
+
+        """
         if include_frozen:
             return self.parameter_names
         return tuple(p
@@ -100,6 +147,14 @@ class Model(object):
                      if f)
 
     def get_parameter_bounds(self, include_frozen=False):
+        """
+        Get a list of the parameter bounds
+
+        Args:
+            include_frozen (Optional[bool]): Should the frozen parameters be
+                included in the returned value? (default: ``False``)
+
+        """
         if include_frozen:
             return self.parameter_bounds
         return list(p
@@ -107,11 +162,31 @@ class Model(object):
                     if f)
 
     def get_parameter_vector(self, include_frozen=False):
+        """
+        Get an array of the parameter values in the correct order
+
+        Args:
+            include_frozen (Optional[bool]): Should the frozen parameters be
+                included in the returned value? (default: ``False``)
+
+        """
         if include_frozen:
             return self.parameter_vector
         return self.parameter_vector[self.unfrozen_mask]
 
     def set_parameter_vector(self, vector, include_frozen=False):
+        """
+        Set the parameter values to the given vector
+
+        Args:
+            vector (array[vector_size] or array[full_size]): The target
+                parameter vector. This must be in the same order as
+                ``parameter_names`` and it should only include frozen
+                parameters if ``include_frozen`` is ``True``.
+            include_frozen (Optional[bool]): Should the frozen parameters be
+                included in the returned value? (default: ``False``)
+
+        """
         v = self.parameter_vector
         if include_frozen:
             v[:] = vector
@@ -121,30 +196,62 @@ class Model(object):
         self.dirty = True
 
     def freeze_parameter(self, name):
+        """
+        Freeze a parameter by name
+
+        Args:
+            name: The name of the parameter
+
+        """
         i = self.get_parameter_names(include_frozen=True).index(name)
         self.unfrozen_mask[i] = False
 
     def thaw_parameter(self, name):
+        """
+        Thaw a parameter by name
+
+        Args:
+            name: The name of the parameter
+
+        """
         i = self.get_parameter_names(include_frozen=True).index(name)
         self.unfrozen_mask[i] = True
 
     def freeze_all_parameters(self):
+        """Freeze all parameters of the model"""
         self.unfrozen_mask[:] = False
 
     def thaw_all_parameters(self):
+        """Thaw all parameters of the model"""
         self.unfrozen_mask[:] = True
 
     def get_parameter(self, name):
+        """
+        Get a parameter value by name
+
+        Args:
+            name: The name of the parameter
+
+        """
         i = self.get_parameter_names(include_frozen=True).index(name)
         return self.get_parameter_vector(include_frozen=True)[i]
 
     def set_parameter(self, name, value):
+        """
+        Set a parameter value by name
+
+        Args:
+            name: The name of the parameter
+            value (float): The new value for the parameter
+
+        """
         i = self.get_parameter_names(include_frozen=True).index(name)
         v = self.get_parameter_vector(include_frozen=True)
         v[i] = value
         self.set_parameter_vector(v, include_frozen=True)
 
     def log_prior(self):
+        """Compute the log prior probability of the current parameters"""
         for p, b in zip(self.parameter_vector, self.parameter_bounds):
             if b[0] is not None and p < b[0]:
                 return -np.inf
@@ -154,11 +261,42 @@ class Model(object):
 
 
 class ModelSet(Model):
+    """
+    An abstract wrapper for combining named :class:`Model` objects
+
+    The parameter names of a composite model are prepended by the submodel
+    name. For example:
+
+    .. code-block:: python
+
+        model = ModelSet([
+            ("model1", Model(par1=1.0, par2=2.0)),
+            ("model2", Model(par3=3.0, par4=4.0)),
+        ])
+        print(model.get_parameter_names())
+
+    will print
+
+    .. code-block:: python
+
+        ["model1:par1", "model1:par2", "model2:par3", "model2:par4"]
+
+    Args:
+        models: This should be a list of the form: ``[("model1", Model(...)),
+            ("model2", Model(...)), ...]``.
+
+    """
 
     def __init__(self, models):
         self.models = OrderedDict()
         for name, model in models:
             self.models[name] = model
+
+    def __getattr__(self, name):
+        try:
+            return self.models[name]
+        except KeyError:
+            raise AttributeError(name)
 
     @property
     def dirty(self):
@@ -247,6 +385,14 @@ class ModelSet(Model):
 
 
 class ConstantModel(Model):
+    """
+    A simple concrete model with a single parameter ``value``
+
+    Args:
+        value (float): The value of the model.
+
+    """
+
     parameter_names = ("value", )
 
     def get_value(self, x):

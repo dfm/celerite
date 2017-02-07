@@ -58,6 +58,14 @@ celerite is being actively developed in `a public repository on GitHub
 
 
 .. toctree::
+   :maxdepth: 2
+   :caption: C++ Usage
+
+   cpp/install
+   cpp/start
+
+
+.. toctree::
    :maxdepth: 1
    :caption: Tutorials
 
