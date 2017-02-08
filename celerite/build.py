@@ -50,10 +50,11 @@ def find_eigen(hint=None):
         "/Miniconda",
         "/Miniconda/Include",
         "/Miniconda/Library",
+        "/Miniconda/Library/include",
     ]
 
     # Common suffixes
-    suffixes = ["eigen3", "Eigen/include/eigen3", "Eigen3/include/eigen3"]
+    suffixes = ["", "eigen3", "Eigen/include/eigen3", "Eigen3/include/eigen3"]
 
     print(search_dirs)
 
