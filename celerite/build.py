@@ -39,6 +39,7 @@ def find_eigen(hint=None):
 
     # Some other common installation locations on UNIX-ish platforms
     search_dirs += [
+        "/"
         "/usr/local/include",
         "/usr/local/homebrew/include",
         "/opt/local/var/macports/software",
@@ -48,30 +49,33 @@ def find_eigen(hint=None):
         "/usr/include",
     ]
 
-    # Also search in all of these directories with "eigen3" appended
-    search_dirs += [os.path.join(d, "eigen3") for d in search_dirs]
+    # Common suffixes
+    suffixes = ["eigen3", "Eigen/include/eigen3", "Eigen3/include/eigen3"]
+
     print(search_dirs)
 
     # Loop over search paths and check for the existence of the Eigen/Dense
     # header.
-    for d in search_dirs:
-        path = os.path.join(d, "Eigen", "Dense")
-        if not os.path.exists(path):
-            continue
+    for base in search_dirs:
+        for suff in suffixes:
+            d = os.path.abspath(os.path.join(base, suff))
+            path = os.path.join(d, "Eigen", "Dense")
+            if not os.path.exists(path):
+                continue
 
-        # Determine the version.
-        vf = os.path.join(d, "Eigen", "src", "Core", "util", "Macros.h")
-        if not os.path.exists(vf):
-            continue
-        src = open(vf, "r").read()
-        v1 = re.findall("#define EIGEN_WORLD_VERSION (.+)", src)
-        v2 = re.findall("#define EIGEN_MAJOR_VERSION (.+)", src)
-        v3 = re.findall("#define EIGEN_MINOR_VERSION (.+)", src)
-        if not len(v1) or not len(v2) or not len(v3):
-            continue
-        v = "{0}.{1}.{2}".format(v1[0], v2[0], v3[0])
-        print("Found Eigen version {0} in: {1}".format(v, d))
-        return d
+            # Determine the version.
+            vf = os.path.join(d, "Eigen", "src", "Core", "util", "Macros.h")
+            if not os.path.exists(vf):
+                continue
+            src = open(vf, "r").read()
+            v1 = re.findall("#define EIGEN_WORLD_VERSION (.+)", src)
+            v2 = re.findall("#define EIGEN_MAJOR_VERSION (.+)", src)
+            v3 = re.findall("#define EIGEN_MINOR_VERSION (.+)", src)
+            if not len(v1) or not len(v2) or not len(v3):
+                continue
+            v = "{0}.{1}.{2}".format(v1[0], v2[0], v3[0])
+            print("Found Eigen version {0} in: {1}".format(v, d))
+            return d
     return None
 
 def has_flag(compiler, flagname):
