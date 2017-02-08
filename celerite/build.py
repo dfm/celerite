@@ -56,9 +56,14 @@ def find_eigen(hint=None):
     # Common suffixes
     suffixes = ["", "eigen3", "Eigen/include/eigen3", "Eigen3/include/eigen3"]
 
+    # Debugging comments
+    print("Looking for Eigen in:")
+    for d in search_dirs:
+        print(" - {0}".format(d))
+    print("+ suffixes: {0}".format(suffixes))
+
     # Loop over search paths and check for the existence of the Eigen/Dense
     # header.
-    print("Looking for Eigen in:\n{0}".format(search_dirs))
     for base in search_dirs:
         for suff in suffixes:
             d = os.path.abspath(os.path.join(base, suff))
