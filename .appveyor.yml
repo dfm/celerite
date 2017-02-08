@@ -19,8 +19,8 @@ install:
     conda config --set always_yes yes --set changeps1 no
     conda update -q conda
     conda info -a
-    conda create -q -n test-env python=%PYTHON_VERSION%
-    set PATH=C:\Miniconda\envs\test-env\Scripts;C:\Miniconda\envs\test-env;%PATH%
+    conda create -q -n test-env python=$env:PYTHON_VERSION
+    $env:PATH = "C:\Miniconda$env:CONDA\envs\test-env\Scripts;C:\Miniconda$env:CONDA\envs\test-env;$env:PATH"
     activate test-env
     conda install -c conda-forge conda-build numpy setuptools eigen pybind11 pytest pip
 build_script:
