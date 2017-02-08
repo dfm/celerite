@@ -7,6 +7,10 @@
 
 #include "celerite/poly.h"
 
+#ifndef M_PI
+#define M_PI 3.141592653589793238462643383279502884e+00
+#endif
+
 namespace celerite {
 
 template <typename T1, typename T2>

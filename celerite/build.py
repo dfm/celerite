@@ -25,10 +25,14 @@ def find_eigen(hint=None):
     # conda.
     if "CONDA_PREFIX" in os.environ:
         search_dirs.append(os.path.join(os.environ["CONDA_PREFIX"], "include"))
-
-        # Windows
         search_dirs.append(os.path.join(os.environ["CONDA_PREFIX"], "Library",
                                         "include"))
+
+    if "CONDA_ENV_PATH" in os.environ:
+        search_dirs.append(os.path.join(os.environ["CONDA_ENV_PATH"],
+                                        "include"))
+        search_dirs.append(os.path.join(os.environ["CONDA_ENV_PATH"],
+                                        "Library", "include"))
 
     # Another hack to find conda include directory if the environment variable
     # doesn't exist. This seems to be necessary for RTD.
@@ -54,6 +58,7 @@ def find_eigen(hint=None):
 
     # Loop over search paths and check for the existence of the Eigen/Dense
     # header.
+    print("Looking for Eigen in:\n{0}".format(search_dirs))
     for base in search_dirs:
         for suff in suffixes:
             d = os.path.abspath(os.path.join(base, suff))
