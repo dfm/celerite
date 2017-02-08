@@ -9,4 +9,4 @@ dependencies:
   - eigen
   - pybind11
   - pip:
-      - "--editable=git+https://github.com/michaeljones/breathe.git@cc8f83016d59d8421478ca307927d6002ddf8e07#egg=breathe-master"
+      - https://github.com/michaeljones/breathe/zipball/master
