@@ -3,8 +3,41 @@
 Installation
 ============
 
-.. note:: Since celerite is actively under development right now, the only way
+.. note:: Since celerite is actively under development right now, the best way
     to install it is following :ref:`source` below.
+
+Using conda
+-----------
+
+.. note:: This method doesn't work yet but when it does, it'll be the best!
+
+The recommended method of installing celerite is using `conda
+<http://continuum.io/downloads>`_ with the following command:
+
+.. code-block:: bash
+
+    conda install -c conda-forge celerite
+
+
+Using pip
+---------
+
+celerite can also be install using `pip <https://pip.pypa.io>`_ after
+installing `Eigen <http://eigen.tuxfamily.org/>`_:
+
+.. code-block:: bash
+
+    pip install celerite
+
+If the Eigen headers can't be found, you can hint the include directory as
+follows:
+
+.. code-block:: bash
+
+    pip install celerite \
+        --global-option=build_ext \
+        --global-option=-I/path/to/eigen3
+
 
 .. _source:
 
@@ -18,12 +51,14 @@ The source code for celerite can be downloaded `from GitHub
 
     git clone https://github.com/dfm/celerite.git
 
+.. _python-deps:
+
 Dependencies
 ++++++++++++
 
 For the Python interface, you'll (obviously) need a Python installation and I
-recommend the `Anaconda distribution <http://continuum.io/downloads>`_ if you
-don't already have your own opinions.
+recommend `conda <http://continuum.io/downloads>`_ if you don't already have
+your own opinions.
 
 After installing Python, the following dependencies are required to build
 celerite:
