@@ -1,33 +1,62 @@
-.. _install:
+.. _python-install:
 
 Installation
 ============
 
 .. note:: Since celerite is actively under development right now, the only way
-    to install it is following the `from source instructions <#source>`_ below.
+    to install it is following :ref:`source` below.
 
 .. _source:
 
-From source
+From Source
 -----------
 
-First you'll need to make sure that you first have `Eigen
-<http://eigen.tuxfamily.org/>`_ installed. For example, on Debian-based Linux
-distributions:
+The source code for celerite can be downloaded `from GitHub
+<https://github.com/dfm/celerite>`_ by running
 
 .. code-block:: bash
 
-    sudo apt-get install libeigen3-dev
+    git clone https://github.com/dfm/celerite.git
 
-or on a Mac:
+Dependencies
+++++++++++++
+
+For the Python interface, you'll (obviously) need a Python installation and I
+recommend the `Anaconda distribution <http://continuum.io/downloads>`_ if you
+don't already have your own opinions.
+
+After installing Python, the following dependencies are required to build
+celerite:
+
+1. `Eigen <http://eigen.tuxfamily.org/>`_ is required for matrix computations,
+2. `NumPy <http://www.numpy.org/>`_ for math and linear algebra in Python, and
+3. `pybind11 <https://pybind11.readthedocs.io>`_ for the Python–C++ interface.
+
+If you're using conda, you can install all of the dependencies with the
+following command:
 
 .. code-block:: bash
 
-    brew install eigen
+    conda install -c conda-forge eigen numpy pybind11
 
-You'll also need `NumPy <http://www.numpy.org/>`_ and `pybind11
-<https://pybind11.readthedocs.io>`_ and I recommend the `Anaconda distribution
-<http://continuum.io/downloads>`_ if you don't already have your own opinions.
+Building
+++++++++
+
+After installing the dependencies, you can build the celerite module by
+running:
+
+.. code-block:: bash
+
+    python setup.py install
+
+in the root directory of the source tree.
+If the Eigen headers can't be found, you can hint the include directory as
+follows:
+
+.. code-block:: bash
+
+    python setup.py build_ext -I/path/to/eigen3 install
+
 
 Testing
 -------
@@ -39,6 +68,6 @@ execute:
 
     py.test -v
 
-in the ``/python`` directory. All of the tests should (of course) pass.
+All of the tests should (of course) pass.
 If any of the tests don't pass and if you can't sort out why, `open an issue
 on GitHub <https://github.com/dfm/celerite/issues>`_.
