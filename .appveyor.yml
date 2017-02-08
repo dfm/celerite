@@ -23,6 +23,6 @@ install:
     $env:CONDA_PREFIX = "C:\Miniconda$env:CONDA"
 build_script:
 - ps: |
-    python setup.py install
+    python setup.py install && exit 0
 test_script:
 - ps: pytest -v
