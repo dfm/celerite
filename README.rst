@@ -8,6 +8,8 @@ Read the documentation at: `celerite.rtfd.io <http://celerite.readthedocs.io>`_.
     :target: https://github.com/dfm/celerite/blob/master/LICENSE
 .. image:: http://img.shields.io/travis/dfm/celerite/master.svg?style=flat
     :target: https://travis-ci.org/dfm/celerite
+.. image:: https://ci.appveyor.com/api/projects/status/74al24yklrlrvwni?svg=true&style=flat
+    :target: https://ci.appveyor.com/project/dfm/celerite
 .. image:: https://readthedocs.org/projects/celerite/badge/?version=latest&style=flat
     :target: http://celerite.readthedocs.io/en/latest/?badge=latest
 .. image:: https://img.shields.io/badge/PDF-latest-orange.svg?style=flat
