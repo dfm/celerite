@@ -47,27 +47,16 @@ def find_eigen(hint=None):
         "/usr/include",
         "/usr/include/local",
         "/usr/include",
-        "/Miniconda",
-        "/Miniconda/Include",
-        "/Miniconda/Library",
-        "/Miniconda/Library/include",
     ]
 
     # Common suffixes
     suffixes = ["", "eigen3", "Eigen/include/eigen3", "Eigen3/include/eigen3"]
-
-    print(search_dirs)
 
     # Loop over search paths and check for the existence of the Eigen/Dense
     # header.
     for base in search_dirs:
         for suff in suffixes:
             d = os.path.abspath(os.path.join(base, suff))
-            print(d)
-            try:
-                print(os.listdir(d))
-            except:
-                pass
             path = os.path.join(d, "Eigen", "Dense")
             if not os.path.exists(path):
                 continue
