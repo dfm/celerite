@@ -45,7 +45,7 @@ def find_eigen(hint=None):
     ]
 
     # Also search in all of these directories with "eigen3" appended
-    search_dirs += [os.path.append(d, "eigen3") for d in search_dirs]
+    search_dirs += [os.path.join(d, "eigen3") for d in search_dirs]
     print(search_dirs)
 
     # Loop over search paths and check for the existence of the Eigen/Dense
