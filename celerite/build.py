@@ -26,6 +26,10 @@ def find_eigen(hint=None):
     if "CONDA_PREFIX" in os.environ:
         search_dirs.append(os.path.join(os.environ["CONDA_PREFIX"], "include"))
 
+        # Windows
+        search_dirs.append(os.path.join(os.environ["CONDA_PREFIX"], "Library",
+                                        "include"))
+
     # Another hack to find conda include directory if the environment variable
     # doesn't exist. This seems to be necessary for RTD.
     for d in search_dirs:
