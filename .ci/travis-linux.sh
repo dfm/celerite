@@ -9,5 +9,15 @@ then
   export PATH="$HOME/miniconda/bin:$PATH"
 fi
 
+if [[ $TEST_LANG == cpp ]]
+then
+  # Download the requested version of Eigen
+  mkdir -p eigen
+  cd eigen
+  wget --quiet "http://bitbucket.org/eigen/eigen/get/${EIGEN_VERSION}.tar.gz"
+  tar -xf ${EIGEN_VERSION}.tar.gz --strip-components 1
+  cd ..
+fi
+
 # Install Python dependencies
 source "$( dirname "${BASH_SOURCE[0]}" )"/travis.sh
