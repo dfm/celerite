@@ -48,6 +48,7 @@ def find_eigen(hint=None):
         "/usr/include/local",
         "/usr/include",
         "/Miniconda",
+        "/Miniconda/Include",
         "/Miniconda/Library",
     ]
 
