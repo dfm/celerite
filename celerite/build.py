@@ -59,7 +59,7 @@ def find_eigen(hint=None):
     # Debugging comments
     print("Looking for Eigen in:")
     for d in search_dirs:
-        print(" - {0}".format(d))
+        print(" - {0}".format(os.path.abspath(d)))
     print("+ suffixes: {0}".format(suffixes))
 
     # Loop over search paths and check for the existence of the Eigen/Dense
