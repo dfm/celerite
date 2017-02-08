@@ -31,7 +31,7 @@ conda update -q conda
 conda info -a
 conda create --yes -n test python=$PYTHON_VERSION
 source activate test
-conda install -c conda-forge  numpy=$NUMPY_VERSION setuptools eigen3 pybind11 pytest
+conda install -c conda-forge  numpy=$NUMPY_VERSION setuptools eigen pybind11 pytest
 
 # Build the extension
 #CXX=g++-4.8 CC=gcc-4.8 python setup.py install
