@@ -1,7 +1,5 @@
 sudo: false
 language: c
-os:
-    - linux
 addons:
     apt:
         sources:
@@ -18,33 +16,47 @@ env:
           CXX=g++-4.8
           CC=gcc-4.8
 
-    matrix:
-        - TEST_LANG='cpp'
-        - TEST_LANG='paper'
+matrix:
+    include:
 
-        - PYTHON_VERSION=2.7
-          NUMPY_VERSION=1.9
-        - PYTHON_VERSION=2.7
-          NUMPY_VERSION=1.10
-        - PYTHON_VERSION=2.7
-          NUMPY_VERSION=1.11
+        # This build will compile the LaTeX source of the paper
+        - os: linux
+          env: TEST_LANG='paper'
 
-        - PYTHON_VERSION=3.4
-          NUMPY_VERSION=1.9
-        - PYTHON_VERSION=3.4
-          NUMPY_VERSION=1.10
-        - PYTHON_VERSION=3.4
-          NUMPY_VERSION=1.11
+        # This one will test the C++ API
+        - os: linux
+          env: TEST_LANG='cpp'
 
-        - PYTHON_VERSION=3.5
-          NUMPY_VERSION=1.9
-        - PYTHON_VERSION=3.5
-          NUMPY_VERSION=1.10
-        - PYTHON_VERSION=3.5
-          NUMPY_VERSION=1.11
+        # Linux, Python 2.7
+        - os: linux
+          env: PYTHON_VERSION=2.7 NUMPY_VERSION=1.9
+        - os: linux
+          env: PYTHON_VERSION=2.7 NUMPY_VERSION=1.10
+        - os: linux
+          env: PYTHON_VERSION=2.7 NUMPY_VERSION=1.11
+        - os: linux
+          env: PYTHON_VERSION=2.7 NUMPY_VERSION=1.12
+
+        # Linux, Python 3.4
+        - os: linux
+          env: PYTHON_VERSION=3.4 NUMPY_VERSION=1.9
+        - os: linux
+          env: PYTHON_VERSION=3.4 NUMPY_VERSION=1.10
+        - os: linux
+          env: PYTHON_VERSION=3.4 NUMPY_VERSION=1.11
+
+        # Linux, Python 3.5
+        - os: linux
+          env: PYTHON_VERSION=3.5 NUMPY_VERSION=1.9
+        - os: linux
+          env: PYTHON_VERSION=3.5 NUMPY_VERSION=1.10
+        - os: linux
+          env: PYTHON_VERSION=3.5 NUMPY_VERSION=1.11
+        - os: linux
+          env: PYTHON_VERSION=3.5 NUMPY_VERSION=1.12
 
 install:
-    - source .ci/travis-$TRAVIS_OS_NAME.sh
+    - source .ci/travis.sh
 
 script: |
     if [[ $TEST_LANG == paper ]]

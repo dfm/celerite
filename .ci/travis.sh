@@ -17,12 +17,31 @@ fi
 # If testing C++, deal with that here
 if [[ $TEST_LANG == cpp ]]
 then
+  # Download the requested version of Eigen
+  mkdir -p eigen
+  cd eigen
+  wget --quiet "http://bitbucket.org/eigen/eigen/get/${EIGEN_VERSION}.tar.gz"
+  tar -xf ${EIGEN_VERSION}.tar.gz --strip-components 1
+  cd ..
+
+  # Build the tests
   cd cpp
   cmake . -DEIGEN_CHECK_INCLUDE_DIRS=../eigen
   make
   cd ..
   return
 fi
+
+# If we make it here then we're testing Python
+
+# http://conda.pydata.org/docs/travis.html#the-travis-yml-file
+if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
+  wget https://repo.continuum.io/miniconda/Miniconda3-latest-MacOSX-x86_64.sh -O miniconda.sh;
+else
+  wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
+fi
+bash miniconda.sh -b -p $HOME/miniconda
+export PATH="$HOME/miniconda/bin:$PATH"
 
 # Conda Python
 hash -r
@@ -34,5 +53,8 @@ source activate test
 conda install -c conda-forge  numpy=$NUMPY_VERSION setuptools eigen pybind11 pytest
 
 # Build the extension
-#CXX=g++-4.8 CC=gcc-4.8 python setup.py install
-python setup.py install
+if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
+  python setup.py install
+else
+  CXX=g++-4.8 CC=gcc-4.8 python setup.py install
+fi
