@@ -152,13 +152,12 @@ class build_ext(_build_ext):
             opts.append(cpp_flag(self.compiler))
             if has_flag(self.compiler, '-fvisibility=hidden'):
                 opts.append('-fvisibility=hidden')
+            for flag in ["-Wno-unused-function", "-Wno-uninitialized", "-O4"]:
+                if has_flag(self.compiler, flag):
+                    opts.append(flag)
         elif ct == 'msvc':
             opts.append('/DVERSION_INFO=\\"{0:s}\\"'
                         .format(self.distribution.get_version()))
-
-        for flag in ["-Wno-unused-function", "-Wno-uninitialized", "-O4"]:
-            if has_flag(self.compiler, flag):
-                opts.append(flag)
 
         for ext in self.extensions:
             ext.extra_compile_args = opts
