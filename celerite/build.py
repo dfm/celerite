@@ -63,6 +63,10 @@ def find_eigen(hint=None):
         for suff in suffixes:
             d = os.path.abspath(os.path.join(base, suff))
             print(d)
+            try:
+                print(os.listdir(d))
+            except:
+                pass
             path = os.path.join(d, "Eigen", "Dense")
             if not os.path.exists(path):
                 continue
