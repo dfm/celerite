@@ -24,29 +24,29 @@ def find_eigen(hint=None):
     # Look in the conda include directory in case eigen was installed using
     # conda.
     if "CONDA_PREFIX" in os.environ:
-        search_dirs.append(os.path.join(
-            os.environ["CONDA_PREFIX"], "include", "eigen3"))
+        search_dirs.append(os.path.join(os.environ["CONDA_PREFIX"], "include"))
 
     # Another hack to find conda include directory if the environment variable
     # doesn't exist. This seems to be necessary for RTD.
     for d in search_dirs:
         el = os.path.split(d)
         if len(re.findall(r"python[0-9\.].+m", el[-1])):
-            search_dirs += [
-                os.path.join(os.path.join(*el[:-1]), "eigen3")
-            ]
+            search_dirs += [os.path.join(*el[:-1])]
 
-    # Some other common installation locations.
+    # Some other common installation locations on UNIX-ish platforms
     search_dirs += [
-        "/usr/local/include/eigen3",
-        "/usr/local/homebrew/include/eigen3",
-        "/opt/local/var/macports/software/eigen3",
-        "/opt/local/include/eigen3",
-        "/usr/include/eigen3",
+        "/usr/local/include",
+        "/usr/local/homebrew/include",
+        "/opt/local/var/macports/software",
+        "/opt/local/include",
+        "/usr/include",
         "/usr/include/local",
         "/usr/include",
-        "/usr/local/include",
     ]
+
+    # Also search in all of these directories with "eigen3" appended
+    search_dirs += [os.path.append(d, "eigen3") for d in search_dirs]
+    print(search_dirs)
 
     # Loop over search paths and check for the existence of the Eigen/Dense
     # header.
@@ -119,8 +119,6 @@ class build_ext(_build_ext):
         eigen_include = find_eigen(hint=dirs)
         if eigen_include is None:
             logging.warn("Required library Eigen 3 not found.")
-            # raise RuntimeError("Required library Eigen 3 not found. "
-            #                    "Check the documentation for solutions.")
         else:
             include_dirs += [eigen_include]
 
