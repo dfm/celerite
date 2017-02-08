@@ -9,9 +9,7 @@ environment:
     MSSdk: 1
   matrix:
     - CONDA: 27
-      PYTHON_VERSION: 2.7
     - CONDA: 35
-      PYTHON_VERSION: 3.5
 install:
 - cmd: '"%VS140COMNTOOLS%\..\..\VC\vcvarsall.bat" %PLATFORM%'
 - ps: |
@@ -21,9 +19,6 @@ install:
     conda config --set always_yes yes --set changeps1 no
     conda update -q conda
     conda info -a
-    conda create -q -n test-env python=$env:PYTHON_VERSION
-    $env:PATH = "C:\Miniconda$env:CONDA\envs\test-env\Scripts;C:\Miniconda$env:CONDA\envs\test-env;$env:PATH"
-    activate test-env
     conda install -c conda-forge conda-build numpy setuptools eigen pybind11 pytest pip
 build_script:
 - ps: |
