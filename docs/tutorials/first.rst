@@ -7,8 +7,8 @@
 .. _first:
 
 
-First steps
-===========
+Python: First Steps
+===================
 
 For this tutorial, we're going to fit a Gaussian Process (GP) model to a
 simulated dataset with quasiperiodic oscillations. We're also going to
@@ -74,7 +74,7 @@ choosing more or less arbitrary initial values for the parameters.
     Q = 1.0 / np.sqrt(2.0)
     w0 = 3.0
     S0 = np.var(y) / (w0 * Q)
-    kernel = terms.SHOTerm(np.log(S0), np.log(Q), np.log(w0),
+    kernel = terms.SHOTerm(log_S0=np.log(S0), log_Q=np.log(Q), log_omega0=np.log(w0),
                            bounds=[(-15, 15), (-15, 15), (-15, 15)])
     kernel.freeze_parameter("log_Q")  # We don't want to fit for "Q" in this term
     
@@ -82,7 +82,7 @@ choosing more or less arbitrary initial values for the parameters.
     Q = 1.0
     w0 = 3.0
     S0 = np.var(y) / (w0 * Q)
-    kernel += terms.SHOTerm(np.log(S0), np.log(Q), np.log(w0),
+    kernel += terms.SHOTerm(log_S0=np.log(S0), log_Q=np.log(Q), log_omega0=np.log(w0),
                             bounds=[(-15, 15), (-15, 15), (-15, 15)])
 
 Then we wrap this kernel in a ``GP`` object that can be used for
@@ -97,7 +97,7 @@ computing the likelihood function.
 
 .. parsed-literal::
 
-    Initial log likelihood: -6.756596382629667
+    Initial log likelihood: -6.756596382629397
 
 
 There is a modeling language built into ``celerite`` that will come in
@@ -115,10 +115,10 @@ features that the modeling language exposes:
 .. parsed-literal::
 
     parameter_dict:
-    OrderedDict([('kernel:term[0]:log_S0', -0.84977866562586946), ('kernel:term[0]:log_omega0', 1.0986122886681098), ('kernel:term[1]:log_S0', -1.1963522559058422), ('kernel:term[1]:log_Q', 0.0), ('kernel:term[1]:log_omega0', 1.0986122886681098)])
+    OrderedDict([('kernel:terms[0]:log_S0', -0.84977866562586946), ('kernel:terms[0]:log_omega0', 1.0986122886681098), ('kernel:terms[1]:log_S0', -1.1963522559058422), ('kernel:terms[1]:log_Q', 0.0), ('kernel:terms[1]:log_omega0', 1.0986122886681098)])
     
     parameter_names:
-    ('kernel:term[0]:log_S0', 'kernel:term[0]:log_omega0', 'kernel:term[1]:log_S0', 'kernel:term[1]:log_Q', 'kernel:term[1]:log_omega0')
+    ('kernel:terms[0]:log_S0', 'kernel:terms[0]:log_omega0', 'kernel:terms[1]:log_S0', 'kernel:terms[1]:log_Q', 'kernel:terms[1]:log_omega0')
     
     parameter_vector:
     [-0.84977867  1.09861229 -1.19635226  0.          1.09861229]
@@ -134,17 +134,17 @@ but here's what you would do if you wanted to freeze another parameter:
 .. code:: python
 
     print(gp.get_parameter_names())
-    gp.freeze_parameter("kernel:term[0]:log_omega0")
+    gp.freeze_parameter("kernel:terms[0]:log_omega0")
     print(gp.get_parameter_names())
-    gp.thaw_parameter("kernel:term[0]:log_omega0")
+    gp.thaw_parameter("kernel:terms[0]:log_omega0")
     print(gp.get_parameter_names())
 
 
 .. parsed-literal::
 
-    ('kernel:term[0]:log_S0', 'kernel:term[0]:log_omega0', 'kernel:term[1]:log_S0', 'kernel:term[1]:log_Q', 'kernel:term[1]:log_omega0')
-    ('kernel:term[0]:log_S0', 'kernel:term[1]:log_S0', 'kernel:term[1]:log_Q', 'kernel:term[1]:log_omega0')
-    ('kernel:term[0]:log_S0', 'kernel:term[0]:log_omega0', 'kernel:term[1]:log_S0', 'kernel:term[1]:log_Q', 'kernel:term[1]:log_omega0')
+    ('kernel:terms[0]:log_S0', 'kernel:terms[0]:log_omega0', 'kernel:terms[1]:log_S0', 'kernel:terms[1]:log_Q', 'kernel:terms[1]:log_omega0')
+    ('kernel:terms[0]:log_S0', 'kernel:terms[1]:log_S0', 'kernel:terms[1]:log_Q', 'kernel:terms[1]:log_omega0')
+    ('kernel:terms[0]:log_S0', 'kernel:terms[0]:log_omega0', 'kernel:terms[1]:log_S0', 'kernel:terms[1]:log_Q', 'kernel:terms[1]:log_omega0')
 
 
 Now we'll use the ``L-BFGS-B`` non-linear optimization routine from
@@ -169,16 +169,16 @@ model.
 
 .. parsed-literal::
 
-          fun: -16.563201710953706
+          fun: -16.563201708563497
      hess_inv: <5x5 LbfgsInvHessProduct with dtype=float64>
-          jac: array([ -5.40012479e-05,  -3.41060513e-05,   8.52651283e-06,
-            -3.97903932e-05,  -8.52651283e-05])
+          jac: array([  2.84217094e-05,  -3.97903932e-05,   1.98951966e-05,
+            -2.27373675e-05,  -1.08002496e-04])
       message: b'CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH'
-         nfev: 240
-          nit: 29
+         nfev: 312
+          nit: 31
        status: 0
       success: True
-            x: array([ 3.27779101, -2.02446512, -4.16135219,  2.3418465 ,  1.13554489])
+            x: array([ 3.27828881, -2.0246582 , -4.16133798,  2.34180961,  1.13554435])
 
 
 With a small dataset like this, this optimization should have only taken
@@ -194,11 +194,11 @@ are the following:
 
 .. parsed-literal::
 
-    OrderedDict([('kernel:term[0]:log_S0', 3.2777910101071543),
-                 ('kernel:term[0]:log_omega0', -2.0244651244791885),
-                 ('kernel:term[1]:log_S0', -4.1613521854851117),
-                 ('kernel:term[1]:log_Q', 2.3418464959702914),
-                 ('kernel:term[1]:log_omega0', 1.1355448911625967)])
+    OrderedDict([('kernel:terms[0]:log_S0', 3.2782888071942451),
+                 ('kernel:terms[0]:log_omega0', -2.0246581958731209),
+                 ('kernel:terms[1]:log_S0', -4.1613379841923566),
+                 ('kernel:terms[1]:log_Q', 2.3418096114033911),
+                 ('kernel:terms[1]:log_omega0', 1.1355443515514363)])
 
 
 

@@ -291,7 +291,7 @@ class GP(ModelSet):
         alpha = self.solver.solve(resid).flatten()
 
         if t is None:
-            alpha = y - self._get_diag() * alpha
+            alpha = resid - self._get_diag() * alpha
         else:
             Kxs = self.get_matrix(xs, self._t)
             alpha = np.dot(Kxs, alpha)
