@@ -50,10 +50,10 @@ matrix:
           env: PYTHON_VERSION=3.6 NUMPY_VERSION=1.12
 
         # OSX
-        #- os: osx
-        #  env: PYTHON_VERSION=2.7 NUMPY_VERSION=1.12
-        #- os: osx
-        #  env: PYTHON_VERSION=3.6 NUMPY_VERSION=1.12
+        - os: osx
+          env: PYTHON_VERSION=2.7 NUMPY_VERSION=1.12
+        - os: osx
+          env: PYTHON_VERSION=3.6 NUMPY_VERSION=1.12
 
 install:
     - source .ci/travis.sh
