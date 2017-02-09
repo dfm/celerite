@@ -4,7 +4,7 @@ Read the documentation at: `celerite.rtfd.io <http://celerite.readthedocs.io>`_.
 
 .. image:: https://img.shields.io/badge/GitHub-dfm%2Fcelerite-blue.svg?style=flat
     :target: https://github.com/dfm/celerite
-.. image:: http://img.shields.io/badge/license-MIT-blue.svg?style=flat
+.. image:: http://img.shields.io/badge/license-MIT-blue.svg?style=flat&bust
     :target: https://github.com/dfm/celerite/blob/master/LICENSE
 .. image:: http://img.shields.io/travis/dfm/celerite/master.svg?style=flat
     :target: https://travis-ci.org/dfm/celerite
