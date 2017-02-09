@@ -1,6 +1,8 @@
 #ifndef _CELERITE_CARMA_H_
 #define _CELERITE_CARMA_H_
 
+#include <iostream>
+
 #include <cmath>
 #include <cfloat>
 #include <complex>
@@ -163,11 +165,14 @@ void predict (double yerr) {
   // Steps 3 and 9 from Kelly et al.
   std::complex<double> tmp = b_ * state_.x;
   expectation_ = tmp.real();
-  tmp = b_ * state_.P * b_.adjoint();
-  variance_ = yerr * yerr + tmp.real();
+  std::complex<double> tmp2 = b_ * state_.P * b_.adjoint();
+  variance_ = yerr * yerr + tmp2.real();
 
   // Check the variance value for instability.
-  if (variance_ < 0.0) throw carma_exception();
+  if (variance_ < 0.0) {
+    std::cout << "no good\n";
+    throw carma_exception();
+  }
 };
 
 void update_state (double y) {
@@ -188,13 +193,16 @@ void advance_time (double dt) {
 double log_likelihood (const Eigen::VectorXd& t, const Eigen::VectorXd& y, const Eigen::VectorXd& yerr) {
   unsigned n = t.rows();
   double r, ll = n * log(2.0 * M_PI);
+  std::cout << "init\n";
 
   reset(t(0));
   for (unsigned i = 0; i < n; ++i) {
     // Integrate the Kalman filter.
+    std::cout << i << "\n";
     predict(yerr(i));
     update_state(y(i));
     if (i < n - 1) advance_time(t(i+1) - t(i));
+    std::cout << i << "\n";
 
     // Update the likelihood evaluation.
     r = y(i) - expectation_;

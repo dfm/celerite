@@ -4,6 +4,7 @@
 #include <Eigen/Core>
 
 #include "celerite/celerite.h"
+#include "celerite/carma.h"
 
 namespace py = pybind11;
 
@@ -350,6 +351,25 @@ Returns:
       t[7].cast<Eigen::VectorXi>()
     );
   });
+
+  // CARMA
+  py::class_<celerite::carma::CARMASolver> carma_solver(m, "CARMASolver", R"delim(
+A thin wrapper around the C++ CARMASolver class
+)delim");
+  carma_solver.def(py::init<double, Eigen::VectorXd, Eigen::VectorXd>());
+  carma_solver.def("log_likelihood", [](celerite::carma::CARMASolver& solver, const Eigen::VectorXd& t, const Eigen::VectorXd& y, const Eigen::VectorXd& yerr) {
+    return solver.log_likelihood(t, y, yerr);
+  });
+  carma_solver.def("get_celerite_coeffs", [](celerite::carma::CARMASolver& solver) {
+    Eigen::VectorXd alpha_real, beta_real, alpha_complex_real, alpha_complex_imag, beta_complex_real, beta_complex_imag;
+    solver.get_celerite_coeffs(
+      alpha_real, beta_real, alpha_complex_real, alpha_complex_imag, beta_complex_real, beta_complex_imag
+    );
+    return std::make_tuple(
+      alpha_real, beta_real, alpha_complex_real, alpha_complex_imag, beta_complex_real, beta_complex_imag
+    );
+  });
+
 
   return m.ptr();
 }
