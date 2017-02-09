@@ -28,6 +28,7 @@ def test_carma(seed=42):
                                np.array([0.2, 0.1]))
     carma_ll = carma_solver.log_likelihood(t, y, yerr)
     params = carma_solver.get_celerite_coeffs()
+    print(params)
 
     solver = Solver()
     solver.compute(
@@ -38,6 +39,7 @@ def test_carma(seed=42):
         solver.dot_solve(y) + solver.log_determinant() + len(t)*np.log(2*np.pi)
     )
 
+    print(carma_ll, celerite_ll)
     assert np.allclose(carma_ll, celerite_ll)
 
 
