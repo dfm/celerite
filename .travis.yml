@@ -13,8 +13,6 @@ env:
     global:
         - EIGEN_VERSION=3.2.9
           TEST_LANG='python'
-          CXX=g++-4.8
-          CC=gcc-4.8
 
 matrix:
     include:
@@ -25,7 +23,7 @@ matrix:
 
         # This one will test the C++ API
         - os: linux
-          env: TEST_LANG='cpp'
+          env: TEST_LANG='cpp' CXX=g++-4.8 CC=gcc-4.8
 
         # Linux, Python 2.7
         - os: linux
