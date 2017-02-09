@@ -21,7 +21,7 @@ kernel = terms.RealTerm(1.0, 0.1) + terms.ComplexTerm(0.1, 2.0, 1.6)
 gp = GP(kernel)
 
 N = 2**np.arange(6, 20)
-K = np.maximum((N.max() / N), 5*np.ones_like(N)).astype(int)
+K = np.maximum((2 * N.max() / N), 5*np.ones_like(N)).astype(int)
 K_chol = np.maximum((4096 / N), 5*np.ones_like(N)).astype(int)
 times = np.empty((len(N), 3))
 times[:] = np.nan
