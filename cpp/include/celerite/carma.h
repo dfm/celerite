@@ -1,6 +1,8 @@
 #ifndef _CELERITE_CARMA_H_
 #define _CELERITE_CARMA_H_
 
+#include <iostream>
+
 #include <cmath>
 #include <cfloat>
 #include <complex>
@@ -55,6 +57,8 @@ CARMASolver (double log_sigma, Eigen::VectorXd arpars, Eigen::VectorXd mapars)
     arroots_(roots_from_params(arpars)), maroots_(roots_from_params(mapars)),
     b_(Eigen::MatrixXcd::Zero(1, p_)), lambda_base_(p_)
 {
+  if (q_ >= p_) throw dimension_mismatch();
+
   // Pre-compute the base lambda vector.
   for (unsigned i = 0; i < p_; ++i)
     lambda_base_(i) = exp(arroots_(i));
@@ -63,6 +67,8 @@ CARMASolver (double log_sigma, Eigen::VectorXd arpars, Eigen::VectorXd mapars)
   alpha_ = poly_from_roots(arroots_);
   beta_ = poly_from_roots(maroots_);
   beta_ /= beta_(0);
+
+  setup();
 };
 
 void get_celerite_coeffs (
@@ -163,11 +169,12 @@ void predict (double yerr) {
   // Steps 3 and 9 from Kelly et al.
   std::complex<double> tmp = b_ * state_.x;
   expectation_ = tmp.real();
-  tmp = b_ * state_.P * b_.adjoint();
-  variance_ = yerr * yerr + tmp.real();
+  std::complex<double> tmp2 = b_ * state_.P * b_.adjoint();
+  variance_ = yerr * yerr + tmp2.real();
 
   // Check the variance value for instability.
-  if (variance_ < 0.0) throw carma_exception();
+  if (variance_ < 0.0)
+    throw carma_exception();
 };
 
 void update_state (double y) {
@@ -186,7 +193,8 @@ void advance_time (double dt) {
 };
 
 double log_likelihood (const Eigen::VectorXd& t, const Eigen::VectorXd& y, const Eigen::VectorXd& yerr) {
-  unsigned n = t.rows();
+  int n = t.rows();
+  if (y.rows() != n || yerr.rows() != n) throw dimension_mismatch();
   double r, ll = n * log(2.0 * M_PI);
 
   reset(t(0));

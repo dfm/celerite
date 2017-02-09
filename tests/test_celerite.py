@@ -11,11 +11,34 @@ except ImportError:
     import pickle
 
 from celerite import Solver, GP, terms
-from celerite.solver import get_kernel_value
+from celerite.solver import get_kernel_value, CARMASolver
 
-__all__ = ["test_log_determinant", "test_solve", "test_dot", "test_pickle",
-           "test_build_gp", "test_log_likelihood", "test_predict",
-           "test_nyquist_singularity"]
+__all__ = ["test_carma", "test_log_determinant", "test_solve", "test_dot",
+           "test_pickle", "test_build_gp", "test_log_likelihood",
+           "test_predict", "test_nyquist_singularity"]
+
+
+def test_carma(seed=42):
+    np.random.seed(seed)
+    t = np.sort(np.random.uniform(0, 5, 100))
+    yerr = 0.1 + np.zeros_like(t)
+    y = np.sin(t) + yerr * np.random.randn(len(t))
+
+    carma_solver = CARMASolver(-0.5, np.array([0.1, 0.05, 0.01]),
+                               np.array([0.2, 0.1]))
+    carma_ll = carma_solver.log_likelihood(t, y, yerr)
+    params = carma_solver.get_celerite_coeffs()
+
+    solver = Solver()
+    solver.compute(
+        params[0], params[1], params[2], params[3], params[4], params[5],
+        t, yerr**2
+    )
+    celerite_ll = -0.5*(
+        solver.dot_solve(y) + solver.log_determinant() + len(t)*np.log(2*np.pi)
+    )
+
+    assert np.allclose(carma_ll, celerite_ll)
 
 
 def test_log_determinant(seed=42):
