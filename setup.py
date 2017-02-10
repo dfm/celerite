@@ -23,7 +23,7 @@ compile_args = dict(
     define_macros=[("NDEBUG", None)],
 )
 if os.name == "posix":
-    compile_args["libraries"].append("m")
+    compile_args["libraries"] += ["m", "stdc++"]
 
 compile_args["include_dirs"] = [
     localincl,
