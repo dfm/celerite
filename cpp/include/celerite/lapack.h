@@ -1,3 +1,5 @@
+#ifdef WITH_LAPACK
+
 #ifndef _CELERITE_LAPACK_H_
 #define _CELERITE_LAPACK_H_
 
@@ -49,5 +51,7 @@ int band_solve (int kl, int ku,
 }
 
 }
+
+#endif
 
 #endif
