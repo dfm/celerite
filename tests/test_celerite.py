@@ -28,7 +28,6 @@ def test_carma(seed=42):
                                np.array([0.2, 0.1]))
     carma_ll = carma_solver.log_likelihood(t, y, yerr)
     params = carma_solver.get_celerite_coeffs()
-    print(params)
 
     solver = Solver()
     solver.compute(
@@ -39,21 +38,15 @@ def test_carma(seed=42):
         solver.dot_solve(y) + solver.log_determinant() + len(t)*np.log(2*np.pi)
     )
 
-    print(carma_ll, celerite_ll)
     assert np.allclose(carma_ll, celerite_ll)
 
 
-def test_log_determinant(seed=42):
+def _test_log_determinant(alpha_real, beta_real, alpha_complex_real,
+                          alpha_complex_imag, beta_complex_real,
+                          beta_complex_imag, seed=42):
     np.random.seed(seed)
     t = np.sort(np.random.rand(5))
     diag = np.random.uniform(0.1, 0.5, len(t))
-
-    alpha_real = np.array([1.5, 0.1])
-    beta_real = np.array([1.0, 0.3])
-    alpha_complex_real = np.array([1.0])
-    alpha_complex_imag = np.array([0.1])
-    beta_complex_real = np.array([1.0])
-    beta_complex_imag = np.array([1.0])
 
     solver = Solver()
     solver.compute(
@@ -67,19 +60,34 @@ def test_log_determinant(seed=42):
     K[np.diag_indices_from(K)] += diag
     assert np.allclose(solver.log_determinant(), np.linalg.slogdet(K)[1])
 
-
-def test_solve(seed=42):
-    np.random.seed(seed)
-    t = np.sort(np.random.rand(500))
-    diag = np.random.uniform(0.1, 0.5, len(t))
-    b = np.random.randn(len(t))
-
-    alpha_real = np.array([1.3, 1.5])
-    beta_real = np.array([0.5, 0.2])
+def test_log_determinant(seed=42):
+    alpha_real = np.array([1.5, 0.1])
+    beta_real = np.array([1.0, 0.3])
     alpha_complex_real = np.array([1.0])
     alpha_complex_imag = np.array([0.1])
     beta_complex_real = np.array([1.0])
     beta_complex_imag = np.array([1.0])
+    _test_log_determinant(alpha_real, beta_real, alpha_complex_real,
+                          alpha_complex_imag, beta_complex_real,
+                          beta_complex_imag, seed=seed)
+
+    alpha_real = np.array([1.5, 0.1, 0.6, 0.3, 0.8, 0.7])
+    beta_real = np.array([1.0, 0.3, 0.05, 0.01, 0.1, 0.2])
+    alpha_complex_real = np.array([1.0, 2.0])
+    alpha_complex_imag = np.array([0.1, 0.5])
+    beta_complex_real = np.array([1.0, 1.0])
+    beta_complex_imag = np.array([1.0, 1.0])
+    _test_log_determinant(alpha_real, beta_real, alpha_complex_real,
+                          alpha_complex_imag, beta_complex_real,
+                          beta_complex_imag, seed=seed)
+
+
+def _test_solve(alpha_real, beta_real, alpha_complex_real, alpha_complex_imag,
+                beta_complex_real, beta_complex_imag, seed=42):
+    np.random.seed(seed)
+    t = np.sort(np.random.rand(500))
+    diag = np.random.uniform(0.1, 0.5, len(t))
+    b = np.random.randn(len(t))
 
     solver = Solver()
     with pytest.raises(RuntimeError):
@@ -100,6 +108,25 @@ def test_solve(seed=42):
 
     b = np.random.randn(len(t), 5)
     assert np.allclose(solver.solve(b), np.linalg.solve(K, b))
+
+def test_solve(seed=42):
+    alpha_real = np.array([1.5, 0.1])
+    beta_real = np.array([1.0, 0.3])
+    alpha_complex_real = np.array([1.0])
+    alpha_complex_imag = np.array([0.1])
+    beta_complex_real = np.array([1.0])
+    beta_complex_imag = np.array([1.0])
+    _test_solve(alpha_real, beta_real, alpha_complex_real, alpha_complex_imag,
+                beta_complex_real, beta_complex_imag, seed=seed)
+
+    alpha_real = np.array([1.5, 0.1, 0.6, 0.3, 0.8, 0.7])
+    beta_real = np.array([1.0, 0.3, 0.05, 0.01, 0.1, 0.2])
+    alpha_complex_real = np.array([1.0, 2.0])
+    alpha_complex_imag = np.array([0.1, 0.5])
+    beta_complex_real = np.array([1.0, 1.0])
+    beta_complex_imag = np.array([1.0, 1.0])
+    _test_solve(alpha_real, beta_real, alpha_complex_real, alpha_complex_imag,
+                beta_complex_real, beta_complex_imag, seed=seed)
 
 
 def test_dot(seed=42):

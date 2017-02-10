@@ -54,7 +54,7 @@ conda install -c conda-forge  numpy=$NUMPY_VERSION setuptools eigen pybind11 pyt
 
 # Build the extension
 if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
-  python setup.py install
+  python setup.py install $BUILD_ARGS
 else
-  CXX=g++-4.8 CC=gcc-4.8 python setup.py install
+  CXX=g++-4.8 CC=gcc-4.8 python setup.py install $BUILD_ARGS
 fi

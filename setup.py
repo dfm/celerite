@@ -12,6 +12,11 @@ if "publish" in sys.argv[-1]:
     os.system("python setup.py sdist upload")
     sys.exit()
 
+# The include directory for the celerite headers
+localincl = os.path.join("cpp", "include")
+if not os.path.exists(os.path.join(localincl, "celerite", "version.h")):
+    raise RuntimeError("couldn't find celerite headers")
+
 # Default compile arguments.
 compile_args = dict(
     libraries=[],
@@ -20,15 +25,15 @@ compile_args = dict(
 if os.name == "posix":
     compile_args["libraries"].append("m")
 
-localincl = os.path.join("cpp", "include")
 compile_args["include_dirs"] = [
     localincl,
     numpy.get_include(),
 ]
 
-# Check to make sure that the header files are in place
-if not os.path.exists(os.path.join(localincl, "celerite", "version.h")):
-    raise RuntimeError("couldn't find celerite headers")
+# Check for LAPACK argument
+if "--lapack" in sys.argv:
+    sys.argv.pop(sys.argv.index("--lapack"))
+    compile_args["define_macros"] += [("WITH_LAPACK", None)]
 
 ext = Extension("celerite.solver",
                 sources=[os.path.join("celerite", "solver.cpp")],
