@@ -9,7 +9,7 @@ from itertools import product
 import matplotlib
 import matplotlib.pyplot as plt
 
-from plot_setup import setup, get_figsize
+from celerite.plot_setup import setup, get_figsize
 
 setup()
 
@@ -67,6 +67,10 @@ for n in range(1, N):
     y_strt = 2*J+1+(n-1)*(4*J+1)
     y_end = min(y_strt+width, full_dim)
     full[x_strt:x_end, y_strt:y_end] = block[:x_end-x_strt, :y_end-y_strt]
+
+nband = len(full) * 2*(2*J+2)
+nnz = np.sum(full > 0)
+print("Sparsity: {0}".format(nnz / nband))
 
 # Legend
 d = 1
