@@ -21,9 +21,9 @@ import celerite
 from celerite import modeling
 
 from astero_term import AsteroTerm
-from plot_setup import setup, get_figsize, COLORS
+from celerite.plot_setup import setup, get_figsize, COLORS
 
-setup()
+setup(auto=True)
 
 def format_filename(name):
     base = "astero-{0}-".format(kicid)

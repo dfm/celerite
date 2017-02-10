@@ -11,9 +11,9 @@ from scipy.ndimage.filters import gaussian_filter
 
 import emcee3
 
-from plot_setup import setup, get_figsize, COLORS
+from celerite.plot_setup import setup, get_figsize, COLORS
 
-setup()
+setup(auto=True)
 np.random.seed(42)
 
 # Helpers

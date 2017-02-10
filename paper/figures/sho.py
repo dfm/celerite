@@ -5,9 +5,9 @@ from __future__ import division, print_function
 
 import numpy as np
 import matplotlib.pyplot as plt
-from plot_setup import setup, HORIZONTAL_FIGSIZE
+from celerite.plot_setup import setup, HORIZONTAL_FIGSIZE
 
-setup()
+setup(auto=True)
 
 def sho_psd(Q, x):
     x2 = x*x

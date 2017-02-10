@@ -89,7 +89,7 @@ c = [(0.89411765336990356, 0.10196078568696976, 0.10980392247438431),
      (0.60000002384185791, 0.60000002384185791, 0.60000002384185791),
      (0.89411765336990356, 0.10196078568696976, 0.10980392247438431)]
 cmap = matplotlib.colors.ListedColormap(["white"] + list(c), name="cmap")
-fig, ax = plt.subplots(1, 1, figsize=get_figsize(2, 2))
+fig, ax = plt.subplots(1, 1, figsize=get_figsize(2.3, 2.3))
 ax.pcolor(full, cmap=cmap, vmin=0, vmax=len(c))
 
 # Plot the edges
@@ -122,4 +122,4 @@ ax.plot([0.25, 0.25, 8.5, 8.5, 0.25],
         full_dim - np.array([0.25, 16.75, 16.75, 0.25, 0.25]),
         "k")
 
-fig.savefig("matrix.pdf")
+fig.savefig("matrix.pdf", bbox_inches="tight")

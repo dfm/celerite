@@ -14,10 +14,10 @@ import matplotlib.pyplot as plt
 from scipy.optimize import minimize
 
 import celerite
-from plot_setup import setup, get_figsize
+from celerite.plot_setup import setup, get_figsize
 from transit_model import RotationTerm, TransitModel
 
-setup()
+setup(auto=True)
 np.random.seed(42)
 
 data, hdr = fitsio.read("data/kplr001430163-2013011073258_llc.fits",
