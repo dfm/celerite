@@ -174,12 +174,14 @@ class build_ext(_build_ext):
         print("Found LAPACK linking info:")
         pprint.pprint(info)
         for ext in self.extensions:
+            if not any(k[0] == "WITH_LAPACK" for k in ext.define_macros):
+                continue
+            print("Linking extension to LAPACK...")
             for k, v in info.items():
                 try:
                     setattr(ext, k, getattr(ext, k) + v)
                 except TypeError:
                     continue
-            ext.define_macros += [("WITH_LAPACK", None)]
 
         # Run the standard build procedure.
         _build_ext.build_extension(self, ext)
