@@ -486,7 +486,11 @@ Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> BandSolver<T>::dot (
       int k = block_size * i;
       b_out(i, j) = 0.0;
       for (int kp = std::max(0, width - k); kp < std::min(2*width+1, dim_ext + width - k); ++kp)
+#ifdef WITH_LAPACK
         b_out(i, j) += A(width+kp, k) * bex(k + kp - width, j);
+#else
+        b_out(i, j) += A(kp, k) * bex(k + kp - width, j);
+#endif
     }
   }
 
