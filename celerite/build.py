@@ -167,5 +167,19 @@ class build_ext(_build_ext):
         for ext in self.extensions:
             ext.extra_compile_args = opts
 
+        # Link to numpy's LAPACK if available
+        import pprint
+        import numpy.__config__ as npconf
+        info = npconf.get_info("blas_opt_info")
+        print("Found LAPACK linking info:")
+        pprint.pprint(info)
+        for ext in self.extensions:
+            for k, v in info.items():
+                try:
+                    setattr(ext, k, getattr(ext, k) + v)
+                except TypeError:
+                    continue
+            # ext.define_macros += [("WITH_LAPACK", None)]
+
         # Run the standard build procedure.
         _build_ext.build_extension(self, ext)

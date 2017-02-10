@@ -6,6 +6,7 @@
 
 #include "celerite/utils.h"
 #include "celerite/exceptions.h"
+#include "celerite/lapack.h"
 #include "celerite/banded.h"
 #include "celerite/solver/solver.h"
 
@@ -115,16 +116,23 @@ public:
   using Solver<T>::solve;
 
 protected:
-  Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> a_, al_;
+  Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> a_;
+  Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> al_;
   Eigen::VectorXi ipiv_;
 
 };
 
 // Function for working with band matrices.
+#ifdef WITH_LAPACK
+inline double& get_band_element (Eigen::MatrixXd& m, int width, int i, int j) {
+  return m(2*width - i, std::max(0, i) + j);
+}
+#else
 template <typename T>
 inline T& get_band_element (Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>& m, int width, int i, int j) {
   return m(width - i, std::max(0, i) + j);
 }
+#endif
 
 template <typename T>
 void BandSolver<T>::build_matrix (
@@ -145,7 +153,11 @@ void BandSolver<T>::build_matrix (
   BLOCKSIZE_BASE
 
   // Set up the extended matrix.
+#ifdef WITH_LAPACK
+  A.resize(1+3*width, dim_ext);
+#else
   A.resize(1+2*width, dim_ext);
+#endif
   A.setConstant(T(0.0));
 
   // Start with the diagonal.
@@ -312,17 +324,32 @@ int BandSolver<T>::compute (
     get_band_element(a_, width, 0, k*block_size) += diag(k);
 
   // Reshape the working arrays
+#ifndef WITH_LAPACK
   al_.resize(width, dim_ext);
+#endif
   ipiv_.resize(dim_ext);
 
   // Factorize the sparse matrix
+#ifdef WITH_LAPACK
+  band_factorize(dim_ext, width, width, a_, ipiv_);
+#else
   int nothing;
   bandec<T>(a_.data(), dim_ext, width, width, al_.data(), ipiv_.data(), &nothing);
+#endif
 
-  // Compute the determinant
+// Compute the determinant
+#ifdef WITH_LAPACK
+  //Eigen::VectorXcd d = a_.row(2*width).cast<std::complex<double> >();
+  //this->log_det_ = log(d.array()).real().sum();
+  T ld = T(0.0);
+  for (int i = 0; i < dim_ext; ++i) ld += log(abs(a_(2*width, i)));
+  this->log_det_ = ld;
+#else
   T ld = T(0.0);
   for (int i = 0; i < dim_ext; ++i) ld += log(abs(a_(0, i)));
   this->log_det_ = ld;
+#endif
+
   this->computed_ = true;
 
   return 0;
@@ -343,8 +370,12 @@ void BandSolver<T>::solve (const Eigen::MatrixXd& b, T* x) const {
       bex(i*block_size, j) = T(b(i, j));
 
   // Solve the extended system.
+#ifdef WITH_LAPACK
+  band_solve(width, width, a_, ipiv_, bex);
+#else
   for (int i = 0; i < nrhs; ++i)
     banbks<T>(a_.data(), dim_ext, width, width, al_.data(), ipiv_.data(), bex.col(i).data());
+#endif
 
   // Copy the output.
   for (int j = 0; j < nrhs; ++j)
@@ -455,7 +486,7 @@ Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> BandSolver<T>::dot (
       int k = block_size * i;
       b_out(i, j) = 0.0;
       for (int kp = std::max(0, width - k); kp < std::min(2*width+1, dim_ext + width - k); ++kp)
-        b_out(i, j) += A(kp, k) * bex(k + kp - width, j);
+        b_out(i, j) += A(width+kp, k) * bex(k + kp - width, j);
     }
   }
 
