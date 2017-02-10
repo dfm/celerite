@@ -172,10 +172,18 @@ void reset (double t) {
 
 void predict (double yerr) {
   // Steps 3 and 9 from Kelly et al.
-  std::complex<double> tmp = b_ * state_.x;
-  expectation_ = tmp.real();
-  std::complex<double> tmp2 = b_ * state_.P * b_.adjoint();
-  variance_ = yerr * yerr + tmp2.real();
+  //std::complex<double> tmp = b_ * state_.x;
+  //expectation_ = tmp.real();
+  //std::complex<double> tmp2 = b_ * state_.P * b_.adjoint();
+  //variance_ = yerr * yerr + tmp2.real();
+  expectation_ = 0.0;
+  variance_ = yerr * yerr;
+  for (int i = 0; i < p_; ++i) {
+    expectation_ += (b_(i) * state_.x(i)).real();
+    for (int j = 0; j < p_; ++j) {
+      variance_ += (b_(i) * state_.P(i, j) * std::conj(b_(j))).real();
+    }
+  }
 
   // Check the variance value for instability.
   if (variance_ < 0.0)
@@ -184,17 +192,38 @@ void predict (double yerr) {
 
 void update_state (double y) {
   // Steps 4-6 and 10-12 from Kelly et al.
-  Eigen::VectorXcd K = state_.P * b_.adjoint() / variance_;
-  state_.x += (y - expectation_) * K;
-  state_.P -= variance_ * K * K.adjoint();
+  //Eigen::VectorXcd K = state_.P * b_.adjoint() / variance_;
+  //state_.x += (y - expectation_) * K;
+  //state_.P -= variance_ * K * K.adjoint();
+  Eigen::VectorXcd K(p_, p_);
+  K.setConstant(0.0);
+  for (int i = 0; i < p_; ++i) {
+    for (int j = 0; j < p_; ++j)
+      K(i) += state_.P(i, j) * std::conj(b_(j)) / variance_;
+    state_.x(i) += (y - expectation_) * K(i);
+  }
+
+  for (int i = 0; i < p_; ++i)
+    for (int j = 0; j < p_; ++j)
+      state_.P(i, j) -= variance_ * K(i) * std::conj(K(j));
 };
 
 void advance_time (double dt) {
   // Steps 7 and 8 from Kelly et al.
-  Eigen::VectorXcd lam = pow(lambda_base_, dt).matrix();
+  Eigen::VectorXcd lam(p_);  // = pow(lambda_base_, dt).matrix();
   state_.time += dt;
-  for (int i = 0; i < p_; ++i) state_.x(i) *= lam(i);
-  state_.P = lam.asDiagonal() * (state_.P - V_) * lam.conjugate().asDiagonal() + V_;
+  for (int i = 0; i < p_; ++i) {
+    lam(i) = pow(lambda_base_(i), dt);
+    state_.x(i) *= lam(i);
+  }
+  Eigen::MatrixXcd P = state_.P;
+  state_.P = V_;
+  for (int i = 0; i < p_; ++i) {
+    for (int j = 0; j < p_; ++j) {
+      state_.P(i, j) += lam(i) * (P(i, j) - V_(i, j)) * std::conj(lam(j));
+    }
+  }
+  //state_.P = lam.asDiagonal() * (state_.P - V_) * lam.conjugate().asDiagonal() + V_;
 };
 
 double log_likelihood (const Eigen::VectorXd& t, const Eigen::VectorXd& y, const Eigen::VectorXd& yerr) {
