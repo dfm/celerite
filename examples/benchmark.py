@@ -77,5 +77,5 @@ for xi, j in enumerate(J):
             f.write(msg)
         print(msg, end="")
 
-        if comp_time + ll_time >= 0.2:
+        if comp_time + ll_time >= 1:
             break
