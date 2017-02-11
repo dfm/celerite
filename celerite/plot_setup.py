@@ -37,4 +37,5 @@ def setup(auto=False):
 def get_figsize(rows=1, cols=1):
     return (4 * cols, 4 * rows)
 
+
 SQUARE_FIGSIZE = get_figsize(1, 1)
