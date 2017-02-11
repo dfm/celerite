@@ -28,9 +28,15 @@ class GP(ModelSet):
             log of the _variance_ of the white noise. This can either be a
             ``float`` or a subclass of :class:`modeling.Model`.
             (default: ``-inf``)
-        fit_white_noise (optional): If ``False``, all of the parameters of
+        fit_white_noise (Optional): If ``False``, all of the parameters of
             ``log_white_noise`` will be frozen. Otherwise, the parameter
             states are unaffected. (default: ``False``)
+        use_lapack (Optional[bool]): If ``True`` and if celerite was compiled
+            with LAPACK support, the solver will use the optimized LAPACK
+            band matrix solver. By default, LAPACK will be used (if available)
+            for models with at least 8 terms. This seems to be roughly the
+            break even point on some systems but there's no reason why this
+            should be optimal in all cases.
 
     """
 
