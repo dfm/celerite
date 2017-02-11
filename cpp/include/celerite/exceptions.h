@@ -23,6 +23,12 @@ struct dimension_mismatch : public std::exception {
   }
 };
 
+struct no_lapack : public std::exception {
+  const char * what () const throw () {
+    return "celerite was not compiled with LAPACK support";
+  }
+};
+
 }; // namespace celerite
 
 #endif // _CELERITE_EXCEPTIONS_H_

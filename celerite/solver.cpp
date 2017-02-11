@@ -17,13 +17,16 @@ namespace py = pybind11;
 //
 class PicklableBandSolver : public celerite::solver::BandSolver<double> {
 public:
+  PicklableBandSolver (bool use_lapack = false) : celerite::solver::BandSolver<double>(use_lapack) {};
+
   auto serialize () const {
-    return std::make_tuple(this->computed_, this->n_, this->p_real_, this->p_complex_, this->log_det_,
+    return std::make_tuple(this->use_lapack_, this->computed_, this->n_, this->p_real_, this->p_complex_, this->log_det_,
                            this->a_, this->al_, this->ipiv_);
   };
 
-  void deserialize (bool computed, int n, int p_real, int p_complex, double log_det,
-                    Eigen::MatrixXd a, Eigen::MatrixXd al, Eigen::VectorXi ipiv) {
+  void deserialize (bool use_lapack, bool computed, int n, int p_real, int p_complex,
+                    double log_det, Eigen::MatrixXd a, Eigen::MatrixXd al, Eigen::VectorXi ipiv) {
+    this->use_lapack_ = use_lapack;
     this->computed_ = computed;
     this->n_ = n;
     this->p_real_ = p_real;
@@ -48,6 +51,13 @@ need to call these directly. This interface was built using `pybind11
 )delim");
 
   m.def("get_library_version", []() { return CELERITE_VERSION_STRING; }, "The version of the linked C++ library");
+  m.def("with_lapack", []() {
+#ifdef WITH_LAPACK
+    return true;
+#else
+    return false;
+#endif
+  }, "Was celerite compiled with LAPACK support");
 
   m.def("get_kernel_value",
     [](
@@ -169,6 +179,7 @@ method must always be called first.
 
 )delim");
   solver.def(py::init<>());
+  solver.def(py::init<bool>());
 
   solver.def("compute", [](PicklableBandSolver& solver,
       const Eigen::VectorXd& alpha_real,
@@ -335,20 +346,20 @@ Returns:
   });
 
   solver.def("__setstate__", [](PicklableBandSolver& solver, py::tuple t) {
-    if (t.size() != 8)
-    throw std::runtime_error("Invalid state!");
+    if (t.size() != 9) throw std::runtime_error("Invalid state!");
 
-    new (&solver) PicklableBandSolver();
+    new (&solver) PicklableBandSolver(t[0].cast<bool>());
 
     solver.deserialize(
       t[0].cast<bool>(),
-      t[1].cast<int>(),
+      t[1].cast<bool>(),
       t[2].cast<int>(),
       t[3].cast<int>(),
-      t[4].cast<double>(),
-      t[5].cast<Eigen::MatrixXd>(),
+      t[4].cast<int>(),
+      t[5].cast<double>(),
       t[6].cast<Eigen::MatrixXd>(),
-      t[7].cast<Eigen::VectorXi>()
+      t[7].cast<Eigen::MatrixXd>(),
+      t[8].cast<Eigen::VectorXi>()
     );
   });
 

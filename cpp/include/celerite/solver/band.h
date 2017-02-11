@@ -10,10 +10,6 @@
 #include "celerite/banded.h"
 #include "celerite/solver/solver.h"
 
-#ifndef MIN_LAPACK_WIDTH
-#define MIN_LAPACK_WIDTH 8
-#endif
-
 namespace celerite {
 namespace solver {
 
@@ -36,7 +32,7 @@ namespace solver {
 template <typename T>
 class BandSolver : public Solver<T> {
 public:
-  BandSolver () : Solver<T>() {};
+  BandSolver (bool use_lapack = false) : Solver<T>(), use_lapack_(use_lapack) {};
   ~BandSolver () {};
 
   void build_matrix (
@@ -121,6 +117,7 @@ public:
   using Solver<T>::solve;
 
 protected:
+  bool use_lapack_;
   Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> a_;
   Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> al_;
   Eigen::VectorXi ipiv_;
@@ -315,7 +312,9 @@ int BandSolver<T>::compute (
 
   int offset_factor = 1;
 #ifdef WITH_LAPACK
-  if (width >= MIN_LAPACK_WIDTH) offset_factor = 2;
+  if (use_lapack_) offset_factor = 2;
+#else
+  if (use_lapack_) throw no_lapack();
 #endif
 
   // Build the extended matrix.
@@ -328,7 +327,7 @@ int BandSolver<T>::compute (
 
   // Reshape the working arrays
 #ifdef WITH_LAPACK
-  if (width < MIN_LAPACK_WIDTH)
+  if (!use_lapack_)
 #endif
   al_.resize(width, dim_ext);
   ipiv_.resize(dim_ext);
@@ -336,7 +335,7 @@ int BandSolver<T>::compute (
   // Factorize the sparse matrix
   int nothing;
 #ifdef WITH_LAPACK
-  if (width >= MIN_LAPACK_WIDTH)
+  if (use_lapack_)
     band_factorize(dim_ext, width, width, a_, ipiv_);
   else
 #endif
@@ -345,14 +344,13 @@ int BandSolver<T>::compute (
 // Compute the determinant
   T ld = T(0.0);
 #ifdef WITH_LAPACK
-  if (width >= MIN_LAPACK_WIDTH)
+  if (use_lapack_)
     for (int i = 0; i < dim_ext; ++i) ld += log(abs(a_(2*width, i)));
   else
 #endif
   for (int i = 0; i < dim_ext; ++i) ld += log(abs(a_(0, i)));
 
   this->log_det_ = ld;
-
   this->computed_ = true;
 
   return 0;
@@ -374,7 +372,7 @@ void BandSolver<T>::solve (const Eigen::MatrixXd& b, T* x) const {
 
   // Solve the extended system.
 #ifdef WITH_LAPACK
-  if (width >= MIN_LAPACK_WIDTH)
+  if (use_lapack_)
     band_solve(width, width, a_, ipiv_, bex);
   else
 #endif

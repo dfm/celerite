@@ -2,9 +2,10 @@
 
 from __future__ import division, print_function
 import math
+import logging
 import numpy as np
 
-from .solver import Solver
+from .solver import Solver, with_lapack
 from .modeling import ModelSet, ConstantModel
 
 __all__ = ["GP"]
@@ -36,11 +37,24 @@ class GP(ModelSet):
     def __init__(self,
                  kernel,
                  mean=0.0, fit_mean=False,
-                 log_white_noise=-float("inf"), fit_white_noise=False):
+                 log_white_noise=-float("inf"), fit_white_noise=False,
+                 use_lapack=None):
         self.solver = None
         self._computed = False
         self._t = None
         self._y_var = None
+
+        if use_lapack is None:
+            if with_lapack():
+                coeffs = kernel.coefficients
+                nterms = len(coeffs[0]) + 2 * len(coeffs[2])
+                use_lapack = (nterms >= 8)
+            else:
+                use_lapack = False
+        if use_lapack and not with_lapack():
+            use_lapack = False
+            logging.warn("celerite was not compiled with lapack support")
+        self._use_lapack = use_lapack
 
         # Build up a list of models for the ModelSet
         models = [("kernel", kernel)]
@@ -131,7 +145,7 @@ class GP(ModelSet):
         self._yerr = np.empty_like(self._t)
         self._yerr[:] = yerr
         if self.solver is None:
-            self.solver = Solver()
+            self.solver = Solver(self._use_lapack)
         (alpha_real, beta_real, alpha_complex_real, alpha_complex_imag,
          beta_complex_real, beta_complex_imag) = self.kernel.coefficients
         self.solver.compute(
