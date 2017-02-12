@@ -9,18 +9,28 @@ Installation
 Using conda
 -----------
 
-The recommended method of installing celerite is using `conda
-<http://continuum.io/downloads>`_ with the following command:
+The easiest way to install celerite is using `conda
+<http://continuum.io/downloads>`_ (via `conda-forge
+<https://conda-forge.github.io/>`_) with the following command:
 
 .. code-block:: bash
 
     conda install -c conda-forge celerite
 
+This version of celerite will be linked to the OpenBLAS implementation
+available on conda-forge. It's possible that power users might be able to get
+some extra performance by linking to an implementation that is more tuned for
+your system (e.g. MKL) by following the instructions in :ref:`lapack` below.
+
+.. note:: On Windows, celerite is not linked to a LAPACK implementation
+    because OpenBLAS is not available for Windows on conda-forge so users with
+    wide models will need to install from source.
+
 
 Using pip
 ---------
 
-celerite can also be install using `pip <https://pip.pypa.io>`_ after
+celerite can also be installed using `pip <https://pip.pypa.io>`_ after
 installing `Eigen <http://eigen.tuxfamily.org/>`_:
 
 .. code-block:: bash
@@ -90,6 +100,8 @@ follows:
 
     python setup.py build_ext -I/path/to/eigen3 install
 
+
+.. _lapack:
 
 A word about LAPACK support
 ---------------------------
