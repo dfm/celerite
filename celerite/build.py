@@ -13,7 +13,7 @@ from setuptools.command.build_ext import build_ext as _build_ext
 
 __all__ = ["build_ext"]
 
-def find_eigen(hint=None):
+def find_eigen(hint=None, verbose=False):
     """
     Find the location of the Eigen 3 include directory. This will return
     ``None`` on failure.
@@ -57,10 +57,11 @@ def find_eigen(hint=None):
     suffixes = ["", "eigen3", "Eigen/include/eigen3", "Eigen3/include/eigen3"]
 
     # Debugging comments
-    print("Looking for Eigen in:")
-    for d in search_dirs:
-        print(" - {0}".format(os.path.abspath(d)))
-    print("+ suffixes: {0}".format(suffixes))
+    if verbose:
+        print("Looking for Eigen in:")
+        for d in search_dirs:
+            print(" - {0}".format(os.path.abspath(d)))
+        print("+ suffixes: {0}".format(suffixes))
 
     # Loop over search paths and check for the existence of the Eigen/Dense
     # header.
@@ -168,15 +169,16 @@ class build_ext(_build_ext):
             ext.extra_compile_args = opts
 
         # Link to numpy's LAPACK if available
-        import pprint
-        import numpy.__config__ as npconf
-        info = npconf.get_info("blas_opt_info")
-        print("Found LAPACK linking info:")
-        pprint.pprint(info)
+        info = None
         for ext in self.extensions:
             if not any(k[0] == "WITH_LAPACK" for k in ext.define_macros):
                 continue
-            print("Linking extension to LAPACK...")
+            if info is None:
+                import pprint
+                import numpy.__config__ as npconf
+                info = npconf.get_info("blas_opt_info")
+                print("Found LAPACK linking info:")
+                pprint.pprint(info)
             for k, v in info.items():
                 try:
                     setattr(ext, k, getattr(ext, k) + v)
