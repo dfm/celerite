@@ -93,6 +93,31 @@ follows:
     python setup.py build_ext -I/path/to/eigen3 install
 
 
+A word about LAPACK support
+---------------------------
+
+You can get a substantial speed up of the algorithm for models with a large
+number of terms if you link to a LAPACK library tuned for your system.
+The conda package described above will link to the linear algebra used by
+NumPy on macOS and Linux but, if you're installing from source, you'll need to
+request LAPACK support explicitly using:
+
+.. code-block:: bash
+
+    python setup.py install --lapack
+
+This will again link to the LAPACK implementation used by your NumPy
+installation.
+If you want to link to a custom implementation, you can set the
+``WITH_LAPACK`` macro and provide the compiler and linker flags yourself.
+For example, to link to Apple's Accelerate framework on macOS, you could use
+the following:
+
+.. code-block:: bash
+
+    CFLAGS="-DWITH_LAPACK -msse3" LDFLAGS="-Wl,-framework -Wl,Accelerate" python setup.py install
+
+
 Testing
 -------
 
