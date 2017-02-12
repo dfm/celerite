@@ -32,6 +32,10 @@ namespace solver {
 template <typename T>
 class BandSolver : public Solver<T> {
 public:
+  /// You can decide to use LAPACK for solving if it is available
+  ///
+  /// @param use_lapack If true, LAPACK will be used for solving the band
+  //                    system.
   BandSolver (bool use_lapack = false) : Solver<T>(), use_lapack_(use_lapack) {};
   ~BandSolver () {};
 

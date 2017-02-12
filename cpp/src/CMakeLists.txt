@@ -1,5 +1,6 @@
 macro (CELERITE_EXEC NAME)
     add_executable(${NAME} ${NAME}.cc)
+    target_link_libraries(${NAME} ${CELERITE_LIBRARIES})
 endmacro (CELERITE_EXEC)
 
 celerite_exec(benchmark)

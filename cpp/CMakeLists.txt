@@ -38,6 +38,33 @@ message(FATAL_ERROR "-- celerite requires Eigen version >= 3.1.0 in order "
     "that Eigen/SparseCore be available, detected version of Eigen is: "
     "${EIGEN_VERSION}")
 endif (EIGEN_VERSION VERSION_LESS 3.1.0)
+
+# LAPACK (& BLAS).
+set(CELERITE_LIBRARIES)
+option(LAPACK "Enable use of LAPACK." OFF)
+if (LAPACK)
+  find_package(LAPACK QUIET)
+  if (LAPACK_FOUND)
+    message("-- Found LAPACK library: ${LAPACK_LIBRARIES}")
+  else (LAPACK_FOUND)
+    message("-- Did not find LAPACK library, disabling LAPACK support.")
+  endif (LAPACK_FOUND)
+
+  find_package(BLAS QUIET)
+  if (BLAS_FOUND)
+    message("-- Found BLAS library: ${BLAS_LIBRARIES}")
+  else (BLAS_FOUND)
+    message("-- Did not find BLAS library, disabling LAPACK support.")
+  endif (BLAS_FOUND)
+
+  if (LAPACK_FOUND AND BLAS_FOUND)
+    add_definitions(-DWITH_LAPACK)
+    list(APPEND CELERITE_LIBRARIES ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES})
+  endif (LAPACK_FOUND AND BLAS_FOUND)
+else (LAPACK)
+  message("-- Building without LAPACK.")
+endif (LAPACK)
+
 enable_testing()
 
 # Includes.
