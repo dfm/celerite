@@ -9,8 +9,6 @@ Installation
 Using conda
 -----------
 
-.. note:: This method doesn't work yet but when it does, it'll be the best!
-
 The recommended method of installing celerite is using `conda
 <http://continuum.io/downloads>`_ with the following command:
 
