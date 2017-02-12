@@ -3,8 +3,14 @@
 Installation
 ============
 
-.. note:: Since celerite is actively under development right now, the best way
-    to install it is following :ref:`source` below.
+The core implementation of celerite is written in C++ so this will need to be
+compiled to be called from Python. The easiest way for a new user to do this
+will be by following the directions in the :ref:`using-conda` section below.
+Power users might be able to eke out a bit more performance by tuning the
+linear algebra library and installing :ref:`source` and following the
+discussion in :ref:`lapack`.
+
+.. _using-conda:
 
 Using conda
 -----------
