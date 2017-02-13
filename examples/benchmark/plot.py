@@ -14,27 +14,34 @@ setup(auto=True)
 
 parser = argparse.ArgumentParser()
 parser.add_argument("platform")
+parser.add_argument("--default", action="store_true")
 parser.add_argument("--directory",
                     default=os.path.dirname(os.path.abspath(__file__)))
 args = parser.parse_args()
 
 # Compile into a matrix
-fn = os.path.join(args.directory,
-                  "benchmark_{0}_lapack.csv".format(args.platform))
+if not args.default:
+    fn = os.path.join(args.directory,
+                      "benchmark_{0}.csv".format(args.platform))
+    without_lapack = pd.read_csv(fn, comment="#")
+    fn = os.path.join(args.directory,
+                      "benchmark_{0}_lapack.csv".format(args.platform))
+else:
+    fn = os.path.join(args.directory,
+                      "benchmark_{0}_default.csv".format(args.platform))
 with_lapack = pd.read_csv(fn, comment="#")
-fn = os.path.join(args.directory, "benchmark_{0}.csv".format(args.platform))
-without_lapack = pd.read_csv(fn, comment="#")
 
 with_lapack_matrix = np.empty((with_lapack.xi.max() + 1,
                                with_lapack.yi.max() + 1))
 with_lapack_matrix[:] = np.nan
 with_lapack_matrix[with_lapack.xi, with_lapack.yi] = with_lapack.comp_time
 
-without_lapack_matrix = np.empty((without_lapack.xi.max() + 1,
-                                  without_lapack.yi.max() + 1))
-without_lapack_matrix[:] = np.nan
-without_lapack_matrix[without_lapack.xi, without_lapack.yi] = \
-    without_lapack.comp_time
+if not args.default:
+    without_lapack_matrix = np.empty((without_lapack.xi.max() + 1,
+                                      without_lapack.yi.max() + 1))
+    without_lapack_matrix[:] = np.nan
+    without_lapack_matrix[without_lapack.xi, without_lapack.yi] = \
+        without_lapack.comp_time
 
 J = np.sort(np.array(with_lapack.j.unique()))
 N = np.sort(np.array(with_lapack.n.unique()))
@@ -48,9 +55,10 @@ for i, j in enumerate(J):
     ax1.plot(x[m], y[m], ".-", color=COLOR_CYCLE[i],
              label="{0}".format(j))
 
-    y = without_lapack_matrix[i]
-    m = np.isfinite(y)
-    ax1.plot(x[m], y[m], ".--", color=COLOR_CYCLE[i])
+    if not args.default:
+        y = without_lapack_matrix[i]
+        m = np.isfinite(y)
+        ax1.plot(x[m], y[m], ".--", color=COLOR_CYCLE[i])
 
 ax1.plot(N, 4e-2 * N / N[-1], "k",
          label=r"$\mathcal{O}(N)$")
@@ -63,9 +71,10 @@ for i, n in enumerate(N[::2]):
     ax2.plot(x[m], y[m], ".-", color=COLOR_CYCLE[i % len(COLOR_CYCLE)],
              label="{0}".format(n))
 
-    y = without_lapack_matrix[:, 2*i]
-    m = np.isfinite(y)
-    ax2.plot(x[m], y[m], ".--", color=COLOR_CYCLE[i % len(COLOR_CYCLE)])
+    if not args.default:
+        y = without_lapack_matrix[:, 2*i]
+        m = np.isfinite(y)
+        ax2.plot(x[m], y[m], ".--", color=COLOR_CYCLE[i % len(COLOR_CYCLE)])
 ax2.plot(J, 4e-2 * J**2 / J[-1]**2, "k",
          label=r"$\mathcal{O}(J^2)$")
 ax2.legend(loc="lower right", bbox_to_anchor=(1.05, 0), fontsize=8)
@@ -83,5 +92,7 @@ ax1.set_xlabel("number of data points [$N$]")
 ax2.set_xlabel("number of terms [$J$]")
 
 fn = os.path.join(args.directory, "benchmark_{0}".format(args.platform))
+if args.default:
+    fn += "_default"
 fig.savefig(fn + ".png", bbox_inches="tight", dpi=300)
 fig.savefig(fn + ".pdf", bbox_inches="tight", dpi=300)

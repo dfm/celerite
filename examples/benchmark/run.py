@@ -15,6 +15,7 @@ from celerite.timer import benchmark
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--lapack", action="store_true")
+parser.add_argument("--default", action="store_true")
 parser.add_argument("--minnpow", type=int, default=6)
 parser.add_argument("--maxnpow", type=int, default=19)
 parser.add_argument("--minjpow", type=int, default=0)
@@ -41,7 +42,9 @@ header += "# J: {0}\n".format(list(J))
 header += "xi,yi,j,n,comp_time,ll_time\n"
 
 fn = "benchmark_{0}".format(sys.platform)
-if args.lapack:
+if args.default:
+    fn += "_default"
+elif args.lapack:
     fn += "_lapack"
 fn += ".csv"
 fn = os.path.join(args.outdir, fn)
@@ -64,10 +67,11 @@ for xi, j in enumerate(J):
         kernel += terms.ComplexTerm(0.1, 2.0, 1.6)
     c = kernel.coefficients
     assert j == len(c[0]) + 2*len(c[2]), "Wrong number of terms"
-    gp = GP(kernel, use_lapack=args.lapack)
+    use_lapack = bool(args.lapack if not args.default else j >= 8)
+    gp = GP(kernel, use_lapack=use_lapack)
     for yi, n in enumerate(N):
         comp_time = benchmark("gp.compute(t[:{0}], yerr[:{0}])".format(n),
-                            "from __main__ import gp, t, yerr")
+                              "from __main__ import gp, t, yerr")
         gp.compute(t[:n], yerr[:n])
         ll_time = benchmark("gp.log_likelihood(y[:{0}])".format(n),
                             "from __main__ import gp, y")
