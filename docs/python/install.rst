@@ -120,7 +120,7 @@ request LAPACK support explicitly using:
 
 .. code-block:: bash
 
-    python setup.py install --lapack
+    LAPACK_VARIANT='blas_opt' python setup.py install
 
 This will again link to the LAPACK implementation used by your NumPy
 installation.
