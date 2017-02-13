@@ -124,6 +124,12 @@ request LAPACK support explicitly using:
 
 This will again link to the LAPACK implementation used by your NumPy
 installation.
+The ``LAPACK_VARIANT`` can be any of the options provided by the
+:func:`numpy.distutils.system_info.get_info` function.
+The ``blas_opt`` variant used above is NumPy's suggested choice but if you
+have an Intel MKL library installed then you can often gain some performance
+by using ``LAPACK_VARIANT=mkl``.
+
 If you want to link to a custom implementation, you can set the
 ``WITH_LAPACK`` macro and provide the compiler and linker flags yourself.
 For example, to link to Apple's Accelerate framework on macOS, you could use
