@@ -135,16 +135,26 @@ to astronomical time series
 % \altaffiltext{1}{}
 
 \setcounter{affilcounter}{1}
-\edef \uw {\arabic{affilcounter}}\stepcounter{affilcounter}
-\altaffiltext{\uw}       {Astronomy Department, University of Washington,
-                          Seattle, WA, 98195, USA}
 
 \edef \sagan {\arabic{affilcounter}}\stepcounter{affilcounter}
 \altaffiltext{\sagan}{Sagan Fellow}
 
+\edef \uw {\arabic{affilcounter}}\stepcounter{affilcounter}
+\altaffiltext{\uw}{Astronomy Department, University of Washington,
+                   Seattle, WA}
+
+\edef \simons {\arabic{affilcounter}}\stepcounter{affilcounter}
+\altaffiltext{\simons}{Simons Fellow}
+
+\edef \columbia {\arabic{affilcounter}}\stepcounter{affilcounter}
+\altaffiltext{\columbia}{Department of Astronomy, Columbia University,
+                         New York, NY}
+
+
 \author{%
-    Daniel~Foreman-Mackey\altaffilmark{\uw,\sagan} and
-    Eric~Agol\altaffilmark{\uw}
+    Daniel~Foreman-Mackey\altaffilmark{\sagan,\uw},
+    Eric~Agol\altaffilmark{\uw}, and
+    Ruth~Angus\altaffilmark{\simons,\columbia}
 }
 
 
@@ -1655,7 +1665,6 @@ phase functions, and more.
 \acknowledgments
 It is a pleasure to thank
 Sivaram Ambikasaran,
-Ruth Angus,
 Will Farr,
 and
 David W.\ Hogg
