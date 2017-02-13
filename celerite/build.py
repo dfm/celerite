@@ -7,6 +7,7 @@ import re
 import sys
 import logging
 import tempfile
+from numpy.distutils.system_info import get_info
 
 import setuptools
 from setuptools.command.build_ext import build_ext as _build_ext
@@ -169,21 +170,19 @@ class build_ext(_build_ext):
             ext.extra_compile_args = opts
 
         # Link to numpy's LAPACK if available
-        info = None
-        for ext in self.extensions:
-            if not any(k[0] == "WITH_LAPACK" for k in ext.define_macros):
-                continue
-            if info is None:
-                import pprint
-                import numpy.__config__ as npconf
-                info = npconf.get_info("blas_opt_info")
-                print("Found LAPACK linking info:")
-                pprint.pprint(info)
-            for k, v in info.items():
-                try:
-                    setattr(ext, k, getattr(ext, k) + v)
-                except TypeError:
-                    continue
+        variant = os.environ.get("LAPACK_VARIANT", None)
+        if variant is not None and variant.lower() != "none":
+            info = get_info(variant)
+            if not len(info):
+                logging.warn("LAPACK info for variant '{0}' not found")
+                info = get_info("blas_opt")
+            for ext in self.extensions:
+                for k, v in info.items():
+                    try:
+                        setattr(ext, k, getattr(ext, k) + v)
+                    except TypeError:
+                        continue
+                ext.define_macros += [("WITH_LAPACK", None)]
 
         # Run the standard build procedure.
         _build_ext.build_extension(self, ext)
