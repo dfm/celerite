@@ -104,8 +104,8 @@ bkg_some = estimate_background(freq_uHz, power_some)
 
 # Plot the periodograms
 fig, axes = plt.subplots(1, 2, figsize=get_figsize(1, 2), sharey=True)
-axes[0].plot(freq_uHz, np.sqrt(power_all), "k", rasterized=True)
-axes[1].plot(freq_uHz, np.sqrt(power_some), "k", rasterized=True)
+axes[0].plot(freq_uHz, power_all, "k", rasterized=True)
+axes[1].plot(freq_uHz, power_some, "k", rasterized=True)
 axes[0].set_ylabel("power")
 axes[0].set_xlabel("frequency [$\mu$Hz]")
 axes[1].set_xlabel("frequency [$\mu$Hz]")
@@ -185,7 +185,7 @@ kernel = AsteroTerm(
     5.0,                            # log(q_factor)
     np.log(delta_nu*uHz_conv),      # width of envelope
     bounds=bounds,
-    nterms=1,
+    nterms=2,
 )
 log_white_noise = modeling.ConstantModel(
     2.0*np.log(np.median(np.abs(np.diff(fit_y)))),
@@ -228,14 +228,15 @@ with emcee3.pools.InterruptiblePool() as pool:
         get_ml_params, gp.kernel.log_nu_max + np.linspace(-0.05, 0.05, 5)
     ), key=lambda o: o[0]))
 gp.set_parameter_vector(results[0][1])
+print(gp.get_parameter_dict(include_frozen=True))
 
 # Use more modes in the MCMC:
 gp.kernel.nterms = 3
 
 fig, ax = plt.subplots(1, 1, figsize=get_figsize())
-ax.plot(freq_uHz, np.sqrt(power_all), "k", alpha=0.8, rasterized=True)
-ax.plot(freq_uHz, gp.kernel.get_psd(2*np.pi*freq), alpha=0.5,
-        rasterized=True)
+ax.plot(freq_uHz, power_all, "k", alpha=0.8, rasterized=True)
+ax.plot(freq_uHz, len(fit_y)/(2*np.pi)*gp.kernel.get_psd(2*np.pi*freq),
+        alpha=0.5, rasterized=True)
 ax.set_xlabel("frequency [$\mu$Hz]")
 ax.set_ylabel("power")
 ax.set_yscale("log")
