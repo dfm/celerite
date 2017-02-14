@@ -201,6 +201,16 @@ def test_pickle(use_lapack, seed=42):
     solver2 = pickle.loads(pickle.dumps(solver1, -1))
     compare(solver1, solver2)
 
+    # Test that models can be pickled too.
+    kernel = terms.RealTerm(0.5, 0.1)
+    kernel += terms.ComplexTerm(0.6, 0.7, 1.0)
+    gp1 = GP(kernel, use_lapack=use_lapack)
+    gp1.compute(t, diag)
+    s = pickle.dumps(gp1, -1)
+    gp2 = pickle.loads(s)
+
+    assert np.allclose(gp1.log_likelihood(y), gp2.log_likelihood(y))
+
 
 @lapack_switch
 def test_build_gp(use_lapack, seed=42):

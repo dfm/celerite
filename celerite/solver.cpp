@@ -58,6 +58,13 @@ need to call these directly. This interface was built using `pybind11
     return false;
 #endif
   }, "Was celerite compiled with LAPACK support");
+  m.def("lapack_variant", []() {
+#ifdef LAPACK_VARIANT
+    return CELERITE_TO_STRING(LAPACK_VARIANT);
+#else
+    return "";
+#endif
+  }, "The variant of LAPACK used to compile celerite");
 
   m.def("get_kernel_value",
     [](

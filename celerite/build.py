@@ -182,7 +182,10 @@ class build_ext(_build_ext):
                         setattr(ext, k, getattr(ext, k) + v)
                     except TypeError:
                         continue
-                ext.define_macros += [("WITH_LAPACK", None)]
+                ext.define_macros += [
+                    ("WITH_LAPACK", None),
+                    ("LAPACK_VARIANT", variant)
+                ]
 
         # Run the standard build procedure.
         _build_ext.build_extension(self, ext)

@@ -293,10 +293,9 @@ class ModelSet(Model):
             self.models[name] = model
 
     def __getattr__(self, name):
-        try:
+        if "models" in self.__dict__ and name in self.models:
             return self.models[name]
-        except KeyError:
-            raise AttributeError(name)
+        raise AttributeError(name)
 
     @property
     def dirty(self):

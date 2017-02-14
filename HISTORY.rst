@@ -1,5 +1,10 @@
 .. :changelog:
 
+0.1.2 (upcoming)
+++++++++++++++++
+
+- Fixed bug when pickling ``Model`` objects.
+
 0.1.1 (2017-02-12)
 ++++++++++++++++++
 
