@@ -12,7 +12,6 @@
   delta = std::abs(base - comp);                             \
   if (delta > 1e-10) {                                       \
     std::cerr << "Test failed: '" << #NAME << "' - error: " << delta << std::endl; \
-    return 1;                                                \
   } else                                                     \
     std::cerr << "Test passed: '" << #NAME << "' - error: " << delta << std::endl; \
 }
@@ -53,6 +52,7 @@ int main (int argc, char* argv[])
 
   // The times need to be sorted.
   std::sort(x.data(), x.data() + x.size());
+  std::cerr << x << "\n\n";
 
   // Compute the y values.
   y = sin(x.array());

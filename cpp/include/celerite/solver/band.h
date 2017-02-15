@@ -250,7 +250,7 @@ void BandSolver<T>::build_matrix (
 
         A(row, col+1) = T(1.0);
         A(row3 - 2*j - 1, col+1) = alpha_complex_imag(j);
-        A(row2, col+1) = psi_complex(j, k+1);
+        A(row2, col+1) = psi_complex(j);
         A(row2 + 1, col+1) = -phi_complex(j);
       }
     } else {

@@ -53,15 +53,14 @@ for i, j in enumerate(J):
     y = with_lapack_matrix[i]
     m = np.isfinite(y)
     ax1.plot(x[m], y[m], ".-", color=COLOR_CYCLE[i],
-             label="{0}".format(j))
+             label="{0:.0f}".format(j))
 
     if not args.default:
         y = without_lapack_matrix[i]
         m = np.isfinite(y)
         ax1.plot(x[m], y[m], ".--", color=COLOR_CYCLE[i])
 
-ax1.plot(N, 4e-2 * N / N[-1], "k",
-         label=r"$\mathcal{O}(N)$")
+ax1.plot(N, 9e-2 * N / N[-1], "k", label=r"$\mathcal{O}(N)$")
 ax1.legend(loc="lower right", bbox_to_anchor=(1.05, 0), fontsize=8)
 
 for i, n in enumerate(N[::2]):
@@ -69,13 +68,13 @@ for i, n in enumerate(N[::2]):
     y = with_lapack_matrix[:, 2*i]
     m = np.isfinite(y)
     ax2.plot(x[m], y[m], ".-", color=COLOR_CYCLE[i % len(COLOR_CYCLE)],
-             label="{0}".format(n))
+             label="{0:.0f}".format(n))
 
     if not args.default:
         y = without_lapack_matrix[:, 2*i]
         m = np.isfinite(y)
         ax2.plot(x[m], y[m], ".--", color=COLOR_CYCLE[i % len(COLOR_CYCLE)])
-ax2.plot(J, 4e-2 * J**2 / J[-1]**2, "k",
+ax2.plot(J, 0.5 * J**2 / J[-1]**2, "k",
          label=r"$\mathcal{O}(J^2)$")
 ax2.legend(loc="lower right", bbox_to_anchor=(1.05, 0), fontsize=8)
 
@@ -84,8 +83,8 @@ ax1.set_xscale("log")
 ax2.set_xscale("log")
 ax1.set_yscale("log")
 ax1.set_xlim(N.min(), N.max())
-ax2.set_xlim(J.min(), J.max())
-ax2.set_ylim(8e-5, 4.0)
+ax2.set_xlim(1, J.max())
+ax2.set_ylim(2e-5, 8.0)
 
 ax1.set_ylabel("computational cost [seconds]")
 ax1.set_xlabel("number of data points [$N$]")
