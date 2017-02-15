@@ -342,8 +342,9 @@ k_\bvec{\alpha}(\tau_{nm}) = \sigma_n^2\,\delta_{nm} +
     \sum_{j=1}^J a_j\,\exp(-c_j\,\tau_{nm})\quad.
 \end{eqnarray}
 In this case, the inverse will be dense but \eq{gp-likelihood} can still be
-evaluated in $\mathcal{O}(J^2\,N)$ operations where $J$ is the number of
-components in the mixture and $N$ is still the number of data points.
+evaluated in $\mathcal{O}(J^2\,N)$ operations \citep{Anderson:1999} where $J$
+is the number of components in the mixture and $N$ is still the number of data
+points.
 
 It turns out that this kernel function can be made even more general by
 introducing complex parameters $a_j \to a_j\pm i\,b_j$ and

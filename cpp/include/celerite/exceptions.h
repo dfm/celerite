@@ -29,6 +29,12 @@ struct no_lapack : public std::exception {
   }
 };
 
+struct linalg_exception : public std::exception {
+  const char * what () const throw () {
+    return "failed to factorize or solve matrix";
+  }
+};
+
 }; // namespace celerite
 
 #endif // _CELERITE_EXCEPTIONS_H_
