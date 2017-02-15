@@ -26,8 +26,10 @@ uHz_conv = 1e-6 * 24 * 60 * 60
 
 # Save the current state of the GP and data
 with open("astero-{0}.pkl".format(kicid), "rb") as f:
-    gp, fit_y, freq, power_all, power_some = pickle.load(f)
+    gp, fit_y, freq, power_all, power_some, n_tot = pickle.load(f)
 measurement_var = np.median(gp._yerr**2)
+white_noise_all = measurement_var * uHz_conv / n_tot
+white_noise_some = measurement_var * uHz_conv / len(fit_y)
 
 backend = emcee3.backends.HDFBackend("astero-{0}.h5".format(kicid))
 
@@ -105,7 +107,8 @@ fig.savefig(format_filename("model"))
 plt.close(fig)
 
 # Plot constraints on nu-max and delta-nu
-s = np.exp(samples[:, 3:5])/uHz_conv
+i = [names.index("log(nu max)"), names.index("log(delta nu)")]
+s = np.exp(samples[:, i])/uHz_conv
 nu_max_pub = 171.94, 3.62
 delta_nu_pub = 13.28, 0.29
 fig = corner.corner(s, smooth=0.7, smooth1d=1.0,
@@ -123,34 +126,45 @@ fig.savefig(format_filename("full_corner"), bbox_inches="tight")
 plt.close(fig)
 
 # Make comparison plot
-fig, axes = plt.subplots(3, 1, sharex=True, figsize=get_figsize(2.5, 2))
+fig, axes = plt.subplots(3, 1, sharex=True, sharey=True,
+                         figsize=get_figsize(2.5, 2))
 
 factor = 1.
 freq_uHz = freq / uHz_conv
-axes[0].plot(freq_uHz, power_all * factor, "k", alpha=0.3, rasterized=True)
-axes[0].plot(freq_uHz, gaussian_filter(power_all, 5) * factor, "k",
-             rasterized=True)
+axes[0].plot(freq_uHz, power_all, "k", rasterized=True)
+# axes[0].plot(freq_uHz, gaussian_filter(power_all, 5) * factor, "k",
+#              rasterized=True)
+axes[0].axhline(white_noise_all)
 
-axes[1].plot(freq_uHz, power_some * factor, "k", alpha=0.3, rasterized=True)
-axes[1].plot(freq_uHz, gaussian_filter(power_some, 5) * factor, "k",
-             rasterized=True)
+axes[1].plot(freq_uHz, power_some, "k", rasterized=True)
+# axes[1].plot(freq_uHz, gaussian_filter(power_some, 20) * factor, "k",
+#              rasterized=True)
+axes[1].axhline(white_noise_some)
 
 q = np.percentile(uHz_conv/(2*np.pi)*psds, [16, 50, 84], axis=0)
 axes[2].fill_between(freq_uHz, q[0], q[2], color="k", alpha=0.3,
                      rasterized=True)
 axes[2].plot(freq_uHz, q[1], "k", alpha=0.8, rasterized=True)
+axes[2].axhline(white_noise_some)
 
-for ax in axes:
+labels = [
+    "periodogram estimator\n4 years of data",
+    "periodogram estimator\n1 month of data",
+    "posterior inference\n1 month of data",
+]
+for ax, label in zip(axes, labels):
     ax.set_yscale("log")
-    # ax.set_ylim(70, 9e6)
-    # ax.axhline(measurement_var * factor, color="k", ls="dashed")
-    # for f in peak_freqs / uHz_conv:
-    #     ax.plot([f, f], [5e6, 1e7], "k", lw=0.5)
+    for f in peak_freqs / uHz_conv:
+        ax.plot([f, f], [2e2, 3e2], "k", lw=0.5)
+    ax.annotate(label, xy=(1, 1), xycoords="axes fraction",
+                ha="right", va="top",
+                xytext=(-5, -5), textcoords="offset points",
+                fontsize=12)
+    ax.set_ylabel("power [$\mathrm{ppm}^2\,\mu\mathrm{Hz}^{-1}$]")
 
-axes[0].set_ylabel("periodogram; all data")
-axes[1].set_ylabel("periodogram; 3\% of data")
-axes[2].set_ylabel("posterior psd; 3\% of data")
 axes[2].set_xlabel("frequency [$\mu$Hz]")
+axes[2].set_xlim(freq_uHz.min(), freq_uHz.max())
+axes[2].set_ylim(1e-3, 4e2)
 
 fig.savefig(format_filename("comparisons"), bbox_inches="tight", dpi=300)
 plt.close(fig)

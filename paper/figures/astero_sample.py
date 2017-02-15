@@ -72,7 +72,7 @@ fig.savefig(format_filename("time_series"), bbox_inches="tight", dpi=300)
 plt.close(fig)
 
 # Define a frequency grid for the periodogram
-freq_uHz = np.linspace(1, 300, 50000)
+freq_uHz = np.linspace(1, 300, 100000)
 freq = freq_uHz * uHz_conv
 
 # Compute the periodogram on the full dataset
@@ -265,7 +265,7 @@ gp.kernel.parameter_bounds[3] = np.log(delta_nu*uHz_conv) + np.array([-1, 1])
 # Save the current state of the GP and data
 with open("astero-{0}.pkl".format(kicid), "wb") as f:
     pickle.dump((
-        gp, fit_y, freq, power_all, power_some,
+        gp, fit_y, freq, power_all, power_some, len(x),
     ), f, -1)
 
 if os.path.exists("astero-{0}.h5".format(kicid)):
