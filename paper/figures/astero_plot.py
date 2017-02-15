@@ -125,7 +125,7 @@ plt.close(fig)
 # Make comparison plot
 fig, axes = plt.subplots(3, 1, sharex=True, figsize=get_figsize(2.5, 2))
 
-factor = 1.  # / len(gp._t)
+factor = 1.
 freq_uHz = freq / uHz_conv
 axes[0].plot(freq_uHz, power_all * factor, "k", alpha=0.3, rasterized=True)
 axes[0].plot(freq_uHz, gaussian_filter(power_all, 5) * factor, "k",
@@ -135,15 +135,15 @@ axes[1].plot(freq_uHz, power_some * factor, "k", alpha=0.3, rasterized=True)
 axes[1].plot(freq_uHz, gaussian_filter(power_some, 5) * factor, "k",
              rasterized=True)
 
-q = np.percentile(len(fit_y)/(2*np.pi)*psds, [16, 50, 84], axis=0)
+q = np.percentile(uHz_conv/(2*np.pi)*psds, [16, 50, 84], axis=0)
 axes[2].fill_between(freq_uHz, q[0], q[2], color="k", alpha=0.3,
                      rasterized=True)
 axes[2].plot(freq_uHz, q[1], "k", alpha=0.8, rasterized=True)
 
 for ax in axes:
     ax.set_yscale("log")
-    ax.set_ylim(70, 9e6)
-    ax.axhline(measurement_var * factor, color="k", ls="dashed")
+    # ax.set_ylim(70, 9e6)
+    # ax.axhline(measurement_var * factor, color="k", ls="dashed")
     # for f in peak_freqs / uHz_conv:
     #     ax.plot([f, f], [5e6, 1e7], "k", lw=0.5)
 
