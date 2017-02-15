@@ -123,3 +123,31 @@ ax.plot([0.25, 0.25, 8.5, 8.5, 0.25],
         "k")
 
 fig.savefig("matrix.pdf", bbox_inches="tight")
+
+# From: https://github.com/MattShannon/bandmat
+def band_e(l, u, mat_full):
+    assert l >= 0
+    assert u >= 0
+    assert mat_full.shape[1] == mat_full.shape[0]
+    size = mat_full.shape[0]
+    mat_rect = np.zeros((l + u + 1, size), dtype=int)
+    for i in range(-u, l + 1):
+        row = u + i
+        for j in range(size):
+            if j + i < 0:
+                continue
+            mat_rect[row, j] = mat_full[j + i, j] if j + i < size else 0.0
+    return mat_rect
+
+
+band = band_e(2*J+2, 2*J+2, full)
+print(band.shape)
+fig, ax = plt.subplots(1, 1, figsize=get_figsize(2.3, 2.3))
+ax.pcolor(band, cmap=cmap, vmin=0, vmax=len(c))
+ax.set_ylim(band.shape[0], 0)
+ax.set_xlim(0, band.shape[1])
+ax.set_frame_on(False)
+ax.set_xticks([])
+ax.set_yticks([])
+ax.set_aspect("equal")
+fig.savefig("matrix-band.pdf", bbox_inches="tight")

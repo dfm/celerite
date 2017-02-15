@@ -128,6 +128,12 @@ protected:
 
 };
 
+// Function for working with band matrices.
+template <typename T>
+inline T& get_band_element (Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>& m, int offset, int i, int j) {
+  return m(offset - i, std::max(0, i) + j);
+}
+
 template <typename T>
 void BandSolver<T>::build_matrix (
   const Eigen::Matrix<T, Eigen::Dynamic, 1>& alpha_real,
@@ -146,135 +152,140 @@ void BandSolver<T>::build_matrix (
       p_complex = alpha_complex_real.rows(),
       n = x.rows();
   BLOCKSIZE_BASE
+
   int offset = offset_factor * width;
 
   // Set up the extended matrix.
   A.resize(1+width+offset, dim_ext);
   A.setConstant(T(0.0));
 
-  // Compute the diagonal element
+  // Start with the diagonal.
   T sum_alpha = alpha_real.sum() + alpha_complex_real.sum();
+  for (k = 0; k < n; ++k)
+    get_band_element(A, offset, 0, k*block_size) = sum_alpha;
 
-  // Pre-compute the phis and psis
+  // Fill in all but the last block.
   double dt;
-  T amp, arg;
-  Eigen::Array<T, Eigen::Dynamic, 1> phi_real(p_real), phi_complex(p_complex), psi_complex(p_complex);
+  Eigen::Array<T, Eigen::Dynamic, 1> amp, arg;
+  Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic>
+    phi_real(p_real, n-1), phi_complex(p_complex, n-1), psi_complex(p_complex, n-1);
 
-  dt = x(1) - x(0);
-  for (j = 0; j < p_real; ++j) {
-    phi_real(j) = exp(-beta_real(j) * dt);
-  }
-  for (j = 0; j < p_complex; ++j) {
-    amp = exp(-beta_complex_real(j) * dt);
-    arg = beta_complex_imag(j) * dt;
-    phi_complex(j) = amp * cos(arg);
-    psi_complex(j) = -amp * sin(arg);
-  }
-
-  int row, col, row2, row3;
   for (k = 0; k < n - 1; ++k) {
-    // First column
-    col = block_size * k;
-    row = offset;
-    A(row, col) = sum_alpha;
-    row++;
-    for (j = 0; j < p_real; ++j, ++row) {
-      A(row, col) = phi_real(j);
-    }
-    for (j = 0; j < p_complex; ++j, row += 2) {
-      A(row, col) = phi_complex(j);
-      A(row+1, col) = psi_complex(j);
-    }
+    dt = x(k+1) - x(k);
+    phi_real.col(k) = exp(-beta_real.array() * dt);
+    amp = exp(-beta_complex_real.array() * dt);
+    arg = beta_complex_imag.array() * dt;
+    phi_complex.col(k) = amp * cos(arg);
+    psi_complex.col(k) = -amp * sin(arg);
+  }
 
-    // Block 1
-    col++;
-    row2 = row - 1;
-    row = offset - 1;
-    if (k > 0) {
-      row3 = offset - p_real - 2*p_complex - 1;
-      for (j = 0; j < p_real; ++j, ++col, --row) {
-        A(row3, col) = phi_real(j);
-        A(row, col) = phi_real(j);
-        A(row2, col) = T(-1.0);
-      }
-      for (j = 0; j < p_complex; ++j, col += 2, row -= 2) {
-        A(row3, col) = phi_complex(j);
-        A(row3+1, col) = psi_complex(j);
-        A(row, col) = phi_complex(j);
-        A(row2, col) = T(-1.0);
+  for (k = 0; k < n - 1; ++k) {
+    // Equations for the rs:
+    block_id = block_size * k;
+    start_b = block_id + 1;
+    for (j = 0; j < p_real; ++j) {
+      a = block_id;
+      b = start_b + j;
+      value = phi_real(j, k);
+      get_band_element(A, offset, b-a, a) = value;
+      get_band_element(A, offset, a-b, a) = value;
+    }
+    start_b += p_real;
+    for (j = 0; j < p_complex; ++j) {
+      a = block_id;
+      b = start_b + 2*j;
+      value = phi_complex(j, k);
+      get_band_element(A, offset, b-a, a) = value;
+      get_band_element(A, offset, a-b, a) = value;
 
-        A(row3-1, col+1) = psi_complex(j);
-        A(row3, col+1) = -phi_complex(j);
-        A(row-1, col+1) = psi_complex(j);
-        A(row2, col+1) = T(1.0);
-      }
-    } else {
-      for (j = 0; j < p_real; ++j, ++col, --row) {
-        A(row, col) = phi_real(j);
-        A(row2, col) = T(-1.0);
-      }
-      for (j = 0; j < p_complex; ++j, col += 2, row -= 2) {
-        A(row, col) = phi_complex(j);
-        A(row2, col) = T(-1.0);
-        A(row-1, col+1) = psi_complex(j);
-        A(row2, col+1) = T(1.0);
-      }
+      b = start_b + 2*j + 1;
+      value = psi_complex(j, k);
+      get_band_element(A, offset, b-a, a) = value;
+      get_band_element(A, offset, a-b, a) = value;
     }
 
-    // Block 3
-    row = offset - p_real - 2*p_complex;
-    row3 = row2 - p_real;
-    if (k < n-2) {
-      // Update the phis and psis
-      dt = x(k+2) - x(k+1);
-      for (j = 0; j < p_real; ++j) {
-        phi_real(j) = exp(-beta_real(j) * dt);
-      }
-      for (j = 0; j < p_complex; ++j) {
-        amp = exp(-beta_complex_real(j) * dt);
-        arg = beta_complex_imag(j) * dt;
-        phi_complex(j) = amp * cos(arg);
-        psi_complex(j) = -amp * sin(arg);
-      }
+    // Equations for the ls:
+    start_a = block_id + 1;
+    start_b += 2*p_complex;
+    for (j = 0; j < p_real; ++j) {
+      a = start_a + j;
+      b = start_b + j;
+      value = -1.0;
+      get_band_element(A, offset, b-a, a) = value;
+      get_band_element(A, offset, a-b, a) = value;
+    }
+    start_a += p_real;
+    start_b += p_real;
+    for (j = 0; j < p_complex; ++j) {
+      a = start_a + 2*j;
+      b = start_b + 2*j;
+      value = -1.0;
+      get_band_element(A, offset, b-a, a) = value;
+      get_band_element(A, offset, a-b, a) = value;
 
-      for (j = 0; j < p_real; ++j, ++col) {
-        A(row, col) = T(-1.0);
-        A(row2 - j, col) = alpha_real(j);
-        A(row2 + 1, col) = phi_real(j);
-      }
-      for (j = 0; j < p_complex; ++j, col += 2) {
-        A(row, col) = T(-1.0);
-        A(row3 - 2*j, col) = alpha_complex_real(j);
-        A(row2 + 1, col) = phi_complex(j);
-        A(row2 + 2, col) = psi_complex(j);
-
-        A(row, col+1) = T(1.0);
-        A(row3 - 2*j - 1, col+1) = alpha_complex_imag(j);
-        A(row2, col+1) = psi_complex(j, k+1);
-        A(row2 + 1, col+1) = -phi_complex(j);
-      }
-    } else {
-      for (j = 0; j < p_real; ++j, ++col) {
-        A(row, col) = T(-1.0);
-        A(row2 - j, col) = alpha_real(j);
-      }
-      for (j = 0; j < p_complex; ++j, col += 2) {
-        A(row, col) = T(-1.0);
-        A(row3 - 2*j, col) = alpha_complex_real(j);
-        A(row, col+1) = T(1.0);
-        A(row3 - 2*j - 1, col+1) = alpha_complex_imag(j);
-      }
+      a += 1;
+      b += 1;
+      value = 1.0;
+      get_band_element(A, offset, b-a, a) = value;
+      get_band_element(A, offset, a-b, a) = value;
     }
 
-    for (j = 0; j < p_real; ++j, ++row) {
-      A(row, col) = alpha_real(j);
+    // Equations for the k+1 terms:
+    start_a += 2*p_complex;
+    start_b += 2*p_complex;
+    for (j = 0; j < p_real; ++j) {
+      a = start_a + j;
+      b = start_b;
+      value = alpha_real(j);
+      get_band_element(A, offset, b-a, a) = value;
+      get_band_element(A, offset, a-b, a) = value;
+
+      if (k > 0) {
+        a -= block_size;
+        b = start_b + 1 + j - block_size;
+        value = phi_real(j, k);
+        get_band_element(A, offset, b-a, a) = value;
+        get_band_element(A, offset, a-b, a) = value;
+      }
     }
-    for (j = 0; j < p_complex; ++j, row+=2) {
-      A(row, col) = alpha_complex_real(j);
-      A(row+1, col) = alpha_complex_imag(j);
+    start_a += p_real;
+    for (j = 0; j < p_complex; ++j) {
+      a = start_a + 2*j;
+      b = start_b;
+      value = alpha_complex_real(j);
+      get_band_element(A, offset, b-a, a) = value;
+      get_band_element(A, offset, a-b, a) = value;
+
+      a += 1;
+      value = alpha_complex_imag(j);
+      get_band_element(A, offset, b-a, a) = value;
+      get_band_element(A, offset, a-b, a) = value;
+      a -= 1;
+
+      if (k > 0) {
+        a -= block_size;
+        b = start_b + 1 + p_real + 2*j - block_size;
+        value = phi_complex(j, k);
+        get_band_element(A, offset, b-a, a) = value;
+        get_band_element(A, offset, a-b, a) = value;
+
+        b += 1;
+        value = psi_complex(j, k);
+        get_band_element(A, offset, b-a, a) = value;
+        get_band_element(A, offset, a-b, a) = value;
+
+        a += 1;
+        b -= 1;
+        get_band_element(A, offset, b-a, a) = value;
+        get_band_element(A, offset, a-b, a) = value;
+
+        b += 1;
+        value = -phi_complex(j, k);
+        get_band_element(A, offset, b-a, a) = value;
+        get_band_element(A, offset, a-b, a) = value;
+      }
     }
   }
-  A(offset, col) = sum_alpha;
 };
 
 template <typename T>
@@ -316,9 +327,8 @@ int BandSolver<T>::compute (
                beta_complex_real, beta_complex_imag, offset_factor, x, a_);
 
   // Add the diagonal component
-  int offset = offset_factor*width;
   for (int k = 0; k < this->n_; ++k)
-    a_(offset, k*block_size) += diag(k);
+    get_band_element(a_, offset_factor*width, 0, k*block_size) += diag(k);
 
   // Reshape the working arrays
 #ifdef WITH_LAPACK

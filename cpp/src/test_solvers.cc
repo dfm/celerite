@@ -22,9 +22,9 @@ int main (int argc, char* argv[])
   srand(42);
 
   size_t N = 1024;
-  if (argc >= 3) N = atoi(argv[2]);
+  if (argc >= 2) N = atoi(argv[1]);
   size_t niter = 10;
-  if (argc >= 4) niter = atoi(argv[3]);
+  if (argc >= 3) niter = atoi(argv[2]);
 
   // Set up the coefficients.
   size_t p_real = 2, p_complex = 1;
