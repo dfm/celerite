@@ -396,8 +396,16 @@ Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> BandSolver<T>::dot (
   build_matrix(alpha_real, beta_real, alpha_complex_real, alpha_complex_imag,
                beta_complex_real, beta_complex_imag, 1, t, A);
 
-  // Do the dot product - WARNING: this assumes symmetry!
   Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> b_out(b_in.rows(), b_in.cols());
+#ifdef WITH_LAPACK
+  if (use_lapack_) {
+    bex = band_dot(width, width, A, bex);
+    for (int j = 0; j < nrhs; ++j)
+      for (int i = 0; i < n; ++i)
+        b_out(i, j) = bex(i*block_size, j);
+  } else {
+#endif
+  // Do the dot product - WARNING: this assumes symmetry!
   for (int j = 0; j < nrhs; ++j) {
     for (int i = 0; i < n; ++i) {
       int k = block_size * i;
@@ -406,6 +414,9 @@ Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> BandSolver<T>::dot (
         b_out(i, j) += A(kp, k) * bex(k + kp - width, j);
     }
   }
+#ifdef WITH_LAPACK
+  }
+#endif
 
   return b_out;
 }
