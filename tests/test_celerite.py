@@ -165,8 +165,6 @@ def test_dot(solver, seed=42):
         alpha_real, beta_real, alpha_complex_real, alpha_complex_imag,
         beta_complex_real, beta_complex_imag, t, b
     )
-    print(x0)
-    print(x)
     assert np.allclose(x0, x)
 
 def get_gp(solver, kernel):
