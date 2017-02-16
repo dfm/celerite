@@ -19,6 +19,8 @@ class PicklableBandSolver : public celerite::solver::BandSolver<double> {
 public:
   PicklableBandSolver (bool use_lapack = false) : celerite::solver::BandSolver<double>(use_lapack) {};
 
+  bool use_lapack() const { return use_lapack_; };
+
   auto serialize () const {
     return std::make_tuple(this->use_lapack_, this->computed_, this->n_, this->p_real_, this->p_complex_, this->log_det_,
                            this->a_, this->al_, this->ipiv_);
@@ -351,6 +353,10 @@ Returns:
 
 )delim");
 
+  solver.def("use_lapack", [](const PicklableBandSolver& solver) {
+    return solver.use_lapack();
+  });
+
   solver.def("__getstate__", [](const PicklableBandSolver& solver) {
     return solver.serialize();
   });
@@ -490,6 +496,54 @@ Raises:
 
 )delim");
 
+  sparse_solver.def("dot", [](celerite::solver::SparseSolver<double>& solver,
+      const Eigen::VectorXd& alpha_real,
+      const Eigen::VectorXd& beta_real,
+      const Eigen::VectorXd& alpha_complex_real,
+      const Eigen::VectorXd& alpha_complex_imag,
+      const Eigen::VectorXd& beta_complex_real,
+      const Eigen::VectorXd& beta_complex_imag,
+      const Eigen::VectorXd& x,
+      const Eigen::MatrixXd& b) {
+    return solver.dot(
+      alpha_real,
+      beta_real,
+      alpha_complex_real,
+      alpha_complex_imag,
+      beta_complex_real,
+      beta_complex_imag,
+      x,
+      b
+    );
+  },
+  R"delim(
+Compute the dot product of a ``celerite`` matrix and another arbitrary matrix
+
+This method computes ``A.b`` where ``A`` is defined by the parameters and
+``b`` is an arbitrary matrix of the correct shape.
+
+Args:
+    alpha_real (array[j_real]): The coefficients of the real terms.
+    beta_real (array[j_real]): The exponents of the real terms.
+    alpha_complex_real (array[j_complex]): The real part of the
+        coefficients of the complex terms.
+    alpha_complex_imag (array[j_complex]): The imaginary part of the
+        coefficients of the complex terms.
+    beta_complex_real (array[j_complex]): The real part of the
+        exponents of the complex terms.
+    beta_complex_imag (array[j_complex]): The imaginary part of the
+        exponents of the complex terms.
+    x (array[n]): The _sorted_ array of input coordinates.
+    b (array[n] or array[n, neq]): The matrix ``b`` described above.
+
+Returns:
+    array[n] or array[n, neq]: The dot product ``A.b`` as described above.
+
+Raises:
+    ValueError: For mismatched dimensions.
+
+)delim");
+
   sparse_solver.def("log_determinant", [](celerite::solver::SparseSolver<double>& solver) {
     return solver.log_determinant();
   },
@@ -513,6 +567,14 @@ Returns:
     successfully.
 
 )delim");
+
+  // It turns out that SparseLU objects are hard to serialize so we'll just punt. Sorry!
+  sparse_solver.def("__getstate__", [](const celerite::solver::SparseSolver<double>& solver) {
+    return std::make_tuple(false);
+  });
+  sparse_solver.def("__setstate__", [](celerite::solver::SparseSolver<double>& solver, py::tuple t) {
+    new (&solver) celerite::solver::SparseSolver<double>();
+  });
 
   return m.ptr();
 }

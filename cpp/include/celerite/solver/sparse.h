@@ -6,23 +6,12 @@
 #include <Eigen/Sparse>
 
 #include "celerite/utils.h"
+#include "celerite/extended.h"
 #include "celerite/exceptions.h"
 #include "celerite/solver/solver.h"
 
 namespace celerite {
 namespace solver {
-
-#define BLOCKSIZE_BASE                              \
-  int width = p_real + 2 * p_complex + 2,           \
-      block_size = 2 * p_real + 4 * p_complex + 1,  \
-      dim_ext = block_size * (n - 1) + 1;           \
-  if (p_complex == 0) width = p_real + 1;
-
-#define BLOCKSIZE                                   \
-  int p_real = this->p_real_,                       \
-      p_complex = this->p_complex_,                 \
-      n = this->n_;                                 \
-  BLOCKSIZE_BASE
 
 /// The class provides an alternative solver that uses Eigen's SparseLU
 ///
@@ -78,6 +67,32 @@ public:
   /// @param b The right hand side of the linear system.
   /// @param x A pointer that will be overwritten with the result.
   void solve (const Eigen::MatrixXd& b, T* x) const;
+
+  /// Compute the dot product of a ``celerite`` matrix and another arbitrary matrix
+  ///
+  /// This method computes ``A.b`` where ``A`` is defined by the parameters and
+  /// ``b`` is an arbitrary matrix of the correct shape.
+  ///
+  /// @param alpha_real The coefficients of the real terms.
+  /// @param beta_real The exponents of the real terms.
+  /// @param alpha_complex_real The real part of the coefficients of the complex terms.
+  /// @param alpha_complex_imag The imaginary part of the of the complex terms.
+  /// @param beta_complex_real The real part of the exponents of the complex terms.
+  /// @param beta_complex_imag The imaginary part of the exponents of the complex terms.
+  /// @param x The _sorted_ array of input coordinates.
+  /// @param b_in The matrix ``b`` described above.
+  ///
+  /// @return The matrix ``A.b``.
+  Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> dot (
+    const Eigen::Matrix<T, Eigen::Dynamic, 1>& alpha_real,
+    const Eigen::Matrix<T, Eigen::Dynamic, 1>& beta_real,
+    const Eigen::Matrix<T, Eigen::Dynamic, 1>& alpha_complex_real,
+    const Eigen::Matrix<T, Eigen::Dynamic, 1>& alpha_complex_imag,
+    const Eigen::Matrix<T, Eigen::Dynamic, 1>& beta_complex_real,
+    const Eigen::Matrix<T, Eigen::Dynamic, 1>& beta_complex_imag,
+    const Eigen::VectorXd& x,
+    const Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>& b_in
+  );
 
   size_t dim_ext () const {
     BLOCKSIZE
@@ -313,8 +328,39 @@ void SparseSolver<T>::solve (const Eigen::MatrixXd& b, T* x) const {
       x[i+j*this->n_] = bex(i*block_size, j);
 }
 
-#undef BLOCKSIZE
-#undef BLOCKSIZE_BASE
+template <typename T>
+Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> SparseSolver<T>::dot (
+  const Eigen::Matrix<T, Eigen::Dynamic, 1>& alpha_real,
+  const Eigen::Matrix<T, Eigen::Dynamic, 1>& beta_real,
+  const Eigen::Matrix<T, Eigen::Dynamic, 1>& alpha_complex_real,
+  const Eigen::Matrix<T, Eigen::Dynamic, 1>& alpha_complex_imag,
+  const Eigen::Matrix<T, Eigen::Dynamic, 1>& beta_complex_real,
+  const Eigen::Matrix<T, Eigen::Dynamic, 1>& beta_complex_imag,
+  const Eigen::VectorXd& t,
+  const Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>& b_in
+) {
+  Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> bex =
+    build_b_ext(alpha_real, beta_real, alpha_complex_real, alpha_complex_imag,
+                beta_complex_real, beta_complex_imag, t, b_in);
+
+  int p_real = alpha_real.rows(),
+      p_complex = alpha_complex_real.rows(),
+      n = t.rows(),
+      nrhs = b_in.cols();
+  BLOCKSIZE_BASE
+
+  // Build the extended matrix
+  Eigen::SparseMatrix<T> A(dim_ext, dim_ext);
+  build_matrix(alpha_real, beta_real, alpha_complex_real, alpha_complex_imag,
+               beta_complex_real, beta_complex_imag, t, A);
+
+  bex = A * bex;
+  Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> b_out(b_in.rows(), b_in.cols());
+  for (int j = 0; j < nrhs; ++j)
+    for (int i = 0; i < n; ++i)
+      b_out(i, j) = bex(block_size * i, j);
+  return b_out;
+}
 
 };
 };

@@ -11,8 +11,8 @@ except ImportError:
     import pickle
 
 import celerite
-from celerite import Solver, GP, terms
-from celerite.solver import get_kernel_value, CARMASolver, with_lapack
+from celerite import Solver, SparseSolver, GP, terms
+from celerite.solver import get_kernel_value, CARMASolver
 
 __all__ = ["test_carma", "test_log_determinant", "test_solve", "test_dot",
            "test_pickle", "test_build_gp", "test_log_likelihood",
@@ -20,14 +20,17 @@ __all__ = ["test_carma", "test_log_determinant", "test_solve", "test_dot",
 
 
 lapack_switch = pytest.mark.parametrize(
-    "use_lapack",
-    [False,
-     pytest.mark.skipif(celerite.__with_lapack__ is False, True,
+    "solver",
+    [(lambda: Solver(False)),
+     (lambda: SparseSolver()),
+     pytest.mark.skipif(celerite.__with_lapack__ is False,
+                        (lambda: Solver(True)),
                         reason="LAPACK support not compiled")]
 )
 
 @lapack_switch
-def test_carma(use_lapack, seed=42):
+def test_carma(solver, seed=42):
+    solver = solver()
     np.random.seed(seed)
     t = np.sort(np.random.uniform(0, 5, 100))
     yerr = 0.1 + np.zeros_like(t)
@@ -38,7 +41,6 @@ def test_carma(use_lapack, seed=42):
     carma_ll = carma_solver.log_likelihood(t, y, yerr)
     params = carma_solver.get_celerite_coeffs()
 
-    solver = Solver(use_lapack)
     solver.compute(
         params[0], params[1], params[2], params[3], params[4], params[5],
         t, yerr**2
@@ -51,12 +53,12 @@ def test_carma(use_lapack, seed=42):
 
 def _test_log_determinant(alpha_real, beta_real, alpha_complex_real,
                           alpha_complex_imag, beta_complex_real,
-                          beta_complex_imag, use_lapack, seed=42):
+                          beta_complex_imag, solver, seed=42):
+    solver = solver()
     np.random.seed(seed)
     t = np.sort(np.random.rand(5))
     diag = np.random.uniform(0.1, 0.5, len(t))
 
-    solver = Solver(use_lapack)
     solver.compute(
         alpha_real, beta_real, alpha_complex_real, alpha_complex_imag,
         beta_complex_real, beta_complex_imag, t, diag
@@ -69,7 +71,7 @@ def _test_log_determinant(alpha_real, beta_real, alpha_complex_real,
     assert np.allclose(solver.log_determinant(), np.linalg.slogdet(K)[1])
 
 @lapack_switch
-def test_log_determinant(use_lapack, seed=42):
+def test_log_determinant(solver, seed=42):
     alpha_real = np.array([1.5, 0.1])
     beta_real = np.array([1.0, 0.3])
     alpha_complex_real = np.array([1.0])
@@ -78,7 +80,7 @@ def test_log_determinant(use_lapack, seed=42):
     beta_complex_imag = np.array([1.0])
     _test_log_determinant(alpha_real, beta_real, alpha_complex_real,
                           alpha_complex_imag, beta_complex_real,
-                          beta_complex_imag, use_lapack, seed=seed)
+                          beta_complex_imag, solver, seed=seed)
 
     alpha_real = np.array([1.5, 0.1, 0.6, 0.3, 0.8, 0.7])
     beta_real = np.array([1.0, 0.3, 0.05, 0.01, 0.1, 0.2])
@@ -88,17 +90,17 @@ def test_log_determinant(use_lapack, seed=42):
     beta_complex_imag = np.array([1.0, 1.0])
     _test_log_determinant(alpha_real, beta_real, alpha_complex_real,
                           alpha_complex_imag, beta_complex_real,
-                          beta_complex_imag, use_lapack, seed=seed)
+                          beta_complex_imag, solver, seed=seed)
 
 
 def _test_solve(alpha_real, beta_real, alpha_complex_real, alpha_complex_imag,
-                beta_complex_real, beta_complex_imag, use_lapack, seed=42):
+                beta_complex_real, beta_complex_imag, solver, seed=42):
+    solver = solver()
     np.random.seed(seed)
     t = np.sort(np.random.rand(500))
     diag = np.random.uniform(0.1, 0.5, len(t))
     b = np.random.randn(len(t))
 
-    solver = Solver(use_lapack)
     with pytest.raises(RuntimeError):
         solver.log_determinant()
     with pytest.raises(RuntimeError):
@@ -119,7 +121,7 @@ def _test_solve(alpha_real, beta_real, alpha_complex_real, alpha_complex_imag,
     assert np.allclose(solver.solve(b), np.linalg.solve(K, b))
 
 @lapack_switch
-def test_solve(use_lapack, seed=42):
+def test_solve(solver, seed=42):
     alpha_real = np.array([1.5, 0.1])
     beta_real = np.array([1.0, 0.3])
     alpha_complex_real = np.array([1.0])
@@ -127,7 +129,7 @@ def test_solve(use_lapack, seed=42):
     beta_complex_real = np.array([1.0])
     beta_complex_imag = np.array([1.0])
     _test_solve(alpha_real, beta_real, alpha_complex_real, alpha_complex_imag,
-                beta_complex_real, beta_complex_imag, use_lapack, seed=seed)
+                beta_complex_real, beta_complex_imag, solver, seed=seed)
 
     alpha_real = np.array([1.5, 0.1, 0.6, 0.3, 0.8, 0.7])
     beta_real = np.array([1.0, 0.3, 0.05, 0.01, 0.1, 0.2])
@@ -136,11 +138,12 @@ def test_solve(use_lapack, seed=42):
     beta_complex_real = np.array([1.0, 1.0])
     beta_complex_imag = np.array([1.0, 1.0])
     _test_solve(alpha_real, beta_real, alpha_complex_real, alpha_complex_imag,
-                beta_complex_real, beta_complex_imag, use_lapack, seed=seed)
+                beta_complex_real, beta_complex_imag, solver, seed=seed)
 
 
 @lapack_switch
-def test_dot(use_lapack, seed=42):
+def test_dot(solver, seed=42):
+    solver = solver()
     np.random.seed(seed)
     t = np.sort(np.random.rand(300))
     b = np.random.randn(len(t), 5)
@@ -158,16 +161,20 @@ def test_dot(use_lapack, seed=42):
     )
     x0 = np.dot(K, b)
 
-    solver = Solver(use_lapack)
     x = solver.dot(
         alpha_real, beta_real, alpha_complex_real, alpha_complex_imag,
         beta_complex_real, beta_complex_imag, t, b
     )
     assert np.allclose(x0, x)
 
+def get_gp(solver, kernel):
+    if type(solver) == SparseSolver:
+        return GP(kernel, sparse=True)
+    return GP(kernel, use_lapack=solver.use_lapack)
 
 @lapack_switch
-def test_pickle(use_lapack, seed=42):
+def test_pickle(solver, seed=42):
+    solver = solver()
     np.random.seed(seed)
     t = np.sort(np.random.rand(500))
     diag = np.random.uniform(0.1, 0.5, len(t))
@@ -189,34 +196,35 @@ def test_pickle(use_lapack, seed=42):
         assert np.allclose(solver1.dot_solve(y),
                            solver2.dot_solve(y))
 
-    solver1 = Solver(use_lapack)
-    s = pickle.dumps(solver1, -1)
+    s = pickle.dumps(solver, -1)
     solver2 = pickle.loads(s)
-    compare(solver1, solver2)
+    compare(solver, solver2)
 
-    solver1.compute(
+    if type(solver) == SparseSolver:
+        return
+    solver.compute(
         alpha_real, beta_real, alpha_complex_real, alpha_complex_imag,
         beta_complex_real, beta_complex_imag, t, diag
     )
-    solver2 = pickle.loads(pickle.dumps(solver1, -1))
-    compare(solver1, solver2)
+    solver2 = pickle.loads(pickle.dumps(solver, -1))
+    compare(solver, solver2)
 
     # Test that models can be pickled too.
     kernel = terms.RealTerm(0.5, 0.1)
     kernel += terms.ComplexTerm(0.6, 0.7, 1.0)
-    gp1 = GP(kernel, use_lapack=use_lapack)
+    gp1 = get_gp(solver, kernel)
     gp1.compute(t, diag)
     s = pickle.dumps(gp1, -1)
     gp2 = pickle.loads(s)
-
     assert np.allclose(gp1.log_likelihood(y), gp2.log_likelihood(y))
 
 
 @lapack_switch
-def test_build_gp(use_lapack, seed=42):
+def test_build_gp(solver, seed=42):
+    solver = solver()
     kernel = terms.RealTerm(0.5, 0.1)
     kernel += terms.ComplexTerm(0.6, 0.7, 1.0)
-    gp = GP(kernel, use_lapack=use_lapack)
+    gp = get_gp(solver, kernel)
 
     assert gp.vector_size == 5
     p = gp.get_parameter_vector()
@@ -234,20 +242,21 @@ def test_build_gp(use_lapack, seed=42):
 
 
 @lapack_switch
-def test_log_likelihood(use_lapack, seed=42):
+def test_log_likelihood(solver, seed=42):
+    solver = solver()
     np.random.seed(seed)
     x = np.sort(np.random.rand(10))
     yerr = np.random.uniform(0.1, 0.5, len(x))
     y = np.sin(x)
 
     kernel = terms.RealTerm(0.1, 0.5)
-    gp = GP(kernel, use_lapack=use_lapack)
+    gp = get_gp(solver, kernel)
     with pytest.raises(RuntimeError):
         gp.log_likelihood(y)
 
     for term in [(0.6, 0.7, 1.0)]:
         kernel += terms.ComplexTerm(*term)
-        gp = GP(kernel, use_lapack=use_lapack)
+        gp = get_gp(solver, kernel)
 
         assert gp.computed is False
 
@@ -280,9 +289,7 @@ def test_log_likelihood(use_lapack, seed=42):
     ll2 = gp.log_likelihood(y)
     assert not np.allclose(ll1, ll2)
 
-    print(gp.get_parameter_dict())
     gp[1] += 0.1
-    print(gp.get_parameter_dict())
     assert gp.dirty is True
     gp.compute(x, yerr)
     ll3 = gp.log_likelihood(y)
@@ -290,7 +297,8 @@ def test_log_likelihood(use_lapack, seed=42):
 
 
 @lapack_switch
-def test_predict(use_lapack, seed=42):
+def test_predict(solver, seed=42):
+    solver = solver()
     np.random.seed(seed)
     x = np.sort(np.random.rand(10))
     yerr = np.random.uniform(0.1, 0.5, len(x))
@@ -299,7 +307,7 @@ def test_predict(use_lapack, seed=42):
     kernel = terms.RealTerm(0.1, 0.5)
     for term in [(0.6, 0.7, 1.0)]:
         kernel += terms.ComplexTerm(*term)
-    gp = GP(kernel, use_lapack=use_lapack)
+    gp = get_gp(solver, kernel)
     gp.compute(x, yerr)
 
     mu0, cov0 = gp.predict(y, x)
@@ -311,11 +319,12 @@ def test_predict(use_lapack, seed=42):
 # very large quality factor and the time samples are almost exactly at Nyquist
 # sampling.  This can frustrate Green's-function-based CARMA solvers.
 @lapack_switch
-def test_nyquist_singularity(use_lapack, seed=4220):
+def test_nyquist_singularity(solver, seed=4220):
+    solver = solver()
     np.random.seed(seed)
 
     kernel = terms.ComplexTerm(1.0, np.log(1e-6), np.log(1.0))
-    gp = GP(kernel, use_lapack=use_lapack)
+    gp = get_gp(solver, kernel)
 
     # Samples are very close to Nyquist with f = 1.0
     ts = np.array([0.0, 0.5, 1.0, 1.5])

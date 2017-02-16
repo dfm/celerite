@@ -8,12 +8,12 @@ except NameError:
     __CELERITE_SETUP__ = False
 
 if not __CELERITE_SETUP__:
-    __all__ = ["Solver", "GP", "terms",
+    __all__ = ["Solver", "SparseSolver", "GP", "terms",
                "__library_version__", "__with_lapack__"]
 
     from . import terms, solver
     from .celerite import GP
-    from .solver import Solver
+    from .solver import Solver, SparseSolver
 
     __library_version__ = solver.get_library_version()
     __with_lapack__ = solver.with_lapack()

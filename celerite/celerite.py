@@ -5,8 +5,8 @@ import math
 import logging
 import numpy as np
 
-from .solver import Solver, with_lapack
 from .modeling import ModelSet, ConstantModel
+from .solver import Solver, SparseSolver, with_lapack
 
 __all__ = ["GP"]
 
@@ -44,12 +44,13 @@ class GP(ModelSet):
                  kernel,
                  mean=0.0, fit_mean=False,
                  log_white_noise=-float("inf"), fit_white_noise=False,
-                 use_lapack=None):
+                 use_lapack=None, sparse=False):
         self.solver = None
         self._computed = False
         self._t = None
         self._y_var = None
 
+        self.sparse = bool(sparse)
         if use_lapack is None:
             if with_lapack():
                 coeffs = kernel.coefficients
@@ -60,7 +61,7 @@ class GP(ModelSet):
         if use_lapack and not with_lapack():
             use_lapack = False
             logging.warn("celerite was not compiled with lapack support")
-        self._use_lapack = use_lapack
+        self._use_lapack = bool(use_lapack)
 
         # Build up a list of models for the ModelSet
         models = [("kernel", kernel)]
@@ -151,7 +152,10 @@ class GP(ModelSet):
         self._yerr = np.empty_like(self._t)
         self._yerr[:] = yerr
         if self.solver is None:
-            self.solver = Solver(self._use_lapack)
+            if self.sparse:
+                self.solver = SparseSolver()
+            else:
+                self.solver = Solver(self._use_lapack)
         (alpha_real, beta_real, alpha_complex_real, alpha_complex_imag,
          beta_complex_real, beta_complex_imag) = self.kernel.coefficients
         self.solver.compute(
