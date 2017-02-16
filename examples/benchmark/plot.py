@@ -15,20 +15,26 @@ setup(auto=True)
 parser = argparse.ArgumentParser()
 parser.add_argument("platform")
 parser.add_argument("--default", action="store_true")
+parser.add_argument("--sparse", action="store_true")
 parser.add_argument("--directory",
                     default=os.path.dirname(os.path.abspath(__file__)))
 args = parser.parse_args()
 
 # Compile into a matrix
-if not args.default:
+lapack = False
+if args.default:
+    fn = os.path.join(args.directory,
+                      "benchmark_{0}_default.csv".format(args.platform))
+elif args.sparse:
+    fn = os.path.join(args.directory,
+                      "benchmark_{0}_sparse.csv".format(args.platform))
+else:
+    lapack = True
     fn = os.path.join(args.directory,
                       "benchmark_{0}.csv".format(args.platform))
     without_lapack = pd.read_csv(fn, comment="#")
     fn = os.path.join(args.directory,
                       "benchmark_{0}_lapack.csv".format(args.platform))
-else:
-    fn = os.path.join(args.directory,
-                      "benchmark_{0}_default.csv".format(args.platform))
 with_lapack = pd.read_csv(fn, comment="#")
 
 with_lapack_matrix = np.empty((with_lapack.xi.max() + 1,
@@ -36,7 +42,7 @@ with_lapack_matrix = np.empty((with_lapack.xi.max() + 1,
 with_lapack_matrix[:] = np.nan
 with_lapack_matrix[with_lapack.xi, with_lapack.yi] = with_lapack.comp_time
 
-if not args.default:
+if lapack:
     without_lapack_matrix = np.empty((without_lapack.xi.max() + 1,
                                       without_lapack.yi.max() + 1))
     without_lapack_matrix[:] = np.nan
@@ -55,7 +61,7 @@ for i, j in enumerate(J):
     ax1.plot(x[m], y[m], ".-", color=COLOR_CYCLE[i],
              label="{0:.0f}".format(j))
 
-    if not args.default:
+    if lapack:
         y = without_lapack_matrix[i]
         m = np.isfinite(y)
         ax1.plot(x[m], y[m], ".--", color=COLOR_CYCLE[i])
@@ -70,7 +76,7 @@ for i, n in enumerate(N[::2]):
     ax2.plot(x[m], y[m], ".-", color=COLOR_CYCLE[i % len(COLOR_CYCLE)],
              label="{0:.0f}".format(n))
 
-    if not args.default:
+    if lapack:
         y = without_lapack_matrix[:, 2*i]
         m = np.isfinite(y)
         ax2.plot(x[m], y[m], ".--", color=COLOR_CYCLE[i % len(COLOR_CYCLE)])
@@ -93,5 +99,7 @@ ax2.set_xlabel("number of terms [$J$]")
 fn = os.path.join(args.directory, "benchmark_{0}".format(args.platform))
 if args.default:
     fn += "_default"
+elif args.sparse:
+    fn += "_sparse"
 fig.savefig(fn + ".png", bbox_inches="tight", dpi=300)
 fig.savefig(fn + ".pdf", bbox_inches="tight", dpi=300)

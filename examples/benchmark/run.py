@@ -12,11 +12,12 @@ import numpy.__config__ as npconf
 import celerite
 from celerite import terms
 from celerite.timer import benchmark
-from celerite.solver import lapack_variant, Solver
+from celerite.solver import lapack_variant, Solver, SparseSolver
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--lapack", action="store_true")
 parser.add_argument("--default", action="store_true")
+parser.add_argument("--sparse", action="store_true")
 parser.add_argument("--minnpow", type=int, default=6)
 parser.add_argument("--maxnpow", type=int, default=19)
 parser.add_argument("--minjpow", type=int, default=0)
@@ -33,7 +34,8 @@ N = 2**np.arange(args.minnpow, args.maxnpow + 1)
 J = 2**np.arange(args.minjpow, args.maxjpow + 1)
 
 header = ""
-for k in ["lapack", "minnpow", "maxnpow", "minjpow", "maxjpow"]:
+for k in ["lapack", "sparse", "default", "minnpow", "maxnpow", "minjpow",
+          "maxjpow"]:
     header += "# {0}: {1}\n".format(k, getattr(args, k))
 header += "# platform: {0}\n".format(sys.platform)
 header += "# with_lapack: {0}\n".format(celerite.__with_lapack__)
@@ -45,6 +47,8 @@ header += "xi,yi,j,n,comp_time,ll_time\n"
 fn = "benchmark_{0}".format(sys.platform)
 if args.default:
     fn += "_default"
+elif args.sparse:
+    fn += "_sparse"
 elif args.lapack:
     fn += "_lapack"
 fn += ".csv"
@@ -68,8 +72,13 @@ for xi, j in enumerate(J):
         kernel += terms.ComplexTerm(0.1, 2.0, 1.6)
     c = kernel.coefficients
     assert 2*j == len(c[0]) + 2*len(c[2]), "Wrong number of terms"
-    use_lapack = bool(args.lapack if not args.default else j >= 4)
-    solver = Solver(use_lapack)
+
+    if args.sparse:
+        solver = SparseSolver()
+    else:
+        use_lapack = bool(args.lapack if not args.default else j >= 4)
+        solver = Solver(use_lapack)
+
     for yi, n in enumerate(N):
         params = list(c)
         params += [t[:n], yerr[:n]**2]
@@ -85,5 +94,5 @@ for xi, j in enumerate(J):
             f.write(msg)
         print(msg, end="")
 
-        if comp_time + ll_time >= 3:
+        if comp_time + ll_time >= 5:
             break
