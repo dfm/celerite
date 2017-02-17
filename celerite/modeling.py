@@ -37,12 +37,22 @@ class Model(object):
         self.unfrozen_mask = np.ones(self.full_size, dtype=bool)
         self.dirty = True
 
-        # Pull out the recognized keyword arguments
-        self.parameter_bounds = kwargs.pop(
-            "bounds", [(None, None) for _ in range(self.full_size)])
+        # Deal with bounds
+        self.parameter_bounds = []
+        bounds = kwargs.pop("bounds", dict())
+        try:
+            # Try to treat 'bounds' as a dictionary
+            for name in self.parameter_names:
+                self.parameter_bounds.append(bounds.get(name, (None, None)))
+        except AttributeError:
+            # 'bounds' isn't a dictionary - it had better be a list
+            self.parameter_bounds = list(bounds)
         if len(self.parameter_bounds) != self.full_size:
             raise ValueError("the number of bounds must equal the number of "
                              "parameters")
+        if not all(len(b) == 2 for b in bounds):
+            raise ValueError("the bounds for each parameter must have the "
+                             "format: '(min, max)'")
 
         # Parameter values can be specified as arguments or keywords
         if len(args):
