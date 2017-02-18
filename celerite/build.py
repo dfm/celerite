@@ -100,19 +100,6 @@ def has_flag(compiler, flagname):
             return False
     return True
 
-def check_for_sparse(compiler):
-    """Check if Eigen/Sparse is supported"""
-    with tempfile.NamedTemporaryFile('w', suffix='.cpp') as f:
-        f.write('#include "celerite/solver/sparse.h"\n'
-                'int main (int argc, char **argv) {\n'
-                'celerite::solver::SparseSolver<double> solver;\n'
-                'return 0; }')
-        try:
-            compiler.compile([f.name])
-        except setuptools.distutils.errors.CompileError:
-            return False
-    return True
-
 def cpp_flag(compiler):
     """Return the -std=c++[11/14] compiler flag.
 
@@ -182,9 +169,15 @@ class build_ext(_build_ext):
         for ext in self.extensions:
             ext.extra_compile_args = opts
 
-        # Check for sparse support
-        if check_for_sparse(self.compiler):
-            print("Has sparse...")
+        # Building on RTD doesn't require the extra speedups and it seems to
+        # fail for some reason so we'll bail early.
+        if os.environ.get("READTHEDOCS", None) == "True":
+            _build_ext.build_extensions(self)
+            return
+
+        # Enable Eigen/Sparse support
+        with_sparse = os.environ.get("WITH_SPARSE", None)
+        if with_sparse is None or with_sparse.lower() != "false":
             for ext in self.extensions:
                 ext.define_macros += [("WITH_SPARSE", None)]
 
@@ -207,4 +200,4 @@ class build_ext(_build_ext):
                 ]
 
         # Run the standard build procedure.
-        _build_ext.build_extension(self, ext)
+        _build_ext.build_extensions(self)
