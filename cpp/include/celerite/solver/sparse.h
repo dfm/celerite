@@ -3,10 +3,7 @@
 
 #include <cmath>
 #include <Eigen/Core>
-#include <Eigen/StdVector>
 #include <Eigen/Sparse>
-
-#include <Eigen/Dense>
 
 #include "celerite/utils.h"
 #include "celerite/extended.h"

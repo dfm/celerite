@@ -44,11 +44,23 @@ class GP(ModelSet):
                  kernel,
                  mean=0.0, fit_mean=False,
                  log_white_noise=-float("inf"), fit_white_noise=False,
-                 use_lapack=None, sparse=False):
+                 solve_method=None):
         self.solver = None
         self._computed = False
         self._t = None
         self._y_var = None
+
+        # Choose which solver to use
+        sparse = False
+        use_lapack = False
+        if solve_method is None:
+            coeffs = kernel.coefficients
+            nterms = len(coeffs[0]) + 2 * len(coeffs[2])
+            if with_lapack():
+                sparse = False
+                use_lapack = (nterms >= 8)
+            else:
+                pass
 
         self.sparse = bool(sparse)
         if use_lapack is None:

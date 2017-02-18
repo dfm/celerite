@@ -53,6 +53,7 @@ need to call these directly. This interface was built using `pybind11
 )delim");
 
   m.def("get_library_version", []() { return CELERITE_VERSION_STRING; }, "The version of the linked C++ library");
+
   m.def("with_lapack", []() {
 #ifdef WITH_LAPACK
     return true;
@@ -67,6 +68,14 @@ need to call these directly. This interface was built using `pybind11
     return "";
 #endif
   }, "The variant of LAPACK used to compile celerite");
+
+  m.def("with_sparse", []() {
+#ifdef WITH_SPARSE
+    return true;
+#else
+    return false;
+#endif
+  }, "Was celerite compiled with sparse support");
 
   m.def("get_kernel_value",
     [](
@@ -399,7 +408,7 @@ A thin wrapper around the C++ CARMASolver class
     );
   });
 
-
+#ifdef WITH_SPARSE
   //
   // ------ SPARSE ------
   //
@@ -575,6 +584,7 @@ Returns:
   sparse_solver.def("__setstate__", [](celerite::solver::SparseSolver<double>& solver, py::tuple t) {
     new (&solver) celerite::solver::SparseSolver<double>();
   });
+#endif
 
   return m.ptr();
 }

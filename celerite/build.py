@@ -100,6 +100,17 @@ def has_flag(compiler, flagname):
             return False
     return True
 
+def check_for_sparse(compiler):
+    """Check if Eigen/Sparse is supported"""
+    with tempfile.NamedTemporaryFile('w', suffix='.cpp') as f:
+        f.write('#include<Eigen/Sparse>\n'
+                'int main (int argc, char **argv) { return 0; }')
+        try:
+            compiler.compile([f.name])
+        except setuptools.distutils.errors.CompileError:
+            return False
+    return True
+
 def cpp_flag(compiler):
     """Return the -std=c++[11/14] compiler flag.
 
@@ -168,6 +179,12 @@ class build_ext(_build_ext):
 
         for ext in self.extensions:
             ext.extra_compile_args = opts
+
+        # Check for sparse support
+        if check_for_sparse(self.compiler):
+            print("Has sparse...")
+            for ext in self.extensions:
+                ext.define_macros += [("WITH_SPARSE", None)]
 
         # Link to numpy's LAPACK if available
         variant = os.environ.get("LAPACK_VARIANT", None)
