@@ -5,10 +5,23 @@ import math
 import logging
 import numpy as np
 
+from . import solver
 from .modeling import ModelSet, ConstantModel
-from .solver import Solver, SparseSolver, with_lapack
 
-__all__ = ["GP"]
+__all__ = ["GP", "get_solver"]
+
+
+def get_solver(method=None):
+    if method is None or method == "default":
+        if solver.with_lapack():
+            return solver.Solver(True)
+        if solver.with_sparse():
+            return solver.SparseSolver()
+    elif method == "lapack" and solver.with_lapack():
+        return solver.Solver(True)
+    elif method == "sparse" and solver.with_sparse():
+        return solver.SparseSolver()
+    return solver.Solver(False)
 
 
 class GP(ModelSet):
@@ -44,35 +57,36 @@ class GP(ModelSet):
                  kernel,
                  mean=0.0, fit_mean=False,
                  log_white_noise=-float("inf"), fit_white_noise=False,
-                 solve_method=None):
+                 method=None):
         self.solver = None
         self._computed = False
         self._t = None
         self._y_var = None
 
         # Choose which solver to use
-        sparse = False
+        use_sparse = False
         use_lapack = False
-        if solve_method is None:
+        if method is None or method == "default":
             coeffs = kernel.coefficients
             nterms = len(coeffs[0]) + 2 * len(coeffs[2])
-            if with_lapack():
-                sparse = False
+            if solver.with_lapack():
                 use_lapack = (nterms >= 8)
-            else:
-                pass
-
-        self.sparse = bool(sparse)
-        if use_lapack is None:
-            if with_lapack():
-                coeffs = kernel.coefficients
-                nterms = len(coeffs[0]) + 2 * len(coeffs[2])
-                use_lapack = (nterms >= 8)
-            else:
-                use_lapack = False
-        if use_lapack and not with_lapack():
-            use_lapack = False
-            logging.warn("celerite was not compiled with lapack support")
+            elif solver.with_sparse():
+                use_sparse = (nterms >= 8)
+        elif method == "simple":
+            pass
+        elif method == "lapack":
+            use_lapack = solver.with_lapack()
+            if not use_lapack:
+                logging.warn("celerite was not compiled with LAPACK support")
+        elif method == "sparse":
+            use_sparse = solver.with_sparse()
+            if not use_sparse:
+                logging.warn("celerite was not compiled with Sparse support")
+        else:
+            logging.warn("'method' must be one of ['default', 'simple', "
+                         "'lapack', 'sparse']; falling back on 'simple'")
+        self._use_sparse = bool(use_sparse)
         self._use_lapack = bool(use_lapack)
 
         # Build up a list of models for the ModelSet
@@ -134,7 +148,11 @@ class GP(ModelSet):
 
     @property
     def computed(self):
-        return not self.dirty
+        return (
+            self.solver is not None and
+            self.solver.computed() and
+            not self.dirty
+        )
 
     def compute(self, t, yerr=1.123e-12, check_sorted=True):
         """
@@ -164,10 +182,10 @@ class GP(ModelSet):
         self._yerr = np.empty_like(self._t)
         self._yerr[:] = yerr
         if self.solver is None:
-            if self.sparse:
-                self.solver = SparseSolver()
+            if self._use_sparse:
+                self.solver = solver.SparseSolver()
             else:
-                self.solver = Solver(self._use_lapack)
+                self.solver = solver.Solver(self._use_lapack)
         (alpha_real, beta_real, alpha_complex_real, alpha_complex_imag,
          beta_complex_real, beta_complex_imag) = self.kernel.coefficients
         self.solver.compute(
@@ -179,7 +197,7 @@ class GP(ModelSet):
         self.dirty = False
 
     def _recompute(self):
-        if self.dirty:
+        if not self.computed:
             if self._t is None:
                 raise RuntimeError("you must call 'compute' first")
             self.compute(self._t, self._yerr, check_sorted=False)

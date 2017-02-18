@@ -103,8 +103,10 @@ def has_flag(compiler, flagname):
 def check_for_sparse(compiler):
     """Check if Eigen/Sparse is supported"""
     with tempfile.NamedTemporaryFile('w', suffix='.cpp') as f:
-        f.write('#include<Eigen/Sparse>\n'
-                'int main (int argc, char **argv) { return 0; }')
+        f.write('#include "celerite/solver/sparse.h"\n'
+                'int main (int argc, char **argv) {\n'
+                'celerite::solver::SparseSolver<double> solver;\n'
+                'return 0; }')
         try:
             compiler.compile([f.name])
         except setuptools.distutils.errors.CompileError:

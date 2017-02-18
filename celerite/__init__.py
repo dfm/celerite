@@ -9,13 +9,13 @@ except NameError:
 
 if not __CELERITE_SETUP__:
     __all__ = [
-        "terms", "solver", "modeling", "GP", "Solver",
+        "terms", "solver", "modeling", "get_solver", "GP", "Solver",
         "__library_version__", "__with_lapack__", "__lapack_variant__",
         "__with_sparse__",
     ]
 
     from . import terms, solver, modeling
-    from .celerite import GP
+    from .celerite import get_solver, GP
     from .solver import Solver
 
     __library_version__ = solver.get_library_version()
