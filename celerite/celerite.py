@@ -44,12 +44,12 @@ class GP(ModelSet):
         fit_white_noise (Optional): If ``False``, all of the parameters of
             ``log_white_noise`` will be frozen. Otherwise, the parameter
             states are unaffected. (default: ``False``)
-        use_lapack (Optional[bool]): If ``True`` and if celerite was compiled
-            with LAPACK support, the solver will use the optimized LAPACK
-            band matrix solver. By default, LAPACK will be used (if available)
-            for models with at least 8 terms. This seems to be roughly the
-            break even point on some systems but there's no reason why this
-            should be optimal in all cases.
+        method: Select a matrix solver method by name. This can be one of
+            (a) ``simple``: a simple banded Gaussian elimination based method,
+            (b) ``lapack``: an optimized band solver if compiled with LAPACK,
+            (c) ``sparse``: a sparse solver if compiled with Eigen/Sparse, or
+            (d) ``default``: uses heuristics to select the fastest method that
+            is available.
 
     """
 

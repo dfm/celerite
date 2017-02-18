@@ -4,6 +4,7 @@
 ++++++++++++++++
 
 - Fixed bug when pickling ``Model`` objects.
+- Added sparse solver using ``Eigen/SparseLU``
 
 0.1.1 (2017-02-12)
 ++++++++++++++++++

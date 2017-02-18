@@ -32,9 +32,9 @@ FFT and Lomb-Scargle estimators of the power spectrum.
     import celerite
     from celerite import terms
     
-    def simulate_and_compute_psds(N, K=1500, norm=False):
+    def simulate_and_compute_psds(N, K=1500):
         # Set up a simple celerite model
-        kernel = terms.RealTerm(0.1, 0.5) + terms.ComplexTerm(0.5, 0.1, 2.0)
+        kernel = terms.RealTerm(0.1, 0.5) + terms.ComplexTerm(0.5, 0.05, 3.0)
         gp = celerite.GP(kernel)
         
         # Simulate K datasets with N points
@@ -42,45 +42,53 @@ FFT and Lomb-Scargle estimators of the power spectrum.
         np.random.seed(42)
         y = gp.sample(t, size=K)
         
-        # Compute the mean FFT based power spectrum estimate
+        # Compute the FFT based power spectrum estimates
         f = np.fft.rfftfreq(len(t), t[1] - t[0])
         fft = np.array(list(map(np.fft.rfft, y)))
         fft *= np.conj(fft)
-        if norm:
-            fft /= N**2
-        q_fft = np.percentile(fft.real, [16, 50, 84], axis=0)
+        
+        # >>> To get the FFT based PSD in the correct units, normalize by N^2 <<<
+        power_fft = fft.real / N**2
     
-        # Compute the mean LS based power spectrum estimate
+        # Compute the LS based power spectrum estimates
         power_ls = []
         for y0 in y:
             model = LombScargle(t, y0)
             power_ls.append(model.power(f[1:-1], method="fast", normalization="psd"))
         power_ls = np.array(power_ls)
-        if norm:
-            power_ls /= N
-        q_ls = np.percentile(power_ls, [16, 50, 84], axis=0)
+        
+        # >>> To get the LS based PSD in the correct units, normalize by N <<<
+        power_ls /= N
         
         # Compute the true power spectrum
         # NOTE: the 2*pi enters because celerite computes the PSD in _angular_ frequency
         power_true = kernel.get_psd(2*np.pi*f)
-        if norm:
-            power_true /= 2*np.pi
+        
+        # >>> To get the true PSD in units of physical frequency, normalize by 2*pi <<<
+        power_true /= 2*np.pi
         
         # Let's plot the estimates of the PSD
+        plt.figure()
         plt.plot(f, power_true, label="truth")
-        plt.plot(f, q_fft[1], "--", label="FFT")
-        plt.plot(f[1:-1], q_ls[1], ":", label="LS")
+        plt.plot(f, np.median(power_fft, axis=0), "--", label="FFT")
+        plt.plot(f[1:-1], np.median(power_ls, axis=0), ":", label="LS")
         plt.yscale("log")
         plt.xscale("log")
         plt.xlim(f.min(), f.max())
-        plt.ylabel("power")
-        plt.xlabel("frequency")
+        plt.ylabel("power [$\mathrm{ppm}^2/\mathrm{Hz}$]")
+        plt.xlabel("frequency [Hz]")
+        plt.title("$N = {0}$".format(N))
         plt.legend()
         
-    simulate_and_compute_psds(1000, norm=True)
+    simulate_and_compute_psds(500)
+    simulate_and_compute_psds(1000)
 
 
 
 .. image:: normalization_files/normalization_2_0.png
+
+
+
+.. image:: normalization_files/normalization_2_1.png
 
 
