@@ -2,8 +2,11 @@
 #define _CELERITE_SOLVER_SPARSE_H_
 
 #include <cmath>
-#include <Eigen/Sparse>
 #include <Eigen/Core>
+#include <Eigen/StdVector>
+#include <Eigen/Sparse>
+
+#include <Eigen/Dense>
 
 #include "celerite/utils.h"
 #include "celerite/extended.h"
