@@ -136,6 +136,7 @@ void BandSolver<T>::build_matrix (
       p_complex = alpha_complex_real.rows(),
       n = x.rows();
   BLOCKSIZE_BASE
+  WIDTH
   int offset = offset_factor * width;
 
   // Set up the extended matrix.
@@ -293,6 +294,7 @@ int BandSolver<T>::compute (
   this->p_complex_ = alpha_complex_real.rows();
   this->n_ = x.rows();
   BLOCKSIZE
+  WIDTH
 
   int offset_factor = 1;
 #ifdef WITH_LAPACK
@@ -348,6 +350,7 @@ void BandSolver<T>::solve (const Eigen::MatrixXd& b, T* x) const {
   int nrhs = b.cols();
 
   BLOCKSIZE
+  WIDTH
 
   // Pad the input vector to the extended size.
   Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> bex = Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>::Zero(dim_ext, nrhs);
@@ -390,6 +393,7 @@ Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> BandSolver<T>::dot (
       n = t.rows(),
       nrhs = b_in.cols();
   BLOCKSIZE_BASE
+  WIDTH
 
   // Build the extended matrix
   Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> A;

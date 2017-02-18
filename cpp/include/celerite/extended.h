@@ -7,16 +7,18 @@
 namespace celerite {
 
 #define BLOCKSIZE_BASE                              \
-  int width = p_real + 2 * p_complex + 2,           \
-      block_size = 2 * p_real + 4 * p_complex + 1,  \
+  int block_size = 2 * p_real + 4 * p_complex + 1,  \
       dim_ext = block_size * (n - 1) + 1;           \
-  if (p_complex == 0) width = p_real + 1;
 
 #define BLOCKSIZE                                   \
   int p_real = this->p_real_,                       \
       p_complex = this->p_complex_,                 \
       n = this->n_;                                 \
   BLOCKSIZE_BASE
+
+#define WIDTH  \
+  int width = p_real + 2 * p_complex + 2;           \
+  if (p_complex == 0) width = p_real + 1;
 
 
 template <typename T>

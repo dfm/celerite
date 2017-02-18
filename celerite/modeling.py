@@ -29,6 +29,17 @@ class Model(object):
         # or...
         model = CustomModel(1.0, 2.0)
 
+    Args:
+        bounds (Optional[list or dict]): Bounds can be given for each
+            parameter setting their minimum and maximum allowed values.
+            This parameter can either be a ``list`` (with length
+            ``full_size``) or a ``dict`` with named parameters. Any parameters
+            that are omitted from the ``dict`` will be assumed to have no
+            bounds. These bounds can be retrieved later using the
+            :func:`celerite.Model.get_parameter_bounds` method and, by
+            default, they are used in the :func:`celerite.Model.log_prior`
+            method.
+
     """
 
     parameter_names = tuple()
@@ -50,7 +61,7 @@ class Model(object):
         if len(self.parameter_bounds) != self.full_size:
             raise ValueError("the number of bounds must equal the number of "
                              "parameters")
-        if not all(len(b) == 2 for b in bounds):
+        if any(len(b) != 2 for b in self.parameter_bounds):
             raise ValueError("the bounds for each parameter must have the "
                              "format: '(min, max)'")
 
