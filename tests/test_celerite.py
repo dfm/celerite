@@ -4,6 +4,7 @@ from __future__ import division, print_function
 
 import pytest
 import numpy as np
+from itertools import product
 
 try:
     import cPickle as pickle
@@ -31,6 +32,30 @@ method_switch = pytest.mark.parametrize(
                            reason="Sparse support not sparse"),
     ]
 )
+
+
+def test_kernel(seed=42):
+    np.random.seed(seed)
+    t = np.sort(np.random.uniform(0, 5, 100))
+    tau = t[:, None] - t[None, :]
+
+    k1 = terms.RealTerm(log_a=0.1, log_c=0.5)
+    k2 = terms.ComplexTerm(0.2, -3.0, 0.5, 0.01)
+    k3 = terms.SHOTerm(1.0, 0.2, 3.0)
+
+    K1 = k1.get_value(tau)
+    K2 = k2.get_value(tau)
+    K3 = k3.get_value(tau)
+
+    assert np.allclose((k1 + k2).get_value(tau), K1 + K2)
+    assert np.allclose((k3 + k2).get_value(tau), K3 + K2)
+    assert np.allclose((k1 + k2 + k3).get_value(tau), K1 + K2 + K3)
+
+    for (a, b), (A, B) in zip(product((k1, k2, k3, k1+k2, k1+k3, k2+k3),
+                                      (k1, k2, k3)),
+                              product((K1, K2, K3, K1+K2, K1+K3, K2+K3),
+                                      (K1, K2, K3))):
+        assert np.allclose((a * b).get_value(tau), A*B)
 
 @method_switch
 def test_carma(method, seed=42):

@@ -2,7 +2,7 @@
 
 from __future__ import division, print_function
 import numpy as np
-from itertools import chain
+from itertools import chain, product
 
 from .modeling import Model, ModelSet
 from .solver import get_kernel_value, get_psd_value, check_coefficients
@@ -90,6 +90,12 @@ class Term(Model):
     def __radd__(self, b):
         return TermSum(b, self)
 
+    def __mul__(self, b):
+        return TermProduct(self, b)
+
+    def __rmul__(self, b):
+        return TermProduct(b, self)
+
     def get_real_coefficients(self):
         """
         Get the arrays ``alpha_real`` and ``beta_real``
@@ -165,6 +171,67 @@ class Term(Model):
         return pars
 
 
+class TermProduct(Term, ModelSet):
+
+    def __init__(self, k1, k2):
+        super(TermProduct, self).__init__([("k1", k1), ("k2", k2)])
+
+    def __repr__(self):
+        return " * ".join(map("{0}".format, (self.models["k1"],
+                                             self.models["k2"])))
+
+    @property
+    def terms(self):
+        return [self]
+
+    def get_all_coefficients(self):
+        c1 = self.models["k1"].get_all_coefficients()
+        nr1, nc1 = len(c1[0]), len(c1[2])
+        c2 = self.models["k2"].get_all_coefficients()
+        nr2, nc2 = len(c2[0]), len(c2[2])
+
+        # First compute real terms
+        nr = nr1 * nr2
+        ar = np.empty(nr)
+        cr = np.empty(nr)
+        gen = product(zip(c1[0], c1[1]), zip(c2[0], c2[1]))
+        for i, ((aj, cj), (ak, ck)) in enumerate(gen):
+            ar[i] = aj * ak
+            cr[i] = cj + ck
+
+        # Then the complex terms
+        nc = nr1 * nc2 + nc1 * nr2 + 2 * nc1 * nc2
+        ac = np.empty(nc)
+        bc = np.empty(nc)
+        cc = np.empty(nc)
+        dc = np.empty(nc)
+
+        # real * complex
+        gen = product(zip(c1[0], c1[1]), zip(*(c2[2:])))
+        gen = chain(gen, product(zip(c2[0], c2[1]), zip(*(c1[2:]))))
+        for i, ((aj, cj), (ak, bk, ck, dk)) in enumerate(gen):
+            ac[i] = aj * ak
+            bc[i] = aj * bk
+            cc[i] = cj + ck
+            dc[i] = dk
+
+        # complex * complex
+        i0 = nr1 * nc2 + nc1 * nr2
+        gen = product(zip(*(c1[2:])), zip(*(c2[2:])))
+        for i, ((aj, bj, cj, dj), (ak, bk, ck, dk)) in enumerate(gen):
+            ac[i0 + 2*i] = 0.5 * (aj * ak + bj * bk)
+            bc[i0 + 2*i] = 0.5 * (bj * ak - aj * bk)
+            cc[i0 + 2*i] = cj + ck
+            dc[i0 + 2*i] = dj - dk
+
+            ac[i0 + 2*i + 1] = 0.5 * (aj * ak - bj * bk)
+            bc[i0 + 2*i + 1] = 0.5 * (bj * ak + aj * bk)
+            cc[i0 + 2*i + 1] = cj + ck
+            dc[i0 + 2*i + 1] = dj + dk
+
+        return ar, cr, ac, bc, cc, dc
+
+
 class TermSum(Term, ModelSet):
 
     def __init__(self, *terms):
@@ -175,7 +242,7 @@ class TermSum(Term, ModelSet):
                                        for i, t in enumerate(models)])
 
     def __repr__(self):
-        return " + ".join(map("{0}".format, self.terms))
+        return "(" + " + ".join(map("{0}".format, self.terms)) + ")"
 
     @property
     def terms(self):

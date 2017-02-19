@@ -407,13 +407,19 @@ class GP(ModelSet):
                                                  .get_value(x1))
         return K
 
-    def sample(self, x, tiny=1e-12, size=None):
+    def sample(self, x=None, diag=None, include_diagonal=False, size=None):
         """
         Sample from the prior distribution over datasets
 
         Args:
-            x (array[n]): The independent coordinates where the observations
-                should be made.
+            x (Optional[array[n]]): The independent coordinates where the
+                observations should be made. If ``None``, the coordinates used
+                in the last call to ``compute`` will be used.
+            diag (Optional[array[n] or float]): If provided, this will be
+                added to the diagonal of the covariance matrix.
+            include_diagonal (Optional[bool]): Should the white noise and/or
+                ``yerr`` terms be included on the diagonal?
+                (default: ``False``)
             size (Optional[int]): The number of samples to draw.
 
         Returns:
@@ -421,7 +427,8 @@ class GP(ModelSet):
             distribution over datasets.
 
         """
-        K = self.get_matrix(x, include_diagonal=True)
-        K[np.diag_indices_from(K)] += tiny
+        K = self.get_matrix(x, include_diagonal=include_diagonal)
+        if diag is not None:
+            K[np.diag_indices_from(K)] += diag
         sample = np.random.multivariate_normal(np.zeros_like(x), K, size=size)
         return self.mean.get_value(x) + sample

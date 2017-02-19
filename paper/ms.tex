@@ -824,8 +824,8 @@ $S_0$, and $\omega_0$ to give a sufficient accounting of the power spectrum
 stellar time series.
 Since this kernel is exactly described by the exponential kernel, the
 likelihood (\eqalt{gp-likelihood}) can be evaluated for a time series with $N$
-measurements in $\mathcal{O}(N)$ operations using the \celerite\ method described
-in the previous section.
+measurements in $\mathcal{O}(N)$ operations using the \celerite\ method
+described in the previous section.
 
 \begin{figure}[!htbp]
 \begin{center}
@@ -844,11 +844,20 @@ in the previous section.
 
 \section{Examples with simulated data}
 
-\begin{enumerate}
-\item an OU process
-\item a full celerite process
-\item some sort of QP oscillation
-\end{enumerate}
+\subsection{Recovery of a celerite process}
+
+In this first example, we will simulate a dataset using a known \celerite\
+process and fit it with \celerite\ to demonstrate that valid inferences can be
+made in this idealized case.
+
+\subsection{Inferences with the ``wrong'' model}
+
+For this example, we will simulate two datasets using known GP models with
+kernels outside of the support of a \celerite\ process.
+We will use these simulations to demonstrate that, at least in these cases,
+valid inferences can be made about the physical parameters of the model even
+if the effective covariance function is known to be ``wrong''.
+
 
 \section{Examples with real data}
 
