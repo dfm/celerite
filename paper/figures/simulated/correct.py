@@ -74,7 +74,7 @@ fig, (ax1, ax2) = plt.subplots(1, 2, figsize=plot_setup.get_figsize(1, 2))
 ax1.errorbar(t, y, yerr=yerr, fmt=".k", capsize=0)
 ax1.set_ylim(-26, 26)
 ax1.set_xlim(0, 10)
-ax1.set_xlabel("time [s]")
+ax1.set_xlabel("time [day]")
 ax1.set_ylabel("relative flux [ppm]")
 ax1.annotate("simulated data", xy=(0, 0), xycoords="axes fraction",
              xytext=(5, 5), textcoords="offset points",
@@ -88,8 +88,8 @@ ax2.plot(f, true_psd * factor, "--k")
 ax2.set_xlim(f[0], f[-1])
 ax2.set_yscale("log")
 ax2.set_xscale("log")
-ax2.set_xlabel("frequency [Hz]")
-ax2.set_ylabel("power [ppm$^2$ Hz$^{-1}$]")
+ax2.set_xlabel("frequency [day$^{-1}$]")
+ax2.set_ylabel("power [ppm$^2$ day]")
 ax2.annotate("inferred psd", xy=(0, 0), xycoords="axes fraction",
              xytext=(5, 5), textcoords="offset points",
              ha="left", va="bottom")
