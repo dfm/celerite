@@ -8,7 +8,8 @@ from .modeling import Model, ModelSet
 from .solver import get_kernel_value, get_psd_value, check_coefficients
 
 __all__ = [
-    "Term", "TermSum", "RealTerm", "ComplexTerm", "SHOTerm", "Matern32Term"
+    "Term", "TermProduct", "TermSum",
+    "RealTerm", "ComplexTerm", "SHOTerm", "Matern32Term",
 ]
 
 

@@ -398,6 +398,24 @@ S_j(\omega) = \sqrt{\frac{2}{\pi}}\,\frac{a_j}{c_j}\,
     \frac{1}{1+\left(\frac{\omega}{c_j}\right)^2} \quad.
 \end{eqnarray}
 
+It's worth noting that the product of two terms of the form found inside the
+sum in \eq{celerite-kernel} can also be re-written as a sum with updated
+parameters
+\begin{eqnarray}
+k_j(\tau) \, k_k(\tau) =
+    e^{-\tilde{c}\,\tau}\,[
+        a_+\,\cos(d_+\,\tau) + b_+\,\sin(d_+\,\tau) +
+        a_-\,\cos(d_-\,\tau) + b_-\,\sin(d_-\,\tau)
+    ]
+\end{eqnarray}
+where
+\begin{eqnarray}
+    \tilde{a}_{\pm} &=& \frac{1}{2}\,(a_j\,a_k \pm b_j\,b_k) \\
+    \tilde{b}_{\pm} &=& \frac{1}{2}\,(b_j\,a_k \mp a_j\,b_k) \\
+    \tilde{c} &=& c_j + c_k \\
+    \tilde{d}_{\pm} &=& d_j \mp d_k \quad.
+\end{eqnarray}
+
 \section{Implementation \& performance}
 
 \citet{Rybicki:1995} demonstrated that the inverse of a matrix $K$ where the
