@@ -868,13 +868,37 @@ In this first example, we will simulate a dataset using a known \celerite\
 process and fit it with \celerite\ to demonstrate that valid inferences can be
 made in this idealized case.
 
+\begin{figure}[!htbp]
+\begin{center}
+\includegraphics[width=0.9\textwidth]{figures/simulated/correct.pdf}
+\caption{(left) A simulated dataset.
+    (right) The inferred PSD~--~the blue contours encompass 68\% of the
+    posterior mass~--~compared to the true PSD (dashed black line).
+    \figurelabel{simulated-correct}}
+\end{center}
+\end{figure}
+
+
 \subsection{Inferences with the ``wrong'' model}
 
-For this example, we will simulate two datasets using known GP models with
-kernels outside of the support of a \celerite\ process.
-We will use these simulations to demonstrate that, at least in these cases,
-valid inferences can be made about the physical parameters of the model even
-if the effective covariance function is known to be ``wrong''.
+For this example, we simulate a dataset using a known GP model with a kernel
+outside of the support of a \celerite\ process.
+This means that the true autocorrelation of the process can never be correctly
+represented by the model that we're using to fit but we will use this example
+to demonstrate that, at least in this case, valid inferences can still be made
+about the physical parameters of the model.
+
+\begin{figure}[!htbp]
+\begin{center}
+\includegraphics[width=0.9\textwidth]{figures/simulated/wrong-qpo.pdf}
+\caption{(left) A simulated dataset.
+    (right) The inferred period of the process. The true period is indicated
+    by the vertical orange line, the posterior inference using the correct
+    model is shown as the blue dashed histogram, and the inference made using
+    the ``wrong'' effective model is shown as the black histogram.
+    \figurelabel{simulated-wrong}}
+\end{center}
+\end{figure}
 
 
 \section{Examples with real data}
