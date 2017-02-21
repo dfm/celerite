@@ -81,6 +81,7 @@
 \newcommand{\project}[1]{\textsf{#1}}
 \newcommand{\kepler}{\project{Kepler}}
 \newcommand{\celerite}{\project{celerite}}
+\newcommand{\emcee}{\project{emcee}}
 
 \newcommand{\foreign}[1]{\emph{#1}}
 \newcommand{\etal}{\foreign{et\,al.}}
@@ -401,7 +402,7 @@ S_j(\omega) = \sqrt{\frac{2}{\pi}}\,\frac{a_j}{c_j}\,
 It's worth noting that the product of two terms of the form found inside the
 sum in \eq{celerite-kernel} can also be re-written as a sum with updated
 parameters
-\begin{eqnarray}
+\begin{eqnarray}\eqlabel{product-rule}
 k_j(\tau) \, k_k(\tau) =
     e^{-\tilde{c}\,\tau}\,[
         a_+\,\cos(d_+\,\tau) + b_+\,\sin(d_+\,\tau) +
@@ -758,7 +759,7 @@ d_{j\pm} &=& 0 \quad. \nonumber
 \end{eqnarray}
 
 These identities yield a kernel of the form
-\begin{equation}
+\begin{equation}\eqlabel{sho-kernel}
 k(\tau) = S_0\,\omega_0\,Q\,e^{-\frac{\omega_0\,\tau}{2Q}}\,
 \begin{cases}
     \cosh{(\eta\,\omega_0\,\tau)} +
@@ -887,6 +888,45 @@ This means that the true autocorrelation of the process can never be correctly
 represented by the model that we're using to fit but we will use this example
 to demonstrate that, at least in this case, valid inferences can still be made
 about the physical parameters of the model.
+
+For this example, the data are simulated from a quasiperiodic GP with the
+kernel
+\begin{eqnarray}\eqlabel{sim-wrong-true}
+k_\mathrm{true} (\tau) = \alpha\,
+    \exp\left(-\frac{\tau^2}{2\,\lambda^2}\right)\,
+    \cos\left(\frac{2\,\pi\,\tau}{P_\mathrm{true}}\right)
+\end{eqnarray}
+where $P_\mathrm{true}$ is the fundamental period of the process.
+This autocorrelation structure yields the power spectrum
+\begin{eqnarray}
+S_\mathrm{true} (\omega) = \frac{\lambda\,\alpha}{2}\,\left[
+    \exp\left(-\frac{\lambda^2}{2}\,\left(\omega-
+        \frac{2\,\pi}{P_\mathrm{true}}\right)^2\right) +
+    \exp\left(-\frac{\lambda^2}{2}\,\left(\omega+
+        \frac{2\,\pi}{P_\mathrm{true}}\right)^2\right)
+\right]
+\end{eqnarray}
+that for large $\omega$ falls off exponentially.
+When compared to \eq{celerite-psd}~--~that for large $\omega$ goes as
+$\omega^{-4}$, at most~--~it is clear that a \celerite\ model can never
+perfectly reproduce the structure of this process.
+That being said, we will demonstrate that rigorous inferences can be made
+about $P_\mathrm{true}$ even with an effective model.
+The left panel of \Figure{simulated-wrong} shows the simulated dataset.
+We then fit this simulated data using the product of two SHO terms
+(\eqalt{sho-kernel}) where one of the terms has $S_0 = 1$ and $Q =
+1/\sqrt{2}$ and the other has $\omega_0 = 2\,\pi/P$.
+We note that using \eq{product-rule}, the product of two \celerite\ terms can
+also be expressed as a \celerite\ term.
+We apply log-uniform priors on all the parameters and use \emcee\
+\citep{Foreman-Mackey:2013} to sample the posterior probability for all of the
+parameters.
+The inferred distribution for the parameter $P$ is shown in the right panel of
+\Figure{simulated-wrong} and compared to the true period $P_\mathrm{true}$ and
+the inferences made using the correct model (\eqalt{sim-wrong-true}).
+The inference made using this effective \celerite\ model are indistinguishable
+from the inferences made using the correct model but substantially less
+computation time is required for the \celerite\ inference.
 
 \begin{figure}[!htbp]
 \begin{center}
