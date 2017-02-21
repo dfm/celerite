@@ -144,6 +144,9 @@ q = np.percentile(uHz_conv/(2*np.pi)*psds, [16, 50, 84], axis=0)
 axes[2].fill_between(freq_uHz, q[0], q[2], color="k", alpha=0.3,
                      rasterized=True)
 axes[2].plot(freq_uHz, q[1], "k", alpha=0.8, rasterized=True)
+for t in gp.kernel.terms:
+    p = t.get_psd(2*np.pi*freq)*uHz_conv/(2*np.pi)
+    axes[2].plot(freq_uHz, p, ":k", alpha=0.8, rasterized=True)
 axes[2].axhline(white_noise_some)
 
 labels = [
