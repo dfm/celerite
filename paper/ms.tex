@@ -80,6 +80,7 @@
 % Projects:
 \newcommand{\project}[1]{\textsf{#1}}
 \newcommand{\kepler}{\project{Kepler}}
+\newcommand{\tess}{\project{TESS}}
 \newcommand{\celerite}{\project{celerite}}
 \newcommand{\emcee}{\project{emcee}}
 
@@ -868,6 +869,19 @@ described in the previous section.
 In this first example, we will simulate a dataset using a known \celerite\
 process and fit it with \celerite\ to demonstrate that valid inferences can be
 made in this idealized case.
+The simulated dataset is shown in the left panel of \Figure{simulated-correct}
+and it was generated using a SHO kernel (\eqalt{sho-kernel}) with parameters
+$S_0 = 1$, $\omega_0 = e^2$, and $Q = e^2$.
+The true PSD is shown as a dashed line in the right panel of
+\Figure{simulated-correct}.
+We applied log-uniform priors to all of the parameters and used \emcee\
+\citep{Foreman-Mackey:2013} to sample the joint posterior density and computed
+the marginalized posterior inference of the PSD.
+This inference is shown in the right panel of \Figure{simulated-correct} as a
+blue contour indicating 68\% of the posterior mass.
+It is clear from this figure that, as expected, the inference correctly
+reproduces the true PSD.
+
 
 \begin{figure}[!htbp]
 \begin{center}
@@ -943,6 +957,20 @@ computation time is required for the \celerite\ inference.
 
 \section{Examples with real data}
 
+In this section we will demonstrate several use cases of \celerite\ when
+applied to real datasets.
+Each of these examples touches on an active area of research so we will limit
+our examples to be qualitative in nature and make no claim of optimality but
+we hope that these examples will encourage interested readers to investigate
+the applicability of \celerite\ to their research.
+
+All of the following examples show time domain datasets with a clear bias in
+favor of large homogeneous photometric surveys but these methods can similarly
+be applied to spectroscopy, where wavelength~--~instead of time~--~is the
+independent coordinate and other one-dimensional domains.
+It is also possible to cast some two-dimensional problems in the \celerite\
+framework (\dfmtodo{CITE Ian C}).
+
 \subsection{Asteroseismic oscillations}
 
 The asteroseismic oscillations of thousands of stars were measured using light
@@ -970,12 +998,12 @@ with standard non-linear optimization or posterior sampling methods to infer
 constraints on the parameters for the given dataset.
 
 To demonstrate this method, we will use a very simple heuristic model based on
-\dfmtodo{CITE} where the model PSD is given by a mixture of 6 components with
+\dfmtodo{CITE} where the model PSD is given by a mixture of 8 components with
 amplitudes and frequencies specified by $\nu_\mathrm{max}$, $\Delta \nu$, and
 several nuisance parameters.
 The first term is used to capture the granulation ``background'' using
 \eq{granulation-psd} with two free parameters $S_g$ and $\omega_g$.
-The remaining 5 terms are given by \eq{sho-psd} where $Q$ is a nuisance
+The remaining  7 terms are given by \eq{sho-psd} where $Q$ is a nuisance
 parameter shared between terms and the frequencies are given by
 \begin{eqnarray}
 \omega_{0,\,j} = 2\,\pi\,(\nu_\mathrm{max} + j\,\Delta\nu + \epsilon)
@@ -991,13 +1019,40 @@ This model could be easily extended to include small frequency splitting and
 $\nu_\mathrm{max}$ and $\Delta \nu$ could be replaced by physical parameters
 like $\log g$.
 
-KIC~11615890 \citep{Pinsonneault:2014}
+To demonstrate the applicability of this model, we apply it to infer the
+asteroseismic parameters of the giant star KIC~11615890 observed by the
+\kepler\ Mission.
+The goal of this example is to show that, even for a low signal-to-noise
+dataset with a short baseline, it is possible to infer asteroseismic
+parameters with formal uncertainties that are consistent with the parameters
+inferred with a much larger dataset.
+Looking forward to \tess, we will infer $\nu_\mathrm{max}$ and $\Delta\nu$
+using only one month of \kepler\ data and compare our results to the results
+inferred from the full 4 year baseline of the mission.
+For KIC~11615890, the published asteroseismic parameters based on the full
+dataset are \citep{Pinsonneault:2014}
 \begin{eqnarray}
     \nu_\mathrm{max} = 171.94 \pm 3.62 \,\mu\mathrm{Hz} \quad\mathrm{and}\quad
-    \Delta\nu = 13.28 \pm 0.29 \,\mu\mathrm{Hz}
+    \Delta\nu = 13.28 \pm 0.29 \,\mu\mathrm{Hz} \quad.
 \end{eqnarray}
+We randomly select a month-long segment of \kepler\ data, initialize our
+\celerite\ model using a grid search in the parameter space, and then use
+\emcee\ \citep{Foreman-Mackey:2013} to sample the joint posterior density for
+the full set of parameters.
+\Figure{astero-corner} shows the marginalized density for $\nu_\mathrm{max}$
+and $\Delta\nu$ compared to the results from the literature.
+\dfmtodo{Add some more discussion here.}
 
-\dfmtodo{Add plots etc.}
+\begin{figure}[!htbp]
+\begin{center}
+\includegraphics[width=0.8\textwidth]{figures/astero-11615890-numax_deltanu_corner.pdf}
+\caption{The probabilistic constraints on $\nu_\mathrm{max}$ and $\Delta \nu$
+    from the inference shown in \Figure{astero} compared to the published
+    value (error bar) based on the full \kepler\ dataset \dfmtodo{CITE}.
+    \figurelabel{astero-corner}}
+\end{center}
+\end{figure}
+
 
 \begin{figure}[!htbp]
 \begin{center}
@@ -1014,16 +1069,6 @@ the PSD as a mixture of stochastically driven simple harmonic oscillators.
     The black line shows the median of posterior PSD and the gray contours
     show the 68\% credible region.
     \figurelabel{astero}}
-\end{center}
-\end{figure}
-
-\begin{figure}[!htbp]
-\begin{center}
-\includegraphics[width=0.8\textwidth]{figures/astero-11615890-numax_deltanu_corner.pdf}
-\caption{The probabilistic constraints on $\nu_\mathrm{max}$ and $\Delta \nu$
-    from the inference shown in \Figure{astero} compared to the published
-    value (error bar) based on the full \kepler\ dataset \dfmtodo{CITE}.
-    \figurelabel{astero-corner}}
 \end{center}
 \end{figure}
 
