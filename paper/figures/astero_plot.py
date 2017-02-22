@@ -87,21 +87,22 @@ for i, j in enumerate(np.random.randint(len(samples), size=n)):
 gp.set_parameter_vector(samples[np.argmax(log_probs)])
 peak_freqs = gp.kernel.get_freqs()
 
+factor = uHz_conv/(2*np.pi)
 fig, ax = plt.subplots(1, 1, figsize=get_figsize(1, 2))
-for t in gp.kernel.terms:
-    p = t.get_psd(2*np.pi*freq)*uHz_conv/(2*np.pi)
-    ax.plot(freq_uHz, p, ":k")
-p = gp.kernel.get_psd(2*np.pi*freq)*uHz_conv/(2*np.pi)
+for t in gp.kernel.get_terms():
+    p = t.get_psd(2*np.pi*freq)*factor
+    ax.plot(freq_uHz, p, "k", lw=0.5, alpha=0.8)
+p = gp.kernel.get_psd(2*np.pi*freq)*factor
 ax.plot(freq_uHz, p, "k")
+ax.plot(freq_uHz, gp.kernel.get_envelope(2*np.pi*freq)*factor, "--k", lw=0.75)
+ax.axvline(np.exp(gp.kernel.log_nu_max) / uHz_conv, color="k", ls="dashed",
+           lw=0.75)
 ax.set_ylabel("power [$\mathrm{ppm}^2\,\mu\mathrm{Hz}^{-1}$]")
 ax.set_xlabel("frequency [$\mu$Hz]")
 ax.set_xlim(freq_uHz.min(), freq_uHz.max())
-ax.set_ylim(1e-3, 4e2)
+ax.set_ylim(2e-2, 2e2)
 ax.set_yscale("log")
-fig.savefig("sketch.pdf", bbox_inches="tight")
-
-
-assert 0
+fig.savefig("astero-sketch.pdf", bbox_inches="tight")
 
 # Plot the predictions
 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=get_figsize(1, 2))
@@ -160,9 +161,6 @@ q = np.percentile(uHz_conv/(2*np.pi)*psds, [16, 50, 84], axis=0)
 axes[2].fill_between(freq_uHz, q[0], q[2], color="k", alpha=0.3,
                      rasterized=True)
 axes[2].plot(freq_uHz, q[1], "k", alpha=0.8, rasterized=True)
-for t in gp.kernel.terms:
-    p = t.get_psd(2*np.pi*freq)*uHz_conv/(2*np.pi)
-    axes[2].plot(freq_uHz, p, ":k", alpha=0.8, rasterized=True)
 axes[2].axhline(white_noise_some)
 
 labels = [
