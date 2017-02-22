@@ -26,6 +26,7 @@ uHz_conv = 1e-6 * 24 * 60 * 60
 # Save the current state of the GP and data
 with open("astero-{0}.pkl".format(kicid), "rb") as f:
     gp, fit_y, freq, power_all, power_some, n_tot = pickle.load(f)
+freq_uHz = freq / uHz_conv
 measurement_var = np.median(gp._yerr**2)
 white_noise_all = measurement_var * uHz_conv / n_tot
 white_noise_some = measurement_var * uHz_conv / len(fit_y)
@@ -86,6 +87,22 @@ for i, j in enumerate(np.random.randint(len(samples), size=n)):
 gp.set_parameter_vector(samples[np.argmax(log_probs)])
 peak_freqs = gp.kernel.get_freqs()
 
+fig, ax = plt.subplots(1, 1, figsize=get_figsize(1, 2))
+for t in gp.kernel.terms:
+    p = t.get_psd(2*np.pi*freq)*uHz_conv/(2*np.pi)
+    ax.plot(freq_uHz, p, ":k")
+p = gp.kernel.get_psd(2*np.pi*freq)*uHz_conv/(2*np.pi)
+ax.plot(freq_uHz, p, "k")
+ax.set_ylabel("power [$\mathrm{ppm}^2\,\mu\mathrm{Hz}^{-1}$]")
+ax.set_xlabel("frequency [$\mu$Hz]")
+ax.set_xlim(freq_uHz.min(), freq_uHz.max())
+ax.set_ylim(1e-3, 4e2)
+ax.set_yscale("log")
+fig.savefig("sketch.pdf", bbox_inches="tight")
+
+
+assert 0
+
 # Plot the predictions
 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=get_figsize(1, 2))
 
@@ -129,7 +146,6 @@ fig, axes = plt.subplots(3, 1, sharex=True, sharey=True,
                          figsize=get_figsize(2.5, 2))
 
 factor = 1.
-freq_uHz = freq / uHz_conv
 axes[0].plot(freq_uHz, power_all, "k", rasterized=True)
 # axes[0].plot(freq_uHz, gaussian_filter(power_all, 5) * factor, "k",
 #              rasterized=True)
