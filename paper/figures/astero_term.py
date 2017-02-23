@@ -34,6 +34,15 @@ class AsteroTerm(terms.Term):
             np.append(beta, 0.5*omega/Q*np.sqrt(4*Q*Q-1)),
         )
 
+    def get_envelope(self, omega):
+        delta = omega/(2*np.pi) - np.exp(self.log_nu_max)
+        return np.sqrt(2/np.pi)*np.exp(self.log_A -
+                                       0.5*delta**2*np.exp(2*self.log_W))
+
+    def get_terms(self):
+        coeffs = self.get_complex_coefficients()
+        return [terms.ComplexTerm(*(np.log(args))) for args in zip(*coeffs)]
+
     def get_freqs(self):
         j = np.arange(-self.nterms, self.nterms+1, 1)
         delta = j*np.exp(self.log_delta_nu) + self.epsilon
