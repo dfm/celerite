@@ -1,7 +1,7 @@
 .. :changelog:
 
-0.1.2 (upcoming)
-++++++++++++++++
+0.1.2 (2017-02-23)
+++++++++++++++++++
 
 - Fixed bug when pickling ``Model`` objects.
 - Added sparse solver using ``Eigen/SparseLU``
