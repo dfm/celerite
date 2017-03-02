@@ -782,12 +782,14 @@ The power spectrum in \eq{sho-psd} has several limits of physical interest:
 \begin{eqnarray}\eqlabel{granulation-psd}
 S(\omega) = \sqrt{\frac{2}{\pi}}\,\frac{S_0}{(\omega/\omega_0)^4+1} \quad.
 \end{eqnarray}
-A model like this has been used to model the granulation is Solar data
-\citep{Michel:2009}}, which has a kernel of
+This, in turn, is the most commonly used model for the background granulation
+noise in asteoreseismic \citep{Kallinger:2014} and helioseismic
+\citep{Harvey:1985, Michel:2009} analyses.
+The Fourier transform of this PSD corresponds to the kernel
 \begin{equation}
 k(\tau) = S_0\,\omega_0\,e^{-\frac{1}{\sqrt{2}}\,\omega_0\,\tau}\,
     \cos{\left(\frac{\omega_0\,\tau}{\sqrt{2}}-\frac{\pi}{4}\right)}.
-\end{equation}
+\end{equation}}
 
 {\item Substituting $Q = 1/2$, \eq{sho-psd} becomes
 \begin{eqnarray}
