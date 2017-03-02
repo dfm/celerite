@@ -227,10 +227,10 @@ These implementations are available online at \project{GitHub}
 \url{https://github.com/dfm/celerite} and \project{Zenodo} \dfmtodo{add zenodo
 archive}.
 
-\section{Gaussian processes}
+\section{Gaussian processes}\sectlabel{gps}
 
 Gaussian Processes \citep[GPs;][]{Rasmussen:2006} are a class of stochastic
-models parameterized by a mean function $\mu_\bvec{\theta}(\bvec{x})$ and a
+models consisting of a mean function $\mu_\bvec{\theta}(\bvec{x})$ and a
 covariance or ``kernel'' function $k_\bvec{\alpha}(\bvec{x}_i,\,\bvec{x}_j)$
 parameterized by the parameters $\bvec{\theta}$ and $\bvec{\alpha}$
 respectively.
@@ -433,8 +433,8 @@ efficient method for computing the determinant of $K$.
 
 \subsection{An example}
 
-To provide some insight for this method, we will start by working through the
-simplest possible example.
+To provide some insight for this method, we will start by working through a
+simple example.
 In this case, we'll assume that we have three data points
 $\{y_1,\,y_2,\,y_3\}$ observed at times $\{t_1,\,t_2,\,t_3\}$ with measurement
 variances $\{{\sigma_1}^2,\,{\sigma_2}^2,\,{\sigma_3}^2\}$ and we would
@@ -445,38 +445,43 @@ k(\tau_{nm}) = \sigma_n^2\,\delta_{nm} + a\,\exp(-c\,\tau_{nm})\quad.
 \end{eqnarray}
 This function is identical to \eq{celerite-kernel-complex} with $J=1$, $b=0$,
 and $d=0$.
-To demonstrate motivate this method, we will write out the full system of
+To demonstrate this method, we will write out the full system of
 equations that we must solve to apply the inverse of $K$ in order to compute
 the first term of \eq{gp-likelihood}.
 In matrix notation, this can be written as
 \begin{eqnarray}\eqlabel{impl-matrix}
-K\,\bvec{x} &=& \bvec{y}, \\
+K\,\bvec{z} &=& \bvec{y}, \\
 \begin{pmatrix}
     a+{\sigma_1}^2 & a\,e^{-c\,\tau_{2,1}} & a\,e^{-c\,\tau_{3,1}}\\
     a\,e^{-c\,\tau_{2,1}} & a+{\sigma_2}^2 & a\,e^{-c\,\tau_{3,2}}\\
     a\,e^{-c\,\tau_{3,1}} & a\,e^{-c\,\tau_{3,2}} & a+{\sigma_3}^2
 \end{pmatrix}\,
 \begin{pmatrix}
-    x_1 \\ x_2 \\ x_3
+    z_1 \\ z_2 \\ z_3
 \end{pmatrix} &=&
 \begin{pmatrix}
     y_1 \\ y_2 \\ y_3
-\end{pmatrix} \quad.
+\end{pmatrix}
 \end{eqnarray}
+where our goal is to solve for the unknown vector \bvec{z} for a given matrix
+$K$ and vector \bvec{y}.
+In this equation, we have assumed that the mean function is zero but a
+non-zero mean could be included by replacing \bvec{y} by
+$\bvec{r}_\bvec{\theta}$ as defined in \sect{gps}.
 Now, if we introduce the variables
 \begin{eqnarray}\eqlabel{algo-first}
-    u_n = e^{-c\,\tau_{n+2,n+1}}\,u_{n+1} + a\,x_{n+1}
+    u_n = e^{-c\,\tau_{n+2,n+1}}\,u_{n+1} + a\,z_{n+1}
 \end{eqnarray}
 where $u_{N} = 0$, and
 \begin{eqnarray}
-    g_n = e^{-c\,\tau_{n+1,n}}\,g_{n-1} + e^{-c\,\tau_{n+1,n}}\,x_{n}
+    g_n = e^{-c\,\tau_{n+1,n}}\,g_{n-1} + e^{-c\,\tau_{n+1,n}}\,z_{n}
 \end{eqnarray}
 where $g_{0} = 0$,
 the system of equations can be rewritten as
 \begin{eqnarray}
-(a+{\sigma_1}^2)\,x_1 + e^{-c\,\tau_{2,1}}\,u_1 &=& y_1 \\
-a\,g_1 + (a+{\sigma_2}^2)\,x_2 + e^{-c\,\tau_{3,2}}\,u_2 &=& y_2 \\
-a\,g_2 + (a+{\sigma_3}^2)\,x_3 &=& y_3 \quad. \eqlabel{algo-last}
+(a+{\sigma_1}^2)\,z_1 + e^{-c\,\tau_{2,1}}\,u_1 &=& y_1 \\
+a\,g_1 + (a+{\sigma_2}^2)\,z_2 + e^{-c\,\tau_{3,2}}\,u_2 &=& y_2 \\
+a\,g_2 + (a+{\sigma_3}^2)\,z_3 &=& y_3 \quad. \eqlabel{algo-last}
 \end{eqnarray}
 The system defined by \eq{algo-first} through \eq{algo-last} can be
 rewritten as a matrix equation to show the benefit that this seemingly trivial
@@ -492,7 +497,7 @@ reformulation provides:
     0 & 0 & 0 & 0 & 0 & a & a+{\sigma_3}^2 \\
 \end{pmatrix}\,
 \begin{pmatrix}
-    x_1 \\ u_1 \\ g_1 \\ x_2 \\ u_2 \\ g_2 \\ x_3
+    z_1 \\ u_1 \\ g_1 \\ z_2 \\ u_2 \\ g_2 \\ z_3
 \end{pmatrix} &=&
 \begin{pmatrix}
     y_1 \\ 0 \\ 0 \\ y_2 \\ 0 \\ 0 \\ y_3
@@ -501,7 +506,7 @@ reformulation provides:
 where we will follow \citet{Ambikasaran:2015} and call this the ``extended''
 system and rewrite \eq{impl-matrix} as
 \begin{eqnarray}
-    K_\mathrm{ext}\,\bvec{x}_\mathrm{ext} &=& \bvec{y}_\mathrm{ext} \quad.
+    K_\mathrm{ext}\,\bvec{z}_\mathrm{ext} &=& \bvec{y}_\mathrm{ext} \quad.
 \end{eqnarray}
 Even though $K_\mathrm{ext}$ is a larger matrix than the original $K$ that we
 started with, it is now has a sparse banded structure that can be exploited to
@@ -510,8 +515,8 @@ In particular, band matrix solvers are available that can perform an
 LU-decomposition of banded matrices like this in $\mathcal{O}(N)$
 operations~--~instead of the $\mathcal{O}(N^3)$ that would be required in
 general~--~and we can take advantage of these algorithms to solve our system
-exactly because the target vector $\bvec{x}$ is a subset of the elements of
-$\bvec{x}_\mathrm{ext}$.
+exactly because the target vector $\bvec{z}$ is a subset of the elements of
+$\bvec{z}_\mathrm{ext}$.
 
 In the following section, we will discuss this method more generally but it's
 worth noting a few important facts that can already be seen in this example.
@@ -556,10 +561,10 @@ analogy to the $u_n$ and $g_n$ that we introduced in the previous section
 \begin{eqnarray}\eqlabel{full-system-first}
 \phi_{n,j} &=& e^{-c_j\,\tau_{n+1,n}}\,\cos\left(d_j\,\tau_{n+1,n}\right)\\
 \psi_{n,j} &=& -e^{-c_j\,\tau_{n+1,n}}\,\sin\left(d_j\,\tau_{n+1,n}\right)\\
-g_{n,j} &=& \phi_{n,j}\,g_{n-1,j} + \phi_{n,j}\,x_n + \psi_{n,j}\,h_{n-1,j}\\
-h_{n,j} &=& \phi_{n,j}\,h_{n-1,j} - \psi_{n,j}\,x_n - \psi_{n,j}\,g_{n-1,j}\\
-u_{n,j} &=& \phi_{n+1,j}\,u_{n+1,j} + a_j\,x_{n+1} + \psi_{n+1,j}\,v_{n+1,j}\\
-v_{n,j} &=& \phi_{n+1,j}\,v_{n+1,j} - b_j\,x_{n+1} - \psi_{n+1,j}\,u_{n+1,j}
+g_{n,j} &=& \phi_{n,j}\,g_{n-1,j} + \phi_{n,j}\,z_n + \psi_{n,j}\,h_{n-1,j}\\
+h_{n,j} &=& \phi_{n,j}\,h_{n-1,j} - \psi_{n,j}\,z_n - \psi_{n,j}\,g_{n-1,j}\\
+u_{n,j} &=& \phi_{n+1,j}\,u_{n+1,j} + a_j\,z_{n+1} + \psi_{n+1,j}\,v_{n+1,j}\\
+v_{n,j} &=& \phi_{n+1,j}\,v_{n+1,j} - b_j\,z_{n+1} - \psi_{n+1,j}\,u_{n+1,j}
 \end{eqnarray}
 with the boundary conditions
 \begin{eqnarray}
@@ -574,33 +579,36 @@ Using these variables and some algebra, we find that the following expression
 \sum_{j=1}^J \left[a_j\,g_{n,j}+b_j\,h_{n,j}\right]
 + \left[{\sigma_n}^2+\sum_{j=1}^J a_j\right]
 + \sum_{j=1}^J \left[\phi_{n,j}\,u_{n,j}+\psi_{n,j}\,v_{n,j}\right]
-    &=& y_n
+    &=& r_{\bvec{\theta},n}
 \end{eqnarray}
 is equivalent to the target matrix equation
 \begin{eqnarray}
-K\,\bvec{x} &=& \bvec{y} \quad.
+K\,\bvec{z} &=& \bvec{r}_\bvec{\theta}
 \end{eqnarray}
+if $r_{\bvec{\theta},n}$ is the $n$-th element of the residual vector
+$\bvec{r}_\bvec{\theta}$ defined in \sect{gps}.
 \eq{full-system-first} through \eq{full-system-last} define a banded matrix
 equation in the ``extended'' space and, as before, this can be used to solve
-for $K^{-1}\,\bvec{y}$ and $\det K$ in $\mathcal{O}(N)$ operations.
+for $K^{-1}\,\bvec{r}_\bvec{\theta}$ and $\det K$ in $\mathcal{O}(N)$
+operations.
 \Figure{matrix} shows a pictorial representation of the sparsity pattern of
 the extended matrix $K_\mathrm{ext}$.
 Given that definition of $K_\mathrm{ext}$, the corresponding extended vectors
-$\bvec{x}_\mathrm{ext}$ and $\bvec{y}_\mathrm{ext}$ are defined schematically
+$\bvec{z}_\mathrm{ext}$ and $\bvec{r}_\mathrm{ext}$ are defined schematically
 as
 \begin{eqnarray}
-{\bvec{x}_\mathrm{ext}} ^\T =
+{\bvec{z}_\mathrm{ext}} ^\T =
 \left(\begin{array}{cccccccccc}
-    x_1 & u_{1,j} & v_{1,j} & g_{1,j} & h_{1,j} & x_2 & u_{2,j} & \cdots &
-    h_{N-1,j} & x_N
+    z_1 & u_{1,j} & v_{1,j} & g_{1,j} & h_{1,j} & z_2 & u_{2,j} & \cdots &
+    h_{N-1,j} & z_N
 \end{array}\right)
 \end{eqnarray}
 and
 \begin{eqnarray}
-{\bvec{y}_\mathrm{ext}} ^\T =
+{\bvec{r}_\mathrm{ext}} ^\T =
 \left(\begin{array}{cccccccccc}
-    y_1 & 0 & 0 & 0 & 0 & y_2 & 0 & \cdots &
-    0 & y_N
+    r_{\bvec{\theta},1} & 0 & 0 & 0 & 0 & r_{\bvec{\theta},2} &
+    0 & \cdots & 0 & r_{\bvec{\theta},2}
 \end{array}\right) \quad.
 \end{eqnarray}
 
@@ -610,8 +618,8 @@ though $K_\mathrm{ext}$ is symmetric, it is not positive definite so a
 Cholesky solver cannot be used for increased efficiency.} routine optimized
 for band matrices.
 This decomposition can be used to compute the determinant of $K$, solve
-$K^{-1}\,\bvec{y}$, and subsequently calculate the marginalized likelihood in
-\eq{gp-likelihood}.
+$K^{-1}\,\bvec{r}_\bvec{\theta}$, and subsequently calculate the marginalized
+likelihood in \eq{gp-likelihood}.
 
 \begin{figure}[!htbp]
 \begin{center}
