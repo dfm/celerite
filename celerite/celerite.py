@@ -432,3 +432,22 @@ class GP(ModelSet):
             K[np.diag_indices_from(K)] += diag
         sample = np.random.multivariate_normal(np.zeros_like(x), K, size=size)
         return self.mean.get_value(x) + sample
+
+    def sample_uniform(self, x_min, x_max, nx, size=None):
+        x = np.linspace(x_min, x_max, nx)
+        dx = x - x[0]
+
+        k = self.kernel.get_value(dx)
+        s = np.append(k, k[1:-1][::-1])
+        M = len(s)
+        Fs = np.sqrt(M*np.fft.fft(s))
+        if size is None:
+            nr = 1
+        else:
+            nr = int(np.ceil(0.5 * size))
+        e = (np.random.randn(nr, M) + 1.j * np.random.randn(nr, M)) * Fs
+        y = np.fft.ifft(e)[:, :nx]
+        if size is None:
+            return y[0].real
+        y = np.concatenate((y.real, y.imag), axis=0)
+        return y[:size]
