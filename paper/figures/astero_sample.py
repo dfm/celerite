@@ -29,6 +29,9 @@ def format_filename(name):
     base = "astero-{0}-".format(kicid)
     return base + name + ".pdf"
 
+# Factor to convert between day^-1 and uHz
+uHz_conv = 1e-6 * 24 * 60 * 60
+
 # Download the data for a giant star from MAST
 kicid = 11615890
 client = kplr.API()
@@ -69,12 +72,13 @@ fig.savefig(format_filename("time_series"), bbox_inches="tight", dpi=300)
 plt.close(fig)
 
 # Define a frequency grid for the periodogram
-freq_uHz = np.linspace(1, 300, 50000)
-freq = freq_uHz * 1e-6 * 24 * 60 * 60
+freq_uHz = np.linspace(1, 300, 100000)
+freq = freq_uHz * uHz_conv
 
 # Compute the periodogram on the full dataset
 model = LombScargle(x, y)
 power_all = model.power(freq, method="fast", normalization="psd")
+power_all *= uHz_conv / len(x)  # Convert to ppm^2/uHz
 
 # Select a subset of the data
 np.random.seed(1234)
@@ -87,6 +91,7 @@ print("Fraction of full dataset: {0:.1f}%".format(100 * n / len(x)))
 # Compute the periodogram on the subset
 model = LombScargle(fit_x, fit_y)
 power_some = model.power(freq, method="fast", normalization="psd")
+power_some *= uHz_conv / len(fit_x)  # Convert to ppm^2/uHz
 
 # Remove background from periodograms
 def estimate_background(x, y, log_width=0.005):
@@ -104,9 +109,9 @@ bkg_some = estimate_background(freq_uHz, power_some)
 
 # Plot the periodograms
 fig, axes = plt.subplots(1, 2, figsize=get_figsize(1, 2), sharey=True)
-axes[0].plot(freq_uHz, np.sqrt(power_all), "k", rasterized=True)
-axes[1].plot(freq_uHz, np.sqrt(power_some), "k", rasterized=True)
-axes[0].set_ylabel("power")
+axes[0].plot(freq_uHz, power_all, "k", rasterized=True)
+axes[1].plot(freq_uHz, power_some, "k", rasterized=True)
+axes[0].set_ylabel("power [$\mathrm{ppm}^2\,\mu\mathrm{Hz}^{-1}$]")
 axes[0].set_xlabel("frequency [$\mu$Hz]")
 axes[1].set_xlabel("frequency [$\mu$Hz]")
 axes[0].set_title("all data")
@@ -166,9 +171,6 @@ for name, ps in zip(("subset of data", "all data"),
                 bbox_inches="tight")
     plt.close(fig)
 
-# Factor to convert between day^-1 and uHz
-uHz_conv = 1e-6 * 24 * 60 * 60
-
 # Parameter bounds
 bounds = [(-15, 15) for _ in range(8)]
 bounds[2] = np.log(nu_max*uHz_conv) + np.array([-0.1, 0.1])
@@ -185,7 +187,7 @@ kernel = AsteroTerm(
     5.0,                            # log(q_factor)
     np.log(delta_nu*uHz_conv),      # width of envelope
     bounds=bounds,
-    nterms=1,
+    nterms=2,
 )
 log_white_noise = modeling.ConstantModel(
     2.0*np.log(np.median(np.abs(np.diff(fit_y)))),
@@ -228,16 +230,17 @@ with emcee3.pools.InterruptiblePool() as pool:
         get_ml_params, gp.kernel.log_nu_max + np.linspace(-0.05, 0.05, 5)
     ), key=lambda o: o[0]))
 gp.set_parameter_vector(results[0][1])
+print(gp.get_parameter_dict(include_frozen=True))
 
 # Use more modes in the MCMC:
 gp.kernel.nterms = 3
 
 fig, ax = plt.subplots(1, 1, figsize=get_figsize())
-ax.plot(freq_uHz, np.sqrt(power_all), "k", alpha=0.8, rasterized=True)
-ax.plot(freq_uHz, gp.kernel.get_psd(2*np.pi*freq), alpha=0.5,
-        rasterized=True)
+ax.plot(freq_uHz, power_all, "k", alpha=0.8, rasterized=True)
+ax.plot(freq_uHz, gp.kernel.get_psd(2*np.pi*freq) * uHz_conv / (2*np.pi),
+        alpha=0.5, rasterized=True)
 ax.set_xlabel("frequency [$\mu$Hz]")
-ax.set_ylabel("power")
+ax.set_ylabel("power [$\mathrm{ppm}^2\,\mu\mathrm{Hz}^{-1}$]")
 ax.set_yscale("log")
 fig.savefig(format_filename("initial_psd"), bbox_inches="tight", dpi=300)
 
@@ -262,7 +265,7 @@ gp.kernel.parameter_bounds[3] = np.log(delta_nu*uHz_conv) + np.array([-1, 1])
 # Save the current state of the GP and data
 with open("astero-{0}.pkl".format(kicid), "wb") as f:
     pickle.dump((
-        gp, fit_y, freq, power_all, power_some,
+        gp, fit_y, freq, power_all, power_some, len(x),
     ), f, -1)
 
 if os.path.exists("astero-{0}.h5".format(kicid)):

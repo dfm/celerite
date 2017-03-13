@@ -74,8 +74,9 @@ choosing more or less arbitrary initial values for the parameters.
     Q = 1.0 / np.sqrt(2.0)
     w0 = 3.0
     S0 = np.var(y) / (w0 * Q)
+    bounds = dict(log_S0=(-15, 15), log_Q=(-15, 15), log_omega0=(-15, 15))
     kernel = terms.SHOTerm(log_S0=np.log(S0), log_Q=np.log(Q), log_omega0=np.log(w0),
-                           bounds=[(-15, 15), (-15, 15), (-15, 15)])
+                           bounds=bounds)
     kernel.freeze_parameter("log_Q")  # We don't want to fit for "Q" in this term
     
     # A periodic component
@@ -83,7 +84,7 @@ choosing more or less arbitrary initial values for the parameters.
     w0 = 3.0
     S0 = np.var(y) / (w0 * Q)
     kernel += terms.SHOTerm(log_S0=np.log(S0), log_Q=np.log(Q), log_omega0=np.log(w0),
-                            bounds=[(-15, 15), (-15, 15), (-15, 15)])
+                            bounds=bounds)
 
 Then we wrap this kernel in a ``GP`` object that can be used for
 computing the likelihood function.
@@ -97,7 +98,7 @@ computing the likelihood function.
 
 .. parsed-literal::
 
-    Initial log likelihood: -6.756596382629397
+    Initial log likelihood: -6.756596382629482
 
 
 There is a modeling language built into ``celerite`` that will come in
@@ -169,16 +170,16 @@ model.
 
 .. parsed-literal::
 
-          fun: -16.563201708563497
+          fun: -16.563201713111056
      hess_inv: <5x5 LbfgsInvHessProduct with dtype=float64>
-          jac: array([  2.84217094e-05,  -3.97903932e-05,   1.98951966e-05,
-            -2.27373675e-05,  -1.08002496e-04])
+          jac: array([ -1.42108547e-05,  -5.40012479e-05,  -8.52651283e-06,
+             2.84217094e-06,   1.13686838e-05])
       message: b'CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH'
-         nfev: 312
+         nfev: 258
           nit: 31
        status: 0
       success: True
-            x: array([ 3.27828881, -2.0246582 , -4.16133798,  2.34180961,  1.13554435])
+            x: array([ 3.27792006, -2.02451631, -4.16134681,  2.34183274,  1.13554489])
 
 
 With a small dataset like this, this optimization should have only taken
@@ -194,11 +195,11 @@ are the following:
 
 .. parsed-literal::
 
-    OrderedDict([('kernel:terms[0]:log_S0', 3.2782888071942451),
-                 ('kernel:terms[0]:log_omega0', -2.0246581958731209),
-                 ('kernel:terms[1]:log_S0', -4.1613379841923566),
-                 ('kernel:terms[1]:log_Q', 2.3418096114033911),
-                 ('kernel:terms[1]:log_omega0', 1.1355443515514363)])
+    OrderedDict([('kernel:terms[0]:log_S0', 3.2779200639454396),
+                 ('kernel:terms[0]:log_omega0', -2.0245163125194621),
+                 ('kernel:terms[1]:log_S0', -4.1613468104945968),
+                 ('kernel:terms[1]:log_Q', 2.3418327377701575),
+                 ('kernel:terms[1]:log_omega0', 1.1355448932408829)])
 
 
 

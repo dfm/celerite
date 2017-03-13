@@ -50,7 +50,11 @@ conda update -q conda
 conda info -a
 conda create --yes -n test python=$PYTHON_VERSION
 source activate test
-conda install -c conda-forge  numpy=$NUMPY_VERSION setuptools eigen pybind11 pytest
+conda install -c conda-forge numpy=$NUMPY_VERSION setuptools eigen pybind11 pytest mkl
+
+if [[ "$TRAVIS_OS_NAME" == "mkl" ]]; then
+  conda install mkl
+fi
 
 # Build the extension
 if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then

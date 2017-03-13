@@ -195,8 +195,8 @@ scipy:
 
 .. parsed-literal::
 
-    Initial log-likelihood: 49.8991728673766
-    Final log-likelihood: 54.018158109121536
+    Initial log-likelihood: 49.89917286737914
+    Final log-likelihood: 54.01815810911389
 
 
 

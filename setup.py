@@ -30,11 +30,6 @@ compile_args["include_dirs"] = [
     numpy.get_include(),
 ]
 
-# Check for LAPACK argument
-if "--lapack" in sys.argv:
-    sys.argv.pop(sys.argv.index("--lapack"))
-    compile_args["define_macros"] += [("WITH_LAPACK", None)]
-
 ext = Extension("celerite.solver",
                 sources=[os.path.join("celerite", "solver.cpp")],
                 language="c++",

@@ -5,10 +5,23 @@ import math
 import logging
 import numpy as np
 
-from .solver import Solver, with_lapack
+from . import solver
 from .modeling import ModelSet, ConstantModel
 
-__all__ = ["GP"]
+__all__ = ["GP", "get_solver"]
+
+
+def get_solver(method=None):
+    if method is None or method == "default":
+        if solver.with_lapack():
+            return solver.Solver(True)
+        if solver.with_sparse():
+            return solver.SparseSolver()
+    elif method == "lapack" and solver.with_lapack():
+        return solver.Solver(True)
+    elif method == "sparse" and solver.with_sparse():
+        return solver.SparseSolver()
+    return solver.Solver(False)
 
 
 class GP(ModelSet):
@@ -31,12 +44,12 @@ class GP(ModelSet):
         fit_white_noise (Optional): If ``False``, all of the parameters of
             ``log_white_noise`` will be frozen. Otherwise, the parameter
             states are unaffected. (default: ``False``)
-        use_lapack (Optional[bool]): If ``True`` and if celerite was compiled
-            with LAPACK support, the solver will use the optimized LAPACK
-            band matrix solver. By default, LAPACK will be used (if available)
-            for models with at least 8 terms. This seems to be roughly the
-            break even point on some systems but there's no reason why this
-            should be optimal in all cases.
+        method: Select a matrix solver method by name. This can be one of
+            (a) ``simple``: a simple banded Gaussian elimination based method,
+            (b) ``lapack``: an optimized band solver if compiled with LAPACK,
+            (c) ``sparse``: a sparse solver if compiled with Eigen/Sparse, or
+            (d) ``default``: uses heuristics to select the fastest method that
+            is available.
 
     """
 
@@ -44,23 +57,37 @@ class GP(ModelSet):
                  kernel,
                  mean=0.0, fit_mean=False,
                  log_white_noise=-float("inf"), fit_white_noise=False,
-                 use_lapack=None):
+                 method=None):
         self.solver = None
         self._computed = False
         self._t = None
         self._y_var = None
 
-        if use_lapack is None:
-            if with_lapack():
-                coeffs = kernel.coefficients
-                nterms = len(coeffs[0]) + 2 * len(coeffs[2])
+        # Choose which solver to use
+        use_sparse = False
+        use_lapack = False
+        if method is None or method == "default":
+            coeffs = kernel.coefficients
+            nterms = len(coeffs[0]) + 2 * len(coeffs[2])
+            if solver.with_lapack():
                 use_lapack = (nterms >= 8)
-            else:
-                use_lapack = False
-        if use_lapack and not with_lapack():
-            use_lapack = False
-            logging.warn("celerite was not compiled with lapack support")
-        self._use_lapack = use_lapack
+            elif solver.with_sparse():
+                use_sparse = (nterms >= 8)
+        elif method == "simple":
+            pass
+        elif method == "lapack":
+            use_lapack = solver.with_lapack()
+            if not use_lapack:
+                logging.warn("celerite was not compiled with LAPACK support")
+        elif method == "sparse":
+            use_sparse = solver.with_sparse()
+            if not use_sparse:
+                logging.warn("celerite was not compiled with Sparse support")
+        else:
+            logging.warn("'method' must be one of ['default', 'simple', "
+                         "'lapack', 'sparse']; falling back on 'simple'")
+        self._use_sparse = bool(use_sparse)
+        self._use_lapack = bool(use_lapack)
 
         # Build up a list of models for the ModelSet
         models = [("kernel", kernel)]
@@ -121,7 +148,11 @@ class GP(ModelSet):
 
     @property
     def computed(self):
-        return not self.dirty
+        return (
+            self.solver is not None and
+            self.solver.computed() and
+            not self.dirty
+        )
 
     def compute(self, t, yerr=1.123e-12, check_sorted=True):
         """
@@ -151,7 +182,10 @@ class GP(ModelSet):
         self._yerr = np.empty_like(self._t)
         self._yerr[:] = yerr
         if self.solver is None:
-            self.solver = Solver(self._use_lapack)
+            if self._use_sparse:
+                self.solver = solver.SparseSolver()
+            else:
+                self.solver = solver.Solver(self._use_lapack)
         (alpha_real, beta_real, alpha_complex_real, alpha_complex_imag,
          beta_complex_real, beta_complex_imag) = self.kernel.coefficients
         self.solver.compute(
@@ -163,7 +197,7 @@ class GP(ModelSet):
         self.dirty = False
 
     def _recompute(self):
-        if self.dirty:
+        if not self.computed:
             if self._t is None:
                 raise RuntimeError("you must call 'compute' first")
             self.compute(self._t, self._yerr, check_sorted=False)
@@ -373,13 +407,19 @@ class GP(ModelSet):
                                                  .get_value(x1))
         return K
 
-    def sample(self, x, tiny=1e-12, size=None):
+    def sample(self, x=None, diag=None, include_diagonal=False, size=None):
         """
         Sample from the prior distribution over datasets
 
         Args:
-            x (array[n]): The independent coordinates where the observations
-                should be made.
+            x (Optional[array[n]]): The independent coordinates where the
+                observations should be made. If ``None``, the coordinates used
+                in the last call to ``compute`` will be used.
+            diag (Optional[array[n] or float]): If provided, this will be
+                added to the diagonal of the covariance matrix.
+            include_diagonal (Optional[bool]): Should the white noise and/or
+                ``yerr`` terms be included on the diagonal?
+                (default: ``False``)
             size (Optional[int]): The number of samples to draw.
 
         Returns:
@@ -387,7 +427,27 @@ class GP(ModelSet):
             distribution over datasets.
 
         """
-        K = self.get_matrix(x, include_diagonal=True)
-        K[np.diag_indices_from(K)] += tiny
+        K = self.get_matrix(x, include_diagonal=include_diagonal)
+        if diag is not None:
+            K[np.diag_indices_from(K)] += diag
         sample = np.random.multivariate_normal(np.zeros_like(x), K, size=size)
         return self.mean.get_value(x) + sample
+
+    def sample_uniform(self, x_min, x_max, nx, size=None):
+        x = np.linspace(x_min, x_max, nx)
+        dx = x - x[0]
+
+        k = self.kernel.get_value(dx)
+        s = np.append(k, k[1:-1][::-1])
+        M = len(s)
+        Fs = np.sqrt(M*np.fft.fft(s))
+        if size is None:
+            nr = 1
+        else:
+            nr = int(np.ceil(0.5 * size))
+        e = (np.random.randn(nr, M) + 1.j * np.random.randn(nr, M)) * Fs
+        y = np.fft.ifft(e)[:, :nx]
+        if size is None:
+            return y[0].real
+        y = np.concatenate((y.real, y.imag), axis=0)
+        return y[:size]

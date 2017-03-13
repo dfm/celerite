@@ -5,7 +5,7 @@ from __future__ import division, print_function
 
 import numpy as np
 import matplotlib.pyplot as plt
-from celerite.plot_setup import setup, HORIZONTAL_FIGSIZE
+from celerite.plot_setup import setup, get_figsize
 
 setup(auto=True)
 
@@ -30,7 +30,7 @@ def lorentz_acf(Q, tau):
     t = np.abs(tau)
     return np.exp(-0.5*t/Q) * np.cos(t)
 
-fig, (ax1, ax2) = plt.subplots(1, 2, figsize=HORIZONTAL_FIGSIZE)
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=get_figsize(1, 2))
 x = 10**np.linspace(-1.1, 1.1, 5000)
 tau = np.linspace(0, 20, 5000)
 

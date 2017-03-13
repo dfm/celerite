@@ -13,7 +13,6 @@ env:
     global:
         - EIGEN_VERSION=3.2.9
           TEST_LANG='python'
-          BUILD_ARGS=''
 
 matrix:
     include:
@@ -28,9 +27,9 @@ matrix:
 
         # Linux, Python 2.7
         - os: linux
-          env: PYTHON_VERSION=2.7 NUMPY_VERSION=1.9
-        - os: linux
           env: PYTHON_VERSION=2.7 NUMPY_VERSION=1.10
+        - os: linux
+          env: PYTHON_VERSION=2.7 NUMPY_VERSION=1.11
         - os: linux
           env: PYTHON_VERSION=2.7 NUMPY_VERSION=1.12
 
@@ -48,7 +47,9 @@ matrix:
         - os: linux
           env: PYTHON_VERSION=3.6 NUMPY_VERSION=1.12
         - os: linux
-          env: PYTHON_VERSION=3.6 NUMPY_VERSION=1.12 BUILD_ARGS='--lapack'
+          env: PYTHON_VERSION=3.6 NUMPY_VERSION=1.12 LAPACK_VARIANT='mkl'
+        - os: linux
+          env: PYTHON_VERSION=3.6 NUMPY_VERSION=1.12 LAPACK_VARIANT='openblas'
 
         # OSX
         - os: osx
@@ -56,7 +57,9 @@ matrix:
         - os: osx
           env: PYTHON_VERSION=3.6 NUMPY_VERSION=1.12
         - os: osx
-          env: PYTHON_VERSION=3.6 NUMPY_VERSION=1.12 BUILD_ARGS='--lapack'
+          env: PYTHON_VERSION=3.6 NUMPY_VERSION=1.12 LAPACK_VARIANT='mkl'
+        - os: osx
+          env: PYTHON_VERSION=3.6 NUMPY_VERSION=1.12 LAPACK_VARIANT='openblas'
 
 install:
     - source .ci/travis.sh

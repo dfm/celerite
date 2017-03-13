@@ -19,6 +19,8 @@ class PicklableBandSolver : public celerite::solver::BandSolver<double> {
 public:
   PicklableBandSolver (bool use_lapack = false) : celerite::solver::BandSolver<double>(use_lapack) {};
 
+  bool use_lapack() const { return use_lapack_; };
+
   auto serialize () const {
     return std::make_tuple(this->use_lapack_, this->computed_, this->n_, this->p_real_, this->p_complex_, this->log_det_,
                            this->a_, this->al_, this->ipiv_);
@@ -51,6 +53,7 @@ need to call these directly. This interface was built using `pybind11
 )delim");
 
   m.def("get_library_version", []() { return CELERITE_VERSION_STRING; }, "The version of the linked C++ library");
+
   m.def("with_lapack", []() {
 #ifdef WITH_LAPACK
     return true;
@@ -58,6 +61,21 @@ need to call these directly. This interface was built using `pybind11
     return false;
 #endif
   }, "Was celerite compiled with LAPACK support");
+  m.def("lapack_variant", []() {
+#ifdef LAPACK_VARIANT
+    return CELERITE_TO_STRING(LAPACK_VARIANT);
+#else
+    return "";
+#endif
+  }, "The variant of LAPACK used to compile celerite");
+
+  m.def("with_sparse", []() {
+#ifdef WITH_SPARSE
+    return true;
+#else
+    return false;
+#endif
+  }, "Was celerite compiled with sparse support");
 
   m.def("get_kernel_value",
     [](
@@ -170,6 +188,9 @@ Returns:
 
 )delim");
 
+  //
+  // ------ BAND ------
+  //
   py::class_<PicklableBandSolver> solver(m, "Solver", R"delim(
 A thin wrapper around the C++ BandSolver class
 
@@ -341,6 +362,10 @@ Returns:
 
 )delim");
 
+  solver.def("use_lapack", [](const PicklableBandSolver& solver) {
+    return solver.use_lapack();
+  });
+
   solver.def("__getstate__", [](const PicklableBandSolver& solver) {
     return solver.serialize();
   });
@@ -363,7 +388,9 @@ Returns:
     );
   });
 
-  // CARMA
+  //
+  // ------ CARMA ------
+  //
   py::class_<celerite::carma::CARMASolver> carma_solver(m, "CARMASolver", R"delim(
 A thin wrapper around the C++ CARMASolver class
 )delim");
@@ -381,6 +408,183 @@ A thin wrapper around the C++ CARMASolver class
     );
   });
 
+#ifdef WITH_SPARSE
+  //
+  // ------ SPARSE ------
+  //
+  py::class_<celerite::solver::SparseSolver<double> > sparse_solver(m, "SparseSolver", R"delim(
+A thin wrapper around the C++ SparseSolver class
+)delim");
+  sparse_solver.def(py::init<>());
+
+  sparse_solver.def("compute", [](celerite::solver::SparseSolver<double>& solver,
+      const Eigen::VectorXd& alpha_real,
+      const Eigen::VectorXd& beta_real,
+      const Eigen::VectorXd& alpha_complex_real,
+      const Eigen::VectorXd& alpha_complex_imag,
+      const Eigen::VectorXd& beta_complex_real,
+      const Eigen::VectorXd& beta_complex_imag,
+      const Eigen::VectorXd& x,
+      const Eigen::VectorXd& diag) {
+    return solver.compute(
+      alpha_real,
+      beta_real,
+      alpha_complex_real,
+      alpha_complex_imag,
+      beta_complex_real,
+      beta_complex_imag,
+      x,
+      diag
+    );
+  },
+  R"delim(
+Assemble the extended matrix and perform the banded LU decomposition
+
+Args:
+    alpha_real (array[j_real]): The coefficients of the real terms.
+    beta_real (array[j_real]): The exponents of the real terms.
+    alpha_complex_real (array[j_complex]): The real part of the
+        coefficients of the complex terms.
+    alpha_complex_imag (array[j_complex]): The imaginary part of the
+        coefficients of the complex terms.
+    beta_complex_real (array[j_complex]): The real part of the
+        exponents of the complex terms.
+    beta_complex_imag (array[j_complex]): The imaginary part of the
+        exponents of the complex terms.
+    x (array[n]): The _sorted_ array of input coordinates.
+    diag (array[n]): An array that should be added to the diagonal of the
+        matrix. This often corresponds to measurement uncertainties and in
+        that case, ``diag`` should be the measurement _variance_
+        (i.e. sigma^2).
+
+Returns:
+    int: ``1`` if the dimensions are inconsistent and ``0`` otherwise. No
+    attempt is made to confirm that the matrix is positive definite. If
+    it is not positive definite, the ``solve`` and ``log_determinant``
+    methods will return incorrect results.
+
+)delim");
+
+  sparse_solver.def("solve", [](celerite::solver::SparseSolver<double>& solver, const Eigen::MatrixXd& b) {
+    return solver.solve(b);
+  },
+  R"delim(
+Solve a linear system for the matrix defined in ``compute``
+
+A previous call to :func:`solver.Solver.compute` defines a matrix ``A``
+and this method solves for ``x`` in the matrix equation ``A.x = b``.
+
+Args:
+    b (array[n] or array[n, nrhs]): The right hand side of the linear system.
+
+Returns:
+    array[n] or array[n, nrhs]: The solution of the linear system.
+
+Raises:
+    ValueError: For mismatched dimensions.
+
+)delim");
+
+  sparse_solver.def("dot_solve", [](celerite::solver::SparseSolver<double>& solver, const Eigen::MatrixXd& b) {
+    return solver.dot_solve(b);
+  },
+  R"delim(
+Solve the system ``b^T . A^-1 . b``
+
+A previous call to :func:`solver.Solver.compute` defines a matrix ``A``
+and this method solves ``b^T . A^-1 . b`` for a vector ``b``.
+
+Args:
+    b (array[n]): The right hand side of the linear system.
+
+Returns:
+    float: The solution of ``b^T . A^-1 . b``.
+
+Raises:
+    ValueError: For mismatched dimensions.
+
+)delim");
+
+  sparse_solver.def("dot", [](celerite::solver::SparseSolver<double>& solver,
+      const Eigen::VectorXd& alpha_real,
+      const Eigen::VectorXd& beta_real,
+      const Eigen::VectorXd& alpha_complex_real,
+      const Eigen::VectorXd& alpha_complex_imag,
+      const Eigen::VectorXd& beta_complex_real,
+      const Eigen::VectorXd& beta_complex_imag,
+      const Eigen::VectorXd& x,
+      const Eigen::MatrixXd& b) {
+    return solver.dot(
+      alpha_real,
+      beta_real,
+      alpha_complex_real,
+      alpha_complex_imag,
+      beta_complex_real,
+      beta_complex_imag,
+      x,
+      b
+    );
+  },
+  R"delim(
+Compute the dot product of a ``celerite`` matrix and another arbitrary matrix
+
+This method computes ``A.b`` where ``A`` is defined by the parameters and
+``b`` is an arbitrary matrix of the correct shape.
+
+Args:
+    alpha_real (array[j_real]): The coefficients of the real terms.
+    beta_real (array[j_real]): The exponents of the real terms.
+    alpha_complex_real (array[j_complex]): The real part of the
+        coefficients of the complex terms.
+    alpha_complex_imag (array[j_complex]): The imaginary part of the
+        coefficients of the complex terms.
+    beta_complex_real (array[j_complex]): The real part of the
+        exponents of the complex terms.
+    beta_complex_imag (array[j_complex]): The imaginary part of the
+        exponents of the complex terms.
+    x (array[n]): The _sorted_ array of input coordinates.
+    b (array[n] or array[n, neq]): The matrix ``b`` described above.
+
+Returns:
+    array[n] or array[n, neq]: The dot product ``A.b`` as described above.
+
+Raises:
+    ValueError: For mismatched dimensions.
+
+)delim");
+
+  sparse_solver.def("log_determinant", [](celerite::solver::SparseSolver<double>& solver) {
+    return solver.log_determinant();
+  },
+  R"delim(
+Get the log-determinant of the matrix defined by ``compute``
+
+Returns:
+    float: The log-determinant of the matrix defined by
+    :func:`solver.Solver.compute`.
+
+)delim");
+
+  sparse_solver.def("computed", [](celerite::solver::SparseSolver<double>& solver) {
+      return solver.computed();
+  },
+  R"delim(
+A flag that indicates if ``compute`` has been executed
+
+Returns:
+    bool: ``True`` if :func:`solver.Solver.compute` was previously executed
+    successfully.
+
+)delim");
+
+  // It turns out that SparseLU objects are hard to serialize so we'll just punt. Sorry!
+  sparse_solver.def("__getstate__", [](const celerite::solver::SparseSolver<double>& solver) {
+    return std::make_tuple(false);
+  });
+  sparse_solver.def("__setstate__", [](celerite::solver::SparseSolver<double>& solver, py::tuple t) {
+    new (&solver) celerite::solver::SparseSolver<double>();
+  });
+#endif
 
   return m.ptr();
 }

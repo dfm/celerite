@@ -1,4 +1,4 @@
-% Copyright 2015-2016 Dan Foreman-Mackey and the co-authors listed below.
+% Copyright 2015-2017 Dan Foreman-Mackey and the co-authors listed below.
 
 \documentclass[manuscript, letterpaper]{aastex6}
 
@@ -80,7 +80,9 @@
 % Projects:
 \newcommand{\project}[1]{\textsf{#1}}
 \newcommand{\kepler}{\project{Kepler}}
+\newcommand{\tess}{\project{TESS}}
 \newcommand{\celerite}{\project{celerite}}
+\newcommand{\emcee}{\project{emcee}}
 
 \newcommand{\foreign}[1]{\emph{#1}}
 \newcommand{\etal}{\foreign{et\,al.}}
@@ -206,7 +208,7 @@ This method is a generalization of a method developed by
 \citet{Ambikasaran:2015} that was, in turn, built on intuition from a twenty
 year old paper \citep{Rybicki:1995}.
 For this method to be applicable, the data must be one-dimensional and the
-covariance function must be written as a mixture of damped sinusoid functions.
+covariance function must have a specific form.
 However, there is no further constraint on the data or the model.
 In particular, the measurements don't need to be evenly spaced and the
 uncertainties can be heteroscedastic.
@@ -225,37 +227,10 @@ These implementations are available online at \project{GitHub}
 \url{https://github.com/dfm/celerite} and \project{Zenodo} \dfmtodo{add zenodo
 archive}.
 
-%
-% New Outline:
-% 1. Introduction
-% 2. Gaussian processes
-%   - GPs in general
-%   - RP method
-%   - Ambikasaran method
-%   - Generalization
-%   - Relation to stochastically-driven, damped simple harmonic oscillator
-% 3. Implementation and performance
-%   - Implementation considerations: band solver vs. sparse, parameterization
-%   - Ensuring positive-definite covariance matrix: Sturm's theorem
-%   - Benchmark numbers
-%   - Scaling with N and M
-%   - Description of APIs
-% 4. Examples
-%   - Simulated data: a simple exact celerite simulation, a celerite simulation with
-%     structure, a few standard kernels, a AGW kernel
-%   - An AGN light curve
-%   - An RR Lyrae
-%   - A kepler light curve
-%   - An asteroseismic target
-% 5. Comparisons to other methods
-% 6. Summary
-%   - Possible applications
-%
-
-\section{Gaussian processes}
+\section{Gaussian processes}\sectlabel{gps}
 
 Gaussian Processes \citep[GPs;][]{Rasmussen:2006} are a class of stochastic
-models parameterized by a mean function $\mu_\bvec{\theta}(\bvec{x})$ and a
+models consisting of a mean function $\mu_\bvec{\theta}(\bvec{x})$ and a
 covariance or ``kernel'' function $k_\bvec{\alpha}(\bvec{x}_i,\,\bvec{x}_j)$
 parameterized by the parameters $\bvec{\theta}$ and $\bvec{\alpha}$
 respectively.
@@ -307,11 +282,17 @@ quickly become computationally intractable.
 In this case, standard non-linear optimization or MCMC will no longer be
 practical inference methods.
 
-In the following Section, we present a method of improving this scaling that
-we call the \celerite\ method.
-The \celerite\ method requires using a specific model for the covariance
-$k_\bvec{\alpha}(\bvec{x}_n,\,\bvec{x}_m)$ and it has several limitations.
-The method can only be applied to one-dimensional datasets.
+In the following Section, we present a method of substantially improving this
+scaling in many circumstances.
+We call our method and its implementations \celerite.\footnote{The name
+\celerite\ comes from the French word \foreign{c\'elerit\'e} meaning the speed
+of light in a vacuum.} The \celerite\ method requires using a specific model
+for the covariance $k_\bvec{\alpha}(\bvec{x}_n,\,\bvec{x}_m)$ and it has
+several limitations but, in subsequent sections, we demonstrate that it can be
+used to increase the computational efficiency of many astronomical data
+analysis problems.
+The main limitation of this method is that it can only be applied to
+one-dimensional datasets.
 When we say ``one-dimensional'' here, it means that the \emph{input
 coordinates} $\bvec{x}_n$ are scalar, $\bvec{x}_n \equiv t_n$.\footnote{We are
 using $t$ as the input coordinate because one-dimensional GPs are often
@@ -325,14 +306,14 @@ of $\tau_{nm} \equiv |t_n - t_m|$.
 \section{The celerite model}
 
 To scale GP models to larger datasets, \citet{Rybicki:1995} presented a method
-of computing \eq{gp-likelihood} in $\mathcal{O}(N)$ when the covariance
-function is
+of computing the first term in \eq{gp-likelihood} in $\mathcal{O}(N)$
+operations when the covariance function is given by
 \begin{eqnarray}\eqlabel{kernel-simple}
 k_\bvec{\alpha}(\tau_{nm}) = \sigma_n^2\,\delta_{nm} + a\,\exp(-c\,\tau_{nm})
 \end{eqnarray}
 where $\{{\sigma_n}^2\}_{n=1}^N$ are the measurement uncertainties,
 $\delta_{nm}$ is the Kronecker delta, and $\bvec{\alpha} = (a,\,c)$.
-The intuition behind this method is that, for the choice of $k_\bvec{\alpha}$,
+The intuition behind this method is that, for this choice of $k_\bvec{\alpha}$,
 the inverse of $K_\bvec{\alpha}$ is tridiagonal and can it can be computed
 with a small number of operations for each data point.
 Subsequently, \citet{Ambikasaran:2015} generalized this method to arbitrary
@@ -342,8 +323,8 @@ k_\bvec{\alpha}(\tau_{nm}) = \sigma_n^2\,\delta_{nm} +
     \sum_{j=1}^J a_j\,\exp(-c_j\,\tau_{nm})\quad.
 \end{eqnarray}
 In this case, the inverse will be dense but \eq{gp-likelihood} can still be
-evaluated in $\mathcal{O}(J^2\,N)$ operations where $J$ is the number of
-components in the mixture and $N$ is still the number of data points.
+evaluated in $\mathcal{O}(N)$ operations where $J$ is the number of components
+in the mixture and $N$ is still the number of data points.
 
 It turns out that this kernel function can be made even more general by
 introducing complex parameters $a_j \to a_j\pm i\,b_j$ and
@@ -359,11 +340,14 @@ k_\bvec{\alpha}(\tau_{nm}) = \sigma_n^2\,\delta_{nm} +
 \right]
 \end{eqnarray}
 and, for this function, \eq{gp-likelihood} can still be solved with
-$\mathcal{O}(J^2\,N)$ operations.
+$\mathcal{O}(N)$ operations.
 The details of this method and a few implementation considerations are
-discussed in \app{implementation}.
+discussed in the following \sectionname\ but we will first discuss some
+properties of this covariance function.
 
-\eq{celerite-kernel-complex} can also be expressed as
+By rewriting the exponentials in \eq{celerite-kernel-complex} as sums of sine
+and cosine functions, we can see the autocorrelation structure is defined by a
+mixture of quasiperiodic oscillators
 \begin{eqnarray}\eqlabel{celerite-kernel}
 k_\bvec{\alpha}(\tau_{nm}) = \sigma_n^2\,\delta_{nm} +
     \sum_{j=1}^J &&\left[
@@ -373,8 +357,12 @@ k_\bvec{\alpha}(\tau_{nm}) = \sigma_n^2\,\delta_{nm} +
     b_j\,\exp\left(-c_j\,\tau_{nm}\right)\,\sin\left(d_j\,\tau_{nm}\right)
 \right] \quad.
 \end{eqnarray}
-The Fourier transform of this covariance function is the power spectral
-density (PSD) of the model and it is given by
+For clarity, we will refer to the argument within the sum as a ``\celerite\
+term'' for the remainder of this paper.
+The Fourier transform\footnote{Here and throughout we have defined the Fourier
+transform of the function $f(t)$ as $F(\omega)=(2\,\pi)^{-1/2}\,
+\int_{-\infty}^\infty f(t)\,e^{i\,\omega\,t}\dd t$.} of this covariance
+function is the power spectral density (PSD) of the process and it is given by
 \begin{eqnarray}\eqlabel{celerite-psd}
 S(\omega) = \sum_{j=1}^J \sqrt{\frac{2}{\pi}}
 \frac{(a_j\,c_j+b_j\,d_j)\,({c_j}^2+{d_j}^2)+(a_j\,c_j-b_j\,d_j)\,\omega^2}
@@ -414,6 +402,24 @@ S_j(\omega) = \sqrt{\frac{2}{\pi}}\,\frac{a_j}{c_j}\,
     \frac{1}{1+\left(\frac{\omega}{c_j}\right)^2} \quad.
 \end{eqnarray}
 
+It's worth noting that the product of two terms of the form found inside the
+sum in \eq{celerite-kernel} can also be re-written as a sum with updated
+parameters
+\begin{eqnarray}\eqlabel{product-rule}
+k_j(\tau) \, k_k(\tau) =
+    e^{-\tilde{c}\,\tau}\,[
+        a_+\,\cos(d_+\,\tau) + b_+\,\sin(d_+\,\tau) +
+        a_-\,\cos(d_-\,\tau) + b_-\,\sin(d_-\,\tau)
+    ]
+\end{eqnarray}
+where
+\begin{eqnarray}
+    \tilde{a}_{\pm} &=& \frac{1}{2}\,(a_j\,a_k \pm b_j\,b_k) \\
+    \tilde{b}_{\pm} &=& \frac{1}{2}\,(b_j\,a_k \mp a_j\,b_k) \\
+    \tilde{c} &=& c_j + c_k \\
+    \tilde{d}_{\pm} &=& d_j \mp d_k \quad.
+\end{eqnarray}
+
 \section{Implementation \& performance}
 
 \citet{Rybicki:1995} demonstrated that the inverse of a matrix $K$ where the
@@ -429,10 +435,10 @@ efficient method for computing the determinant of $K$.
 
 \subsection{An example}
 
-To provide some insight for this method, we will start by working through the
-simplest possible example.
+To provide some insight for this method, we will start by working through a
+simple example.
 In this case, we'll assume that we have three data points
-$\{y_1,\,y_2,\,y_3\}$ observed at times $\{t_1,\,t_2,\,t_3\}$ with
+$\{y_1,\,y_2,\,y_3\}$ observed at times $\{t_1,\,t_2,\,t_3\}$ with measurement
 variances $\{{\sigma_1}^2,\,{\sigma_2}^2,\,{\sigma_3}^2\}$ and we would
 like to compute the likelihood of these data under a GP model with the
 covariance function
@@ -441,37 +447,43 @@ k(\tau_{nm}) = \sigma_n^2\,\delta_{nm} + a\,\exp(-c\,\tau_{nm})\quad.
 \end{eqnarray}
 This function is identical to \eq{celerite-kernel-complex} with $J=1$, $b=0$,
 and $d=0$.
-To demonstrate motivate this method, we will write out the full system of
-equations that we must solve to apply the inverse of $K$.
+To demonstrate this method, we will write out the full system of
+equations that we must solve to apply the inverse of $K$ in order to compute
+the first term of \eq{gp-likelihood}.
 In matrix notation, this can be written as
 \begin{eqnarray}\eqlabel{impl-matrix}
-K\,\bvec{x} &=& \bvec{y}, \\
+K\,\bvec{z} &=& \bvec{y}, \\
 \begin{pmatrix}
     a+{\sigma_1}^2 & a\,e^{-c\,\tau_{2,1}} & a\,e^{-c\,\tau_{3,1}}\\
     a\,e^{-c\,\tau_{2,1}} & a+{\sigma_2}^2 & a\,e^{-c\,\tau_{3,2}}\\
     a\,e^{-c\,\tau_{3,1}} & a\,e^{-c\,\tau_{3,2}} & a+{\sigma_3}^2
 \end{pmatrix}\,
 \begin{pmatrix}
-    x_1 \\ x_2 \\ x_3
+    z_1 \\ z_2 \\ z_3
 \end{pmatrix} &=&
 \begin{pmatrix}
     y_1 \\ y_2 \\ y_3
-\end{pmatrix} \quad.
+\end{pmatrix}
 \end{eqnarray}
+where our goal is to solve for the unknown vector \bvec{z} for a given matrix
+$K$ and vector \bvec{y}.
+In this equation, we have assumed that the mean function is zero but a
+non-zero mean could be included by replacing \bvec{y} by
+$\bvec{r}_\bvec{\theta}$ as defined in \sect{gps}.
 Now, if we introduce the variables
 \begin{eqnarray}\eqlabel{algo-first}
-    u_n = e^{-c\,\tau_{n+2,n+1}}\,u_{n+1} + a\,x_{n+1}
+    u_n = e^{-c\,\tau_{n+2,n+1}}\,u_{n+1} + a\,z_{n+1}
 \end{eqnarray}
 where $u_{N} = 0$, and
 \begin{eqnarray}
-    g_n = e^{-c\,\tau_{n+1,n}}\,g_{n-1} + e^{-c\,\tau_{n+1,n}}\,x_{n}
+    g_n = e^{-c\,\tau_{n+1,n}}\,g_{n-1} + e^{-c\,\tau_{n+1,n}}\,z_{n}
 \end{eqnarray}
 where $g_{0} = 0$,
 the system of equations can be rewritten as
 \begin{eqnarray}
-(a+{\sigma_1}^2)\,x_1 + e^{-c\,\tau_{2,1}}\,u_1 &=& y_1 \\
-a\,g_1 + (a+{\sigma_2}^2)\,x_2 + e^{-c\,\tau_{3,2}}\,u_2 &=& y_2 \\
-a\,g_2 + (a+{\sigma_3}^2)\,x_3 &=& y_3 \quad. \eqlabel{algo-last}
+(a+{\sigma_1}^2)\,z_1 + e^{-c\,\tau_{2,1}}\,u_1 &=& y_1 \\
+a\,g_1 + (a+{\sigma_2}^2)\,z_2 + e^{-c\,\tau_{3,2}}\,u_2 &=& y_2 \\
+a\,g_2 + (a+{\sigma_3}^2)\,z_3 &=& y_3 \quad. \eqlabel{algo-last}
 \end{eqnarray}
 The system defined by \eq{algo-first} through \eq{algo-last} can be
 rewritten as a matrix equation to show the benefit that this seemingly trivial
@@ -487,7 +499,7 @@ reformulation provides:
     0 & 0 & 0 & 0 & 0 & a & a+{\sigma_3}^2 \\
 \end{pmatrix}\,
 \begin{pmatrix}
-    x_1 \\ u_1 \\ g_1 \\ x_2 \\ u_2 \\ g_2 \\ x_3
+    z_1 \\ u_1 \\ g_1 \\ z_2 \\ u_2 \\ g_2 \\ z_3
 \end{pmatrix} &=&
 \begin{pmatrix}
     y_1 \\ 0 \\ 0 \\ y_2 \\ 0 \\ 0 \\ y_3
@@ -496,7 +508,7 @@ reformulation provides:
 where we will follow \citet{Ambikasaran:2015} and call this the ``extended''
 system and rewrite \eq{impl-matrix} as
 \begin{eqnarray}
-    K_\mathrm{ext}\,\bvec{x}_\mathrm{ext} &=& \bvec{y}_\mathrm{ext} \quad.
+    K_\mathrm{ext}\,\bvec{z}_\mathrm{ext} &=& \bvec{y}_\mathrm{ext} \quad.
 \end{eqnarray}
 Even though $K_\mathrm{ext}$ is a larger matrix than the original $K$ that we
 started with, it is now has a sparse banded structure that can be exploited to
@@ -505,8 +517,8 @@ In particular, band matrix solvers are available that can perform an
 LU-decomposition of banded matrices like this in $\mathcal{O}(N)$
 operations~--~instead of the $\mathcal{O}(N^3)$ that would be required in
 general~--~and we can take advantage of these algorithms to solve our system
-exactly because the target vector $\bvec{x}$ is a subset of the elements of
-$\bvec{x}_\mathrm{ext}$.
+exactly because the target vector $\bvec{z}$ is a subset of the elements of
+$\bvec{z}_\mathrm{ext}$.
 
 In the following section, we will discuss this method more generally but it's
 worth noting a few important facts that can already be seen in this example.
@@ -536,7 +548,7 @@ with the number of components $J$.
 Second, \citet{Ambikasaran:2015} proved that the determinant of
 $K_\mathrm{ext}$ is equal to the determinant of $K$ up to a sign.
 This means that we can use this extended matrix formalism to compute the
-marginalized likelihood in $\mathcal{O}(J^2\,N)$ operations.
+marginalized likelihood in $\mathcal{O}(N)$ operations.
 
 \subsection{The algorithm}
 
@@ -551,10 +563,10 @@ analogy to the $u_n$ and $g_n$ that we introduced in the previous section
 \begin{eqnarray}\eqlabel{full-system-first}
 \phi_{n,j} &=& e^{-c_j\,\tau_{n+1,n}}\,\cos\left(d_j\,\tau_{n+1,n}\right)\\
 \psi_{n,j} &=& -e^{-c_j\,\tau_{n+1,n}}\,\sin\left(d_j\,\tau_{n+1,n}\right)\\
-g_{n,j} &=& \phi_{n,j}\,g_{n-1,j} + \phi_{n,j}\,x_n + \psi_{n,j}\,h_{n-1,j}\\
-h_{n,j} &=& \phi_{n,j}\,h_{n-1,j} - \psi_{n,j}\,x_n - \psi_{n,j}\,g_{n-1,j}\\
-u_{n,j} &=& \phi_{n+1,j}\,u_{n+1,j} + a_j\,x_{n+1} + \psi_{n+1,j}\,v_{n+1,j}\\
-v_{n,j} &=& \phi_{n+1,j}\,v_{n+1,j} - b_j\,x_{n+1} - \psi_{n+1,j}\,u_{n+1,j}
+g_{n,j} &=& \phi_{n,j}\,g_{n-1,j} + \phi_{n,j}\,z_n + \psi_{n,j}\,h_{n-1,j}\\
+h_{n,j} &=& \phi_{n,j}\,h_{n-1,j} - \psi_{n,j}\,z_n - \psi_{n,j}\,g_{n-1,j}\\
+u_{n,j} &=& \phi_{n+1,j}\,u_{n+1,j} + a_j\,z_{n+1} + \psi_{n+1,j}\,v_{n+1,j}\\
+v_{n,j} &=& \phi_{n+1,j}\,v_{n+1,j} - b_j\,z_{n+1} - \psi_{n+1,j}\,u_{n+1,j}
 \end{eqnarray}
 with the boundary conditions
 \begin{eqnarray}
@@ -569,33 +581,36 @@ Using these variables and some algebra, we find that the following expression
 \sum_{j=1}^J \left[a_j\,g_{n,j}+b_j\,h_{n,j}\right]
 + \left[{\sigma_n}^2+\sum_{j=1}^J a_j\right]
 + \sum_{j=1}^J \left[\phi_{n,j}\,u_{n,j}+\psi_{n,j}\,v_{n,j}\right]
-    &=& y_n
+    &=& r_{\bvec{\theta},n}
 \end{eqnarray}
 is equivalent to the target matrix equation
 \begin{eqnarray}
-K\,\bvec{x} &=& \bvec{y} \quad.
+K\,\bvec{z} &=& \bvec{r}_\bvec{\theta}
 \end{eqnarray}
+if $r_{\bvec{\theta},n}$ is the $n$-th element of the residual vector
+$\bvec{r}_\bvec{\theta}$ defined in \sect{gps}.
 \eq{full-system-first} through \eq{full-system-last} define a banded matrix
 equation in the ``extended'' space and, as before, this can be used to solve
-for $K^{-1}\,\bvec{y}$ and $\det K$ in $\mathcal{O}(J^2\,N)$ operations.
+for $K^{-1}\,\bvec{r}_\bvec{\theta}$ and $\det K$ in $\mathcal{O}(N)$
+operations.
 \Figure{matrix} shows a pictorial representation of the sparsity pattern of
 the extended matrix $K_\mathrm{ext}$.
 Given that definition of $K_\mathrm{ext}$, the corresponding extended vectors
-$\bvec{x}_\mathrm{ext}$ and $\bvec{y}_\mathrm{ext}$ are defined schematically
+$\bvec{z}_\mathrm{ext}$ and $\bvec{r}_\mathrm{ext}$ are defined schematically
 as
 \begin{eqnarray}
-{\bvec{x}_\mathrm{ext}} ^\T =
+{\bvec{z}_\mathrm{ext}} ^\T =
 \left(\begin{array}{cccccccccc}
-    x_1 & u_{1,j} & v_{1,j} & g_{1,j} & h_{1,j} & x_2 & u_{2,j} & \cdots &
-    h_{N-1,j} & x_N
+    z_1 & u_{1,j} & v_{1,j} & g_{1,j} & h_{1,j} & z_2 & u_{2,j} & \cdots &
+    h_{N-1,j} & z_N
 \end{array}\right)
 \end{eqnarray}
 and
 \begin{eqnarray}
-{\bvec{y}_\mathrm{ext}} ^\T =
+{\bvec{r}_\mathrm{ext}} ^\T =
 \left(\begin{array}{cccccccccc}
-    y_1 & 0 & 0 & 0 & 0 & y_2 & 0 & \cdots &
-    0 & y_N
+    r_{\bvec{\theta},1} & 0 & 0 & 0 & 0 & r_{\bvec{\theta},2} &
+    0 & \cdots & 0 & r_{\bvec{\theta},2}
 \end{array}\right) \quad.
 \end{eqnarray}
 
@@ -604,8 +619,9 @@ extended matrix can be factorized using a LU-decomposition\footnote{Even
 though $K_\mathrm{ext}$ is symmetric, it is not positive definite so a
 Cholesky solver cannot be used for increased efficiency.} routine optimized
 for band matrices.
-This decomposition can be used to compute the determinant of $K$ and to solve
-$K^{-1}\,\bvec{y}$.
+This decomposition can be used to compute the determinant of $K$, solve
+$K^{-1}\,\bvec{r}_\bvec{\theta}$, and subsequently calculate the marginalized
+likelihood in \eq{gp-likelihood}.
 
 \begin{figure}[!htbp]
 \begin{center}
@@ -619,22 +635,33 @@ in the legend.
 \end{figure}
 
 
-\subsection{Implementation considerations}
+\subsection{Implementation considerations \& scaling}
 
-Solvers.
-Banded vs.\ sparse.
+The extended system defined in the previous section is sparse with fewer than
+a few percent non-zero entries and band structure.
+In this \sectionname, we empirically investigate the performance and scaling
+of three different algorithms for solving this extended systems:
+
+\begin{enumerate}
+
+\item A simple algorithm for computing the LU decomposition for banded
+    matrices using Gaussian elimination \citep{Press:1992, Press:2007},
+
+\item The general banded LU decomposition implementation from
+    LAPACK\footnote{We use the \texttt{dgbtrf} and \texttt{dgbtrs} methods
+        from LAPACK.} \citep{Anderson:1999} using optimized BLAS routines, and
+
+\item A general sparse LU solver that exploits the sparsity but not the band
+    structure \citep{Guennebaud:2010}.
+
+\end{enumerate}
+
+NNZ: $(10\,J + 1)\,N - 4\,J + 1$
 
 \begin{figure}[!htbp]
 \begin{center}
-\includegraphics[width=0.5\textwidth]{figures/benchmark.pdf}
+\includegraphics[width=\textwidth]{../examples/benchmark/benchmark_darwin_default.pdf}
 \caption{Benchmark\figurelabel{benchmark}}
-\end{center}
-\end{figure}
-
-\begin{figure}[!htbp]
-\begin{center}
-\includegraphics[width=0.5\textwidth]{figures/carma_comp.pdf}
-\caption{Benchmark\figurelabel{carma-comp}}
 \end{center}
 \end{figure}
 
@@ -658,8 +685,9 @@ Sturm's theorem.
 %Relation of positive power spectrum to positive definite covariance matrix.
 %Power spectrum of a sum of kernels.
 
-In the case of $J$ damped sinusoids we can check for negative values of the PSD by solving for the
-roots of the power spectrum, abbreviating with $z = \omega^2$:
+In the case of $J$ \celerite\ terms, we can check for negative values of the
+PSD by solving for the roots of the power spectrum, abbreviating with
+$z = \omega^2$:
 \begin{equation}
 P(\omega)=  \sum_{j=1}^J \frac{q_j z + r_j}{z^2+s_jz + t_j} = 0
 \end{equation}
@@ -701,13 +729,11 @@ manipulation of polynomials to determine the number of positive real roots.  If 
 likelihood may be set to zero.
 %Sturm's theorem applied to numerator of power spectrum.
 
-\subsection{Benchmarks \& scaling}
-
-\subsection{Parameterization \& API}
-
 \section{celerite as a model of stellar variations}
 
-Another special case of the \celerite\ model of great physical interest is a
+\dfmtodo{Add more intro to this section.}
+
+A special case of the \celerite\ model of great physical interest is a
 stochastically-driven simple harmonic oscillator.
 The differential equation for this system is
 \begin{equation}
@@ -745,7 +771,7 @@ d_{j\pm} &=& 0 \quad. \nonumber
 \end{eqnarray}
 
 These identities yield a kernel of the form
-\begin{equation}
+\begin{equation}\eqlabel{sho-kernel}
 k(\tau) = S_0\,\omega_0\,Q\,e^{-\frac{\omega_0\,\tau}{2Q}}\,
 \begin{cases}
     \cosh{(\eta\,\omega_0\,\tau)} +
@@ -767,12 +793,14 @@ The power spectrum in \eq{sho-psd} has several limits of physical interest:
 \begin{eqnarray}\eqlabel{granulation-psd}
 S(\omega) = \sqrt{\frac{2}{\pi}}\,\frac{S_0}{(\omega/\omega_0)^4+1} \quad.
 \end{eqnarray}
-A model like this has been used to model the granulation is Solar data
-\citep{Michel:2009}}, which has a kernel of
+This, in turn, is the most commonly used model for the background granulation
+noise in asteoreseismic \citep{Kallinger:2014} and helioseismic
+\citep{Harvey:1985, Michel:2009} analyses.
+The Fourier transform of this PSD corresponds to the kernel
 \begin{equation}
 k(\tau) = S_0\,\omega_0\,e^{-\frac{1}{\sqrt{2}}\,\omega_0\,\tau}\,
     \cos{\left(\frac{\omega_0\,\tau}{\sqrt{2}}-\frac{\pi}{4}\right)}.
-\end{equation}
+\end{equation}}
 
 {\item Substituting $Q = 1/2$, \eq{sho-psd} becomes
 \begin{eqnarray}
@@ -829,8 +857,8 @@ $S_0$, and $\omega_0$ to give a sufficient accounting of the power spectrum
 stellar time series.
 Since this kernel is exactly described by the exponential kernel, the
 likelihood (\eqalt{gp-likelihood}) can be evaluated for a time series with $N$
-measurements in $\mathcal{O}(N)$ operations using the \celerite\ method described
-in the previous section.
+measurements in $\mathcal{O}(N)$ operations using the \celerite\ method
+described in the previous section.
 
 \begin{figure}[!htbp]
 \begin{center}
@@ -849,14 +877,112 @@ in the previous section.
 
 \section{Examples with simulated data}
 
-\begin{enumerate}
-\item an OU process
-\item a full celerite process
-\item Some standard kernels: Matern, Exp-squared, etc.
-\item A KISS-GP process
-\end{enumerate}
+\subsection{Recovery of a celerite process}
+
+In this first example, we will simulate a dataset using a known \celerite\
+process and fit it with \celerite\ to demonstrate that valid inferences can be
+made in this idealized case.
+The simulated dataset is shown in the left panel of \Figure{simulated-correct}
+and it was generated using a SHO kernel (\eqalt{sho-kernel}) with parameters
+$S_0 = 1$, $\omega_0 = e^2$, and $Q = e^2$.
+The true PSD is shown as a dashed line in the right panel of
+\Figure{simulated-correct}.
+We applied log-uniform priors to all of the parameters and used \emcee\
+\citep{Foreman-Mackey:2013} to sample the joint posterior density and computed
+the marginalized posterior inference of the PSD.
+This inference is shown in the right panel of \Figure{simulated-correct} as a
+blue contour indicating 68\% of the posterior mass.
+It is clear from this figure that, as expected, the inference correctly
+reproduces the true PSD.
+
+
+\begin{figure}[!htbp]
+\begin{center}
+\includegraphics[width=0.9\textwidth]{figures/simulated/correct.pdf}
+\caption{(left) A simulated dataset.
+    (right) The inferred PSD~--~the blue contours encompass 68\% of the
+    posterior mass~--~compared to the true PSD (dashed black line).
+    \figurelabel{simulated-correct}}
+\end{center}
+\end{figure}
+
+
+\subsection{Inferences with the ``wrong'' model}
+
+For this example, we simulate a dataset using a known GP model with a kernel
+outside of the support of a \celerite\ process.
+This means that the true autocorrelation of the process can never be correctly
+represented by the model that we're using to fit but we will use this example
+to demonstrate that, at least in this case, valid inferences can still be made
+about the physical parameters of the model.
+
+For this example, the data are simulated from a quasiperiodic GP with the
+kernel
+\begin{eqnarray}\eqlabel{sim-wrong-true}
+k_\mathrm{true} (\tau) = \alpha\,
+    \exp\left(-\frac{\tau^2}{2\,\lambda^2}\right)\,
+    \cos\left(\frac{2\,\pi\,\tau}{P_\mathrm{true}}\right)
+\end{eqnarray}
+where $P_\mathrm{true}$ is the fundamental period of the process.
+This autocorrelation structure yields the power spectrum
+\begin{eqnarray}
+S_\mathrm{true} (\omega) = \frac{\lambda\,\alpha}{2}\,\left[
+    \exp\left(-\frac{\lambda^2}{2}\,\left(\omega-
+        \frac{2\,\pi}{P_\mathrm{true}}\right)^2\right) +
+    \exp\left(-\frac{\lambda^2}{2}\,\left(\omega+
+        \frac{2\,\pi}{P_\mathrm{true}}\right)^2\right)
+\right]
+\end{eqnarray}
+that for large $\omega$ falls off exponentially.
+When compared to \eq{celerite-psd}~--~that for large $\omega$ goes as
+$\omega^{-4}$, at most~--~it is clear that a \celerite\ model can never
+perfectly reproduce the structure of this process.
+That being said, we will demonstrate that rigorous inferences can be made
+about $P_\mathrm{true}$ even with an effective model.
+The left panel of \Figure{simulated-wrong} shows the simulated dataset.
+We then fit this simulated data using the product of two SHO terms
+(\eqalt{sho-kernel}) where one of the terms has $S_0 = 1$ and $Q =
+1/\sqrt{2}$ and the other has $\omega_0 = 2\,\pi/P$.
+We note that using \eq{product-rule}, the product of two \celerite\ terms can
+also be expressed as a \celerite\ term.
+We apply log-uniform priors on all the parameters and use \emcee\
+\citep{Foreman-Mackey:2013} to sample the posterior probability for all of the
+parameters.
+The inferred distribution for the parameter $P$ is shown in the right panel of
+\Figure{simulated-wrong} and compared to the true period $P_\mathrm{true}$ and
+the inferences made using the correct model (\eqalt{sim-wrong-true}).
+The inference made using this effective \celerite\ model are indistinguishable
+from the inferences made using the correct model but substantially less
+computation time is required for the \celerite\ inference.
+
+\begin{figure}[!htbp]
+\begin{center}
+\includegraphics[width=0.9\textwidth]{figures/simulated/wrong-qpo.pdf}
+\caption{(left) A simulated dataset.
+    (right) The inferred period of the process. The true period is indicated
+    by the vertical orange line, the posterior inference using the correct
+    model is shown as the blue dashed histogram, and the inference made using
+    the ``wrong'' effective model is shown as the black histogram.
+    \figurelabel{simulated-wrong}}
+\end{center}
+\end{figure}
+
 
 \section{Examples with real data}
+
+In this section we will demonstrate several use cases of \celerite\ when
+applied to real datasets.
+Each of these examples touches on an active area of research so we will limit
+our examples to be qualitative in nature and make no claim of optimality but
+we hope that these examples will encourage interested readers to investigate
+the applicability of \celerite\ to their research.
+
+All of the following examples show time domain datasets with a clear bias in
+favor of large homogeneous photometric surveys but these methods can similarly
+be applied to spectroscopy, where wavelength~--~instead of time~--~is the
+independent coordinate and other one-dimensional domains.
+It is also possible to cast some two-dimensional problems in the \celerite\
+framework (\dfmtodo{CITE Ian C}).
 
 \subsection{Asteroseismic oscillations}
 
@@ -885,12 +1011,12 @@ with standard non-linear optimization or posterior sampling methods to infer
 constraints on the parameters for the given dataset.
 
 To demonstrate this method, we will use a very simple heuristic model based on
-\dfmtodo{CITE} where the model PSD is given by a mixture of 6 components with
+\dfmtodo{CITE} where the model PSD is given by a mixture of 8 components with
 amplitudes and frequencies specified by $\nu_\mathrm{max}$, $\Delta \nu$, and
 several nuisance parameters.
 The first term is used to capture the granulation ``background'' using
 \eq{granulation-psd} with two free parameters $S_g$ and $\omega_g$.
-The remaining 5 terms are given by \eq{sho-psd} where $Q$ is a nuisance
+The remaining  7 terms are given by \eq{sho-psd} where $Q$ is a nuisance
 parameter shared between terms and the frequencies are given by
 \begin{eqnarray}
 \omega_{0,\,j} = 2\,\pi\,(\nu_\mathrm{max} + j\,\Delta\nu + \epsilon)
@@ -906,13 +1032,40 @@ This model could be easily extended to include small frequency splitting and
 $\nu_\mathrm{max}$ and $\Delta \nu$ could be replaced by physical parameters
 like $\log g$.
 
-KIC~11615890 \citep{Pinsonneault:2014}
+To demonstrate the applicability of this model, we apply it to infer the
+asteroseismic parameters of the giant star KIC~11615890 observed by the
+\kepler\ Mission.
+The goal of this example is to show that, even for a low signal-to-noise
+dataset with a short baseline, it is possible to infer asteroseismic
+parameters with formal uncertainties that are consistent with the parameters
+inferred with a much larger dataset.
+Looking forward to \tess, we will infer $\nu_\mathrm{max}$ and $\Delta\nu$
+using only one month of \kepler\ data and compare our results to the results
+inferred from the full 4 year baseline of the mission.
+For KIC~11615890, the published asteroseismic parameters based on the full
+dataset are \citep{Pinsonneault:2014}
 \begin{eqnarray}
     \nu_\mathrm{max} = 171.94 \pm 3.62 \,\mu\mathrm{Hz} \quad\mathrm{and}\quad
-    \Delta\nu = 13.28 \pm 0.29 \,\mu\mathrm{Hz}
+    \Delta\nu = 13.28 \pm 0.29 \,\mu\mathrm{Hz} \quad.
 \end{eqnarray}
+We randomly select a month-long segment of \kepler\ data, initialize our
+\celerite\ model using a grid search in the parameter space, and then use
+\emcee\ \citep{Foreman-Mackey:2013} to sample the joint posterior density for
+the full set of parameters.
+\Figure{astero-corner} shows the marginalized density for $\nu_\mathrm{max}$
+and $\Delta\nu$ compared to the results from the literature.
+\dfmtodo{Add some more discussion here.}
 
-\dfmtodo{Add plots etc.}
+\begin{figure}[!htbp]
+\begin{center}
+\includegraphics[width=0.8\textwidth]{figures/astero-11615890-numax_deltanu_corner.pdf}
+\caption{The probabilistic constraints on $\nu_\mathrm{max}$ and $\Delta \nu$
+    from the inference shown in \Figure{astero} compared to the published
+    value (error bar) based on the full \kepler\ dataset \dfmtodo{CITE}.
+    \figurelabel{astero-corner}}
+\end{center}
+\end{figure}
+
 
 \begin{figure}[!htbp]
 \begin{center}
@@ -929,16 +1082,6 @@ the PSD as a mixture of stochastically driven simple harmonic oscillators.
     The black line shows the median of posterior PSD and the gray contours
     show the 68\% credible region.
     \figurelabel{astero}}
-\end{center}
-\end{figure}
-
-\begin{figure}[!htbp]
-\begin{center}
-\includegraphics[width=0.8\textwidth]{figures/astero-11615890-numax_deltanu_corner.pdf}
-\caption{The probabilistic constraints on $\nu_\mathrm{max}$ and $\Delta \nu$
-    from the inference shown in \Figure{astero} compared to the published
-    value (error bar) based on the full \kepler\ dataset \dfmtodo{CITE}.
-    \figurelabel{astero-corner}}
 \end{center}
 \end{figure}
 
@@ -1011,6 +1154,21 @@ as a drop-in replacement for a substantial gain in computational efficiency.
 \end{figure}
 
 \subsection{Exoplanet transit fitting}
+
+In this example, we inject the signal of a simulated exoplanet transit into a
+real \kepler\ light curve and then demonstrate that we can recover the true
+physical parameters of the exoplanet while modeling the stellar variability
+using \celerite.
+This example is different from all the previous examples because in this case,
+we are uninterested in the inferred parameters of the covariance model.
+Instead, we're interested in inferring constraints on the parameters of the
+mean model.
+In \eq{gp-likelihood} these parameters are called $\bvec{\theta}$ and in this
+example, the mean function $\mu_\bvec{\theta}(t)$ is a limb-darkened transit
+light curve \dfmtodo{CITE MA} parameterized by a period $P$, a transit
+duration $T$, a phase or epoch $t_0$, an impact parameter $b$, the radius
+of the planet in units of the stellar radius $R_P/R_\star$, and several
+parameters describing the limb-darkening profile of the star \dfmtodo{CITE}.
 
 KIC~1430163 with simulated transit.
 \Figure{transit-ml} and \Figure{transit-corner}.
@@ -1135,391 +1293,6 @@ Limitations of celerite: one-dimension, stationary, etc.
 % and allows optimization software to use automatic differential in computing
 % derivatives of the likelihood function.
 
-% The plan of the paper is...
-
-
-% \section{Outline}
-% \begin{enumerate}
-%\item Non-parametric modeling of time series with correlated noise using Gaussian processes
-%\item Assumptions:\\
-%  a). Stationary noise (although this can be broken).\\
-%  b). Gaussian
-%\item Problem: can't handle large datasets - e.g. entire Kepler long-cadence; Spitzer light
-%   curves; Solar curves; short-cadence.
-%\item Solution(s):\\
-%  a). HODLR \citep{Ambikasaran:2013,Ambikasaran:2016}\\
-%  b). CARMA (Lorentzian power spectra, but with limitations) \citep{Kelly:2014}\\
-%  c). Tri-diagonal (Press \& Rybicki) \citep{Rybicki:1995}
-%  d). KISS-GP \citep{Wilson:2015} %Kernel Interpolation for Scalable Structured Gaussian Processes (KISS-GP) Andrew Wilson, Hannes Nickisch Proceedings of The 32nd International Conference on Machine Learning, pp. 1775-1784, 2015
-%\item Problem: HODLR is tricky to use; CARMA requires certain relations between
-%  coefficients of Lorentzians (right?); P\&R only works for up to 2 components + white noise
-%\item Solution: Ambikasaran \citep{Ambikasaran:2015} shows how sum of exponential kernels can be solved in order
-%   $O(N*p^2)$, where p is number of Lorentzians.
-%  - Sum of Lorentzians is a good description of stellar variability:
-%     - granulation has expoential (or sums of exponential) noise
-%     - asteroseismic obeys sums of Lorentzians
-%     - periodic variability due to spots/plages/etc. can also be
-%       approximated by Lorentzian(s)
-%\item Generalized Ambikasarn for complex coefficients (Hermitian).
-% \item Performance:\\
-%   a). Show $O(N*p^2)$ scaling\\
-%   b). Show comparison to HODLR.\\
-%   c). Show comparison to wavelet (ala Carter \& Winn).\\
-%   d). Compare with CARMA Kallman filter(?).
-% \item Various methods/formulae:\\
-%   a). Likelihood computation.\\
-%   b). Generating GP with particular covariance [yet to solve]. [ ]\\
-%   c). Inferring particular components.\\
-%   d). Computing derivatives of GPs (as used in RV methods).\\
-%   e). Forecasting/interpolating.\\
-%   f). Inferring confidence intervals.\\
-%   g). Derivative of likelihood function with respect to kernel parameters.\\
-%   h). Non-stationary GP (can the coefficients vary with time?).\\
-%   i). Multi-band (each element of extended matrix becomes a matrix).
-%   j). Approximating various kernels: Matern, exp(sin$^2$), Gaussian, etc.
-% \item Generalization to non-stationary noise.
-% \item Example application: TYC 3559\\
-%   a). Entire long-cadence 17-quarter Kepler dataset (~65k data points).\\
-%   b). Analysis of solar data.
-%   c). CO2 Mauna Kea
-%   d). TBD Computing derivatives of GPs (as used in RV methods).\\
-%   e). TBD Forecasting/interpolating.\\
-%   f). TBD Inferring confidence intervals.\\
-%   g). Autodiff: Derivative of likelihood function with respect to kernel parameters.\\
-%   h). TBD Non-stationary GP (can the coefficients vary with time?).\\
-%   i). TBD Multi-band (each element of extended matrix becomes a matrix).
-
-% \item Example application: TYC 3559\\
-%   a). Entire long-cadence 17-quarter Kepler dataset (~65k data points).\\
-%   b). Simulated datasets - hyperparameter/PSD inference.\\
-%   c). Analysis of solar data?
-
-% \item Possible future applications:\\
-%   a). Inference of asteroseismic variability - ala Andrew Gordon Wilson \citep{Wilson:2013}, but
-%       with Lorentzians, not Gaussians.\\
-%   b). Multi-waveband GPs.\\
-%   c). RV interpolation.\\
-%   d). Non-parametric phase functions.\\
-%   e). Better calibration of the flicker log(g) relation.\\
-%   f). Measurement of rotational periods - gyrochronology.\\
-%   g). Doppler shifts in oscillating EBs.
-
-% \item Appendix:
-%   a). Description/summary of mathematics.\\
-%   b). Description of code.
-% \end{enumerate}
-
-\section{Generalized Press-Rybicki}
-
-The general problem to be solved for Gaussian Process analysis of stellar time series is to evaluate
-the likelihood function,
-\begin{equation}
-{\cal{L}} = \ln{p(\mathbf{y}\vert {\mathbf{t},\bvec{\theta}},\bvec{\alpha})} = -\frac{1}{2}\ln{\vert \mathbf{K}(\bvec{\alpha}) \vert}
-- \frac{N_{time}}{2} \ln{(2\pi)}
-    - \frac{1}{2} {\mathbf r} (\bvec{\theta} ) ^T \mathbf{K}(\bvec{\alpha})^{-1} \mathbf{r}(\bvec{\theta}),
-\end{equation}
-where $\mathbf{y}$ are the measured time series (for example fluxes or radial velocities) at times
-$\mathbf{t}$, while the data are modeled with a function $m(\mathbf{t};\bvec{\theta})$ (for example,
-a transit model or Keplerian orbital model) which leaves residuals $\mathbf{r}(\bvec{\theta}) =
-\mathbf{y} - m(\mathbf{t};\bvec{\theta})$. % Note: I'm using the same notation as the peerless project. -EA
-The vector $\bvec{\alpha}$ specifies the parameters of the kernel, while the vector $\bvec{\theta}$
-specifies the parameters of the physical model.  In addition to this likelihood, a prior may be placed on
-the values of these model parameters (either the physical or kernel); the log of this prior may be
-added to this log likelihood function.  Note that the kernel
-parameters may also have a physical meaning, but they describe a noisy process, and thus affect
-the correlated variability of stellar noise rather than a deterministic model as encapsulated in
-$m(\mathbf{t};\bvec{\theta})$.
-
-%The kernel is modeled as a sum of damped harmonics,
-%\begin{equation}
-%k_j(\tau) = a_0 \delta(\tau) + \sum_{j=1}^J a_j \exp{(-b_j \tau)} \cos{(-d_j \tau)} + b_j \exp{(-b_j \tau)} \sin{(-d_j \tau)},
-%\end{equation}
-%where $\tau > 0$ is a time-offset between data points, $c_j$ represents the decay
-%in correlation with time and $d_j$ represents oscillations of period $P = 2\pi/d_j$, and
-%$a_0 = \sigma^2$ is a white-noise component with $\delta(0) = 1$ and zero otherwise.  Formally
-%the $\delta(\tau)$ function is a Kronecker delta function for which $\tau$ is the midpoint in
-%time measured over a finite duration exposure time, and $\sigma$ is the standard deviation
-%of the measured times if the correlated components are zero.
-
-%Now, the damped harmonic kernel components may be rewritten as:
-%\begin{equation}
-% a_j e^{-\beta_R \tau} \cos{(\beta_I \tau)} = a_j \frac{1}{2}\left( e^{-(\beta_R + i \beta_I) \tau} +  e^{-(\beta_R + i \beta_I) \tau}\right),
-%\end{equation}
-%where $i^2 = -1$, which has the advantage of utilizing precisely the same form as the Rybicki-Press covariance
-%matrix, and thus the Generalized Rybicki-Press algorithm may be applied as in \citet{Ambikasaran:2015}.
-%The only difference is that the $\beta$ coefficients are now complex, $\beta = \beta_R + i \beta_I$,
-%but otherwise the mathematical form of the extended matrix is identical, but with twice as many
-%exponential kernel components as the real case.
-
-Although the complex kernel is a straightforward extension to the \texttt{celerite} formalism, there is a disadvantage
-in computational speed:  complex arithmetic requires $\approx 3$ times as many operations as real
-arithmetic.  In addition, it turns out that the complex conjugate component, $(c_j+id_j)^* = c_j - id_j$, in
-the extended matrix gives a solution which, not surprisingly, is the complex conjugate of the
-component $c_j + i d_j$;  thus the computation is redundant.  Finally, complex
-arithmetic has the disadvantage that it is not included in automatic-differentiation packages,
-which is what we would like to use to compute the derivative of the likelihood (as it is very difficult
-to compute this explicitly!).
-
-Consequently, we use the fact that $\exp{(id_j\tau)} =  \cos{(d_j\tau)} + i \sin{(d_j \tau)}$ to
-rewrite the extended matrix in terms of real arithmetic using the fact that the imaginary number $i$
-may be replaced by a $2\times 2$ anti-symmetric matrix,
-\begin{equation}
-\left(\begin{tabular}{ll}
-0 & 1 \\
--1 & 0
-\end{tabular}\right),
-\end{equation}
-while real numbers use the $2\times 2$ identity matrix, $\mathbf{I}$,
-so that $\cos{(d_j\tau)} + i \sin{(d_j\tau)}$ may be rewritten as the rotation matrix
-\begin{equation}
-\left(\begin{tabular}{ll}
-$\cos{(d_j\tau)}$ & $\sin{(d_j\tau)}$ \\
-$-\sin{(d_j\tau)}$ & $\cos{(d_j \tau)}$
-\end{tabular}\right).
-\end{equation}
-The algebraic properties of these matrices are identical to the complex numbers, but only involve
-real components.
-We accomplish this transformation in Appendix \ref{appendixa} by taking sums and differences of the complex
-equations, resulting in a real extended matrix that is the same size as the complex matrix.
-This transformation leads to about a factor of two in computational savings, but has the
-additional advantage of allowing the automatic differentiation due to the use of real arithmetic.
-
-\section{Kernel components}
-
-%A stationary, smooth kernel may generally be expressed as a Taylor series for the $\tau \ne 0$ component,
-%plus the white noise component:
-%\begin{equation}
-%k(\tau) = a_0 \delta(\tau) +  \sum_{j=0}^\infty c_j \tau^j.
-%\end{equation}
-%Note that this encompasses all smooth, time-stationary kernels, and generally $c_1 \le 0$ as
-%correlated noise initially declines with separation in time.  We wish to approximate this
-%as the sum of damped cosine kernels, and since this general kernel is symmetric in $\tau$, we
-%can carry out the approximation in terms of sums of damped cosine kernel components
-%\begin{equation}
-%K_j(\tau,a_j,\beta_{R,j},\beta_{I,j}) = a_j \exp{(\beta_{R,j} \tau)}\cos{(\beta_{I,j} \tau)},
-%\end{equation}
-%which has a Taylor series expansion:
-%\begin{eqnarray}
-%\exp{(\beta_R \tau)}\cos{(\beta_I \tau)} &=& 1 - \beta_R \tau + \frac{1}{2}\left(\beta_R^2 - \beta_I^2\right)\tau^2 \\
-%- \frac{1}{6} \left(\beta_R^3-3\beta_R\beta_I^2\right)\tau^3 &+& \frac{1}{24} \left(\beta_R^4+\beta_I^4-6\beta_R^2\beta_I^2\right) \tau^4+ O(\tau^5),
-%\end{eqnarray}
-%which may be continued to any order in $\tau$ as necessary.
-%If an approximation to $k(\tau)$ is desired in a Taylor series to some high order $N$, this
-%requires combining $N/2$ components of $K_j(\tau,a_j,\beta_{R,j},\beta_{I,j})$ with $\beta_{R,j}$ and $\beta_{I,j}$
-%chosen to match the coefficients $c_j$.  Note that for $N=1$ we only require a damped exponential
-%kernel with $\beta_I = 0$.
-%
-%Another way to view this is in the power spectrum of the gaussian process, which is the
-%Fourier transform of the autocorrelation function.  The power spectrum of the $K_j$ kernel
-%is a Lorentzian, for which the frequency is given by $\omega = \beta_{I,j}$, while the
-%width of the Lorentzian is determined by $\beta_{R,j}$.  The functional form of this
-%power spectrum is: {\color{red} Check that this is true.}
-%\begin{equation}
-%P(\vert f\vert) = a_j \beta_{R,j} \frac{1}{\beta_{R,j}^2 + (2\pi f - \beta_{I,j})^2},
-%\end{equation}
-%where $f$ is the frequency in Hz.  The counterpart to the Taylor series is the observation
-%that a smooth distribution may be approximated arbitrarily precisely by summing together
-%Lorentzians with various values of $(a_j,\beta_{R,j},\beta_{I,j})$.  In the case that
-%a peak in the power spectrum is narrow at a specific frequency, then a small value of
-%$\beta_{R,j}$ gives a narrow Lorentzian that may approximate that peak.  If the wings
-%of the distribution decay faster than $f^{-2}$, then differences between Lorentzians
-%can be arranged to cancel in the wings, giving features in the power spectrum that have
-%narrower wings.
-
-The functional form of $k_j$ may be used to approximate some commonly used Kernel components.
-The squared exponential (Gaussian) kernel and the Mat\'ern kernels are commonly
-used radial kernels, while the cosine kernel and the exponential-sine-squared kernels are
-commonly used periodic kernels.  Linear combinations of our basis of damped cosine kernels may be
-used to approximate each of these kernels to better than 1\% with various numbers of damped
-cosine kernel components:
-\begin{itemize}
-\item {\bf Constant kernel.} A constant kernel component can be used to capture long-timescale
-correlations in data, and can be represented exactly with $c_j= d_j =  0$.
-\item {\bf Exponential kernel.} This kernel, $k(\tau) = e^{-\vert \tau/\tau_0\vert}$, is exactly
-represented with $d_j=0$, $c_j= \tau_0^{-1}$.
-\item {\bf Cosine kernel.} The cosine kernel, $k(t) = \cos{\left(\frac{2\pi}{P} \vert \tau \vert\right)}$,
-may be represented exactly with $c_j=0$ and $d_j= \frac{2\pi}{P}$.
-\item {\bf Squared exponential.} The squared exponential or Gaussian kernel, $G(z)=e^{-z^2/2}$,
-has the behavior of declining steeply at large time separation, is an even function, and has $c_1$ = 0.
-Likewise, the Fourier transform of the squared exponential kernel is $\hat G(\omega) = e^{-\omega^2/2}$,
-which also declines steeply at large $\omega$;  this doesn't match the more gradual decline of the
-power spectrum of a damped sinuosoid.  Nevertheless, the squared exponential kernel may be well approximated
-by the sum of four exponential kernels:
-\begin{eqnarray}
-G(z) &\approx& 63.119512 e^{-1.479579 z} -32.173615 e^{-1.593691 z} -29.425156 e^{-1.388929 z}\\
-&+& e^{-1.383928 z} \left[-0.519196\cos{(1.883396 z)} +0.285478 \sin{(1.883396 z)}\right] \\
-\end{eqnarray}
-which has an accuracy of better than $<3\times 10^{-3}$ for all z, and the power spectrum has
-been constrained to be positive.
-\item {\bf Mat\'ern $p+1/2$ kernel.}  The Mat\'ern kernel is given by:
-\begin{equation}
-C_{p+1/2}(x) = \sigma^2 e^{-\sqrt{(2p+1)}x} \frac{\Gamma(p+1)}{\Gamma(2p+1)}
-\sum_{i=0}^p \frac{(p+i)!}{i!(p-i)!} (\sqrt{(8p+4)}x)^{p-i},
-\end{equation}
-where $p$ is a positive integer.  In the limit $p\rightarrow \infty$, this becomes the
-squared exponential kernel: $C_\infty(x) = \sigma^2 e^{-x^2/2}$.  But, for small
-values of $p$, the Mat\'ern kernel may be approximated well by the sum of
-$2p$ exponential kernels.  The exponential kernel is the Mat\'ern 1/2 kernel,
-$C_{1/2}(x) = \sigma^2 e^{-x}$ ($p=0$), while
-$p=1$ is relevant to stellar variability, which we describe next.
-\item {\bf Mat\'ern 3/2 kernel.}  The Mat\'ern $3/2$ ($p=1$) kernel is given by:
-\begin{equation}
-k_{3/2}(\tau) = C_{3/2}(\tau/\tau_0) = (1+v)e^{-v},
-\end{equation}
-where $v = \sqrt{3}\vert \tau/\tau_0\vert$.  This kernel has a Fourier transform\footnote{Using the normalization convention:
-$\hat f(\omega) = \frac{1}{\sqrt{2\pi}} \int_{-\infty}^\infty f(t) e^{i\omega t} dt$}  of
-\begin{equation}
-\hat k_{3/2}(\omega) = \frac{\tau_0 6^{3/2}}{\pi^{1/2}} (3+\tau_0^2\omega^2)^{-2},
-\end{equation}
-where $\omega = 2\pi f$.  This kernel may be well approximated by the sum of two exponential kernels:
-\begin{equation}
-k_{3/2}(\tau) \approx (1-b)e^{-v}+be^{-v\frac{b-1}{b}},
-\end{equation}
-where $b \gg 1$ is a dimensionless parameter; this approximation is exact in the limit $b \rightarrow \infty$.  For
-large values of $b$, the maximum error of the approximation scales as $2/(e^2b) \approx 0.27/b$; for
-$b=100$, the error in this approximation is $<0.3$\%.  Note that the two exponential terms
-have opposite signs, which may lead to numerical instability for values of $b$ that
-are large.
-
-One advantage of the Mat\'ern 3/2 kernel is that it is smooth across
-$\tau=0$ since its derivative is zero at $\tau=0$.  The exponential kernel {\it does not}
-have this property, which leads to qualitatively different noise properties on small
-timescales due to the sharpness of the exponential kernel at $\tau=0$.  The Mat\'ern 3/2 kernel
-turns out to be similar to the observed properties of stellar activity and granulation, and thus the approximate
-formula is simultaneously physically relevant and computationally convenient.
-The power spectrum of a single exponential scales as $f^{-2}$ at high
-frequency, while the Mat\'ern kernel scales as $f^{-4}$ which more
-closely matches the power spectrum due to activity and granulation in
-the Sun \citep{Aigrain:2004,Michel:2009}.
-\item {\bf Mat\'ern 5/2 kernel.}  The Mat\'ern 5/2 kernel is given by
-\begin{equation}
-k_{5/2}(t) = C_{5/2}(y) = \sigma^2 (1+y+y^2/3)e^{-y},
-\end{equation}
-where $y = \sqrt{5}\vert \tau/\tau_0\vert$.  The Fourier transform is:
-\begin{equation}
-\hat k_{5/2}(\omega) = \frac{2\tau_0 10^{5/2}}{3\pi^{1/2}} (5+\tau_0^2\omega^2)^{-3}.
-\end{equation}
-This kernel may be approximated well by the sum of four exponential kernels
-\begin{eqnarray}
-k_{5/2}(\tau) &\approx& -147.6965573 e^{-1.0097610 y} + 85.8875034 e^{-1.0621734 y}\\
- &-&4.6540017 e^{-0.8353745 y} + 67.4630744 e^{-0.9160394 y},
-\end{eqnarray}
-which is accurate to $<4\times 10^{-6}$ for $y \le 10$.
-The Fourier transform has a steeper dependence at large frequencies, $f^{-6}$, and as we are not aware of a stellar
-power spectrum that requires a steeper spectrum than this, we forego approximating further Mat\'ern kernels.
-\item {\bf Exponential-sine-square kernel.}  This kernel is a periodic, positive valued kernel
-which has been used to model quasi-periodic stellar variability due to star spots.   It is
-given by $E(w,\Gamma) = e^{-\Gamma \sin^2{w}}$ where $w = \frac{\pi}{P}\vert \tau \vert$, which may be
-expanded as a series in $\cos{(2kw)} = \cos{\frac{2\pi}{P} k \vert \tau \vert)}$,
-with $k \in \mathbb{N}$.  We have expanded this to $k=4$, and fit for the coefficients, giving:
-\begin{equation}
-E(w,\Gamma) \approx \sum_{k=0}^4 \left(c_{k,1}+c_{k,2} e^{-c_{k,4}\Gamma^{c_{k,3}}}\right) \cos{(2kw)},
-\end{equation}
-with $c_{0,1}=0.24999, c_{0,2}=0.752803, c_{0,3}=0.960477, c_{0,4}=0.643393$ for $k=0$,
-$c_{1,1}=0.450851, c_{1,2}=-0.445338, c_{1,3}=0.960477, c_{1,4}= 1.18102$ for $k=1$,
-$c_{2,1}=0.206593, c_{2,2}=-0.207361, c_{2,3}=1.65902, c_{2,4}= 0.210641$ for $k=2$,
-$c_{3,1}=0.0728449, c_{3,2}=-0.0729381, c_{3,3}=2.43149, c_{3,4}= 0.0471224$ for $k=3$, and
-$c_{4,1}=0.019204, c_{4,2}=-0.0192129, c_{4,3}=3.27977, c_{4,4}= 0.0114198$ for $k=4$.
-This approximation is accurate to better than 0.6\% for $\Gamma < 3$, with a standard
-deviation of 0.1\%.
-\end{itemize}
-
-Examples of the foregoing kernels and their approximations are shown in Figure \ref{kernel_approx}.
-It is clear from this figure that these standard kernels are well approximated by the sums
-of between two and five damped cosine kernels, demonstrating that these form an adequate set
-for modeling a wide range of kernel behaviors.
-
-\begin{figure}[!htbp]
-\begin{center}
-\includegraphics[width=\textwidth]{./approximate_kernels/kernel_approx.pdf}
-\caption{Approximation of various kernels with the sums of damped cosines.
-(a). Kernels that may be expressed exactly: constant (dark grey), exponential (cyan),
-cosine (olive), and damped cosine (salmon).
-(b). Approximation of the squared-exponential (Gaussian) kernel (pink) with three
-damped cosine kernels (magenta). (c). The approximation of the exponential-sine-squared
-kernel with $\Gamma =1$ (blue) and $\Gamma = 3$ (green). (d). Two Mat\'ern kernels,
-$k_{3/2}$ (yellow/brown) and $k_{5/2}$ (violet).  The Mat\'ern 3/2 kernel
-is approximated with $b=100$. The exact kernels are solid, while approximate are dashed.}
-\label{kernel_approx}
-\end{center}
-\end{figure}
-
-A standard practice in constructing kernels for solving problems with Gaussian processes
-is to add or multiply the preceding standard kernel components.  In the case of damped cosine
-kernels, the product of two kernels is:
-\begin{eqnarray}
-k_j(\tau)k_k(\tau) &=&
-\frac{1}{2} e^{-(c_j+c_k) \tau} \left((a_ja_k+b_jb_k)\cos{\left[(d_j-d_k)\tau\right]} + (a_jb_k-a_kb_j)\sin{\left[(d_j-d_k)\tau\right]} \right. \\
- &+&\left.(a_ja_k-b_jb_k)\cos{\left[(d_j+d_k)\tau\right]} -(a_jb_k-a_kb_j)\sin{\left[(d_j+d_k)\tau\right]}\right),
-\end{eqnarray}
-which is the sum of two damped sinusoidal kernels.  Thus, only addition is necessary to
-construct new kernels from the product of damped sinuosidal kernels.
-
-The upshot is that the damped sinusoid is an expressive basis kernel that may be used
-to represent a wide range of autocorrelation functions relevant for stellar variability, and
-more.
-We recommend using a series of sums of damped sinusoids (in which some parameters may be
-fixed to specified values to represent particular kernels) to model different amplitudes
-and timescales of variability.  If an initial estimate of the power spectrum or
-autocorrelation function is available, then these may be fit with this series to
-initialize the coefficients of the damped sinusoid kernel components.
-Since a Gaussian Process
-must be positive definite, we recommend modeling the logarithm of $a_j$, $b_j$,
-$c_j$, and $d_j$ to enforce this to be the case.  One caveat is
-that to produce certain kernels, a negative value of $a_j$ or $b_j$ is needed (such
-as the Mat\'ern 3/2 kernel).  In this case, the value of the sum of
-two coefficients may be sampled from a logarithm, while the individual
-values are allowed to be negative;  this will enforce the positive definite
-constraint, but may allow for other constraints, such as an autocorrelation
-function which has a derivative of zero at $\tau = 0$.
-
-%\subsection{Derivative of likelihood with respect to Kernel parameters}
-%
-%The derivative of the likelihood can be computed in $O(N)$ operations as follows.
-%
-%The derivative of the log likelihood with respect to model parameters ${\bf x}$ is given by:
-%\begin{equation}
-%    \frac{\partial \ln{\cal L}}{\partial x_i} = (\ln{\cal L})^\prime = -\frac{1}{2}\sum_i \frac{K_{ii}^\prime}{K_{ii}}
-%    - \frac{1}{2} {\bf y}^T {\bf K}^{-1} {\bf K}^\prime {\bf K}^{-1} {\bf y},
-%\end{equation}
-%where $^\prime$ means the derivative wrt $x_i$.
-%The kernel may be written as:
-%\begin{equation}
-%    K_{ij}({\bf \alpha},{\bf \beta}) = \left\{
-%    \begin{array}{cc}
-%       w_i + \sum_{l=1}^J \alpha_l & j = i \\
-%       \sum_{l=1}^J \alpha_l \exp{(-\beta_l |t_i-t_j|)}  & j \ne i
-%    \end{array}
-%    \right.
-%\end{equation}
-%Since this equation is the sum of $J$ semi-separable matrices, then applying the product rule to compute the derivative will give a single semi-separable matrix for the derivative with respect to each kernel parameter.
-%
-%Now, letting ${\bf x} = (w,{\bf \alpha},{\bf \beta})$, then the derivative may be written as:
-%\begin{eqnarray}
-%    \frac{\partial K_{ii}}{\partial w} &=& \delta_{ij}\\
-%    \frac{\partial K_{ij}}{\partial \alpha_k} &=&
-%     \left\{
-%    \begin{array}{cc}
-%       1 & j = i \\
-%        \exp{(-\beta_k |t_i-t_j|)}  & j \ne i
-%    \end{array}
-%    \right.\\
-%    \frac{\partial K_{ij}}{\partial \beta_k} &=&
-%     \left\{
-%    \begin{array}{cc}
-%       0  & j = i \\
-%        -\alpha_k|t_i-t_j|\exp{(-\beta_k |t_i-t_j|)}  & j \ne i
-%    \end{array}
-%    \right.
-%\end{eqnarray}
-%The first term in the derivative of the likelihood can be computed in $O(N)$
-%evaluations, while the second term can be computed in three steps:
-%\begin{itemize}
-%\item First, solve ${\bf z_1} = {\bf K}^{-1}{\bf y}$ with the GRP solver.
-%\item Next, create an e
-%\end{itemize}
-%Writing this term out:
-
 \section{Summary}
 
 Although we have in mind application of this fast method to stellar variability,
@@ -1538,28 +1311,6 @@ gravitationally-lensed systems \citep{Press:1998}.
 Outside of astronomy, this technique may have application to seismology
 \citep{Robinson:1967},
 
-
-\vspace{1.5em}
-All of the code used in this project is available from
-\url{https://github.com/dfm/celerite} under the MIT open-source software
-license.
-This code (plus some dependencies) can be run to re-generate all of the
-figures and results in this paper; this version of the paper was generated
-with git commit \texttt{\githash} (\gitdate).
-
-\section{Solving for log likelihood with extended matrix}
-
-Here we summarize \citet{Ambikasaran:2015}, and then point to appendix
-for how to do this with oscillating kernels.
-
-\section{Training}
-
-May use derivative of likelihood + BFGS-B to optimize kernel parameters.
-
-Q: How do we determine how many kernels to use?
-
-\section{Discussion}
-
 There are three primary applications we envision for the \celerite\ formalism: 1).\ modeling
 the variability of an astrophysical system to infer it properties; 2).\
 accounting for astrophysical variability as a source of noise when trying to detect
@@ -1570,8 +1321,6 @@ or detection of quasi-periodic variability in a high-energy source.  Examples of
 second are detecting transiting exoplanets and correcting for stellar activity in
 radial velocity measurements. Examples of the third are measuring time delays in
 multiply-imaged gravitationally lensed sources and reverberation mapping of AGN.
-
-\subsection{Application to stellar variability, transiting exoplanets}
 
 Our background is in studying transiting exoplanets, a field which has only recently begun
 to adopt full covariance matrices in analyzing the noise in transiting planet lightcurves.
@@ -1662,12 +1411,24 @@ phase functions, and more.
 %then we need to resolve $K^{-1} e^{-\beta_q \vert t_{*,k}-{\bf t}\vert}$.  However, maybe we can
 %just solve for the difference in fewer operations? {\bf TBD}
 
+
+
+\vspace{1.5em}
+All of the code used in this project is available from
+\url{https://github.com/dfm/celerite} under the MIT open-source software
+license.
+This code (plus some dependencies) can be run to re-generate all of the
+figures and results in this paper; this version of the paper was generated
+with git commit \texttt{\githash} (\gitdate).
+
 \acknowledgments
 It is a pleasure to thank
 Sivaram Ambikasaran,
+Megan Bedell,
 Will Farr,
-and
-David W.\ Hogg
+Sam Grunblatt,
+David W.\ Hogg, and
+Dan Huber
 for helpful contributions to the ideas and code presented here.
 
 EA acknowledges support from NASA grants NNX13AF20G, NNX13AF62G, and
@@ -1692,134 +1453,16 @@ NNX13AC07G and by other grants and contracts.
 
 \facility{Kepler}
 \software{%
-    % \project{ceres} \citep{Agarwal:2016},
-    % \project{corner.py} \citep{Foreman-Mackey:2016},
-    % \project{emcee} \citep{Foreman-Mackey:2013},
-    % \project{george} \citep{Ambikasaran:2016},
-	% \project{matplotlib} \citep{Hunter:2007},
-	% \project{numpy} \citep{Van-Der-Walt:2011},
-	% \project{scipy} \citep{Jones:2001}.
+     \project{corner.py} \citep{Foreman-Mackey:2016},
+     \project{Eigen} \citep{Guennebaud:2010},
+     \project{emcee} \citep{Foreman-Mackey:2013},
+     \project{george} \citep{Ambikasaran:2016},
+     \project{LAPACK} \citep{Anderson:1999},
+     \project{matplotlib} \citep{Hunter:2007},
+     \project{numpy} \citep{Van-Der-Walt:2011},
+     \project{transit} \citep{Foreman-Mackey:2016a},
+     \project{scipy} \citep{Jones:2001}.
 }
-
-\appendix
-
-\section{Implementation details}\sectlabel{implementation}
-
-Here we adapt the generalized Rybicki-Press (GRP) algorithm to handle periodic kernels.  We
-follow closely the notation and equations given in \citet{Ambikasaran:2015}.  We start
-with the observation that a damped sinusoid correlation function may be decomposed into the sum of two
-exponential functions:
-\begin{eqnarray}
-k_j(\tau) &=& a_j e^{-c_j\tau} \cos{(-d_j\tau)} + b_j e^{-c_j\tau} \sin{(-d_j \tau)}\\
- &=& \frac{1}{2}(a_j+ib_j)\left[e^{-(c_j+id_j) \tau}+e^{-(c_j-id_j) \tau}\right],
-\end{eqnarray}
-where $c_j + id_j$ is the complex kernel parameter and $d_j = 2\pi/P$
-is the frequency of oscillation of the kernel with period $P$.
-
-Now, the damped sinusoid kernal may be included in the GRP algorithm
-using the above two exponential kernels.  This
-requires the algorithm to use complex arithmetic, which has several disadvantages:
-1).\ complex arithmetic is more expensive by a factor of 2-3; 2).\ the complex conjugate equation
-is redundant as it turns out that $l_2 = l_1^*$, $r_2 = r_1^*$, and $x_i = x_i^*$ (i.e.\ $x_i$ is
-real), meaning that the same equations are being solved twice for the real and complex components;
-and 3).\ if the derivative of the likelihood is computed with automatic
-differentiation (AD), most AD algorithms require real variables.
-
-Given these drawbacks, we instead modify the GRP algorithm to use a combination of two real
-components rather than two complex components;  this addresses all three of these drawbacks
-simultaneously.  The one cost is that the banded extended matrix has a bandwidth which is
-larger by one, both above and below the diagonal.
-
-Rather than using $c_j+id_j$ and its complex conjugate as components of the kernel, we instead
-find the real and imaginary components of the complex equation by taking the
-sum and difference of the $c_j+id_j$ and $c_j-id_j$ equations (divided by 2 and $2i$, respectively),
-and then discard the $c_j-id_j$ equation, which is redundant.  This keeps the same number of
-additional equations for each $(c_j,d_j)$ with non-zero imaginary component (four additional
-equations in the extended matrix), but converts the complex equations to real, thus avoiding
-complex arithmetic, while the kernel components with $d_j=0$ still only have two
-additional components in the extended matrix.  The extended matrix adds an extra band above
-and below the diagonal when the $c_j+id_j$ and $c_j-id_j$ equations are combined since this
-mixes the components of the original equations which are shifted by one column from one
-another.  We will enumerate the number of $d_j=0$ cases as $J_0$, while the total number
-of $c_j$'s is still $J$.  This gives a total number of equations to be solved with the
-extended matrix of $N_{ex}= (4(J-J_0)+2J_0+1)\times(N-1)+1$, where $N$ is the number of data
-points.
-
-% Reprint Ambikasaran equations (59)-(61)
-
-For the complex values with $d_j \ne 0$, the equations are modified as follows.  We introduce complex
-auxiliary vectors $l_n = g_n - i h_n$, with $n \in \{1,2,...,N\}$ and $l_1 = 0$; $r_n =
-u_n - i v_n$, with $n \in \{2,...,N\}$ and $r_{N+1} = 0$.  Note that we have defined the
-imaginary component as being negative for aesthetic reasons:  this yields a symmetric extended
-matrix (unfortunately the extended matrix has negative eigenvalues, making it non positive-definite,
-so that Cholesky decomposition cannot be applied; nevertheless we prefer to use a symmetric
-set of equations, and since the values of these variables are discarded in the end, their sign
-is irrelevant).  The length of the vectors $l_n$ and $r_n$
-is the number of kernel components, $J$;  we denote the individual elements of these vectors
-as $g_{n,j}+ih_{n,j}$ and $u_{n,j}+iv_{n,j}$, $j \in \{1,...,J\}$.  Note that the first $J_0$ elements we take
-to be the kernels with $d_j=0$, and for these we do not include the imaginary component
-equations, which are unnecessary and only add extra computation time.  We also define vectors $\phi$ and $\psi$ with
-complex components as well:  $\gamma_n = \phi_n + i\psi_n = \left[\exp{(-(c_1+id_1) t_{n,n+1})} ... \exp{(-(c_J+id_J) t_{n,n+1})}\right]^T
-$.  The individual elements are given by $\phi_{n,j} = e^{-c_j t_{n,n+1}}
-\cos{(d_j t_{n,n+1})}$ and $\psi_{n,j} = -e^{-c_j t_{n,n+1}}\sin{(d_j t_{n,n+1})}$.
-Equation (61) becomes:
-\begin{equation} \label{Amb61}
-% See 9/2/2016 notes
-% Use n rather than k for {1...N} - use g, h & u, v?
-% \gamma & \phi - real & imaginary
-\sum_{j=1}^J \left(\frac{a_j}{2} g_{n,j} +\frac{b_j}{2} h_{n,j}\right)+ \frac{d}{2} x_n + \sum_{j=1}^J \left[
-\phi_{n,j} u_{n+1,j} + \psi_{n,j} v_{n+1,j}\right] = \frac{y_n}{2},
-\end{equation}
-for $j \in \{1,...,J\}$ and $n \in \{1,...,N\}$, where $y_j$ is the $j$th data point.  There is no imaginary component to equation (61)
-in \citet{Ambikasaran:2015}.
-
-Equation (60) in \citet{Ambikasaran:2015} has real and imaginary components:
-\begin{eqnarray} \label{Amb60}
-\phi_{n,j} g_{n,j} +\psi_{n,j} h_{n,j} + \phi_{n,j} x_n - g_{n+1,j} &=& 0,\\
-\psi_{n,j} g_{n,j} -\phi_{n,j} h_{n,j} + \psi_{n,j} x_n + h_{n+1,j} &=& 0,
-\end{eqnarray}
-with $j \in \{1,...,J\}$ and $n \in \{1,...,N-1\}$
-\citep[note that we have shifted the indices of this equation by one from the indexing using in][]{Ambikasaran:2015}.
-
-Finally, equation (59) in \citet{Ambikasaran:2015} has real and imaginary components:
-\begin{eqnarray} \label{Amb59}
--u_{n,j} + \frac{a_j}{2} x_n + \phi_{n,j} u_{n+1,j} + \psi_{n,j} v_{n+1,j} &=&0,\\
- v_{n,j} + \frac{b_j}{2} x_n + \psi_{n,j} u_{n+1,j} - \phi_{n,j} v_{n+1,j} &=&0,
-\end{eqnarray}
-with $j \in \{1,...,J\}$ and $n \in \{2,...,N\}$.  Note that for the $J_0$ real components
-we can drop the variables $v_{n,j}$ and $h_{n,j}$ as these are zero, and we can drop the
-imaginary components of equations (59) and (60) in \citet{Ambikasaran:2015} as well for these, which reduces the total number
-of equations to solve.
-
-With these additional equations, we can solve for the likelihood of sums of damped sinusoid
-in $O(N)$ operations, but with slightly more computational expense due to having 4 extra variables
-for each damped sinusoid with non-zero $\omega$, and due to having a slightly larger bandwidth due to the
-cross terms between the real and imaginary variables.  The off-diagonal components are $J_0+2(J-J_0)+2$ above
-and below the diagonal, for a total bandwidth of $2J_0+4(J-J_0)+5$. In the case in which $J_0=J$, so
-that $d_j=0$, the off-diagonal components revert to $J+1$
-above and below the diagonal, giving a bandwidth of $2J+3$ (the same as the GRP algorithm).
-
-As with the GRP method, we can build an extended matrix which is real and symmetric, and which may be
-solved with a banded solver, as in \citet{Press:1992}.  The determinant of this extended matrix
-may be computed from the LU decomposition, and it is related to the determinant of the kernel by a
-factor of $2^N$ (this is due to dividing each equation by $2$ to yield a symmetric matrix).
-We arrange the auxiliary variables with the $d_j=0$
-terms first, followed by the complex variables, yielding the vector
-$x_{ex} = [x_1, \{u_{2,j},g_{2,j};j=1,...,J_0\}, \{u_{2,j},v_{2,j},g_{2,j},h_{2,j};j=J_0+1,...,J\},
-x_2, ..., x_N]$.  The right hand side is given by: $y_{ex} = [y_1/2, \{0; j=1,...,J_0+2(J-J_0)\}, y_2/2, ..., y_N/2]$.
-The extended matrix, $A_{ex}$, is constructed by inserting the coefficients of equations \ref{Amb61},
-\ref{Amb60}, and \ref{Amb59} into a matrix of dimensions $(2J_0+4(J-J_0)+5) \times N_{ex}$.
-The solution is found by solving $A_{ex} x_{ex} = y_{ex}$ with LU decomposition and back-substitution
-with a banded algorithm.
-
-The matrix has a similar structure as the real case constructed by \citep{Ambikasaran:2015}, but the
-imaginary and real components mix (this is due to the representation of imaginary numbers as
-$2\times 2$ matrices).  Figure \ref{fig:matrix_structure} shows an example of the structure of the extended
-matrix for two damped sinusoids with non-zero $\omega$ values.  This is analagous to the real case with
-$J=2$ which also has four additional equations for each row of the original kernel.  This matrix shows
-that there is an extra band above and below the diagonal \citep[compare with Figure 2 of][]{Ambikasaran:2015}.
-
-{\bf Should I give some examples of this?  Some pseudocode?}
 
 \bibliography{celerite}
 

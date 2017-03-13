@@ -26,6 +26,20 @@ extern "C" void dgbtrs_(char* trans,
                         int* ldb,
                         int* info);
 
+extern "C" void dgbmv_(char* trans,
+                       int* m,
+                       int* n,
+                       int* kl,
+                       int* ku,
+                       double* alpha,
+                       double* a,
+                       int* lda,
+                       double* x,
+                       int* incx,
+                       double* beta,
+                       double* y,
+                       int* incy);
+
 namespace celerite {
 
 // Real band solver:
@@ -48,6 +62,20 @@ int band_solve (int kl, int ku,
       info;
   dgbtrs_(&trans, &n, &kl, &ku, &nrhs, const_cast<double* >(ab.data()), &ldab, const_cast<int*>(ipiv.data()), x.data(), &n, &info);
   return info;
+}
+
+Eigen::MatrixXd band_dot (int kl, int ku, const Eigen::MatrixXd& a, const Eigen::MatrixXd& x) {
+  double one = 1.0;
+  char trans = 'N';
+  int ione = 1,
+      n = a.cols(),
+      lda = a.outerStride(),
+      nrhs = x.cols();
+  Eigen::MatrixXd y(n, nrhs);
+  y.setConstant(0.0);
+  for (int j = 0; j < nrhs; ++j)
+    dgbmv_(&trans, &n, &n, &kl, &ku, &one, const_cast<double* >(a.data()), &lda, const_cast<double* >(x.col(j).data()), &ione, &one, y.col(j).data(), &ione);
+  return y;
 }
 
 }

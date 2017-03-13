@@ -74,6 +74,16 @@ with the parameters ``log_a``, ``log_b``, ``log_c``, and ``log_P``.
 
 In this example, all of the returned coefficients are scalars but they can
 also be returned as arrays.
+To use this kernel, we would use something like the following:
+
+.. code-block:: python
+
+    bounds = dict(log_a=(None, None), log_b=(None, 5.0), log_c=(-1.0, 1.0),
+                  log_P=(-0.5, 0.5))
+    kernel = CustomTerm(log_a=0.1, log_b=0.5, log_c=-0.01, log_P=0.0,
+                        bounds=bounds)
+
+where ``bounds`` is optional.
 
 Finally, terms are combined by adding them:
 

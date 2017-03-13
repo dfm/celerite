@@ -73,6 +73,7 @@ celerite is being actively developed in `a public repository on GitHub
 
    tutorials/first
    tutorials/modeling
+   tutorials/normalization
 
 
 Contributors

@@ -4,5 +4,6 @@
 #include "celerite/version.h"
 #include "celerite/solver/direct.h"
 #include "celerite/solver/band.h"
+#include "celerite/solver/sparse.h"
 
 #endif
