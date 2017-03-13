@@ -208,7 +208,7 @@ This method is a generalization of a method developed by
 \citet{Ambikasaran:2015} that was, in turn, built on intuition from a twenty
 year old paper \citep{Rybicki:1995}.
 For this method to be applicable, the data must be one-dimensional and the
-covariance function must be written as a mixture of damped sinusoid functions.
+covariance function must have a specific form.
 However, there is no further constraint on the data or the model.
 In particular, the measurements don't need to be evenly spaced and the
 uncertainties can be heteroscedastic.
@@ -357,6 +357,8 @@ k_\bvec{\alpha}(\tau_{nm}) = \sigma_n^2\,\delta_{nm} +
     b_j\,\exp\left(-c_j\,\tau_{nm}\right)\,\sin\left(d_j\,\tau_{nm}\right)
 \right] \quad.
 \end{eqnarray}
+For clarity, we will refer to the argument within the sum as a ``\celerite\
+term'' for the remainder of this paper.
 The Fourier transform\footnote{Here and throughout we have defined the Fourier
 transform of the function $f(t)$ as $F(\omega)=(2\,\pi)^{-1/2}\,
 \int_{-\infty}^\infty f(t)\,e^{i\,\omega\,t}\dd t$.} of this covariance
@@ -683,8 +685,9 @@ Sturm's theorem.
 %Relation of positive power spectrum to positive definite covariance matrix.
 %Power spectrum of a sum of kernels.
 
-In the case of $J$ damped sinusoids we can check for negative values of the PSD by solving for the
-roots of the power spectrum, abbreviating with $z = \omega^2$:
+In the case of $J$ \celerite\ terms, we can check for negative values of the
+PSD by solving for the roots of the power spectrum, abbreviating with
+$z = \omega^2$:
 \begin{equation}
 P(\omega)=  \sum_{j=1}^J \frac{q_j z + r_j}{z^2+s_jz + t_j} = 0
 \end{equation}
