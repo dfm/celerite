@@ -684,10 +684,19 @@ NNZ: $(10\,J + 1)\,N - 4\,J + 1$
 \begin{figure}[!htbp]
 \begin{center}
 \includegraphics[width=\textwidth]{../examples/benchmark/benchmark_darwin.pdf}
-\caption{A benchmark showing the computational scaling of the \celerite\
-    implementation as a function of the number of data points and the number
-    of terms.
-    (left) The cost of computing \eq{gp-likelihood}
+\caption{A benchmark showing the computational scaling of \celerite\ with a
+    vanilla band solver as a function of the number of data points and the
+    number of terms.
+    \emph{(left)} The cost of computing \eq{gp-likelihood} with a covariance
+    matrix given by \eq{celerite-kernel} as a function of the number of data
+    points $N$.
+    The different colors show the cost for different numbers of terms $J$ as
+    listed in the legend.
+    To guide the eye, the black line shows linear scaling in $N$.
+    \emph{(right)} The same information plotted as a function of $J$ for
+    different values of $N$.
+    The legend shows the value of $N$ for each color and the black line shows
+    quadratic scaling in $J$.
     \figurelabel{benchmark}}
 \end{center}
 \end{figure}
@@ -695,14 +704,18 @@ NNZ: $(10\,J + 1)\,N - 4\,J + 1$
 \begin{figure}[!htbp]
 \begin{center}
 \includegraphics[width=\textwidth]{../examples/benchmark/benchmark_darwin_lapack.pdf}
-\caption{Benchmark\figurelabel{benchmark-lapack}}
+\caption{The same as \Figure{benchmark} but using the band solver from
+    \project{LAPACK} with the \project{MKL} \project{BLAS} library.
+    \figurelabel{benchmark-lapack}}
 \end{center}
 \end{figure}
 
 \begin{figure}[!htbp]
 \begin{center}
 \includegraphics[width=\textwidth]{../examples/benchmark/benchmark_darwin_sparse.pdf}
-\caption{Benchmark\figurelabel{benchmark-sparse}}
+\caption{The same as \Figure{benchmark} but using the \texttt{SparseLU} solver
+    from \project{Eigen} \citep{Guennebaud:2010}.
+    \figurelabel{benchmark-sparse}}
 \end{center}
 \end{figure}
 
