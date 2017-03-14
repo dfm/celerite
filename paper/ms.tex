@@ -665,70 +665,6 @@ NNZ: $(10\,J + 1)\,N - 4\,J + 1$
 \end{center}
 \end{figure}
 
-\subsection{Ensuring positive definiteness: Sturm's theorem}
-
-The power spectrum is computed from taking the square of the Fourier transform
-of the data time series; hence, the power-spectrum must be non-negative.  In
-constructing a kernel, if any of the parameters $a_j$ or $b_j$ are negative,
-then it is possible for the power spectrum to go negative, which violates the
-definition of the power spectrum.
-Consequently, if any of these coefficients is negative, it is necessary to
-check that the power spectrum is still non-negative.  Note that a non-negative
-power-spectrum does not require the auto-correlation
-function to be positive for all $\tau$.  The positive power spectrum is
-related to the positive eigenvalues of the covariance matrix which are
-necessary for a positive-definite matrix in limiting cases
-\citep{Messerschmitt:2006}.  We find empirically that requiring an everywhere
-positive power spectrum results in positive eigenvalues for the covariance
-matrix, and so we describe here how to ensure a positive power spectrum using
-Sturm's theorem.
-%Relation of positive power spectrum to positive definite covariance matrix.
-%Power spectrum of a sum of kernels.
-
-In the case of $J$ \celerite\ terms, we can check for negative values of the
-PSD by solving for the roots of the power spectrum, abbreviating with
-$z = \omega^2$:
-\begin{equation}
-P(\omega)=  \sum_{j=1}^J \frac{q_j z + r_j}{z^2+s_jz + t_j} = 0
-\end{equation}
-where
-\begin{eqnarray}
-q_j &=& a_jc_j-b_jd_j\\
-r_j &=& (d_j^2+c_j^2)(b_jd_j+a_jc_j)\\
-s_j &=& 2(c_j^2-d_j^2)\\
-t_j &=& (c_j^2+d_j^2)^2.
-\end{eqnarray}
-The denominators of each term are positive, so we can multiply through by $\Pi_j \left(z^2+s_jz + t_j\right)$ yielding:
-\begin{equation}
-P_0(z) = \sum_{j=1}^J (q_j z + r_j)\Pi_{k \ne j}\left(z^2+s_kz + t_k\right) = 0,
-\end{equation}
-which is a polynomial with order $p_{ord}=2(J-1)+1$.  With $J=2$, this yields a cubic equation
-which may be solved exactly for the roots.
-
-A procedure based upon Sturm's theorem \citep{Dorrie:1965} allows one to determine whether there are any
-real roots within the range $(0,\infty]$. We first construct $P_0(z)$ and it's derivative
-$P_1(z) = P^\prime(z)$, and then loop from $k=2$ to $k=p_{ord}$, computing
-$P_k(z) = -{\rm rem}(P_{k-2},P_{k-1})$.  The function ${\rm rem}(p,q)$ is the remainder polynomial after dividing $p(z)$ by $q(z)$.
-
-We evaluate the $z^0$ coefficients of each of the polynomial in the series by evaluating $f_0 = \{P_0(0),...,P_{p_{ord}}(0)\}$ to
-give us the signs of these polynomials evaluated at $z=0$.
-Likewise, we evaluate the coefficients of the largest order term in each polynomial which gives the sign of the polynomial
-as $z \rightarrow \infty$.  This gives $f_\infty = \{C(P_0,p_{ord}),C(P_1,p_{ord}-1),..., C(P_{p_{ord}},1)\}$ where
-$C(p(z),m)$ returns the coefficient of $z^m$ in polynomial $p(z)$.
-
-With the series of coefficients $f_0$ and $f_\infty$, we then determine how many times the sign changes in each
-of these, where $\sigma(0)$ is the number of sign changes at $z=0$, and $\sigma(\infty)$ is the number of sign
-changes at $z \rightarrow \infty$.  The total number of real roots in the range $(0,\infty]$ is given
-by $N_{+}=\sigma(0)-\sigma(\infty)$.
-
-We have checked that this procedure works for a wide range of parameters, and we find that it robustly
-matches the number of positive real roots which we evaluated numerically.
-
-The advantage of this procedure is that it does not require computing the roots, but only carrying out algebraic
-manipulation of polynomials to determine the number of positive real roots.  If a non-zero real root is found, then
-likelihood may be set to zero.
-%Sturm's theorem applied to numerator of power spectrum.
-
 \section{celerite as a model of stellar variations}
 
 \dfmtodo{Add more intro to this section.}
@@ -1411,6 +1347,75 @@ phase functions, and more.
 %then we need to resolve $K^{-1} e^{-\beta_q \vert t_{*,k}-{\bf t}\vert}$.  However, maybe we can
 %just solve for the difference in fewer operations? {\bf TBD}
 
+
+\appendix
+
+\section{Ensuring positive definiteness: Sturm's theorem}
+
+The power spectrum is computed from taking the square of the Fourier transform
+of the data time series; hence, the power-spectrum must be non-negative.  In
+constructing a kernel, if any of the parameters $a_j$ or $b_j$ are negative,
+then it is possible for the power spectrum to go negative, which violates the
+definition of the power spectrum.
+Consequently, if any of these coefficients is negative, it is necessary to
+check that the power spectrum is still non-negative.  Note that a non-negative
+power-spectrum does not require the auto-correlation
+function to be positive for all $\tau$.  The positive power spectrum is
+related to the positive eigenvalues of the covariance matrix which are
+necessary for a positive-definite matrix in limiting cases
+\citep{Messerschmitt:2006}.  We find empirically that requiring an everywhere
+positive power spectrum results in positive eigenvalues for the covariance
+matrix, and so we describe here how to ensure a positive power spectrum using
+Sturm's theorem.
+%Relation of positive power spectrum to positive definite covariance matrix.
+%Power spectrum of a sum of kernels.
+
+In the case of $J$ \celerite\ terms, we can check for negative values of the
+PSD by solving for the roots of the power spectrum, abbreviating with
+$z = \omega^2$:
+\begin{equation}
+P(\omega)=  \sum_{j=1}^J \frac{q_j z + r_j}{z^2+s_jz + t_j} = 0
+\end{equation}
+where
+\begin{eqnarray}
+q_j &=& a_jc_j-b_jd_j\\
+r_j &=& (d_j^2+c_j^2)(b_jd_j+a_jc_j)\\
+s_j &=& 2(c_j^2-d_j^2)\\
+t_j &=& (c_j^2+d_j^2)^2.
+\end{eqnarray}
+The denominators of each term are positive, so we can multiply through by $\Pi_j \left(z^2+s_jz + t_j\right)$ yielding:
+\begin{equation}
+P_0(z) = \sum_{j=1}^J (q_j z + r_j)\Pi_{k \ne j}\left(z^2+s_kz + t_k\right) = 0,
+\end{equation}
+which is a polynomial with order $p_{ord}=2(J-1)+1$.  With $J=2$, this yields a cubic equation
+which may be solved exactly for the roots.
+
+For arbitrary $J$, a procedure based upon Sturm's theorem \citep{Dorrie:1965} allows one to determine whether there are any
+real roots within the range $(0,\infty]$. We first construct $P_0(z)$ and it's derivative
+$P_1(z) = P^\prime(z)$, and then loop from $k=2$ to $k=p_{ord}$, computing
+$P_k(z) = -{\rm rem}(P_{k-2},P_{k-1})$.  The function ${\rm rem}(p,q)$ is the remainder polynomial after dividing $p(z)$ by $q(z)$.
+
+We evaluate the $z^0$ coefficients of each of the polynomial in the series by evaluating $f_0 = \{P_0(0),...,P_{p_{ord}}(0)\}$ to
+give us the signs of these polynomials evaluated at $z=0$.
+Likewise, we evaluate the coefficients of the largest order term in each polynomial which gives the sign of the polynomial
+as $z \rightarrow \infty$.  This gives $f_\infty = \{C(P_0,p_{ord}),C(P_1,p_{ord}-1),..., C(P_{p_{ord}},1)\}$ where
+$C(p(z),m)$ returns the coefficient of $z^m$ in polynomial $p(z)$.
+
+With the series of coefficients $f_0$ and $f_\infty$, we then determine how many times the sign changes in each
+of these, where $\sigma(0)$ is the number of sign changes at $z=0$, and $\sigma(\infty)$ is the number of sign
+changes at $z \rightarrow \infty$.  The total number of real roots in the range $(0,\infty]$ is given
+by $N_{+}=\sigma(0)-\sigma(\infty)$.
+
+We have checked that this procedure works for a wide range of parameters, and we find that it robustly
+matches the number of positive real roots which we evaluated numerically.
+
+The advantage of this procedure is that it does not require computing the roots, but only carrying out algebraic
+manipulation of polynomials to determine the number of positive real roots.  If a non-zero real root is found, then
+likelihood may be set to zero.
+
+We have implemented this algorithm in subroutines that may be called to check for positive-definiteness
+of a kernel with some values of $a_j$ or $b_j$ negative.
+%Sturm's theorem applied to numerator of power spectrum.
 
 
 \vspace{1.5em}
