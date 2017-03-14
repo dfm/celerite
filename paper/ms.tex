@@ -130,7 +130,7 @@
 \title{%
 Fast and scalable Gaussian process modeling with applications
 to astronomical time series
-\vspace{-3\baselineskip}  % OMG AASTEX6 IS SO BROKEN
+\vspace{-3\baselineskip}
 }
 
 \newcounter{affilcounter}
@@ -168,15 +168,15 @@ with a specific emphasis on large astronomical time-series data sets.
 This method, which we christen \celerite, can be applied to any Gaussian Process model where the spectral
 density can be expressed as any general mixture of damped sinusoid functions.
 We present a mathematical description of \celerite,
-its relation to the stochastically-driven, damped simple harmonic oscillator, 
-and details of the implementation.  We give examples of \celerite\ applied to both 
+its relation to the stochastically-driven, damped simple harmonic oscillator,
+and details of the implementation.  We give examples of \celerite\ applied to both
 simulated and actual astronomical time-series, using it to estimate the time-series
-power spectrum, while simultaneously accounting for correlated noise when inferring 
-model parameters.  These examples include Bayesian estimation of the strength 
-of stellar granulation, stellar rotation periods, asteroseismic spectra, and 
-transiting planet light curve parameters.  The model is flexible, fast, and 
-general, with potential for application to a wide range of astronomical problems, 
-for which we provide open-source software that implements \celerite\ in 
+power spectrum, while simultaneously accounting for correlated noise when inferring
+model parameters.  These examples include Bayesian estimation of the strength
+of stellar granulation, stellar rotation periods, asteroseismic spectra, and
+transiting planet light curve parameters.  The model is flexible, fast, and
+general, with potential for application to a wide range of astronomical problems,
+for which we provide open-source software that implements \celerite\ in
 \project{C++}, \project{Python}, and \project{Julia}.
 
 \end{abstract}
@@ -200,11 +200,13 @@ models for time-series analysis.
 For GP modeling, a functional form is chosen to describe the autocovariance
 of the data and the parameters of this function are fit for or marginalized.
 In the astrophysical literature, GPs have been used to model stochastic
-variability in light curves of stars \citep{Brewer:2009}, active galactic nuclei \citep{Kelly:2014},
-and the logarithmic flux of X-ray binaries \citep{Uttley:2005}.
-They have also been used as models for the cosmic microwave background \citep{Bond:1987,Bond:1999},
-correlated instrumental noise \citep{Gibson:2012}, spectroscopic calibration \cite{Czekala:2017,Evans:2015} and
-residuals caused by model inconsistencies (CITE + better words).
+variability in light curves of stars \citep{Brewer:2009}, active galactic
+nuclei \citep{Kelly:2014}, and the logarithmic flux of X-ray binaries
+\citep{Uttley:2005}.
+They have also been used as models for the cosmic microwave background
+\citep{Bond:1987,Bond:1999}, correlated instrumental noise
+\citep{Gibson:2012}, spectroscopic calibration \citep{Czekala:2017,Evans:2015}
+and residuals caused by model inconsistencies (CITE + better words).
 While these models are widely applicable, their use has been limited, in
 practice, by the computational cost and scaling.
 In general, the cost of computing a GP likelihood scales as the third power of
@@ -370,13 +372,13 @@ k_\bvec{\alpha}(\tau_{nm}) = \sigma_n^2\,\delta_{nm} +
 For clarity, we will refer to the argument within the sum as a ``\celerite\
 term'' for the remainder of this paper.
 The Fourier transform\footnote{Here and throughout we have defined the Fourier
-transform of the function $f(t)$ as $F(\omega)=(2\,\pi)^{-1/2}\,
+transform of the function $f(t)$ as $F(\omega)={(2\,\pi)}^{-1/2}\,
 \int_{-\infty}^\infty f(t)\,e^{i\,\omega\,t}\dd t$.} of this covariance
 function is the power spectral density (PSD) of the process and it is given by
 \begin{eqnarray}\eqlabel{celerite-psd}
 S(\omega) = \sum_{j=1}^J \sqrt{\frac{2}{\pi}}
 \frac{(a_j\,c_j+b_j\,d_j)\,({c_j}^2+{d_j}^2)+(a_j\,c_j-b_j\,d_j)\,\omega^2}
-{\omega^4+2\,({c_j}^2-{d_j}^2)\,\omega^2+({c_j}^2+{d_j}^2)^2}\quad.
+{\omega^4+2\,({c_j}^2-{d_j}^2)\,\omega^2+{({c_j}^2+{d_j}^2)}^2}\quad.
 \end{eqnarray}
 The physical interpretation of this model isn't immediately obvious and we
 will return to a more general discussion of the physical intuition in a moment
@@ -391,14 +393,14 @@ k_j(\tau_{nm}) =
 and the PSD for the this component is
 \begin{eqnarray}\eqlabel{lorentz-psd}
 S_j(\omega) = \frac{1}{\sqrt{2\,\pi}}\,\frac{a_j}{c_j}\,\left[
-    \frac{1}{1+\left(\frac{\omega-d_j}{c_j}\right)^2} +
-    \frac{1}{1+\left(\frac{\omega+d_j}{c_j}\right)^2}
+    \frac{1}{1+{\left(\frac{\omega-d_j}{c_j}\right)}^2} +
+    \frac{1}{1+{\left(\frac{\omega+d_j}{c_j}\right)}^2}
 \right] \quad.
 \end{eqnarray}
 This PSD is the sum of two Lorentzian or Cauchy distributions with width
 $c_j$ centered on $\omega = \pm d_j$.
 This model can be interpreted intuitively as a quasiperiodic oscillator with
-amplitude $A_j = a_j$, quality factor $Q_j = d_j\,(2\,c_j)^{-1}$, and period
+amplitude $A_j = a_j$, quality factor $Q_j = d_j\,{(2\,c_j)}^{-1}$, and period
 $P_j = 2\,\pi\,{d_j}^{-1}$.
 
 Similarly, setting both $b_j$ and $d_j$ to zero, we get a Ornstein--Uhlenbeck
@@ -409,7 +411,7 @@ k_j(\tau_{nm}) = a_j\,\exp\left(-c_j\,\tau_{nm}\right)
 with the PSD
 \begin{eqnarray}
 S_j(\omega) = \sqrt{\frac{2}{\pi}}\,\frac{a_j}{c_j}\,
-    \frac{1}{1+\left(\frac{\omega}{c_j}\right)^2} \quad.
+    \frac{1}{1+{\left(\frac{\omega}{c_j}\right)}^2} \quad.
 \end{eqnarray}
 
 It's worth noting that the product of two terms of the form found inside the
@@ -1273,7 +1275,7 @@ variability timescale of a quasar \citep{Kelly:2014}, measuring the asteroseismi
 detection of quasi-periodic variability in a high-energy source \citep{McAllister:2016},
 or classification of variable objects \citep{Zinn:2016}.  Examples of the
 second are detecting transiting exoplanets and correcting for stellar activity in
-radial velocity measurements \citep{Haywood:2014,Rajpaul:2015}. Examples of the third are 
+radial velocity measurements \citep{Haywood:2014,Rajpaul:2015}. Examples of the third are
 measuring time delays in
 multiply-imaged gravitationally lensed sources \citep{Tewes:2013} and reverberation mapping of AGN.
 
@@ -1283,9 +1285,9 @@ One promising early attempt at accounting for correlated noise was the wavelet a
 of \citet{Carter:2009}.  Their technique allowed for a power-law spectrum for the
 noise scaling as $\omega^{-\alpha}$, which unfortunately is not a normalizable, nor
 physically-accurate, description of stellar variability.  Their approach runs in
-${\cal O}(N)$ time for $\alpha=1$, which is referred to as `flicker', $1/r$, or pink 
-noise;  however, this particular type of noise overpredicts the power spectrum at low 
-frequency compared to the Solar granulation power spectrum.  It also cannot describe 
+${\cal O}(N)$ time for $\alpha=1$, which is referred to as `flicker', $1/r$, or pink
+noise;  however, this particular type of noise overpredicts the power spectrum at low
+frequency compared to the Solar granulation power spectrum.  It also cannot describe
 quasi-periodic noise.
 
 Further progress was made by parameterizing the covariance matrix with simple,
