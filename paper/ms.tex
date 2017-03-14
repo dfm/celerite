@@ -677,12 +677,32 @@ algorithm with tuned BLAS routines scales empirically as $\mathcal{O}(N\,J^2)$
 empirically and offers the fastest solves for $J \gtrsim 8$ on all platforms
 that we tested.
 
+
+
 NNZ: $(10\,J + 1)\,N - 4\,J + 1$
 
 \begin{figure}[!htbp]
 \begin{center}
-\includegraphics[width=\textwidth]{../examples/benchmark/benchmark_darwin_default.pdf}
-\caption{Benchmark\figurelabel{benchmark}}
+\includegraphics[width=\textwidth]{../examples/benchmark/benchmark_darwin.pdf}
+\caption{A benchmark showing the computational scaling of the \celerite\
+    implementation as a function of the number of data points and the number
+    of terms.
+    (left) The cost of computing \eq{gp-likelihood}
+    \figurelabel{benchmark}}
+\end{center}
+\end{figure}
+
+\begin{figure}[!htbp]
+\begin{center}
+\includegraphics[width=\textwidth]{../examples/benchmark/benchmark_darwin_lapack.pdf}
+\caption{Benchmark\figurelabel{benchmark-lapack}}
+\end{center}
+\end{figure}
+
+\begin{figure}[!htbp]
+\begin{center}
+\includegraphics[width=\textwidth]{../examples/benchmark/benchmark_darwin_sparse.pdf}
+\caption{Benchmark\figurelabel{benchmark-sparse}}
 \end{center}
 \end{figure}
 
