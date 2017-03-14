@@ -985,7 +985,7 @@ The goal of this example is to show that, even for a low signal-to-noise
 dataset with a short baseline, it is possible to infer asteroseismic
 parameters with formal uncertainties that are consistent with the parameters
 inferred with a much larger dataset.
-Looking forward to \tess, we will infer $\nu_\mathrm{max}$ and $\Delta\nu$
+Looking forward to \tess \citep{Campante2016}, we will infer $\nu_\mathrm{max}$ and $\Delta\nu$
 using only one month of \kepler\ data and compare our results to the results
 inferred from the full 4 year baseline of the mission.
 For KIC~11615890, the published asteroseismic parameters based on the full
@@ -1271,12 +1271,13 @@ multiply-imaged gravitationally lensed sources and reverberation mapping of AGN.
 Our background is in studying transiting exoplanets, a field which has only recently begun
 to adopt full covariance matrices in analyzing the noise in transiting planet lightcurves.
 One promising early attempt at accounting for correlated noise was the wavelet approach
-of Carter \& Winn (2010).  Their technique allowed for a power-law spectrum for the
+of \citet{Carter2009}.  Their technique allowed for a power-law spectrum for the
 noise scaling as $\omega^{-\alpha}$, which unfortunately is not a normalizable, nor
 physically-accurate, description of stellar variability.  Their approach runs in
-${\cal O}(N)$ time for $\alpha=1$, which is `flicker' or pink noise;  however, this
-particular type of noise overpredicts the power spectrum at low frequency compared
-to the granulation power spectrum.  It also cannot describe quasi-periodic noise.
+${\cal O}(N)$ time for $\alpha=1$, which is referred to as `flicker', $1/r$, or pink 
+noise;  however, this particular type of noise overpredicts the power spectrum at low 
+frequency compared to the Solar granulation power spectrum.  It also cannot describe 
+quasi-periodic noise.
 
 Further progress was made by parameterizing the covariance matrix with simple,
 analytic functions that describe the autocorrelation function.  The parameters
