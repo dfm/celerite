@@ -1262,10 +1262,12 @@ the variability of an astrophysical system to infer it properties; 2).\
 accounting for astrophysical variability as a source of noise when trying to detect
 additional phenomena; 3).\ interpolating or extrapolating variability to future or missing
 times.  Some examples of the first are determining the characteristic
-variability timescale of a quasar, measuring the asteroseismic variation of a star,
-or detection of quasi-periodic variability in a high-energy source.  Examples of the
+variability timescale of a quasar \citep{Kelly:2014}, measuring the asteroseismic variation of a star,
+or detection of quasi-periodic variability in a high-energy source \citep{McAllister2016}.  
+Examples of the
 second are detecting transiting exoplanets and correcting for stellar activity in
-radial velocity measurements. Examples of the third are measuring time delays in
+radial velocity measurements \citep{Haywood2014,Rajpaul2015}. Examples of the third are 
+measuring time delays in
 multiply-imaged gravitationally lensed sources and reverberation mapping of AGN.
 
 Our background is in studying transiting exoplanets, a field which has only recently begun
@@ -1297,6 +1299,13 @@ are obtained, the effects of stellar variability will more dramatically impact t
 correct inference of planetary transit parameters, and so we expect that \celerite\
 will be important for transit timing, transit spectroscopy, Doppler beaming,
 phase functions, and more.
+
+In the future we hope to expand the \celerite\ technique to multi-dimensional
+datasets.  The formalism presented could, for example, be used to model
+the covariance between multiple measured quantities, such as in regression of photometric
+time series versus astrometric precision when correcting for systematic errors
+due to detector sensitivity variations \citep{Aigrain2016}, or in correcting
+radial velocity datasets for stellar activity \citep{Haywood2014,Rajpaul2017}.
 
 %\section{Prediction/interpolation}
 %
