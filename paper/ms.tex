@@ -165,8 +165,19 @@ to astronomical time series
 
 We present a scalable method for Gaussian Process regression in one dimension
 with a specific emphasis on large astronomical time-series data sets.
-This method can be applied to any Gaussian Process model where the spectral
+This method, which we christen \celerite, can be applied to any Gaussian Process model where the spectral
 density can be expressed as any general mixture of damped sinusoid functions.
+We present a mathematical description of \celerite,
+its relation to the stochastically-driven, damped simple harmonic oscillator, 
+and details of the implementation.  We give examples of \celerite\ applied to both 
+simulated and actual astronomical time-series, using it to estimate the time-series
+power spectrum, while simultaneously accounting for correlated noise when inferring 
+model parameters.  These examples include Bayesian estimation of the strength 
+of stellar granulation, stellar rotation periods, asteroseismic spectra, and 
+transiting planet light curve parameters.  The model is flexible, fast, and 
+general, with potential for application to a wide range of astronomical problems, 
+for which we provide open-source software that implements \celerite\ in 
+\project{C++}, \project{Python}, and \project{Julia}.
 
 \end{abstract}
 
@@ -189,7 +200,7 @@ models for time-series analysis.
 For GP modeling, a functional form is chosen to describe the autocovariance
 of the data and the parameters of this function are fit for or marginalized.
 In the astrophysical literature, GPs have been used to model stochastic
-variability in light curves of stars (CITE), active galactic nuclei (CITE),
+variability in light curves of stars \citep{Brewer:2009}, active galactic nuclei \citep{Kelly:2014},
 and X-ray binaries (CITE).
 They have also been used as models for the cosmic microwave background (CITE),
 correlated instrumental noise (CITE), spectroscopic calibration (CITE) and
@@ -221,8 +232,7 @@ describe the previously published scalable method \citep{Rybicki:1995,
 Ambikasaran:2015} and our generalization, and demonstrate the model's
 application on various real and simulated data sets.
 Alongside this paper, we have released efficient and well-tested
-implementations of this method written in \project{C++}, \project{Python}, and
-\project{Julia}.
+implementations of this method written in \project{C++}, \project{Python}, and \project{Julia}.
 These implementations are available online at \project{GitHub}
 \url{https://github.com/dfm/celerite} and \project{Zenodo} \dfmtodo{add zenodo
 archive}.
@@ -984,7 +994,7 @@ The goal of this example is to show that, even for a low signal-to-noise
 dataset with a short baseline, it is possible to infer asteroseismic
 parameters with formal uncertainties that are consistent with the parameters
 inferred with a much larger dataset.
-Looking forward to \tess, we will infer $\nu_\mathrm{max}$ and $\Delta\nu$
+Looking forward to \tess \citep{Campante:2016}, we will infer $\nu_\mathrm{max}$ and $\Delta\nu$
 using only one month of \kepler\ data and compare our results to the results
 inferred from the full 4 year baseline of the mission.
 For KIC~11615890, the published asteroseismic parameters based on the full
@@ -1242,15 +1252,12 @@ Limitations of celerite: one-dimension, stationary, etc.
 
 Although we have in mind application of this fast method to stellar variability,
 the method is general for one-dimensional GP problems, and may be applied to
-other problems.    Within astrophysics, correlated noise (due to the environment,
-detector, or modeling uncertainty) may be present in
-gravitational wave time series, and so Gaussian processes may be a way to address
-this problem \citep{Moore:2016}.  Accreting black holes show time series which
+other problems.  Accreting black holes show time series which
 may be modeled by correlated noise \citep{Kelly:2014};  indeed, this was the
 motivation for the original technique developed by Rybicki \& Press \citep{Rybicki:1992,Rybicki:1995}.
 This approach may be broadly used for characterizing quasar variability
 \citep{MacLeod:2010}, measuring time lags with reverberation mapping
-\citep{Zu:2011}, and modeling time delays in multiply-imaged
+\citep{Zu:2011,Pancoast:2014}, and modeling time delays in multiply-imaged
 gravitationally-lensed systems \citep{Press:1998}.
 
 Outside of astronomy, this technique may have application to seismology
@@ -1261,21 +1268,25 @@ the variability of an astrophysical system to infer it properties; 2).\
 accounting for astrophysical variability as a source of noise when trying to detect
 additional phenomena; 3).\ interpolating or extrapolating variability to future or missing
 times.  Some examples of the first are determining the characteristic
-variability timescale of a quasar, measuring the asteroseismic variation of a star,
-or detection of quasi-periodic variability in a high-energy source.  Examples of the
+variability timescale of a quasar \citep{Kelly:2014}, measuring the asteroseismic variation of a star
+\citep{Brewer:2009,Corsaro:2014}, measurement of granulation noise \citep{Bastien:2013,Kallinger:2016},
+detection of quasi-periodic variability in a high-energy source \citep{McAllister:2016},
+or classification of variable objects \citep{Zinn:2016}.  Examples of the
 second are detecting transiting exoplanets and correcting for stellar activity in
-radial velocity measurements. Examples of the third are measuring time delays in
-multiply-imaged gravitationally lensed sources and reverberation mapping of AGN.
+radial velocity measurements \citep{Haywood:2014,Rajpaul:2015}. Examples of the third are 
+measuring time delays in
+multiply-imaged gravitationally lensed sources \citep{Tewes:2013} and reverberation mapping of AGN.
 
 Our background is in studying transiting exoplanets, a field which has only recently begun
 to adopt full covariance matrices in analyzing the noise in transiting planet lightcurves.
 One promising early attempt at accounting for correlated noise was the wavelet approach
-of Carter \& Winn (2010).  Their technique allowed for a power-law spectrum for the
+of \citet{Carter:2009}.  Their technique allowed for a power-law spectrum for the
 noise scaling as $\omega^{-\alpha}$, which unfortunately is not a normalizable, nor
 physically-accurate, description of stellar variability.  Their approach runs in
-${\cal O}(N)$ time for $\alpha=1$, which is `flicker' or pink noise;  however, this
-particular type of noise overpredicts the power spectrum at low frequency compared
-to the granulation power spectrum.  It also cannot describe quasi-periodic noise.
+${\cal O}(N)$ time for $\alpha=1$, which is referred to as `flicker', $1/r$, or pink 
+noise;  however, this particular type of noise overpredicts the power spectrum at low 
+frequency compared to the Solar granulation power spectrum.  It also cannot describe 
+quasi-periodic noise.
 
 Further progress was made by parameterizing the covariance matrix with simple,
 analytic functions that describe the autocorrelation function.  The parameters
@@ -1295,6 +1306,15 @@ are obtained, the effects of stellar variability will more dramatically impact t
 correct inference of planetary transit parameters, and so we expect that \celerite\
 will be important for transit timing, transit spectroscopy, Doppler beaming,
 phase functions, and more.
+
+In the future we hope to expand the \celerite\ technique to multi-dimensional
+datasets.  The formalism presented could, for example, be used to model
+the covariance between multiple measured quantities, such as in regression of photometric
+time series versus astrometric precision when correcting for systematic errors
+due to detector sensitivity variations \citep{Aigrain:2016}, in correcting
+radial velocity datasets for stellar activity \citep{Haywood:2014,Rajpaul:2015},
+or in detection of gravitational waves in the presence of systematic errors
+\citep{Moore:2016}.
 
 %\section{Prediction/interpolation}
 %
