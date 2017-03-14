@@ -623,13 +623,12 @@ and
     0 & \cdots & 0 & r_{\bvec{\theta},2}
 \end{array}\right) \quad.
 \end{eqnarray}
-
 After constructing the extended matrix (using a compact storage format), the
 extended matrix can be factorized using a LU-decomposition\footnote{Even
 though $K_\mathrm{ext}$ is symmetric, it is not positive definite so a
 Cholesky solver cannot be used for increased efficiency.} routine optimized
-for band matrices.
-This decomposition can be used to compute the determinant of $K$, solve
+for band or sparse matrices.
+This decomposition can then be used to compute the determinant of $K$, solve
 $K^{-1}\,\bvec{r}_\bvec{\theta}$, and subsequently calculate the marginalized
 likelihood in \eq{gp-likelihood}.
 
@@ -644,7 +643,6 @@ in the legend.
 \end{center}
 \end{figure}
 
-
 \subsection{Implementation considerations \& scaling}
 
 The extended system defined in the previous section is sparse with fewer than
@@ -654,6 +652,9 @@ of three different algorithms for solving this extended systems:
 
 \begin{enumerate}
 
+\item A general sparse LU solver that exploits the sparsity but not the band
+    structure \citep{Guennebaud:2010}.
+
 \item A simple algorithm for computing the LU decomposition for banded
     matrices using Gaussian elimination \citep{Press:1992, Press:2007},
 
@@ -661,10 +662,18 @@ of three different algorithms for solving this extended systems:
     LAPACK\footnote{We use the \texttt{dgbtrf} and \texttt{dgbtrs} methods
         from LAPACK.} \citep{Anderson:1999} using optimized BLAS routines, and
 
-\item A general sparse LU solver that exploits the sparsity but not the band
-    structure \citep{Guennebaud:2010}.
-
 \end{enumerate}
+
+\citet{Ambikasaran:2015} found an empirical scaling of $\mathcal{O}(N\,J^2)$
+with their method that used the sparse LU decomposition implemented in the
+\project{SuperLU} package \citep{Demmel:1999}.
+The theoretical scaling for a band LU decomposition is $\mathcal{O}(N\,J^3)$
+because the dimension of the extended matrix scales as $N\,J$ and the
+bandwidth scales with $J$ \citep{Press:1992, Press:2007}.
+We find that, while the vanilla banded solver scales as expected, the LAPACK
+algorithm with tuned BLAS routines scales empirically as $\mathcal{O}(N\,J^2)$
+empirically and offers the fastest solves for $J \gtrsim 8$ on all platforms
+that we tested.
 
 NNZ: $(10\,J + 1)\,N - 4\,J + 1$
 
