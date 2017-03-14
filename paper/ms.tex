@@ -165,8 +165,19 @@ to astronomical time series
 
 We present a scalable method for Gaussian Process regression in one dimension
 with a specific emphasis on large astronomical time-series data sets.
-This method can be applied to any Gaussian Process model where the spectral
+This method, which we christen \celerite, can be applied to any Gaussian Process model where the spectral
 density can be expressed as any general mixture of damped sinusoid functions.
+We present a mathematical description of \celerite,
+its relation to the stochastically-driven, damped simple harmonic oscillator, 
+and details of the implementation.  We give examples of \celerite\ applied to both 
+simulated and actual astronomical time-series, using it to estimate the time-series
+power spectrum, while simultaneously accounting for correlated noise when inferring 
+model parameters.  These examples include Bayesian estimation of the strength 
+of stellar granulation, stellar rotation periods, asteroseismic spectra, and 
+transiting planet light curve parameters.  The model is flexible, fast, and 
+general, with potential for application to a wide range of astronomical problems, 
+for which we provide open-source software that implements \celerite\ in 
+\project{C++}, \project{Python}, and \project{Julia}.
 
 \end{abstract}
 
@@ -221,8 +232,7 @@ describe the previously published scalable method \citep{Rybicki:1995,
 Ambikasaran:2015} and our generalization, and demonstrate the model's
 application on various real and simulated data sets.
 Alongside this paper, we have released efficient and well-tested
-implementations of this method written in \project{C++}, \project{Python}, and
-\project{Julia}.
+implementations of this method written in \project{C++}, \project{Python}, and \project{Julia}.
 These implementations are available online at \project{GitHub}
 \url{https://github.com/dfm/celerite} and \project{Zenodo} \dfmtodo{add zenodo
 archive}.
