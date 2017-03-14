@@ -773,7 +773,7 @@ k(\tau) &=& \lim_{f \to 0}\,
 &=& S_0\,\omega_0\,e^{-\omega_0\,\tau}\,[1+\omega_0\,\tau]
 \end{eqnarray}
 or equivalently (using \eqalt{celerite-kernel} and \eqalt{sho-complex})
-\begin{eqnarray}\eqlabel{approx-matern}
+\begin{eqnarray}\eqlabel{approx-matern2}
 k(\tau) &=& \lim_{f \to 0}\,
     S_0\,\omega_0\,e^{-\omega_0\,\tau}\,
     \left[\cos(f\,\tau) + \frac{\omega_0}{f}\,\sin(f\,\tau)\right] \\
@@ -782,7 +782,7 @@ k(\tau) &=& \lim_{f \to 0}\,
 This covariance function is also known as the Mat\'ern-3/2 function
 \citep{Rasmussen:2006}.
 This suggests that the Mat\'ern-3/2 covariance can be well approximated using
-the \celerite\ framework with a small value of $f$ in \eq{approx-matern} but we
+the \celerite\ framework with a small value of $f$ in \eq{approx-matern2} but we
 caution that this could also lead to numerical issues with the solver.
 }
 
@@ -942,16 +942,16 @@ framework (\dfmtodo{CITE Ian C}).
 \subsection{Asteroseismic oscillations}
 
 The asteroseismic oscillations of thousands of stars were measured using light
-curves from the \kepler\ mission (\dfmtodo{cite}) and asteroseismology is a
+curves from the \kepler\ mission \citep{Gilliland:2010,Chaplin:2011,Chaplin:2013,Stello:2013}
+and asteroseismology is a
 key science driver for many of the upcoming large scale photometric surveys
-(\dfmtodo{cite}).
+\citep{Campante:2016,Rauer:2014,Gould:2015}.
 Most asteroseismic analyses have been limited to relatively high
 signal-to-noise oscillations because the standard methods based on statistics
 of the empirical periodogram of the data cannot be used to formally propagate
 the measurement uncertainties to the constraints on physical parameters
 (\dfmtodo{CITE}) and more sophisticated methods are computationally expensive
-and they scale poorly to the current state-of-the-art datasets (\dfmtodo{CITE
-Brewer etc.}).
+and they scale poorly to the current state-of-the-art datasets \citep{Brewer:2009}.
 
 \celerite\ alleviates these problems by providing a physically motivated
 probabilistic model that can be evaluated efficiently even for large datasets.
