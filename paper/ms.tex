@@ -1209,21 +1209,54 @@ light curve \dfmtodo{CITE MA} parameterized by a period $P$, a transit
 duration $T$, a phase or epoch $t_0$, an impact parameter $b$, the radius
 of the planet in units of the stellar radius $R_P/R_\star$, and several
 parameters describing the limb-darkening profile of the star \dfmtodo{CITE}.
+As in the previous example, we model the stellar variability using a GP model
+with a kernel given by \eq{rot-kernel}.
 
-KIC~1430163 with simulated transit.
-\Figure{transit-ml} and \Figure{transit-corner}.
+To demonstrate this example, we take a month-long segment of the \kepler\
+light curve for KIC~1430163~--~the target from the previous example~--~and
+multiply it by a simulated transit model with known parameters.
+The top panel of \Figure{transit-ml} shows the data including the simulated
+transit.
+The bottom panel shows the same data with the maximum likelihood prediction
+for the stellar variation subtracted.
+To find this model, we maximized the likelihood function in \eq{gp-likelihood}
+with respect to the transit parameters $\bvec{\theta}$ and the variability
+parameters $\bvec{\alpha}$ simultaneously.
+\Figure{transit-corner} shows the marginalized posterior constraints on the
+physical properties of the planet compared to the true values.
+This procedure produces estimates of the planet parameters that are consistent
+with the true values using \celerite\ as an effective model for the stellar
+variability.
 
 \begin{figure}[!htbp]
 \begin{center}
 \includegraphics[width=\textwidth]{figures/transit-ml.pdf}
-\caption{\figurelabel{transit-ml}}
+    \caption{\emph{(top)} A month-long segment of \kepler\ light curve for
+    KIC~1430163 with a synthetic transit model injected (black points) and the
+    maximum likelihood model for the stellar variability and the transit model
+    (blue line).
+    \emph{(bottom)} The maximum likelihood ``de-trendeding'' of the data in
+    the top panel.
+    In this panel, the maximum likelihood model for the stellar variability
+    has been subtracted to leave only the transits.
+    The de-trended light curve is shown by black error bars and the maximum
+    likelihood transit model is shown as a blue line.
+    \figurelabel{transit-ml}}
 \end{center}
 \end{figure}
 
 \begin{figure}[!htbp]
 \begin{center}
 \includegraphics[width=\textwidth]{figures/transit-corner.pdf}
-\caption{\figurelabel{transit-corner}}
+\caption{The marginalized posterior constraints on the physical parameters of
+    the planet transiting during the light curve shown in the top panel of
+    \Figure{transit-ml}.
+    The two-dimensional contours show the 0.5-, 1-, 1.5, and 2-sigma credible
+    regions in the marginalized planes and the histograms along the diagonal
+    show the marginalized posterior for each parameter.
+    The true values used in the simulation are indicated by blue lines.
+    For each parameter, the inference is consistent with the true value.
+    \figurelabel{transit-corner}}
 \end{center}
 \end{figure}
 
