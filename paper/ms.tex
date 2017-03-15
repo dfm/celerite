@@ -1143,17 +1143,27 @@ The covariance function in \eq{rot-kernel} cannot exactly reproduce \eq{sine2}
 but, since \eq{sine2} is only an effective model, \eq{rot-kernel} can be used
 as a drop-in replacement for a substantial gain in computational efficiency.
 
-To demonstrate this model, we
-
-\rotationperiod
+To demonstrate this model, we fit a \celerite\ model with a kernel given by
+\eq{rot-kernel} to a \kepler\ light curve for the star KIC~1430163.
+This star has a published rotation period of $3.88 \pm 0.58$ measured using
+traditional periodogram and autocorrelation function approaches applied to
+\kepler\ data from Quarters 0--16 \citep{Mathur:2014}.
+We used \emcee\ to sample to posterior probability density for the four
+parameters in \eq{rot-kernel} conditioned on two quarters of \kepler\ data and
+find a constraint on the rotation period of $P = \rotationperiod$ in good
+agreement with the literature value.
+\Figure{rotation} shows a subset of the data used in this example and the
+posterior inferences of the PSD and autocorrelation function of the process.
+\Figure{rotation-period} shows the marginalized posterior distribution for the
+rotation period.
 
 \begin{figure}[!htbp]
 \begin{center}
 \includegraphics[width=\textwidth]{figures/rotation.pdf}
 \caption{Inferred constraints on a quasiperiodic GP model using the covariance
-    function in \eq{rot-kernel} and one quarter of \kepler\ data.
+    function in \eq{rot-kernel} and two quarters of \kepler\ data.
 (left) The \kepler\ data (black points) and the maximum likelihood model
-    prediction (blue curve).
+    prediction (blue curve) for a 50~day subset of the data used.
     The solid blue line shows the predictive mean and the blue contours show
     the predictive standard deviation.
 (center) Inferred constraints on the model PSD.
