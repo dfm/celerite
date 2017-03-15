@@ -20,9 +20,8 @@ from transit_model import RotationTerm, TransitModel
 setup(auto=True)
 np.random.seed(42)
 
-data, hdr = fitsio.read("data/kplr001430163-2013011073258_llc.fits",
-                        header=True)
-texp = float(hdr["INT_TIME"] * hdr["NUM_FRM"]) / 60. / 60. / 24.
+data = fitsio.read("data/kplr001430163-2013011073258_llc.fits")
+texp = 1625.3467838829 / 60. / 60. / 24.
 
 N = 1000
 m = data["SAP_QUALITY"] == 0
@@ -119,24 +118,27 @@ ml_yerr = np.sqrt(yerr**2 + wn)
 
 # Plot the maximum likelihood predictions
 fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True, figsize=get_figsize(1, 2))
-ax1.errorbar(t - t.min(), y, yerr=ml_yerr, fmt=".k", capsize=0)
-ax1.plot(x - t.min(), mu)
+ax1.errorbar(t - t.min(), y, yerr=ml_yerr, fmt=".k", capsize=0, zorder=-1)
+ax1.plot(x - t.min(), mu, zorder=100)
 ax1.set_ylim(-0.72, 0.72)
 ax1.yaxis.set_major_locator(plt.MaxNLocator(5))
 ax1.set_ylabel("raw [ppt]")
+ax1.yaxis.set_label_coords(-0.1, 0.5)
 
-ax2.errorbar(t - t.min(), y-trend, yerr=ml_yerr, fmt=".k", capsize=0)
-ax2.plot(x - t.min(), mean_mu - gp.mean.mean_flux)
+ax2.errorbar(t - t.min(), y-trend, yerr=ml_yerr, fmt=".k", capsize=0,
+             zorder=-1)
+ax2.plot(x - t.min(), mean_mu - gp.mean.mean_flux, zorder=100)
 ax2.set_xlim(0, t.max()-t.min())
 ax2.set_ylim(-0.41, 0.1)
 ax2.yaxis.set_major_locator(plt.MaxNLocator(5))
 ax2.set_ylabel("de-trended [ppt]")
 ax2.set_xlabel("time [days]")
+ax2.yaxis.set_label_coords(-0.1, 0.5)
 fig.savefig("transit-ml.pdf")
 
 # Save the current state of the GP and data
 with open("transit.pkl", "wb") as f:
-    pickle.dump((gp, y), f, -1)
+    pickle.dump((gp, y, true_model.get_parameter_dict()), f, -1)
 
 if os.path.exists("transit.h5"):
     result = input("MCMC save file exists. Overwrite? (type 'yes'): ")
@@ -168,14 +170,3 @@ sampler = emcee3.Sampler(backend=emcee3.backends.HDFBackend("transit.h5"))
 with emcee3.pools.InterruptiblePool() as pool:
     ensemble = emcee3.Ensemble(emcee3.SimpleModel(log_prob), pos, pool=pool)
     sampler.run(ensemble, 15000, progress=True)
-
-# Plot the parameter constraints
-samples = np.array(sampler.get_coords(discard=5000, flat=True, thin=13))
-samples = samples[:, 1:5]
-samples[:, :3] = np.exp(samples[:, :3])
-truths = np.array(true_params[1:5])
-truths[:3] = np.exp(truths[:3])
-fig = corner.corner(samples, truths=truths,
-                    labels=[r"period", r"$R_\mathrm{P}/R_\star$", r"duration",
-                            r"$t_0$"])
-fig.savefig("transit-corner.pdf")
