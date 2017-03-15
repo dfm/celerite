@@ -1201,9 +1201,6 @@ Toeplitz, KISS-GP, CARMA, HODLR.
 Limitations of celerite: one-dimension, stationary, etc.
 
 
-\section{Summary}
-
-
 
 % DFM: I'm going to redistribute the following in other sections.
 
@@ -1302,11 +1299,12 @@ Limitations of celerite: one-dimension, stationary, etc.
 
 \section{Summary}
 
-Although we have in mind application of this fast method to stellar variability,
-the method is general for one-dimensional GP problems, and may be applied to
-other problems.  Accreting black holes show time series which
-may be modeled by correlated noise \citep{Kelly:2014};  indeed, this was the
-motivation for the original technique developed by Rybicki \& Press \citep{Rybicki:1992,Rybicki:1995}.
+Although we have in mind applications of this fast method to model stellar
+variability, the method is general for one-dimensional GP problems, and may be
+applied to other problems.
+Accreting black holes show time series which may be modeled by correlated
+noise \citep{Kelly:2014};  indeed, this was the motivation for the original
+technique developed by Rybicki \& Press \citep{Rybicki:1992,Rybicki:1995}.
 This approach may be broadly used for characterizing quasar variability
 \citep{MacLeod:2010}, measuring time lags with reverberation mapping
 \citep{Zu:2011,Pancoast:2014}, and modeling time delays in multiply-imaged
@@ -1315,30 +1313,39 @@ gravitationally-lensed systems \citep{Press:1998}.
 Outside of astronomy, this technique may have application to seismology
 \citep{Robinson:1967},
 
-There are three primary applications we envision for the \celerite\ formalism: 1).\ modeling
-the variability of an astrophysical system to infer it properties; 2).\
-accounting for astrophysical variability as a source of noise when trying to detect
-additional phenomena; 3).\ interpolating or extrapolating variability to future or missing
-times.  Some examples of the first are determining the characteristic
-variability timescale of a quasar \citep{Kelly:2014}, measuring the asteroseismic variation of a star
-\citep{Brewer:2009,Corsaro:2014}, measurement of granulation noise \citep{Bastien:2013,Kallinger:2016},
-detection of quasi-periodic variability in a high-energy source \citep{McAllister:2016},
-or classification of variable objects \citep{Zinn:2016}.  Examples of the
-second are detecting transiting exoplanets and correcting for stellar activity in
-radial velocity measurements \citep{Haywood:2014,Rajpaul:2015}. Examples of the third are
-measuring time delays in
-multiply-imaged gravitationally lensed sources \citep{Tewes:2013} and reverberation mapping of AGN.
+There are three primary applications we envision for the \celerite\ formalism:
+1).\ modeling the variability of an astrophysical system to infer it
+properties; 2).\ accounting for astrophysical variability as a source of noise
+when trying to detect additional phenomena; 3).\ interpolating or
+extrapolating variability to future or missing times.
+Some examples of the first are determining the characteristic variability
+timescale of a quasar \citep{Kelly:2014}, measuring the asteroseismic
+variation of a star \citep{Brewer:2009,Corsaro:2014}, measurement of
+granulation noise \citep{Bastien:2013,Kallinger:2016}, detection of
+quasi-periodic variability in a high-energy source \citep{McAllister:2016}, or
+classification of variable objects \citep{Zinn:2016}.
+Examples of the second are detecting and characterizing transiting exoplanets
+\citep[for example,][]{Gibson:2012, Barclay:2015, Evans:2015, Aigrain:2016,
+Grunblatt:2016, Luger:2016}
+and correcting for stellar activity in radial velocity measurements
+\citep[for example,][]{Haywood:2014, Rajpaul:2015}.
+Examples of the third are measuring time delays in multiply-imaged
+gravitationally lensed sources \citep{Tewes:2013} and reverberation mapping of
+AGN.
 
-Our background is in studying transiting exoplanets, a field which has only recently begun
-to adopt full covariance matrices in analyzing the noise in transiting planet lightcurves.
-One promising early attempt at accounting for correlated noise was the wavelet approach
-of \citet{Carter:2009}.  Their technique allowed for a power-law spectrum for the
-noise scaling as $\omega^{-\alpha}$, which unfortunately is not a normalizable, nor
-physically-accurate, description of stellar variability.  Their approach runs in
-${\cal O}(N)$ time for $\alpha=1$, which is referred to as `flicker', $1/r$, or pink
-noise;  however, this particular type of noise overpredicts the power spectrum at low
-frequency compared to the Solar granulation power spectrum.  It also cannot describe
-quasi-periodic noise.
+Our background is in studying transiting exoplanets, a field which has only
+recently begun to adopt full covariance matrices in analyzing the noise in
+transiting planet lightcurves.
+One promising early attempt at accounting for correlated noise was the wavelet
+approach of \citet{Carter:2009}.
+Their technique allowed for a power-law spectrum for the noise scaling as
+$\omega^{-\alpha}$, which unfortunately is not a normalizable, nor
+physically-accurate, description of stellar variability.
+Their approach runs in ${\cal O}(N)$ time for $\alpha=1$, which is referred to
+as `flicker', $1/r$, or pink noise;  however, this particular type of noise
+overpredicts the power spectrum at low frequency compared to the Solar
+granulation power spectrum.
+It also cannot describe quasi-periodic noise.
 
 Further progress was made by parameterizing the covariance matrix with simple,
 analytic functions that describe the autocorrelation function.  The parameters
