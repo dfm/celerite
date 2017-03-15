@@ -683,16 +683,27 @@ offers the fastest solves for $J \gtrsim 8$ on all platforms that we tested.
 The benchmark experiments shown here were performed on a MacBook Pro with two
 2.6~GHz CPUs but we find similar results on a Dell workstation with 16 2.7~GHz
 CPUs and running Ubuntu.
-
-
-NNZ: $(10\,J + 1)\,N - 4\,J + 1$
+\Figure{benchmark} shows how the cost of computing \eq{gp-likelihood} scales
+with $N$ and $J$ using the \texttt{vanilla} solver.
+As expected theoretically, the scaling is linear in $N$ for all $N$ and cubic
+in $J$ for large $J$.
+\Figure{benchmark-lapack} and \Figure{benchmark-sparse} are the same plots for
+the \texttt{lapack} and \texttt{sparse} solvers respectively.
+For each of these optimized solvers, the empirical scaling is
+$\mathcal{O}(N\,J^2)$ at the cost of some extra overhead.
+Therefore, for $J \lesssim 5$ or $10$ the \texttt{vanilla} solver is more
+efficient than the other algorithms.
+The real world performance of \celerite\ depends on the specific platform,
+hardware, and \project{LAPACK}/\project{BLAS} implementation but we have found
+qualitatively similar results across popular platforms and state-of-the-art
+libraries.
 
 \begin{figure}[!htbp]
 \begin{center}
 \includegraphics[width=\textwidth]{../examples/benchmark/benchmark_darwin.pdf}
-\caption{A benchmark showing the computational scaling of \celerite\ with a
-    vanilla band solver as a function of the number of data points and the
-    number of terms.
+\caption{A benchmark showing the computational scaling of \celerite\ using the
+    \texttt{vanilla} band solver as a function of the number of data points
+    and the number of terms.
     \emph{(left)} The cost of computing \eq{gp-likelihood} with a covariance
     matrix given by \eq{celerite-kernel} as a function of the number of data
     points $N$.
@@ -710,8 +721,8 @@ NNZ: $(10\,J + 1)\,N - 4\,J + 1$
 \begin{figure}[!htbp]
 \begin{center}
 \includegraphics[width=\textwidth]{../examples/benchmark/benchmark_darwin_lapack.pdf}
-\caption{The same as \Figure{benchmark} but using the band solver from
-    \project{LAPACK} with the \project{MKL} \project{BLAS} library.
+\caption{The same as \Figure{benchmark} but using the \texttt{lapack} solver
+    with the \project{MKL} \project{BLAS} library.
     \figurelabel{benchmark-lapack}}
 \end{center}
 \end{figure}
@@ -719,7 +730,7 @@ NNZ: $(10\,J + 1)\,N - 4\,J + 1$
 \begin{figure}[!htbp]
 \begin{center}
 \includegraphics[width=\textwidth]{../examples/benchmark/benchmark_darwin_sparse.pdf}
-\caption{The same as \Figure{benchmark} but using the \texttt{SparseLU} solver
+\caption{The same as \Figure{benchmark} but using the \texttt{sparse} solver
     from \project{Eigen} \citep{Guennebaud:2010}.
     \figurelabel{benchmark-sparse}}
 \end{center}
