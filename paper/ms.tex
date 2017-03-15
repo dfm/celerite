@@ -650,19 +650,23 @@ in the legend.
 The extended system defined in the previous section is sparse with fewer than
 a few percent non-zero entries and band structure.
 In this \sectionname, we empirically investigate the performance and scaling
-of three different algorithms for solving this extended systems:
+of three different algorithms for solving this extended system:
 
 \begin{enumerate}
 
-\item A general sparse LU solver that exploits the sparsity but not the band
-    structure \citep{Guennebaud:2010}.
+\item \texttt{vanilla}: A simple algorithm for computing the LU decomposition
+    for banded matrices using Gaussian elimination \citep{Press:1992,
+    Press:2007},
 
-\item A simple algorithm for computing the LU decomposition for banded
-    matrices using Gaussian elimination \citep{Press:1992, Press:2007},
-
-\item The general banded LU decomposition implementation from
+\item \texttt{lapack}: The general banded LU decomposition implementation from
     LAPACK\footnote{We use the \texttt{dgbtrf} and \texttt{dgbtrs} methods
-        from LAPACK.} \citep{Anderson:1999} using optimized BLAS routines, and
+    from LAPACK.} \citep{Anderson:1999} using optimized BLAS
+    routines\footnote{The experiments below use the Intel Math Kernel Library
+    (\project{MKL}): \url{https://software.intel.com/en-us/intel-mkl}.}, and
+
+\item \texttt{sparse}: A general sparse LU solver~--~the \texttt{SparseLU}
+    solver from \project{Eigen} \citep{Guennebaud:2010}~--~that exploits the
+    sparsity but not the band structure.
 
 \end{enumerate}
 
@@ -672,11 +676,13 @@ with their method that used the sparse LU decomposition implemented in the
 The theoretical scaling for a band LU decomposition is $\mathcal{O}(N\,J^3)$
 because the dimension of the extended matrix scales as $N\,J$ and the
 bandwidth scales with $J$ \citep{Press:1992, Press:2007}.
-We find that, while the vanilla banded solver scales as expected, the LAPACK
-algorithm with tuned BLAS routines scales empirically as $\mathcal{O}(N\,J^2)$
-empirically and offers the fastest solves for $J \gtrsim 8$ on all platforms
-that we tested.
+We find that, while the \texttt{vanilla} solver scales as expected, the
+\texttt{lapack} implementation scales empirically as $\mathcal{O}(N\,J^2)$ and
+offers the fastest solves for $J \gtrsim 8$ on all platforms that we tested.
 
+The benchmark experiments shown here were performed on a MacBook Pro with two
+2.6~GHz CPUs but we find similar results on a Dell workstation with 16 2.7~GHz
+CPUs and running Ubuntu.
 
 
 NNZ: $(10\,J + 1)\,N - 4\,J + 1$
