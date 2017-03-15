@@ -5,8 +5,9 @@
 \pdfoutput=1
 
 \include{vc}
-\usepackage{microtype}
+\include{figures/rotation}
 
+\usepackage{microtype}
 \usepackage{url}
 \usepackage{amsmath}
 \usepackage{amssymb}
@@ -1063,9 +1064,10 @@ The goal of this example is to show that, even for a low signal-to-noise
 dataset with a short baseline, it is possible to infer asteroseismic
 parameters with formal uncertainties that are consistent with the parameters
 inferred with a much larger dataset.
-Looking forward to \tess \citep{Campante:2016}, we will infer $\nu_\mathrm{max}$ and $\Delta\nu$
-using only one month of \kepler\ data and compare our results to the results
-inferred from the full 4 year baseline of the mission.
+Looking forward to \tess\ \citep{Campante:2016}, we will infer
+$\nu_\mathrm{max}$ and $\Delta\nu$ using only one month of \kepler\ data and
+compare our results to the results inferred from the full 4 year baseline of
+the \kepler\ mission.
 For KIC~11615890, the published asteroseismic parameters based on the full
 dataset are \citep{Pinsonneault:2014}
 \begin{eqnarray}
@@ -1140,6 +1142,10 @@ for $a>0$, $b>0$, and $c>0$.
 The covariance function in \eq{rot-kernel} cannot exactly reproduce \eq{sine2}
 but, since \eq{sine2} is only an effective model, \eq{rot-kernel} can be used
 as a drop-in replacement for a substantial gain in computational efficiency.
+
+To demonstrate this model, we
+
+\rotationperiod
 
 \begin{figure}[!htbp]
 \begin{center}

@@ -5,7 +5,6 @@ from __future__ import division, print_function
 
 import os
 import sys
-import corner
 import emcee3
 import pickle
 import fitsio
