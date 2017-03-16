@@ -40,6 +40,26 @@ public:
   };
 };
 
+class PicklableSingleSolver : public celerite::solver::SingleSolver<double> {
+public:
+  auto serialize () const {
+    return std::make_tuple(this->computed_, this->n_, this->log_det_, this->dl_, this->d_,
+                           this->dl_noise_, this->d_noise_, this->du_noise_);
+  };
+
+  void deserialize (bool computed, int n, double log_det, Eigen::MatrixXd dl, Eigen::MatrixXd d,
+                    Eigen::MatrixXd dl_noise, Eigen::MatrixXd d_noise, Eigen::MatrixXd du_noise) {
+    this->computed_ = computed;
+    this->n_ = n;
+    this->log_det_ = log_det;
+    this->dl_ = dl;
+    this->d_ = d;
+    this->dl_noise_ = dl_noise;
+    this->d_noise_ = d_noise;
+    this->du_noise_ = du_noise;
+  };
+};
+
 //
 // Below is the boilerplate code for the pybind11 extension module.
 //
@@ -385,6 +405,196 @@ Returns:
       t[6].cast<Eigen::MatrixXd>(),
       t[7].cast<Eigen::MatrixXd>(),
       t[8].cast<Eigen::VectorXi>()
+    );
+  });
+
+  //
+  // ------ SINGLE ------
+  //
+  py::class_<PicklableSingleSolver> single_solver(m, "SingleSolver", R"delim(
+A thin wrapper around the C++ SingleSolver class
+
+The class implements the original R&P method.
+
+)delim");
+  single_solver.def(py::init<>());
+
+  single_solver.def("compute", [](PicklableSingleSolver& solver,
+      const Eigen::VectorXd& alpha_real,
+      const Eigen::VectorXd& beta_real,
+      const Eigen::VectorXd& alpha_complex_real,
+      const Eigen::VectorXd& alpha_complex_imag,
+      const Eigen::VectorXd& beta_complex_real,
+      const Eigen::VectorXd& beta_complex_imag,
+      const Eigen::VectorXd& x,
+      const Eigen::VectorXd& diag) {
+    return solver.compute(
+      alpha_real,
+      beta_real,
+      alpha_complex_real,
+      alpha_complex_imag,
+      beta_complex_real,
+      beta_complex_imag,
+      x,
+      diag
+    );
+  },
+  R"delim(
+Compute the diagonals and the log determinant
+
+Args:
+    alpha_real (array[j_real]): The coefficients of the real terms.
+    beta_real (array[j_real]): The exponents of the real terms.
+    alpha_complex_real (array[j_complex]): The real part of the
+        coefficients of the complex terms.
+    alpha_complex_imag (array[j_complex]): The imaginary part of the
+        coefficients of the complex terms.
+    beta_complex_real (array[j_complex]): The real part of the
+        exponents of the complex terms.
+    beta_complex_imag (array[j_complex]): The imaginary part of the
+        exponents of the complex terms.
+    x (array[n]): The _sorted_ array of input coordinates.
+    diag (array[n]): An array that should be added to the diagonal of the
+        matrix. This often corresponds to measurement uncertainties and in
+        that case, ``diag`` should be the measurement _variance_
+        (i.e. sigma^2).
+
+Returns:
+    int: ``1`` if the dimensions are inconsistent and ``0`` otherwise. No
+    attempt is made to confirm that the matrix is positive definite. If
+    it is not positive definite, the ``solve`` and ``log_determinant``
+    methods will return incorrect results.
+
+)delim");
+
+  single_solver.def("solve", [](PicklableSingleSolver& solver, const Eigen::MatrixXd& b) {
+    return solver.solve(b);
+  },
+  R"delim(
+Solve a linear system for the matrix defined in ``compute``
+
+A previous call to :func:`solver.SingleSolver.compute` defines a matrix ``A``
+and this method solves for ``x`` in the matrix equation ``A.x = b``.
+
+Args:
+    b (array[n] or array[n, nrhs]): The right hand side of the linear system.
+
+Returns:
+    array[n] or array[n, nrhs]: The solution of the linear system.
+
+Raises:
+    ValueError: For mismatched dimensions.
+
+)delim");
+
+  single_solver.def("dot", [](PicklableSingleSolver& solver,
+      const Eigen::VectorXd& alpha_real,
+      const Eigen::VectorXd& beta_real,
+      const Eigen::VectorXd& alpha_complex_real,
+      const Eigen::VectorXd& alpha_complex_imag,
+      const Eigen::VectorXd& beta_complex_real,
+      const Eigen::VectorXd& beta_complex_imag,
+      const Eigen::VectorXd& x,
+      const Eigen::MatrixXd& b) {
+    return solver.dot(
+      alpha_real,
+      beta_real,
+      alpha_complex_real,
+      alpha_complex_imag,
+      beta_complex_real,
+      beta_complex_imag,
+      x,
+      b
+    );
+  },
+  R"delim(
+Compute the dot product of a ``celerite`` matrix and another arbitrary matrix
+
+This method computes ``A.b`` where ``A`` is defined by the parameters and
+``b`` is an arbitrary matrix of the correct shape.
+
+Args:
+    alpha_real (array[j_real]): The coefficients of the real terms.
+    beta_real (array[j_real]): The exponents of the real terms.
+    alpha_complex_real (array[j_complex]): The real part of the
+        coefficients of the complex terms.
+    alpha_complex_imag (array[j_complex]): The imaginary part of the
+        coefficients of the complex terms.
+    beta_complex_real (array[j_complex]): The real part of the
+        exponents of the complex terms.
+    beta_complex_imag (array[j_complex]): The imaginary part of the
+        exponents of the complex terms.
+    x (array[n]): The _sorted_ array of input coordinates.
+    b (array[n] or array[n, neq]): The matrix ``b`` described above.
+
+Returns:
+    array[n] or array[n, neq]: The dot product ``A.b`` as described above.
+
+Raises:
+    ValueError: For mismatched dimensions.
+
+)delim");
+
+  single_solver.def("dot_solve", [](PicklableSingleSolver& solver, const Eigen::MatrixXd& b) {
+    return solver.dot_solve(b);
+  },
+  R"delim(
+Solve the system ``b^T . A^-1 . b``
+
+A previous call to :func:`solver.SingleSolver.compute` defines a matrix ``A``
+and this method solves ``b^T . A^-1 . b`` for a vector ``b``.
+
+Args:
+    b (array[n]): The right hand side of the linear system.
+
+Returns:
+    float: The solution of ``b^T . A^-1 . b``.
+
+Raises:
+    ValueError: For mismatched dimensions.
+
+)delim");
+
+  single_solver.def("log_determinant", [](PicklableSingleSolver& solver) {
+    return solver.log_determinant();
+  },
+  R"delim(
+Get the log-determinant of the matrix defined by ``compute``
+
+Returns:
+    float: The log-determinant of the matrix defined by
+    :func:`solver.SingleSolver.compute`.
+
+)delim");
+
+  single_solver.def("computed", [](PicklableSingleSolver& solver) {
+      return solver.computed();
+  },
+  R"delim(
+A flag that indicates if ``compute`` has been executed
+
+Returns:
+    bool: ``True`` if :func:`solver.SingleSolver.compute` was previously
+    executed successfully.
+
+)delim");
+
+  single_solver.def("__getstate__", [](const PicklableSingleSolver& solver) {
+    return solver.serialize();
+  });
+
+  single_solver.def("__setstate__", [](PicklableSingleSolver& solver, py::tuple t) {
+    if (t.size() != 8) throw std::runtime_error("Invalid state!");
+    new (&solver) PicklableSingleSolver();
+    solver.deserialize(
+      t[0].cast<bool>(),
+      t[1].cast<int>(),
+      t[2].cast<double>(),
+      t[3].cast<Eigen::MatrixXd>(),
+      t[4].cast<Eigen::MatrixXd>(),
+      t[5].cast<Eigen::MatrixXd>(),
+      t[6].cast<Eigen::MatrixXd>(),
+      t[7].cast<Eigen::MatrixXd>()
     );
   });
 

@@ -384,6 +384,7 @@ Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> BandSolver<T>::dot (
   const Eigen::VectorXd& t,
   const Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>& b_in
 ) {
+  if (t.rows() != b_in.rows()) throw dimension_mismatch();
   Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> bex =
     build_b_ext(alpha_real, beta_real, alpha_complex_real, alpha_complex_imag,
                 beta_complex_real, beta_complex_imag, t, b_in);

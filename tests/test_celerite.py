@@ -13,7 +13,7 @@ except ImportError:
 
 import celerite
 from celerite import get_solver, GP, terms
-from celerite.solver import get_kernel_value, CARMASolver
+from celerite.solver import get_kernel_value, CARMASolver, SingleSolver
 
 __all__ = ["test_carma", "test_log_determinant", "test_solve", "test_dot",
            "test_pickle", "test_build_gp", "test_log_likelihood",
@@ -79,6 +79,46 @@ def test_carma(method, seed=42):
     )
     assert np.allclose(carma_ll, celerite_ll)
 
+def test_single(seed=42):
+    if not celerite.__with_lapack__:
+        with pytest.raises(RuntimeError):
+            solver = SingleSolver()
+        return
+
+    alpha_real = np.array([1.5])
+    beta_real = np.array([0.3])
+    alpha_complex_real = np.array([])
+    alpha_complex_imag = np.array([])
+    beta_complex_real = np.array([])
+    beta_complex_imag = np.array([])
+
+    solver = SingleSolver()
+    np.random.seed(seed)
+    t = np.sort(np.random.uniform(0, 10, 5))
+    diag = np.random.uniform(0.1, 0.8, len(t))
+
+    flag = solver.compute(
+        alpha_real, beta_real, alpha_complex_real, alpha_complex_imag,
+        beta_complex_real, beta_complex_imag, t, diag
+    )
+    assert flag == 0
+    K0 = get_kernel_value(
+        alpha_real, beta_real, alpha_complex_real, alpha_complex_imag,
+        beta_complex_real, beta_complex_imag, t[:, None] - t[None, :]
+    )
+    K = np.array(K0)
+    K[np.diag_indices_from(K)] += diag
+    assert np.allclose(solver.log_determinant(), np.linalg.slogdet(K)[1])
+
+    b = np.random.randn(len(t), 2)
+    assert np.allclose(solver.solve(b), np.linalg.solve(K, b))
+
+    d1 = solver.dot(
+        alpha_real, beta_real, alpha_complex_real, alpha_complex_imag,
+        beta_complex_real, beta_complex_imag, t, b
+    )
+    d2 = np.dot(K0, b)
+    assert np.allclose(d1, d2)
 
 def _test_log_determinant(alpha_real, beta_real, alpha_complex_real,
                           alpha_complex_imag, beta_complex_real,

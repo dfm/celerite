@@ -40,6 +40,15 @@ extern "C" void dgbmv_(char* trans,
                        double* y,
                        int* incy);
 
+extern "C" void dgtsv_(int* n,
+                       int* nrhs,
+                       double* dl,
+                       double* d,
+                       double* du,
+                       double* b,
+                       int* ldb,
+                       int* info);
+
 namespace celerite {
 
 // Real band solver:
