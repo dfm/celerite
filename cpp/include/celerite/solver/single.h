@@ -260,16 +260,15 @@ Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> SingleSolver<T>::dot (
   const Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>& b_in
 ) {
   if (t.rows() != b_in.rows()) throw dimension_mismatch();
-
-  int n = t.rows(), nrhs = b_in.cols(), info = 0;
   Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> b_out = b_in;
 
+#ifdef WITH_LAPACK
+  int n = t.rows(), nrhs = b_in.cols(), info = 0;
   Eigen::Array<T, Eigen::Dynamic, 1> d, dl, du;
   T a = alpha_real(0), c = beta_real(0);
   get_diags(a, c, t, d, dl);
   du = dl;
 
-#ifdef WITH_LAPACK
   // Do the dot product using a tridiagonal solve
   dgtsv_(&n, &nrhs, dl.data(), d.data(), du.data(), b_out.data(), &n, &info);
 #else
