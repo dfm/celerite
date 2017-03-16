@@ -169,21 +169,31 @@ to astronomical time series
 
 \begin{abstract}
 
-We present a scalable method for Gaussian Process regression in one dimension
-with a specific emphasis on large astronomical time-series data sets.
-This method, which we christen \celerite, can be applied to any Gaussian Process model where the spectral
-density can be expressed as any general mixture of damped sinusoid functions.
-We present a mathematical description of \celerite,
-its relation to the stochastically-driven, damped simple harmonic oscillator,
-and details of the implementation.  We give examples of \celerite\ applied to both
-simulated and actual astronomical time-series, using it to estimate the time-series
-power spectrum, while simultaneously accounting for correlated noise when inferring
-model parameters.  These examples include Bayesian estimation of the strength
-of stellar granulation, stellar rotation periods, asteroseismic spectra, and
-transiting planet light curve parameters.  The model is flexible, fast, and
-general, with potential for application to a wide range of astronomical problems,
-for which we provide open-source software that implements \celerite\ in
-\project{C++}, \project{Python}, and \project{Julia}.
+\dfmtodo{Make this less douchey:}
+In the current era of large-scale time domain astronomy, scalable methods for
+probabilistic inference are of great interest.
+We present a method for Gaussian Process regression in one dimension with a
+computational cost that scales linearly with the size of the dataset.
+This method exploits structure in the problem when the covariance function is
+expressed as a mixture of complex exponentials but it does not require evenly
+spaced observations or homoscedastic noise.
+This form of the covariance arises naturally when the process is a mixture of
+stochastically-driven damped harmonic oscillators~--~providing a physical
+motivation for and interpretation of this choice~--~but we also demonstrate
+that this function can also be a sufficient effective model in many other
+cases.
+We present a mathematical description of the method, details of the
+implementation, and compare it to existing scalable Gaussian Process methods.
+We demonstrate the application of this method by applying it to simulated and
+real astronomical time series datasets.
+These demonstrations are examples of probabilistic inference of stellar
+rotation periods, asteroseismic oscillation spectra, and transiting planet
+parameters.
+The method is flexible, fast, and most importantly, interpretable.
+There are a wide range of potential applications within astronomical data
+analysis and beyond.
+We provide well tested and documented open-source implementations of this
+method in \project{C++}, \project{Python}, and \project{Julia}.
 
 \end{abstract}
 
