@@ -1,1 +1,2 @@
 paper/* linguist-documentation
+*.h linguist-language=C++
