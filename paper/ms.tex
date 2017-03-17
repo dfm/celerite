@@ -753,7 +753,7 @@ libraries.
 \end{center}
 \end{figure}
 
-\section{celerite as a model of stellar variations}
+\section{celerite as a model of stellar variations}\sectlabel{sho}
 
 \dfmtodo{Add more intro to this section.}
 
@@ -1058,12 +1058,12 @@ signal-to-noise datasets and we hope to revisit this idea in a subsequent
 paper.
 
 To demonstrate this method, we will use a very simple heuristic model based on
-\dfmtodo{CITE} where the model PSD is given by a mixture of 9 components with
+\dfmtodo{CITE} where the model PSD is given by a mixture of 8 components with
 amplitudes and frequencies specified by $\nu_\mathrm{max}$, $\Delta \nu$, and
 several nuisance parameters.
-The first two terms are used to capture the granulation ``background''
+The first term is used to capture the granulation ``background''
 \citep{Kallinger:2014} using \eq{granulation-psd} with two free parameters
-$S_g$ and $\omega_g$ in each term.
+$S_g$ and $\omega_g$.
 The remaining  7 terms are given by \eq{sho-psd} where $Q$ is a nuisance
 parameter shared between terms and the frequencies are given by
 \begin{eqnarray}
@@ -1268,7 +1268,7 @@ variability.
 \end{center}
 \end{figure}
 
-\begin{figure}[!htbp]
+\begin{figure}[!p]
 \begin{center}
 \includegraphics[width=\textwidth]{figures/transit-corner.pdf}
 \caption{The marginalized posterior constraints on the physical parameters of
@@ -1285,9 +1285,70 @@ variability.
 
 \section{Comparisons to other methods}
 
-Toeplitz, KISS-GP, CARMA, HODLR.
+There are many other methods of scaling GP models to large datasets and in
+this section we will explore some comparisons between \celerite\ and some
+other popular methods and discuss some use cases where \celerite\ shines and
+others where it does not.
+Scalable GP methods tend to fall into two categories: approximate and
+restrictive.
+\celerite\ falls into the latter category because, while the method is exact,
+it requires a specific choice of stationary kernel function and it can only be
+used in one-dimension.
 
-Limitations of celerite: one-dimension, stationary, etc.
+\dfmtodo{Add discussion of original R\&P method here.}
+
+Another commonly used restrictive method uses the fact that, in the limit of
+evenly-spaced data and homoscedastic uncertainties, the covariance matrix is
+``Toeplitz'' \citep[for example][]{Dillon:2013}.
+There are exact methods for solving Toeplitz matrix equations that scale as
+$\mathcal{O}(N\,\log N)$ and methods for computing determinants exactly in
+$\mathcal{O}(N^2)$ or approximately in $\mathcal{O}(N\,\log N$
+\citep{Wilson:2014}.
+The Toeplitz method is, in some ways, more flexible than \celerite\ because it
+can be used with any stationary kernel but it requires uniformly spaced data
+and the scaling is worse than \celerite\ so it will, in general, be less
+efficient when applied to large datasets.
+
+The continuous autoregressive moving average (CARMA) models introduced into
+the astrophysics literature by \citet{Kelly:2014} share many features with
+\celerite.
+Like \celerite, the likelihood function for a CARMA model conditioned on a
+sorted one-dimensional dataset can be solved in $\mathcal{O}(N)$ using a
+recursive method.
+The kernel function for CARMA$(J,\,K)$ model is \citep{Kelly:2014}
+\begin{eqnarray}\eqlabel{carma-kernel}
+k_\mathrm{CARMA}(\tau) = \sum_{j=1}^J A_j\,\exp\,(r_j\,\tau)
+\end{eqnarray}
+where
+\begin{eqnarray}\eqlabel{carma-coeff}
+A_j = \sigma^2 \,\frac{\left[\sum_{k=0}^K\beta_k\,{(r_j)}^k\right]\,
+    \left[\sum_{k=0}^K\beta_k\,{(-r_j)}^k\right]}
+    {-2\,\mathrm{Re}(r_j)\,\prod_{k=1,\,k \ne j}^{J}(r_k-r_j)({r_k}^*+r_j)}
+\end{eqnarray}
+and $\sigma$, $\{r_j\}_{j=1}^J$ and $\{\beta_k\}_{k=1}^K$ are parameters of
+the model.
+Comparing \eq{carma-kernel} to \eq{celerite-kernel-complex}, we can see that
+every CARMA model corresponds to a \celerite\ and the parameters $a_j$, $b_j$,
+$c_j$, and $d_j$ can be easily computed analytically.
+The inverse statement is not true, however, for any $J > 1$.
+This means that \celerite\ could be used to compute any CARMA model but using
+CARMA to compute the likelihood of a \celerite\ model would require solving
+\eq{carma-coeff} for a given set of $\{A_j\}_{j=1}^J$ numerically.
+This is an interesting distinction because, while the computational scaling of
+CARMA models is also $\mathcal{O}(N\,J^2)$, CARMA solvers are, in practice,
+faster and the memory requirements are smaller.
+However, as discussed in \sect{sho}, \celerite\ models have physical a
+interpretation as a mixture of stochastically-driven damped harmonic
+oscillators.
+This enabled, for example, the use of \celerite\ as a model for asteroseismic
+oscillations.
+A similar example using CARMA would necessarily be qualitative.
+
+
+Approximate:
+- inducing point methods \citep{Quinonero-Candela:2007}
+- KISS-GP \citep{Wilson:2015, Wilson:2015a}
+- HODLR \citep{Ambikasaran:2016}
 
 
 
