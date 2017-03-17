@@ -227,12 +227,12 @@ While these models are widely applicable, their use has been limited, in
 practice, by the computational cost and scaling.
 In general, the cost of computing a GP likelihood scales as the third power of
 the number of data points $\mathcal{O}(N^3)$ and in the current era of large
-time-domain surveys~--~with $\sim10^{4-9}$ targets with $\sim10^{3-5}$
-observations each~---~this cost is prohibitive.
+time domain surveys~--~with as many as $\sim10^{4-9}$ targets with
+$\sim10^{3-5}$ observations each~---~this cost is prohibitive.
 
-In this paper, we present a class of GP models that enable likelihood
-calculations that scale linearly with the number of data points
-$\mathcal{O}(N)$ for one dimensional data sets.
+In this paper, we present a method for computing a class of GP models that
+scales linearly with the number of data points $\mathcal{O}(N)$ for one
+dimensional data sets.
 This method is a generalization of a method developed by
 \citet{Ambikasaran:2015} that was, in turn, built on intuition from a twenty
 year old paper \citep{Rybicki:1995}.
@@ -242,16 +242,16 @@ However, there is no further constraint on the data or the model.
 In particular, the measurements don't need to be evenly spaced and the
 uncertainties can be heteroscedastic.
 This method is especially appealing compared to other similar methods~--~we
-will return to these below~--~because it is exact, flexible, robust, simple,
-and fast.
+will return to these below~--~because it is exact, flexible, simple, and fast.
 
 In the following pages, we will motivate the general problem of GP regression,
 describe the previously published scalable method \citep{Rybicki:1995,
 Ambikasaran:2015} and our generalization, and demonstrate the model's
 application on various real and simulated data sets.
-Alongside this paper, we have released efficient and well-tested
-implementations of this method written in \project{C++}, \project{Python}, and \project{Julia}.
-These implementations are available online at \project{GitHub}
+Alongside this paper, we have released well tested and documented open source
+implementations written in \project{C++}, \project{Python}, and
+\project{Julia}.
+These are available online at \project{GitHub}
 \url{https://github.com/dfm/celerite} and \project{Zenodo} \dfmtodo{add zenodo
 archive}.
 
@@ -259,9 +259,9 @@ archive}.
 
 Gaussian Processes \citep[GPs;][]{Rasmussen:2006} are a class of stochastic
 models consisting of a mean function $\mu_\bvec{\theta}(\bvec{x})$ and a
-covariance or ``kernel'' function $k_\bvec{\alpha}(\bvec{x}_i,\,\bvec{x}_j)$
-parameterized by the parameters $\bvec{\theta}$ and $\bvec{\alpha}$
-respectively.
+covariance, autocorrelation, or ``kernel'' function
+$k_\bvec{\alpha}(\bvec{x}_i,\,\bvec{x}_j)$ parameterized by the parameters
+$\bvec{\theta}$ and $\bvec{\alpha}$ respectively.
 Under this model, the log-likelihood of observing a dataset
 \begin{eqnarray}
 \bvec{y} = \left(\begin{array}{ccccc}
@@ -294,17 +294,18 @@ given by $[K_\bvec{\alpha}]_{nm} = k_\bvec{\alpha}(\bvec{x}_n,\,\bvec{x}_m)$.
 The maximum likelihood values for the parameters $\bvec{\theta}$ and
 $\bvec{\alpha}$ for a given dataset $(\bvec{y},\,X)$ can be found by
 maximizing \eq{gp-likelihood} with respect to $\bvec{\theta}$ and
-$\bvec{\alpha}$ using a non-linear optimization routine \dfmtodo{examples and
-CITE}.
+$\bvec{\alpha}$ using a non-linear optimization routine \citep{Nocedal:2006}.
 Similarly, probabilistic constraints on $\bvec{\theta}$ and $\bvec{\alpha}$
 can be obtained by multiplying the likelihood by a prior
-$p(\bvec{\theta},\,\bvec{\alpha})$ and using a Markov Chain Monte Carlo (MCMC;
-\dfmtodo{CITE}) algorithm to sample from the posterior probability density.
+$p(\bvec{\theta},\,\bvec{\alpha})$ and using a Markov Chain Monte Carlo (MCMC)
+algorithm to sample from the posterior probability density.
 
-The application of GP models is generally limited to small datasets because
-the computational cost of computing the inverse and determinant of the matrix
-$K_\bvec{\alpha}$ scales as the cube of the number of data points $N$,
-$\mathcal{O}(N^3)$.
+GP models have been widely used across the physical sciences but their
+application is generally limited to small datasets because the computational
+cost of computing the inverse and determinant of the matrix $K_\bvec{\alpha}$
+is $\mathcal{O}(N^3)$.
+In other words, this cost is proportional to the cube of the number of data
+points $N$.
 This means that for large datasets, every evaluation of the likelihood will
 quickly become computationally intractable.
 In this case, standard non-linear optimization or MCMC will no longer be
@@ -413,8 +414,8 @@ S_j(\omega) = \frac{1}{\sqrt{2\,\pi}}\,\frac{a_j}{c_j}\,\left[
     \frac{1}{1+{\left(\frac{\omega+d_j}{c_j}\right)}^2}
 \right] \quad.
 \end{eqnarray}
-This PSD is the sum of two Lorentzian or Cauchy distributions with width
-$c_j$ centered on $\omega = \pm d_j$.
+This is the sum of two Lorentzian or Cauchy distributions with width $c_j$
+centered on $\omega = \pm d_j$.
 This model can be interpreted intuitively as a quasiperiodic oscillator with
 amplitude $A_j = a_j$, quality factor $Q_j = d_j\,{(2\,c_j)}^{-1}$, and period
 $P_j = 2\,\pi\,{d_j}^{-1}$.
@@ -430,7 +431,7 @@ S_j(\omega) = \sqrt{\frac{2}{\pi}}\,\frac{a_j}{c_j}\,
     \frac{1}{1+{\left(\frac{\omega}{c_j}\right)}^2} \quad.
 \end{eqnarray}
 
-It's worth noting that the product of two terms of the form found inside the
+Finally, we note that the product of two terms of the form found inside the
 sum in \eq{celerite-kernel} can also be re-written as a sum with updated
 parameters
 \begin{eqnarray}\eqlabel{product-rule}
@@ -447,15 +448,14 @@ where
     \tilde{c} &=& c_j + c_k \\
     \tilde{d}_{\pm} &=& d_j \mp d_k \quad.
 \end{eqnarray}
+Therefore, the method described in the following section can be used to scale
+inferences to large datasets for any model where the kernel function is a
+general sum or product of \celerite\ terms.
 
 \section{Implementation \& performance}
 
 \citet{Rybicki:1995} demonstrated that the inverse of a matrix $K$ where the
-elements are given by
-\begin{eqnarray}
-K_{nm} = k(\tau_{nm})
-\end{eqnarray}
-for $k(\tau_{nm})$ given by equation \eq{kernel-simple} could be computed
+elements are given by equation \eq{kernel-simple} could be computed
 efficiently by taking advantage of the structure of this covariance function
 and \citet{Ambikasaran:2015} generalized this computation to apply to the full
 mixture of $J$ terms in \eq{celerite-kernel-complex} and derived an equally
@@ -463,8 +463,8 @@ efficient method for computing the determinant of $K$.
 
 \subsection{An example}
 
-To provide some insight for this method, we will start by working through a
-simple example.
+To provide some insight for this method, we will follow
+\citet{Ambikasaran:2015} and start by working through a simple example.
 In this case, we'll assume that we have three data points
 $\{y_1,\,y_2,\,y_3\}$ observed at times $\{t_1,\,t_2,\,t_3\}$ with measurement
 variances $\{{\sigma_1}^2,\,{\sigma_2}^2,\,{\sigma_3}^2\}$ and we would
@@ -473,8 +473,9 @@ covariance function
 \begin{eqnarray}
 k(\tau_{nm}) = \sigma_n^2\,\delta_{nm} + a\,\exp(-c\,\tau_{nm})\quad.
 \end{eqnarray}
-This function is identical to \eq{celerite-kernel-complex} with $J=1$, $b=0$,
-and $d=0$.
+This is the result of setting $J=1$, $b=0$, and $d=0$ in
+\eq{celerite-kernel-complex} and this is the model that was studied by
+\citet{Rybicki:1995}.
 To demonstrate this method, we will write out the full system of
 equations that we must solve to apply the inverse of $K$ in order to compute
 the first term of \eq{gp-likelihood}.
@@ -538,11 +539,11 @@ system and rewrite \eq{impl-matrix} as
 \begin{eqnarray}
     K_\mathrm{ext}\,\bvec{z}_\mathrm{ext} &=& \bvec{y}_\mathrm{ext} \quad.
 \end{eqnarray}
-Even though $K_\mathrm{ext}$ is a larger matrix than the original $K$ that we
-started with, it is now has a sparse banded structure that can be exploited to
-solve the system efficiently.
-In particular, band matrix solvers are available that can perform an
-LU-decomposition of banded matrices like this in $\mathcal{O}(N)$
+Even though $K_\mathrm{ext}$ is a larger matrix than the $K$ that we started
+with, it is now sparse with banded structure that can be exploited to solve
+the system efficiently.
+In particular, sparse solvers are available that can perform a
+LU-decomposition of matrices like this in $\mathcal{O}(N)$
 operations~--~instead of the $\mathcal{O}(N^3)$ that would be required in
 general~--~and we can take advantage of these algorithms to solve our system
 exactly because the target vector $\bvec{z}$ is a subset of the elements of
@@ -757,7 +758,7 @@ libraries.
 \dfmtodo{Add more intro to this section.}
 
 A special case of the \celerite\ model of great physical interest is a
-stochastically-driven simple harmonic oscillator.
+stochastically-driven damped simple harmonic oscillator.
 The differential equation for this system is
 \begin{equation}
     \left[\frac{\dd^2}{\dd t^2} + \frac{\omega_0}{Q}\,\frac{\dd}{\dd t}
@@ -766,8 +767,8 @@ The differential equation for this system is
 where $\omega_0$ is the frequency of the undamped oscillator, $Q$ is the
 quality factor of the oscillator, and $\epsilon(t)$ is a stochastic driving
 force.
-In the limit of an infinite time series and white random forcing, the PSD of
-this equation is given by \citep{Anderson:1990}
+If $\epsilon(t)$ is white noise, the PSD of this process is given by
+\citep[for example][]{Anderson:1990}
 \begin{equation}\eqlabel{sho-psd}
 S(\omega) = \sqrt{\frac{2}{\pi}}\,\frac{S_0\,\omega_0^4}
     {(\omega^2-\omega_0^2)^2 + \omega_0^2\omega^2/Q^2}
@@ -866,9 +867,9 @@ k(\tau) \approx
 \end{itemize}
 \Figure{sho} shows a plot of the PSD for these limits and several other values
 of $Q$.
-This figure demonstrates that for $Q \le 1/2$, the model has no oscillatory
-behavior and that for large $Q$, the shape of the PSD near the peak frequency
-approaches a Lorentzian.
+From this figure, it is clear that for $Q \le 1/2$, the model has no
+oscillatory behavior and that for large $Q$, the shape of the PSD near the
+peak frequency approaches a Lorentzian.
 
 These special cases demonstrate that the stochastically-driven simple harmonic
 oscillator provides a physically motivated model that is flexible enough to
@@ -1027,35 +1028,42 @@ framework (\dfmtodo{CITE Ian C}).
 \subsection{Asteroseismic oscillations}
 
 The asteroseismic oscillations of thousands of stars were measured using light
-curves from the \kepler\ mission \citep{Gilliland:2010,Chaplin:2011,Chaplin:2013,Stello:2013}
-and asteroseismology is a
-key science driver for many of the upcoming large scale photometric surveys
-\citep{Campante:2016,Rauer:2014,Gould:2015}.
+curves from the \kepler\ mission \citep{Gilliland:2010, Chaplin:2011,
+Chaplin:2013, Stello:2013} and asteroseismology is a key science driver for
+many of the upcoming large scale photometric surveys \citep{Campante:2016,
+Rauer:2014, Gould:2015}.
 Most asteroseismic analyses have been limited to relatively high
 signal-to-noise oscillations because the standard methods based on statistics
 of the empirical periodogram of the data cannot be used to formally propagate
 the measurement uncertainties to the constraints on physical parameters
-(\dfmtodo{CITE}) and more sophisticated methods are computationally expensive
-and they scale poorly to the current state-of-the-art datasets \citep{Brewer:2009}.
+(\dfmtodo{CITE}) but more sophisticated methods that compute the likelihood
+function in the time domain scale poorly to state-of-the-art datasets
+\citep{Brewer:2009}.
 
 \celerite\ alleviates these problems by providing a physically motivated
 probabilistic model that can be evaluated efficiently even for large datasets.
-In practice, we will model the star as a mixture of stochastically driven
+In practice, one would model the star as a mixture of stochastically-driven
 simple harmonic oscillators where the amplitudes and frequencies of the
 oscillations are computed using a physical model and evaluate the probability
-of the observed dataset using a Gaussian Process with a PSD given by a sum of
-terms given by \eq{sho-psd}.
+of the observed dataset using a GP where the PSD is a sum of terms given by
+\eq{sho-psd}.
 This gives us a method of computing the likelihood function for the parameters
-of the physical model in $\mathcal{O}(N)$ operations and this can be combined
-with standard non-linear optimization or posterior sampling methods to infer
-constraints on the parameters for the given dataset.
+of the physical model (for example, $\nu_\mathrm{max}$ and $\Delta \nu$)
+\emph{conditioned on the observed time series} in $\mathcal{O}(N)$ operations.
+In other words, this provides us with a computationally efficient method for
+performing rigorous probabilistic inference of asteroseismic parameters in the
+time domain.
+We expect that this has the potential to push asteroseismic analysis to lower
+signal-to-noise datasets and we hope to revisit this idea in a subsequent
+paper.
 
 To demonstrate this method, we will use a very simple heuristic model based on
-\dfmtodo{CITE} where the model PSD is given by a mixture of 8 components with
+\dfmtodo{CITE} where the model PSD is given by a mixture of 9 components with
 amplitudes and frequencies specified by $\nu_\mathrm{max}$, $\Delta \nu$, and
 several nuisance parameters.
-The first term is used to capture the granulation ``background'' using
-\eq{granulation-psd} with two free parameters $S_g$ and $\omega_g$.
+The first two terms are used to capture the granulation ``background''
+\citep{Kallinger:2014} using \eq{granulation-psd} with two free parameters
+$S_g$ and $\omega_g$ in each term.
 The remaining  7 terms are given by \eq{sho-psd} where $Q$ is a nuisance
 parameter shared between terms and the frequencies are given by
 \begin{eqnarray}
@@ -1083,8 +1091,8 @@ Looking forward to \tess\ \citep{Campante:2016}, we will infer
 $\nu_\mathrm{max}$ and $\Delta\nu$ using only one month of \kepler\ data and
 compare our results to the results inferred from the full 4 year baseline of
 the \kepler\ mission.
-For KIC~11615890, the published asteroseismic parameters based on the full
-dataset are \citep{Pinsonneault:2014}
+For KIC~11615890, the published asteroseismic parameters based on several
+years of \kepler\ observations are \citep{Pinsonneault:2014}
 \begin{eqnarray}
     \nu_\mathrm{max} = 171.94 \pm 3.62 \,\mu\mathrm{Hz} \quad\mathrm{and}\quad
     \Delta\nu = 13.28 \pm 0.29 \,\mu\mathrm{Hz} \quad.
@@ -1112,7 +1120,7 @@ and $\Delta\nu$ compared to the results from the literature.
 \begin{center}
 \includegraphics[width=0.9\textwidth]{figures/astero-11615890-comparisons.pdf}
 \caption{A comparison between the empirical PSD and the posterior inference of
-the PSD as a mixture of stochastically driven simple harmonic oscillators.
+the PSD as a mixture of stochastically-driven simple harmonic oscillators.
 (top) The periodogram of the \kepler\ light curve for KIC~11615890 computed
     on the full four year baseline of the mission.
     The light gray curve shows the raw periodogram and the black curve has
