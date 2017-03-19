@@ -1256,9 +1256,9 @@ variability.
 \includegraphics[width=\textwidth]{figures/transit-ml.pdf}
     \caption{\emph{(top)} A month-long segment of \kepler\ light curve for
     KIC~1430163 with a synthetic transit model injected (black points) and the
-    maximum likelihood model for the stellar variability and the transit model
+    maximum likelihood model for the stellar variability
     (blue line).
-    \emph{(bottom)} The maximum likelihood ``de-trendeding'' of the data in
+    \emph{(bottom)} The maximum likelihood ``de-trending'' of the data in
     the top panel.
     In this panel, the maximum likelihood model for the stellar variability
     has been subtracted to leave only the transits.
@@ -1595,7 +1595,6 @@ with git commit \texttt{\githash} (\gitdate).
 
 \acknowledgments
 It is a pleasure to thank
-Sivaram Ambikasaran,
 Megan Bedell,
 Will Farr,
 Sam Grunblatt,
@@ -1638,7 +1637,28 @@ NNX13AC07G and by other grants and contracts.
 
 \appendix
 
-\section{Ensuring positive definiteness: Sturm's theorem}
+\section{Ensuring positive definiteness}
+
+For a GP kernel to be valid, it must produce a positive definite covariance
+matrix for all input coordinates.
+For stationary kernels, this is equivalent~--~by Bochner's theorem \citep[see
+Section 4.2.1 in][]{Rasmussen:2006}~--~to requiring that the kernel be the
+Fourier transform of a positive finite measure.
+This means that the power spectrum of a positive definite kernel must be
+positive for all frequencies.
+
+Using \eq{celerite-psd}, we find that for a single \celerite\ term, this
+requirement is met when
+\begin{eqnarray}\eqlabel{psd-req}
+\frac{(a_j\,c_j+b_j\,d_j)\,({c_j}^2+{d_j}^2)+(a_j\,c_j-b_j\,d_j)\,\omega^2}
+{\omega^4+2\,({c_j}^2-{d_j}^2)\,\omega^2+{({c_j}^2+{d_j}^2)}^2} > 0 \quad.
+\end{eqnarray}
+The denominator is positive for all $c_j \ne 0$ and it can be shown that, when
+$c_j=0$, \eq{psd-req} is satisfied for all $\omega \ne d_j$ where the power is
+identically zero.
+Therefore, when $c_j \ne 0$, we require that the numerator is positive for all
+$\omega$.
+
 
 The power spectrum is computed from taking the square of the Fourier transform
 of the data time series; hence, the power-spectrum must be non-negative.  In
