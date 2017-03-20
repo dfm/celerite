@@ -169,21 +169,19 @@ to astronomical time series
 
 \begin{abstract}
 
-\dfmtodo{Make this less douchey:}
-In the current era of large-scale time domain astronomy, scalable methods for
-probabilistic inference are of great interest.
+The growing field of large-scale time domain astronomy requires methods for
+probabilistic inference that scale well with amount of data.
 We present a method for Gaussian Process regression in one dimension with a
 computational cost that scales linearly with the size of the dataset.
 This method exploits structure in the problem when the covariance function is
-expressed as a mixture of complex exponentials but it does not require evenly
-spaced observations or homoscedastic noise.
-This form of the covariance arises naturally when the process is a mixture of
+expressed as a mixture of complex exponentials, without requiring evenly
+spaced observations or uniform noise.
+This form of covariance arises naturally when the process is a mixture of
 stochastically-driven damped harmonic oscillators~--~providing a physical
 motivation for and interpretation of this choice~--~but we also demonstrate
-that this function can also be a sufficient effective model in many other
-cases.
-We present a mathematical description of the method, details of the
-implementation, and compare it to existing scalable Gaussian Process methods.
+that it is effective in many other cases.
+We present a mathematical description of the method, the details of the
+implementation, and a comparison to existing scalable Gaussian Process methods.
 We demonstrate the application of this method by applying it to simulated and
 real astronomical time series datasets.
 These demonstrations are examples of probabilistic inference of stellar
@@ -240,7 +238,7 @@ For this method to be applicable, the data must be one-dimensional and the
 covariance function must have a specific form.
 However, there is no further constraint on the data or the model.
 In particular, the measurements don't need to be evenly spaced and the
-uncertainties can be heteroscedastic.
+uncertainties can be heteroscedastic (non-uniform).
 This method is especially appealing compared to other similar methods~--~we
 will return to these below~--~because it is exact, flexible, simple, and fast.
 
@@ -1645,7 +1643,9 @@ For stationary kernels, this is equivalent~--~by Bochner's theorem \citep[see
 Section 4.2.1 in][]{Rasmussen:2006}~--~to requiring that the kernel be the
 Fourier transform of a positive finite measure.
 This means that the power spectrum of a positive definite kernel must be
-positive for all frequencies.
+positive for all frequencies.  This seems true intuitively:  since the
+power spectrum is the square of the Fourier transform of the data time
+series, it must be non-negative.
 
 Using \eq{celerite-psd}, we find that for a single \celerite\ term, this
 requirement is met when
@@ -1659,22 +1659,22 @@ identically zero.
 Therefore, when $c_j \ne 0$, we require that the numerator is positive for all
 $\omega$.
 
-
-The power spectrum is computed from taking the square of the Fourier transform
-of the data time series; hence, the power-spectrum must be non-negative.  In
-constructing a kernel, if any of the parameters $a_j$ or $b_j$ are negative,
-then it is possible for the power spectrum to go negative, which violates the
-definition of the power spectrum.
-Consequently, if any of these coefficients is negative, it is necessary to
-check that the power spectrum is still non-negative.  Note that a non-negative
-power-spectrum does not require the auto-correlation
-function to be positive for all $\tau$.  The positive power spectrum is
-related to the positive eigenvalues of the covariance matrix which are
-necessary for a positive-definite matrix in limiting cases
-\citep{Messerschmitt:2006}.  We find empirically that requiring an everywhere
-positive power spectrum results in positive eigenvalues for the covariance
-matrix, and so we describe here how to ensure a positive power spectrum using
-Sturm's theorem.
+%The general case with multiple \celerite\ terms can be checked using Sturm's
+%theorem. The power spectrum is computed from taking the square of the Fourier 
+%transform of the data time series; hence, the power-spectrum must be non-negative.  
+%In constructing a kernel, if any of the parameters $a_j$ or $b_j$ are negative,
+%then it is possible for the power spectrum to go negative, which violates the
+%definition of the power spectrum.
+%Consequently, if any of these coefficients is negative, it is necessary to
+%check that the power spectrum is still non-negative.  Note that a non-negative
+%power-spectrum does not require the auto-correlation
+function to be positive for all $\tau$.  %The positive power spectrum is
+%related to the positive eigenvalues of the covariance matrix which are
+%necessary for a positive-definite matrix in limiting cases
+%\citep{Messerschmitt:2006}.  %We find empirically that requiring an everywhere
+%positive power spectrum results in positive eigenvalues for the covariance
+%matrix, and so we describe here how to ensure a positive power spectrum using
+%Sturm's theorem.
 %Relation of positive power spectrum to positive definite covariance matrix.
 %Power spectrum of a sum of kernels.
 
