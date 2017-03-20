@@ -1643,9 +1643,10 @@ For stationary kernels, this is equivalent~--~by Bochner's theorem \citep[see
 Section 4.2.1 in][]{Rasmussen:2006}~--~to requiring that the kernel be the
 Fourier transform of a positive finite measure.
 This means that the power spectrum of a positive definite kernel must be
-positive for all frequencies.  This seems true intuitively:  since the
-power spectrum is the square of the Fourier transform of the data time
-series, it must be non-negative.
+positive for all frequencies.
+This result is also intuitive because, since the power spectrum of a process
+is defined as expected the squared amplitude of the Fourier transform of the
+time series, it must be non-negative.
 
 Using \eq{celerite-psd}, we find that for a single \celerite\ term, this
 requirement is met when
@@ -1660,8 +1661,8 @@ Therefore, when $c_j \ne 0$, we require that the numerator is positive for all
 $\omega$.
 
 %The general case with multiple \celerite\ terms can be checked using Sturm's
-%theorem. The power spectrum is computed from taking the square of the Fourier 
-%transform of the data time series; hence, the power-spectrum must be non-negative.  
+%theorem. The power spectrum is computed from taking the square of the Fourier
+%transform of the data time series; hence, the power-spectrum must be non-negative.
 %In constructing a kernel, if any of the parameters $a_j$ or $b_j$ are negative,
 %then it is possible for the power spectrum to go negative, which violates the
 %definition of the power spectrum.
