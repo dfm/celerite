@@ -341,7 +341,7 @@ k_\bvec{\alpha}(\tau_{nm}) = \sigma_n^2\,\delta_{nm} + a\,\exp(-c\,\tau_{nm})
 where $\{{\sigma_n}^2\}_{n=1}^N$ are the measurement uncertainties,
 $\delta_{nm}$ is the Kronecker delta, and $\bvec{\alpha} = (a,\,c)$.
 The intuition behind this method is that, for this choice of $k_\bvec{\alpha}$,
-the inverse of $K_\bvec{\alpha}$ is tridiagonal and can it can be computed
+the inverse of $K_\bvec{\alpha}$ is tridiagonal and can be computed
 with a small number of operations for each data point.
 Subsequently, \citet{Ambikasaran:2015} generalized this method to arbitrary
 mixtures of exponentials
@@ -637,7 +637,7 @@ and
 {\bvec{r}_\mathrm{ext}} ^\T =
 \left(\begin{array}{cccccccccc}
     r_{\bvec{\theta},1} & 0 & 0 & 0 & 0 & r_{\bvec{\theta},2} &
-    0 & \cdots & 0 & r_{\bvec{\theta},2}
+    0 & \cdots & 0 & r_{\bvec{\theta},N}
 \end{array}\right) \quad.
 \end{eqnarray}
 After constructing the extended matrix (using a compact storage format), the
@@ -662,7 +662,7 @@ in the legend.
 
 \subsection{Implementation considerations \& scaling}
 
-The extended system defined in the previous section is sparse with fewer than
+The extended system defined in the previous section is sparse with typically fewer than
 a few percent non-zero entries and band structure.
 In this \sectionname, we empirically investigate the performance and scaling
 of three different algorithms for solving this extended system:
@@ -753,9 +753,15 @@ libraries.
 
 \section{celerite as a model of stellar variations}\sectlabel{sho}
 
-\dfmtodo{Add more intro to this section.}
+We now turn to the application of the \celerite\ algorithm to astrophysical
+variability.  Many astrophysical objects have a characteristic timescale
+of variability which is determined by its physical structure. The variability
+is excited by noisy physical processes, but also damped due to dissipation 
+in the system.  As a concrete example, stellar oscillations are strong at 
+resonant frequencies determined by the internal stellar structure,
+which are excited and damped by convective turbulence.
 
-A special case of the \celerite\ model of great physical interest is a
+Thus, a special case of the \celerite\ model of great physical interest is a
 stochastically-driven damped simple harmonic oscillator.
 The differential equation for this system is
 \begin{equation}
