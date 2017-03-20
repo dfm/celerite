@@ -754,12 +754,13 @@ libraries.
 \section{celerite as a model of stellar variations}\sectlabel{sho}
 
 We now turn to the application of the \celerite\ algorithm to astrophysical
-variability.  Many astrophysical objects have a characteristic timescale
-of variability which is determined by its physical structure. The variability
-is excited by noisy physical processes, but also damped due to dissipation 
+variability.  Many astronomical objects have a characteristic timescale
+which is determined by the physical structure.  Variability
+is excited by noisy physical processes, which grows most strongly at
+the characteristic timescale, but is also damped due to dissipation 
 in the system.  As a concrete example, stellar oscillations are strong at 
 resonant frequencies determined by the internal stellar structure,
-which are excited and damped by convective turbulence.
+which are both excited and damped by convective turbulence.
 
 Thus, a special case of the \celerite\ model of great physical interest is a
 stochastically-driven damped simple harmonic oscillator.
@@ -895,7 +896,7 @@ described in the previous section.
     oscillator (\eqalt{sho-psd}) plotted for several values of the quality
     factor $Q$.
     For comparison, the dashed line shows the Lorentzian function from
-    \eq{lorentz-psd} with $c_j = \omega_0/2\,Q = 1/20$ and normalized so that
+    \eq{lorentz-psd} with $c_j = \omega_0/(2\,Q) = 1/20$ and normalized so that
     $S(d_j)/S(0) = 100$.
     (right) The corresponding autocorrelation functions with the same colors.
     \figurelabel{sho}}
