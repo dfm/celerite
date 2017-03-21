@@ -1365,16 +1365,18 @@ scaling $\mathcal{O}(N\,\log^2 N)$.
 This method has the advantage that, unlike \celerite, it can be used with any
 kernel function but, in practice, the cost can still prove to be prohibitively
 high for multi-dimensional inputs.
+The proportionality constant in the $N\,\log^2N$ scaling of the HODLR method
+is a function of the specific kernel and we find~--~using the \project{george}
+software package \citep{Foreman-Mackey:2014, Ambikasaran:2016}~--~that this
+scales approximately linearly with $J$ but with substantial overhead for small
+models when compared to \celerite.
+This means that the HODLR solver can \emph{approximately} evaluate \celerite\
+models more efficiently than \celerite\ for large models $J \gg 10$ with a
+small dataset where $N$ is smaller than a few thousand.
 
-
-Many other approximate methods for scaling GP inference exist and we will make
-no attempt to discuss the comparisons exhaustively.
-
-
-Approximate:
-- inducing point methods \citep{Quinonero-Candela:2007}
-- KISS-GP \citep{Wilson:2015, Wilson:2015a}
-- HODLR \citep{Ambikasaran:2016}
+Many other approximate methods for scaling GP inference exist \citep[see, for
+example,][and references therein]{Wilson:2015a} and we will make no attempt to
+discuss the comparisons exhaustively.
 
 
 
