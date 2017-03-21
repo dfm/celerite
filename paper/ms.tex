@@ -1233,10 +1233,10 @@ Instead, we're interested in inferring constraints on the parameters of the
 mean model.
 In \eq{gp-likelihood} these parameters are called $\bvec{\theta}$ and in this
 example, the mean function $\mu_\bvec{\theta}(t)$ is a limb-darkened transit
-light curve \dfmtodo{CITE MA} parameterized by a period $P$, a transit
+light curve \citep{Mandel:2002} parameterized by a period $P$, a transit
 duration $T$, a phase or epoch $t_0$, an impact parameter $b$, the radius
 of the planet in units of the stellar radius $R_P/R_\star$, and several
-parameters describing the limb-darkening profile of the star \dfmtodo{CITE}.
+parameters describing the limb-darkening profile of the star \citep{Claret:2011}.
 As in the previous example, we model the stellar variability using a GP model
 with a kernel given by \eq{rot-kernel}.
 
@@ -1300,7 +1300,15 @@ restrictive.
 it requires a specific choice of stationary kernel function and it can only be
 used in one-dimension.
 
-\dfmtodo{Add discussion of original R\&P method here.}
+The \celerite\ model is based upon a method developed by Press \& Rybicki twenty 
+years ago \citep{Rybicki:1995}.  They observed that a correlation matrix consisting 
+of a single exponential kernel has an inverse that is tri-diagonal;
+the coefficients and solution of a tri-diagonal matrix scale in proportion to $O(N)$.
+This method does not require an extended matrix, and thus speeds up the solution 
+by a factor of $\approx 2$ for large $N$, but 
+the requirement of an exponential kernel is extremely restrictive,
+equivalent to assuming an Ornstein--Uhlenbeck process, which tends to show sharp 
+variations in the light curve, and cannot describe quasi-periodicity.
 
 Another commonly used restrictive method uses the fact that, in the limit of
 evenly-spaced data and homoscedastic uncertainties, the covariance matrix is
@@ -1503,13 +1511,13 @@ granulation power spectrum.
 It also cannot describe quasi-periodic noise.
 
 Further progress was made by parameterizing the covariance matrix with simple,
-analytic functions that describe the autocorrelation function.  The parameters
-of these functions can then be optimized to best match the observed variability
-pattern of the residuals (after subtracting a transit model).  The disadvantage of
-this approach is that the functions used are chosen somewhat arbitrarily (e.g.\
-the exponential-squared function), and the Cholesky decomposition of the covariance
-matrix for computing the likelihood takes ${\cal O}(N^3)$ operations which prohibits
-application of this technique to large datasets.
+analytic functions that describe the autocorrelation function \citep{Gibson:2012}.  
+The parameters of these functions can then be optimized to best match the observed 
+variability pattern of the residuals (after subtracting a transit model).  The 
+disadvantage of this approach is that the functions used are chosen somewhat 
+arbitrarily (e.g.\ the exponential-squared function), and the Cholesky decomposition 
+of the covariance matrix for computing the likelihood takes ${\cal O}(N^3)$ operations 
+which prohibits application of this technique to large datasets.
 
 Given the drawbacks of these approaches, the \celerite\ formalism allows both a fast
 computation of the likelihood in ${\cal O}(N)$ time, as well as a functional form
@@ -1607,7 +1615,11 @@ David W.\ Hogg, and
 Dan Huber
 for helpful contributions to the ideas and code presented here.
 
-EA acknowledges support from NASA grants NNX13AF20G, NNX13AF62G, and
+This work was performed in part under contract with the Jet Propulsion Laboratory (JPL) 
+funded by NASA through the Sagan Fellowship Program executed by the NASA Exoplanet Science Institute.
+
+EA acknowledges support from NASA grants NNX13AF20G, NNX13A124G, NNX13AF62G, 
+from National Science Foundation (NSF) grant AST-1615315, and from
 NASA Astrobiology Institute's Virtual Planetary Laboratory, supported
 by NASA under cooperative agreement NNH05ZDA001C.
 
