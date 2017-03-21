@@ -14,21 +14,15 @@ setup(auto=True)
 
 parser = argparse.ArgumentParser()
 parser.add_argument("platform")
-parser.add_argument("--default", action="store_true")
-parser.add_argument("--lapack", action="store_true")
-parser.add_argument("--sparse", action="store_true")
+parser.add_argument("--suffix", default=None)
 parser.add_argument("--directory",
                     default=os.path.dirname(os.path.abspath(__file__)))
 args = parser.parse_args()
 
 # Compile into a matrix
 suffix = ""
-if args.default:
-    suffix = "_default"
-elif args.lapack:
-    suffix = "_lapack"
-elif args.sparse:
-    suffix = "_sparse"
+if args.suffix is not None:
+    suffix = "_" + args.suffix
 
 fn = "benchmark_{0}{1}.csv".format(args.platform, suffix)
 fn = os.path.join(args.directory, fn)

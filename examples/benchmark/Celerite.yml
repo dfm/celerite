@@ -1,0 +1,26 @@
+name: CeleriteKernel
+stationary: false
+params: [a, b, c, d]
+
+doc: A celerite term for use with the 1.0 version of george.
+
+value: |
+    double tau = fabs(x1 - x2),
+           dtau = d * tau;
+    return exp(-c*tau)*(a*cos(dtau) + b*sin(dtau));
+
+grad:
+    a: |
+        double tau = fabs(x1 - x2);
+        return exp(-c*tau)*cos(d*tau);
+    b: |
+        double tau = fabs(x1 - x2);
+        return exp(-c*tau)*sin(d*tau);
+    c: |
+        double tau = fabs(x1 - x2),
+               dtau = d * tau;
+        return -tau*exp(-c*tau)*(a*cos(dtau) + b*sin(dtau));
+    d: |
+        double tau = fabs(x1 - x2),
+               dtau = d * tau;
+        return exp(-c*tau)*(-a*tau*sin(dtau) + b*tau*cos(dtau));

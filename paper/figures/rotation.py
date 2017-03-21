@@ -5,7 +5,6 @@ from __future__ import division, print_function
 
 import kplr
 import emcee3
-import fitsio
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.optimize import minimize
@@ -72,16 +71,6 @@ kernel = RotationTerm(
         [-5.0, 5.0],
     ]
 )
-# kernel += terms.SHOTerm(log_S0=np.log(np.var(y)),
-#                         log_omega0=np.log(2*np.pi/10.0),
-#                         log_Q=-0.5*np.log(2),
-#                         bounds=dict(log_omega0=(np.log(2*np.pi)-np.log(t.max() -
-#                                                                   t.min()),
-#                                                 np.log(2*np.pi)-np.log(10.0)),
-#                                     log_S0=np.log(np.var(y) * np.array([0.01, 1])),
-#                                     ))
-# kernel.terms[1].freeze_parameter("log_Q")
-# kernel.terms[1].freeze_parameter("log_a")
 gp = celerite.GP(kernel, mean=np.median(y))
 gp.compute(t, yerr)
 
