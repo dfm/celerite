@@ -341,7 +341,7 @@ k_\bvec{\alpha}(\tau_{nm}) = \sigma_n^2\,\delta_{nm} + a\,\exp(-c\,\tau_{nm})
 where $\{{\sigma_n}^2\}_{n=1}^N$ are the measurement uncertainties,
 $\delta_{nm}$ is the Kronecker delta, and $\bvec{\alpha} = (a,\,c)$.
 The intuition behind this method is that, for this choice of $k_\bvec{\alpha}$,
-the inverse of $K_\bvec{\alpha}$ is tridiagonal and can it can be computed
+the inverse of $K_\bvec{\alpha}$ is tridiagonal and can be computed
 with a small number of operations for each data point.
 Subsequently, \citet{Ambikasaran:2015} generalized this method to arbitrary
 mixtures of exponentials
@@ -637,7 +637,7 @@ and
 {\bvec{r}_\mathrm{ext}} ^\T =
 \left(\begin{array}{cccccccccc}
     r_{\bvec{\theta},1} & 0 & 0 & 0 & 0 & r_{\bvec{\theta},2} &
-    0 & \cdots & 0 & r_{\bvec{\theta},2}
+    0 & \cdots & 0 & r_{\bvec{\theta},N}
 \end{array}\right) \quad.
 \end{eqnarray}
 After constructing the extended matrix (using a compact storage format), the
@@ -662,7 +662,7 @@ in the legend.
 
 \subsection{Implementation considerations \& scaling}
 
-The extended system defined in the previous section is sparse with fewer than
+The extended system defined in the previous section is sparse with typically fewer than
 a few percent non-zero entries and band structure.
 In this \sectionname, we empirically investigate the performance and scaling
 of three different algorithms for solving this extended system:
@@ -753,9 +753,16 @@ libraries.
 
 \section{celerite as a model of stellar variations}\sectlabel{sho}
 
-\dfmtodo{Add more intro to this section.}
+We now turn to the application of the \celerite\ algorithm to astrophysical
+variability.  Many astronomical objects have a characteristic timescale
+which is determined by the physical structure.  Variability
+is excited by noisy physical processes, which grows most strongly at
+the characteristic timescale, but is also damped due to dissipation 
+in the system.  As a concrete example, stellar oscillations are strong at 
+resonant frequencies determined by the internal stellar structure,
+which are both excited and damped by convective turbulence.
 
-A special case of the \celerite\ model of great physical interest is a
+Thus, a special case of the \celerite\ model of great physical interest is a
 stochastically-driven damped simple harmonic oscillator.
 The differential equation for this system is
 \begin{equation}
@@ -889,7 +896,7 @@ described in the previous section.
     oscillator (\eqalt{sho-psd}) plotted for several values of the quality
     factor $Q$.
     For comparison, the dashed line shows the Lorentzian function from
-    \eq{lorentz-psd} with $c_j = \omega_0/2\,Q = 1/20$ and normalized so that
+    \eq{lorentz-psd} with $c_j = \omega_0/(2\,Q) = 1/20$ and normalized so that
     $S(d_j)/S(0) = 100$.
     (right) The corresponding autocorrelation functions with the same colors.
     \figurelabel{sho}}
@@ -1036,7 +1043,7 @@ of the empirical periodogram of the data cannot be used to formally propagate
 the measurement uncertainties to the constraints on physical parameters
 (\dfmtodo{CITE}) but more sophisticated methods that compute the likelihood
 function in the time domain scale poorly to state-of-the-art datasets
-\citep{Brewer:2009}.
+\citep{Brewer:2009,Corsaro:2014}.
 
 \celerite\ alleviates these problems by providing a physically motivated
 probabilistic model that can be evaluated efficiently even for large datasets.
@@ -1085,7 +1092,7 @@ The goal of this example is to show that, even for a low signal-to-noise
 dataset with a short baseline, it is possible to infer asteroseismic
 parameters with formal uncertainties that are consistent with the parameters
 inferred with a much larger dataset.
-Looking forward to \tess\ \citep{Campante:2016}, we will infer
+Looking forward to \tess\ \citep{Ricker:2014,Campante:2016}, we will infer
 $\nu_\mathrm{max}$ and $\Delta\nu$ using only one month of \kepler\ data and
 compare our results to the results inferred from the full 4 year baseline of
 the \kepler\ mission.
@@ -1138,10 +1145,10 @@ Another source of variability that can be measured from time series
 measurements of stars is rotation.
 The inhomogeneous surface of the star (spots, plage, \etc) imprints itself as
 quasiperiodic variations in photometric or spectroscopic observations
-(\dfmtodo{CITE}).
+\citep{Dumusque:2014}.
 It has been demonstrated that for light curves with nearly uniform sampling,
 the empirical autocorrelation function provides a reliable estimate of the
-rotation period of a star (\dfmtodo{CITE}) and that a GP model with a
+rotation period of a star \citep{Aigrain:2015} and that a GP model with a
 quasiperiodic covariance function can be used to make probabilistic
 measurements even with sparsely sampled data (R.~Angus, \etal\ in prep.).
 The covariance function used for this type of analysis has the form
@@ -1226,10 +1233,10 @@ Instead, we're interested in inferring constraints on the parameters of the
 mean model.
 In \eq{gp-likelihood} these parameters are called $\bvec{\theta}$ and in this
 example, the mean function $\mu_\bvec{\theta}(t)$ is a limb-darkened transit
-light curve \dfmtodo{CITE MA} parameterized by a period $P$, a transit
+light curve \citep{Mandel:2002} parameterized by a period $P$, a transit
 duration $T$, a phase or epoch $t_0$, an impact parameter $b$, the radius
 of the planet in units of the stellar radius $R_P/R_\star$, and several
-parameters describing the limb-darkening profile of the star \dfmtodo{CITE}.
+parameters describing the limb-darkening profile of the star \citep{Claret:2011}.
 As in the previous example, we model the stellar variability using a GP model
 with a kernel given by \eq{rot-kernel}.
 
@@ -1293,7 +1300,15 @@ restrictive.
 it requires a specific choice of stationary kernel function and it can only be
 used in one-dimension.
 
-\dfmtodo{Add discussion of original R\&P method here.}
+The \celerite\ model is based upon a method developed by Press \& Rybicki twenty 
+years ago \citep{Rybicki:1995}.  They observed that a correlation matrix consisting 
+of a single exponential kernel has an inverse that is tri-diagonal;
+the coefficients and solution of a tri-diagonal matrix scale in proportion to $O(N)$.
+This method does not require an extended matrix, and thus speeds up the solution 
+by a factor of $\approx 2$ for large $N$, but 
+the requirement of an exponential kernel is extremely restrictive,
+equivalent to assuming an Ornstein--Uhlenbeck process, which tends to show sharp 
+variations in the light curve, and cannot describe quasi-periodicity.
 
 Another commonly used restrictive method uses the fact that, in the limit of
 evenly-spaced data and homoscedastic uncertainties, the covariance matrix is
@@ -1447,43 +1462,45 @@ Approximate:
 
 \section{Summary}
 
-Although we have in mind applications of this fast method to model stellar
-variability, the method is general for one-dimensional GP problems, and may be
-applied to other problems.
-Accreting black holes show time series which may be modeled by correlated
-noise \citep{Kelly:2014};  indeed, this was the motivation for the original
-technique developed by Rybicki \& Press \citep{Rybicki:1992,Rybicki:1995}.
-This approach may be broadly used for characterizing quasar variability
-\citep{MacLeod:2010}, measuring time lags with reverberation mapping
-\citep{Zu:2011,Pancoast:2014}, and modeling time delays in multiply-imaged
-gravitationally-lensed systems \citep{Press:1998}.
+The computational burden of Gaussian process regression has limited its application
+to small astronomical time series.  With the linear scaling of \celerite\, we
+envision the application of Gaussian processes may be expanded to much larger 
+datasets.  Despite the restrictive form of the \celerite\ kernel, with a 
+sufficient number of components it is flexible enough to describe a wide 
+range of astrophysical variability.  In fact, the relation of the \celerite\ kernel 
+to the damped, driven harmonic oscillator matches simple models of astrophysical 
+variability, and makes the parameterization interpretable in terms of resonant 
+frequency, amplitude, and quality factor.  Perhaps the most significant drawback 
+is the $J^2$ scaling of the solver;  however, for many problems a small value of $J$ 
+suffices.
 
-Outside of astronomy, this technique may have application to seismology
-\citep{Robinson:1967},
+We envision two general varieties of applications:  those interested in the
+the \celerite\ kernel parameters (so-called ``hyper-parameters") which describe the
+astrophysical variability, versus those interested in characterizing the mean 
+model, treating the correlated noise as a nuisance.  Some users may
+be interested in both applications, while other problems may require interpolation
+or extrapolation beyond the dataset that is being modeled.
 
-There are three primary applications we envision for the \celerite\ formalism:
-1).\ modeling the variability of an astrophysical system to infer it
-properties; 2).\ accounting for astrophysical variability as a source of noise
-when trying to detect additional phenomena; 3).\ interpolating or
-extrapolating variability to future or missing times.
-Some examples of the first are determining the characteristic variability
-timescale of a quasar \citep{Kelly:2014}, measuring the asteroseismic
-variation of a star \citep{Brewer:2009,Corsaro:2014}, measurement of
-granulation noise \citep{Bastien:2013,Kallinger:2016}, detection of
-quasi-periodic variability in a high-energy source \citep{McAllister:2016}, or
-classification of variable objects \citep{Zinn:2016}.
-Examples of the second are detecting and characterizing transiting exoplanets
-\citep[for example,][]{Gibson:2012, Barclay:2015, Evans:2015, Aigrain:2016,
-Grunblatt:2016, Luger:2016}
-and correcting for stellar activity in radial velocity measurements
-\citep[for example,][]{Haywood:2014, Rajpaul:2015}.
-Examples of the third are measuring time delays in multiply-imaged
-gravitationally lensed sources \citep{Tewes:2013} and reverberation mapping of
-AGN.
+%Some examples of the first are determining the characteristic variability
+%timescale of a quasar \citep{Kelly:2014}, measuring the asteroseismic
+%variation of a star \citep{Brewer:2009,Corsaro:2014}, measurement of
+%granulation noise \citep{Bastien:2013,Kallinger:2016}, detection of
+%quasi-periodic variability in a high-energy source \citep{McAllister:2016}, or
+%classification of variable objects \citep{Zinn:2016}.
+%Examples of the second are detecting and characterizing transiting exoplanets
+%\citep[for example,][]{Gibson:2012, Barclay:2015, Evans:2015, Aigrain:2016,
+%Grunblatt:2016, Luger:2016}
+%and correcting for stellar activity in radial velocity measurements
+%\citep[for example,][]{Haywood:2014, Rajpaul:2015}.
+%Examples of the third are measuring time delays in multiply-imaged
+%gravitationally lensed sources \citep{Tewes:2013} and reverberation mapping of
+%AGN.
 
 Our background is in studying transiting exoplanets, a field which has only
 recently begun to adopt full covariance matrices in analyzing the noise in
-transiting planet lightcurves.
+stellar lightcurves when detecting or characterizing transiting planets
+\citep[for example,][]{Gibson:2012, Barclay:2015, Evans:2015, Aigrain:2016, 
+Grunblatt:2016, Luger:2016}.
 One promising early attempt at accounting for correlated noise was the wavelet
 approach of \citet{Carter:2009}.
 Their technique allowed for a power-law spectrum for the noise scaling as
@@ -1492,17 +1509,16 @@ physically-accurate, description of stellar variability.
 Their approach runs in ${\cal O}(N)$ time for $\alpha=1$, which is referred to
 as `flicker', $1/r$, or pink noise;  however, this particular type of noise
 overpredicts the power spectrum at low frequency compared to the Solar
-granulation power spectrum.
-It also cannot describe quasi-periodic noise.
+granulation power spectrum.  It also cannot describe quasi-periodic noise.
 
 Further progress was made by parameterizing the covariance matrix with simple,
-analytic functions that describe the autocorrelation function.  The parameters
-of these functions can then be optimized to best match the observed variability
-pattern of the residuals (after subtracting a transit model).  The disadvantage of
-this approach is that the functions used are chosen somewhat arbitrarily (e.g.\
-the exponential-squared function), and the Cholesky decomposition of the covariance
-matrix for computing the likelihood takes ${\cal O}(N^3)$ operations which prohibits
-application of this technique to large datasets.
+analytic functions that describe the autocorrelation function \citep{Gibson:2012}.  
+The parameters of these functions can then be optimized to best match the observed 
+variability pattern of the residuals (after subtracting a transit model).  The 
+disadvantage of this approach is that the functions used are chosen somewhat 
+arbitrarily (e.g.\ the exponential-squared function), and the Cholesky decomposition 
+of the covariance matrix for computing the likelihood takes ${\cal O}(N^3)$ operations 
+which prohibits application of this technique to large datasets.
 
 Given the drawbacks of these approaches, the \celerite\ formalism allows both a fast
 computation of the likelihood in ${\cal O}(N)$ time, as well as a functional form
@@ -1514,6 +1530,23 @@ correct inference of planetary transit parameters, and so we expect that \celeri
 will be important for transit timing, transit spectroscopy, Doppler beaming,
 phase functions, and more.
 
+Although we have in mind applications of this fast method to model stellar
+variability, the method is general for one-dimensional GP problems, and may be
+applied to other problems.
+Accreting black holes show time series which may be modeled by correlated
+noise \citep{Kelly:2014};  indeed, this was the motivation for the original
+technique developed by Rybicki \& Press \citep{Rybicki:1992,Rybicki:1995}.
+This approach may be broadly used for characterizing quasar variability
+\citep{MacLeod:2010}, measuring time lags with reverberation mapping
+\citep{Zu:2011,Pancoast:2014}, modeling time delays in multiply-imaged
+gravitationally-lensed systems \citep{Press:1998}, characterizing quasi-periodic 
+variability in a high-energy source \citep{McAllister:2016}, or
+classification of variable objects \citep{Zinn:2016}.
+Outside of astronomy, this technique may have application to terrestrial 
+seismology \citep{Robinson:1967}.
+The \celerite\ kernel may be used in lieu of a Gaussian power-spectrum for
+non-parametric data modeling \citep{Wilson:2013}.
+
 In the future we hope to expand the \celerite\ technique to multi-dimensional
 datasets.  The formalism presented could, for example, be used to model
 the covariance between multiple measured quantities, such as in regression of photometric
@@ -1521,7 +1554,9 @@ time series versus astrometric precision when correcting for systematic errors
 due to detector sensitivity variations \citep{Aigrain:2016}, in correcting
 radial velocity datasets for stellar activity \citep{Haywood:2014,Rajpaul:2015},
 or in detection of gravitational waves in the presence of systematic errors
-\citep{Moore:2016}.
+\citep{Moore:2016}.  Other extensions that may be useful are fast simulation
+of \celerite\ processes, prediction and/or interpolation of datasets, and
+extended the \celerite\ kernel to time-varying kernels.
 
 %\section{Prediction/interpolation}
 %
@@ -1600,7 +1635,11 @@ David W.\ Hogg, and
 Dan Huber
 for helpful contributions to the ideas and code presented here.
 
-EA acknowledges support from NASA grants NNX13AF20G, NNX13AF62G, and
+This work was performed in part under contract with the Jet Propulsion Laboratory (JPL) 
+funded by NASA through the Sagan Fellowship Program executed by the NASA Exoplanet Science Institute.
+
+EA acknowledges support from NASA grants NNX13AF20G, NNX13A124G, NNX13AF62G, 
+from National Science Foundation (NSF) grant AST-1615315, and from
 NASA Astrobiology Institute's Virtual Planetary Laboratory, supported
 by NASA under cooperative agreement NNH05ZDA001C.
 
