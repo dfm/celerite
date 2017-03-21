@@ -1659,6 +1659,19 @@ $c_j=0$, \eq{psd-req} is satisfied for all $\omega \ne d_j$ where the power is
 identically zero.
 Therefore, when $c_j \ne 0$, we require that the numerator is positive for all
 $\omega$.
+This requirement can also be written as
+\begin{eqnarray}
+a_j\,c_j > -b_j\,d_j \\
+a_j\,c_j > b_j\,d_j \quad.
+\end{eqnarray}
+Furthermore, we can see that $a_j$ must be positive since $k(0) = a_j$ should
+should be positive and, similarly, by requiring the covariance to be finite at
+infinite lag, we obtain the constraint $c_j \ge 0$.
+Without loss of generality, we can choose $d_j \ge 0$ and find the final
+constraint:
+\begin{eqnarray}
+    -|b_j\,d_j| < a_j\,c_j < |b_j\,d_j|
+\end{eqnarray}
 
 %The general case with multiple \celerite\ terms can be checked using Sturm's
 %theorem. The power spectrum is computed from taking the square of the Fourier
@@ -1669,7 +1682,7 @@ $\omega$.
 %Consequently, if any of these coefficients is negative, it is necessary to
 %check that the power spectrum is still non-negative.  Note that a non-negative
 %power-spectrum does not require the auto-correlation
-function to be positive for all $\tau$.  %The positive power spectrum is
+%function to be positive for all $\tau$.  %The positive power spectrum is
 %related to the positive eigenvalues of the covariance matrix which are
 %necessary for a positive-definite matrix in limiting cases
 %\citep{Messerschmitt:2006}.  %We find empirically that requiring an everywhere
@@ -1683,12 +1696,12 @@ In the case of $J$ \celerite\ terms, we can check for negative values of the
 PSD by solving for the roots of the power spectrum (see \eqalt{celerite-psd}),
 abbreviating with $z = \omega^2$:
 \begin{equation}
-S(\omega)=  \sum_{j=1}^J \frac{q_j z + r_j}{z^2+s_jz + t_j} = 0
+S(\omega)=  \sum_{j=1}^J \frac{q_j\,z + r_j}{z^2+s_j\,z + t_j} = 0
 \end{equation}
 where
 \begin{eqnarray}
-q_j &=& a_jc_j-b_jd_j\\
-r_j &=& (d_j^2+c_j^2)(b_jd_j+a_jc_j)\\
+q_j &=& a_j\,c_j-b_j\,d_j\\
+r_j &=& (d_j^2+c_j^2)(b_j\,d_j+a_j\,c_j)\\
 s_j &=& 2(c_j^2-d_j^2)\\
 t_j &=& (c_j^2+d_j^2)^2.
 \end{eqnarray}
