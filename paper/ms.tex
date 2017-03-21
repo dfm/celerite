@@ -1439,7 +1439,7 @@ Their technique allowed for a power-law spectrum for the noise scaling as
 $\omega^{-\alpha}$, which unfortunately is not a normalizable, nor
 physically-accurate, description of stellar variability.
 Their approach runs in ${\cal O}(N)$ time for $\alpha=1$, which is referred to
-as `flicker', $1/r$, or pink noise;  however, this particular type of noise
+as `flicker', $1/f$, or pink noise;  however, this particular type of noise
 overpredicts the power spectrum at low frequency compared to the Solar
 granulation power spectrum.  It also cannot describe quasi-periodic noise.
 
@@ -1487,8 +1487,13 @@ function and aliasing in datasets, and make estimating the significance of
 spectral features ambiguous.  The Bayesian approach to the estimation of a power
 spectrum (CITE) avoids these difficulties:  it allows the computation of
 uncertainties, it accounts for the window function on the uncertainties of
-the power spectrum, and in principle it can treat
-\agoltodo{Finish this\ldots}
+the power spectrum, and in principle it can treat aliases if the full posterior
+is explored.  One drawback is that the number of $J$ terms to include is
+unknown, but may be inferred with computation of the evidence, or an
+approximation such as the Bayesian information criterion \citep{Kelly:2014}.
+In general, the parameters of the \celerite\ terms are more interesting due
+to their physical meaning rather than the overall shape of the power spectrum,
+as shown in the foregoing examples.
 
 In the future we hope to expand the \celerite\ technique to multi-dimensional
 datasets.  The formalism presented could, for example, be used to model
@@ -1699,7 +1704,7 @@ roots.
 For arbitrary $J$, a procedure based upon Sturm's theorem \citep{Dorrie:1965}
 allows one to determine whether there are any real roots within the range
 $(0,\,\infty]$.
-We first construct $Q_0(z)$ and it's derivative $Q_1(z) = {Q_0}^\prime(z)$,
+We first construct $Q_0(z)$ and its derivative $Q_1(z) = {Q_0}^\prime(z)$,
 and then loop from $k=2$ to $k=2\,(J-1)+1$, computing
 \begin{eqnarray}
 Q_k(z) = -{\rm rem}(Q_{k-2},\,Q_{k-1})
