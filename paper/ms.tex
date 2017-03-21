@@ -130,7 +130,7 @@
 
 \title{%
 Fast and scalable Gaussian process modeling with applications
-to astronomical time series and power spectrum estimation
+to astronomical time series
 \vspace{-3\baselineskip}
 }
 
@@ -186,9 +186,9 @@ We demonstrate the application of this method by applying it to simulated and
 real astronomical time series datasets.
 These demonstrations are examples of probabilistic inference of stellar
 rotation periods, asteroseismic oscillation spectra, and transiting planet
-parameters.  The power spectrum of an irregularly sampled time series may be 
-estimated with Bayesian inference, with a posterior estimate of the associated 
-uncertainties, in principle avoiding the problems associated with window functions 
+parameters.  The power spectrum of an irregularly sampled time series may be
+estimated with Bayesian inference, with a posterior estimate of the associated
+uncertainties, in principle avoiding the problems associated with window functions
 and aliasing.
 The method is flexible, fast, and most importantly, interpretable.
 There are a wide range of potential applications within astronomical data
@@ -1476,7 +1476,8 @@ function and aliasing in datasets, and make estimating the significance of
 spectral features ambiguous.  The Bayesian approach to the estimation of a power
 spectrum (CITE) avoids these difficulties:  it allows the computation of
 uncertainties, it accounts for the window function on the uncertainties of
-the power spectrum, and in principle it can treat 
+the power spectrum, and in principle it can treat
+\agoltodo{Finish this\ldots}
 
 In the future we hope to expand the \celerite\ technique to multi-dimensional
 datasets.  The formalism presented could, for example, be used to model
