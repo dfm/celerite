@@ -1031,22 +1031,23 @@ favor of large homogeneous photometric surveys but these methods can similarly
 be applied to spectroscopy, where wavelength~--~instead of time~--~is the
 independent coordinate and other one-dimensional domains.
 It is also possible to cast some two-dimensional problems in the \celerite\
-framework (\dfmtodo{CITE Ian C}).
+framework \citep[see][for a potential application]{Czekala:2017}.
 
 \subsection{Asteroseismic oscillations}
 
 The asteroseismic oscillations of thousands of stars were measured using light
-curves from the \kepler\ mission \citep{Gilliland:2010, Chaplin:2011,
-Chaplin:2013, Stello:2013} and asteroseismology is a key science driver for
-many of the upcoming large scale photometric surveys \citep{Campante:2016,
-Rauer:2014, Gould:2015}.
+curves from the \kepler\ mission \citep{Gilliland:2010, Huber:2011,
+Chaplin:2011, Chaplin:2013, Stello:2013} and asteroseismology is a key science
+driver for many of the upcoming large scale photometric surveys
+\citep{Campante:2016, Rauer:2014, Gould:2015}.
 Most asteroseismic analyses have been limited to relatively high
 signal-to-noise oscillations because the standard methods based on statistics
 of the empirical periodogram of the data cannot be used to formally propagate
-the measurement uncertainties to the constraints on physical parameters
-(\dfmtodo{CITE}) but more sophisticated methods that compute the likelihood
-function in the time domain scale poorly to state-of-the-art datasets
-\citep{Brewer:2009,Corsaro:2014}.
+the measurement uncertainties to the constraints on physical
+parameters~--~instead relying on bootstrapped uncertainty estimators
+\citep{Huber:2009}~--~but more sophisticated methods that compute the
+likelihood function in the time domain scale poorly to state-of-the-art
+datasets \citep{Brewer:2009,Corsaro:2014}.
 
 \celerite\ alleviates these problems by providing a physically motivated
 probabilistic model that can be evaluated efficiently even for large datasets.
@@ -1066,7 +1067,7 @@ signal-to-noise datasets and we hope to revisit this idea in a subsequent
 paper.
 
 To demonstrate this method, we will use a very simple heuristic model based on
-\dfmtodo{CITE} where the model PSD is given by a mixture of 8 components with
+where the model PSD is given by a mixture of 8 components with
 amplitudes and frequencies specified by $\nu_\mathrm{max}$, $\Delta \nu$, and
 several nuisance parameters.
 The first term is used to capture the granulation ``background''
@@ -1111,14 +1112,24 @@ We randomly select a month-long segment of \kepler\ data, initialize our
 the full set of parameters.
 \Figure{astero-corner} shows the marginalized density for $\nu_\mathrm{max}$
 and $\Delta\nu$ compared to the results from the literature.
-\dfmtodo{Add some more discussion here.}
+
+This model requires about a minute of computation time to find the maximum
+likelihood parameters and then it takes about an hour to run the MCMC sampling
+to convergence on a dual-CPU laptop.
+This is more computationally intensive than traditional methods of measuring
+asteroseismic oscillations but is is also orders of magnitude cheaper than the
+same analysis using another GP solver.
+An in depth discussion of the benefits of rigorous probabilistic inference of
+asteroseismic parameters in the time domain is beyond the scope of this paper
+but we hope to revisit this opportunity in the future.
 
 \begin{figure}[!htbp]
 \begin{center}
 \includegraphics[width=0.8\textwidth]{figures/astero-11615890-numax_deltanu_corner.pdf}
 \caption{The probabilistic constraints on $\nu_\mathrm{max}$ and $\Delta \nu$
     from the inference shown in \Figure{astero} compared to the published
-    value (error bar) based on the full \kepler\ dataset \dfmtodo{CITE}.
+    value (error bar) based on several years of \kepler\ observations
+    \citep{Pinsonneault:2014}.
     \figurelabel{astero-corner}}
 \end{center}
 \end{figure}
@@ -1127,12 +1138,11 @@ and $\Delta\nu$ compared to the results from the literature.
 \begin{figure}[!htbp]
 \begin{center}
 \includegraphics[width=0.9\textwidth]{figures/astero-11615890-comparisons.pdf}
-\caption{A comparison between the empirical PSD and the posterior inference of
-the PSD as a mixture of stochastically-driven simple harmonic oscillators.
+\caption{A comparison between the Lomb-Scargle estimator of the PSD and the
+posterior inference of the PSD as a mixture of stochastically-driven simple
+harmonic oscillators.
 (top) The periodogram of the \kepler\ light curve for KIC~11615890 computed
     on the full four year baseline of the mission.
-    The light gray curve shows the raw periodogram and the black curve has
-    been smoothed with a Gaussian filter with \dfmtodo{SOME WIDTH}.
 (middle) The same periodogram computed using about a month of data.
 (bottom) The power spectrum inferred using the mixture of SHOs model described
     in the text and only one month of \kepler\ data.
