@@ -88,6 +88,7 @@
 \newcommand{\foreign}[1]{\emph{#1}}
 \newcommand{\etal}{\foreign{et\,al.}}
 \newcommand{\etc}{\foreign{etc.}}
+\newcommand{\ie}{\foreign{i.e.}}
 
 \newcommand{\figureref}[1]{\ref{fig:#1}}
 \newcommand{\Figure}[1]{Figure~\figureref{#1}}
@@ -304,9 +305,9 @@ $p(\bvec{\theta},\,\bvec{\alpha})$ and using a Markov Chain Monte Carlo (MCMC)
 algorithm to sample the joint posterior probability density.
 
 GP models have been widely used across the physical sciences but their
-application is generally limited to small datasets because the computational
-cost of computing the inverse and determinant of the matrix $K_\bvec{\alpha}$
-is $\mathcal{O}(N^3)$.
+application is generally limited to small datasets because the cost of
+computing the inverse and determinant of the matrix $K_\bvec{\alpha}$ is
+$\mathcal{O}(N^3)$.
 In other words, this cost is proportional to the cube of the number of data
 points $N$.
 This means that for large datasets, every evaluation of the likelihood
@@ -314,25 +315,25 @@ quickly becomes computationally intractable.
 In this case, the use of non-linear optimization or MCMC is no longer
 practical.
 
-In the following Section, we present a method of substantially improving this
+In the following Section, we present a method for substantially improving this
 scaling in many circumstances.
 We call our method and its implementations \celerite.\footnote{The name
 \celerite\ comes from the French word \foreign{c\'elerit\'e} meaning the speed
 of light in a vacuum.} The \celerite\ method requires using a specific model
-for the covariance $k_\bvec{\alpha}(\bvec{x}_n,\,\bvec{x}_m)$ and it has
-several limitations but, in subsequent sections, we demonstrate that it can be
-used to increase the computational efficiency of many astronomical data
-analysis problems.
+for the covariance $k_\bvec{\alpha}(\bvec{x}_n,\,\bvec{x}_m)$ and, although it
+has some limitations, we demonstrate in subsequent sections that it can
+increase the computational efficiency of many astronomical data analysis
+problems.
 The main limitation of this method is that it can only be applied to
-one-dimensional datasets.
-When we say ``one-dimensional'' here, it means that the \emph{input
-coordinates} $\bvec{x}_n$ are scalar, $\bvec{x}_n \equiv t_n$.\footnote{We are
-using $t$ as the input coordinate because one-dimensional GPs are often
-applied to time series data but this isn't a real restriction and the \celerite\
-method can be applied to \emph{any} one-dimensional dataset.}
-Furthermore, the covariance function for the \celerite\ method is ``stationary''.
-This means that the function $k_\bvec{\alpha}(t_n,\,t_m)$ is only a function
-of $\tau_{nm} \equiv |t_n - t_m|$.
+one-dimensional datasets, where by ``one-dimensional'' we mean that the
+ \emph{input coordinates} $\bvec{x}_n$ are scalar, $\bvec{x}_n \equiv
+t_n$.\footnote{We are using $t$ as the input coordinate because
+one-dimensional GPs are often applied to time series data but this isn't a
+real restriction and the \celerite\ method can be applied to \emph{any}
+one-dimensional dataset.}
+Furthermore, the covariance function for the \celerite\ method is
+``stationary'', \ie\ $k_\bvec{\alpha}(t_n,\,t_m)$ is only a function of
+$\tau_{nm} \equiv |t_n - t_m|$.
 
 
 \section{The celerite model}
