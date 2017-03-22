@@ -172,7 +172,7 @@ to astronomical time series
 \begin{abstract}
 
 The growing field of large-scale time domain astronomy requires methods for
-probabilistic inference that are computationally tractable even with large
+probabilistic inference that are computationally tractable, even with large
 datasets.
 We present a method for Gaussian Process regression in one dimension with a
 computational cost that scales linearly with the size of the dataset.
@@ -459,10 +459,10 @@ function is a sum or product of \celerite\ terms.
 
 \section{Implementation \& performance}
 
-\citet{Rybicki:1995} demonstrated that the inverse of a matrix $K$ where the
-elements are given by equation \eq{kernel-simple} could be computed
-efficiently by taking advantage of the structure of this covariance function
-and \citet{Ambikasaran:2015} generalized this computation to apply to the full
+\citet{Rybicki:1995} demonstrated that the inverse of a matrix $K$, with
+elements given by equation \eq{kernel-simple}, could be computed
+efficiently by taking advantage of the structure of this covariance function.
+\citet{Ambikasaran:2015} generalized this computation to apply to the full
 mixture of $J$ terms in \eq{celerite-kernel-complex} and derived an equally
 efficient method for computing the determinant of $K$.
 
@@ -479,10 +479,11 @@ covariance function
 k(\tau_{nm}) = \sigma_n^2\,\delta_{nm} + a\,\exp(-c\,\tau_{nm})\quad.
 \end{eqnarray}
 This is the result of setting $J=1$, $b=0$, and $d=0$ in
-\eq{celerite-kernel-complex} and this is the model that was studied by
+\eq{celerite-kernel-complex} and is the model studied by
 \citet{Rybicki:1995}.
-To demonstrate this method, we write out the full system of
-equations that we must solve to apply the inverse of $K$ in order to compute
+To demonstrate that the likelihood of this model can be computed in
+$\mathcal{O}(N)$, we write out the full system of
+equations that must be solved to apply the inverse of $K$ and compute
 the first term of \eq{gp-likelihood}.
 In matrix notation, this is
 \begin{eqnarray}\eqlabel{impl-matrix}
@@ -519,8 +520,8 @@ the system of equations can be rewritten as
 a\,g_1 + (a+{\sigma_2}^2)\,z_2 + e^{-c\,\tau_{3,2}}\,u_2 &=& y_2 \\
 a\,g_2 + (a+{\sigma_3}^2)\,z_3 &=& y_3 \quad. \eqlabel{algo-last}
 \end{eqnarray}
-The system defined by \eq{algo-first} through \eq{algo-last} can be
-rewritten as a matrix equation to show the benefit that this seemingly trivial
+Rewriting the system defined by \eq{algo-first} through \eq{algo-last}
+as a matrix equation shows the benefit that this seemingly trivial
 reformulation provides:
 \begin{eqnarray}
 \begin{pmatrix}
@@ -539,22 +540,22 @@ reformulation provides:
     y_1 \\ 0 \\ 0 \\ y_2 \\ 0 \\ 0 \\ y_3
 \end{pmatrix}\nonumber
 \end{eqnarray}
-where we follow \citet{Ambikasaran:2015} and call this the ``extended''
-system and rewrite \eq{impl-matrix} as
+Following \citet{Ambikasaran:2015} we call this the ``extended'' system and
+rewrite \eq{impl-matrix} as
 \begin{eqnarray}
     K_\mathrm{ext}\,\bvec{z}_\mathrm{ext} &=& \bvec{y}_\mathrm{ext} \quad.
 \end{eqnarray}
-Even though $K_\mathrm{ext}$ is a larger matrix than the $K$ that we started
+Even though $K_\mathrm{ext}$ is a larger matrix than the $K$ we started
 with, it is now sparse with banded structure that can be exploited to solve
 the system efficiently.
 In particular, sparse solvers are available that can perform a
 LU-decomposition of matrices like this in $\mathcal{O}(N)$
 operations~--~instead of the $\mathcal{O}(N^3)$ that would be required in
-general~--~and we can take advantage of these algorithms to solve our system
+general~--~and we can use these algorithms to solve our system
 exactly because the target vector $\bvec{z}$ is a subset of the elements of
 $\bvec{z}_\mathrm{ext}$.
 
-In the following section, we discuss this method more generally but it's
+In the following section we discuss this method more generally, but it's
 worth noting a few important facts that can already be seen in this example.
 First, the fundamental reason why this matrix $K$ can be solved efficiently is
 the following property of exponentials
@@ -570,18 +571,18 @@ covariance functions like the ``exponential-squared'' function
 \end{eqnarray}
 Furthermore, our derivation of the extended matrix requires that the data
 points be monotonically sorted in time.
-Neither of these properties be satisfied in general for multidimensional
+Neither of these properties will be satisfied in general for multidimensional
 inputs and all of our following discussion assumes a sorted
 one-dimensional dataset.
 
 \citet{Ambikasaran:2015} demonstrated two key facts that allow us to use this
 extended matrix formalism in practice.
 First, even if the covariance function is a mixture of exponentials, the
-extended matrix is still be banded with a bandwidth that scales linearly
-with the number of components $J$.
-Second, \citet{Ambikasaran:2015} proved that the determinant of
-$K_\mathrm{ext}$ is equal to the determinant of $K$ up to a sign.
-This means that we can use this extended matrix formalism to compute the
+extended matrix will still be banded with a bandwidth that scales linearly
+with the number of components, $J$.
+Second, \citet{Ambikasaran:2015} proved that the absolute value of the
+determinant of $K_\mathrm{ext}$ is equal to the determinant of $K$.
+This means we can use this extended matrix formalism to compute the
 marginalized likelihood in $\mathcal{O}(N)$ operations.
 
 \subsection{The algorithm}
