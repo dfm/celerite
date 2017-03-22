@@ -657,6 +657,14 @@ This decomposition can then be used to compute the determinant of $K$, solve
 $K^{-1}\,\bvec{r}_\bvec{\theta}$, and subsequently calculate the marginalized
 likelihood in \eq{gp-likelihood}.
 
+In practice, it is worth treating terms with $b_j=0$ and $d_j=0$ as a special
+case because, for this term $j$, $\psi_{n,\,j}$, $h_{n,\,j}$, and $v_{n,\,j}$
+will also be identically zero for all $n$.
+Removing these trivial rows from the extended matrix results in factor of two
+increase in the computational efficiency for these terms.
+In our implementation, we refer to ``real'' terms as those where $b_j=0$ and
+$d_j=0$, and the general terms are called ``complex''.
+
 \begin{figure}[!htbp]
 \begin{center}
 \includegraphics[width=0.7\textwidth]{figures/matrix.pdf}
@@ -1417,10 +1425,15 @@ models more efficiently than \celerite\ for large models $J \gg 10$ and
 small datasets where $N$ is smaller than a few thousand.
 
 Many other approximate methods for scaling GP inference exist \citep[see, for
-example,][and references therein]{Wilson:2015a} and we make no attempt to
-discuss the comparisons exhaustively.
-
-\dfmtodo{One more sentence in conclusion.}
+example,][and references therein]{Wilson:2015a} and we make no attempt to make
+our discussion exhaustive.
+The key take away here is that \celerite\ provides and \emph{exact} method for
+GP inference for a specific but flexible class of one-dimensional kernel
+functions.
+The closest cousin is the CARMA method with similar strengths and limitations
+but, since there is a simpler relationship between the parameters of a
+\celerite\ model and its behavior, \celerite\ can be more easily integrated
+with physical or physically interpretable models.
 
 \section{Summary}
 
