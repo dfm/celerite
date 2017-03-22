@@ -121,6 +121,7 @@
 \newcommand{\todo}[3]{{\color{#2}\emph{#1}: #3}}
 \newcommand{\dfmtodo}[1]{\todo{DFM}{red}{#1}}
 \newcommand{\agoltodo}[1]{\todo{Agol}{blue}{#1}}
+\newcommand{\racomment}[1]{{\color{magenta}#1}}
 
 
 % \shorttitle{}
@@ -327,7 +328,7 @@ problems.
 The main limitation of this method is that it can only be applied to
 one-dimensional datasets, where by ``one-dimensional'' we mean that the
  \emph{input coordinates} $\bvec{x}_n$ are scalar, $\bvec{x}_n \equiv
-t_n$.\footnote{We are using $t$ as the input coordinate because
+t_n$.\footnote{We use $t$ as the input coordinate because
 one-dimensional GPs are often applied to time series data but this isn't a
 real restriction and the \celerite\ method can be applied to \emph{any}
 one-dimensional dataset.}
@@ -373,9 +374,9 @@ k_\bvec{\alpha}(\tau_{nm}) = \sigma_n^2\,\delta_{nm} +
 \right]
 \end{eqnarray}
 and, for this function, \eq{gp-likelihood} can still be evaluated with
-$\mathcal{O}(N)$ operations.
+$\mathcal{O}(N)$ operations. \racomment{Not $\mathcal{O}(NJ^2)$?}
 The details of this method and a few implementation considerations are
-discussed in the following \sectionname\ but we first discuss some
+outlined in the following \sectionname\ but we first discuss some
 properties of this covariance function.
 
 By rewriting the exponentials in \eq{celerite-kernel-complex} as sums of sine
@@ -452,9 +453,9 @@ where
     \tilde{c} &=& c_j + c_k \\
     \tilde{d}_{\pm} &=& d_j \mp d_k \quad.
 \end{eqnarray}
-Therefore, the method described in the following section can be used to scale
-inferences to large datasets for any model where the kernel function is a
-general sum or product of \celerite\ terms.
+Therefore, the method described in the following section can be used to
+perform scalable inference on large datasets for any model where the kernel
+function is a sum or product of \celerite\ terms.
 
 \section{Implementation \& performance}
 
