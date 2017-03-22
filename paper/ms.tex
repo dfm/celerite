@@ -225,9 +225,9 @@ variability in light curves of stars \citep{Brewer:2009}, active galactic
 nuclei \citep{Kelly:2014}, and the logarithmic flux of X-ray binaries
 \citep{Uttley:2005}.
 They have also been used as models for the cosmic microwave background
-\citep{Bond:1987,Bond:1999}, correlated instrumental noise
-\citep{Gibson:2012}, and spectroscopic calibration
-\citep{Czekala:2017,Evans:2015}.
+\citep{Bond:1987, Bond:1999, Wandelt:2003}, correlated instrumental noise
+\citep{Gibson:2012}, and spectroscopic calibration \citep{Czekala:2017,
+Evans:2015}.
 While these models are widely applicable, their use has been limited, in
 practice, by the computational cost and scaling.
 In general, the cost of computing a GP likelihood scales as the cube of
@@ -374,7 +374,7 @@ k_\bvec{\alpha}(\tau_{nm}) = \sigma_n^2\,\delta_{nm} +
 \right]
 \end{eqnarray}
 and, for this function, \eq{gp-likelihood} can still be evaluated with
-$\mathcal{O}(N)$ operations. \racomment{Not $\mathcal{O}(NJ^2)$?}
+$\mathcal{O}(N\,J^2)$ operations.
 The details of this method and a few implementation considerations are
 outlined in the following \sectionname\ but we first discuss some
 properties of this covariance function.
@@ -1353,6 +1353,17 @@ can be used with any stationary kernel but it requires uniformly spaced data
 and the scaling is worse than \celerite\ so it, in general, be less
 efficient when applied to large datasets.
 
+\citet{Carter:2009} improved the scaling of Toeplitz methods by introducing a
+wavelet-based method for computing a GP likelihood with $\mathcal{O}(N)$
+scaling.
+This method has been widely applied in the context of exoplanet transit
+characterization but it requires evenly spaced observations and the power
+spectrum of the process must have the form $S(\omega)\propto \omega^{-1}$ to
+gain the computational advantage.
+This wavelet method has been demonstrated to improve parameter estimation for
+transiting exoplanets \citep{Carter:2009} but these strict requirements make
+this method applicable for only a limited set of use cases.
+
 The continuous autoregressive moving average (CARMA) models introduced into
 the astrophysics literature by \citet{Kelly:2014} share many features with
 \celerite.
@@ -1476,86 +1487,22 @@ In general, we encourage the use of physically motivated models for parameter
 estimation instead of qualitative modeling of the power spectrum itself.
 
 There are many data analysis problems where \celerite\ will not be applicable.
-In particular, any multidimensional
+In particular, the restriction to one-dimensional problems is significant.
+There are many examples of multidimensional GP modeling the astrophysics
+literature \citep[recent examples from the field of exoplanet characterization
+include][]{Haywood:2014, Rajpaul:2015, Aigrain:2016} but \celerite\ could not
+be used to accelerate any of these analyses.
+It is plausible that an extension could be derived to tackle some
+multidimensional problems with the right structure~--~simultaneous parallel
+time series, for example~--~and we hope to revisit this possibility in future
+work.
 
-In the future we hope to expand the \celerite\ technique to multi-dimensional
-datasets.  The formalism presented could, for example, be used to model
-the covariance between multiple measured quantities, such as in regression of photometric
-time series versus astrometric precision when correcting for systematic errors
-due to detector sensitivity variations \citep{Aigrain:2016}, in correcting
-radial velocity datasets for stellar activity \citep{Haywood:2014,Rajpaul:2015},
-or in detection of gravitational waves in the presence of systematic errors
-\citep{Moore:2016}.  Other extensions that may be useful are fast simulation
-of \celerite\ processes, prediction and/or interpolation of datasets, and
-extended the \celerite\ kernel to time-varying kernels.
-
-%\section{Prediction/interpolation}
-%
-%Precition/interpolation involves constructing a matrix of covariances
-%between the (noisy) training set and the times at which we wish to
-%predict or interpolate data points.   If our training times are given by
-%${\bf t}$, while the predicted times are given by ${\bf t}_*$, then
-%mean values at the predicted times are given by (RW 2.23):
-%\begin{eqnarray}
-%\bar f_{*,k} &=& \sum_j k(t_{*,k},t_j) b_j,\\
-%&=& \sum_j \sum_p \alpha_p e^{-\beta_p \vert t_{*,k}-t_j\vert} b_j,\\
-%&=& \sum_p \alpha_p \sum_j e^{-\beta_p \vert t_{*,k}-t_j\vert} b_j,\\
-%y_k &=& \sum_j k(t_j,t_k) h_j,
-%\end{eqnarray}
-%where the latter equation may be solved for ${\bf h}$ using the extended
-%matrix formalism.  Let the length of ${\bf t}_*$ be $M$; then, the
-%matrix $k({\bf t}_*,{\bf t})$ has a size $M \times N$, and so a total
-%of $MN$ multiplications is required to obtain the predicted values.
-%If $M$ is large, this can become quickly prohibitive.  It turns out
-%that the structure of the sum of exponential kernels may be exploited
-%to obtain the predicted mean in of order $J(M+N)+J^2N$ multiplications,
-%i.e.\ a linear scaling with the total number of data points, which can
-%be much fewer if $M$ is large.
-%
-%The procedure works as follows:
-%\begin{itemize}
-%\item Sort ${\bf t}$ and ${\bf t}_*$ in time order.
-%\item Starting with the smallest value of ${\bf t}_*$, $t_{*,1}$,
-%compute:
-%\begin{eqnarray} \label{prediction}
-%\bar f_{*,k} &=& \sum_p \alpha_p \left[\epsilon^+_{p,k} + \epsilon^-_{p,k}\right]\\
-%\epsilon^+_{p,k} &=& \sum_{j \forall t_{*,k} > t_j} e^{-\beta_p (t_{*,k}-t_j)} h_j\\
-%\epsilon^-_{p,k} &=& \sum_{j \forall t_{*,k} \le t_j} e^{-\beta_p (t_j-t_{*,k})} h_j,
-%\end{eqnarray}
-%where we have separated out the training times before and after the predicted time $t_{*,k}$.
-%
-%\item Next, we update the coefficients recursively:
-%\begin{eqnarray}
-%\epsilon^+_{p,k} &=& e^{-\beta_p (t_{*,k}-t_{*,k-1})} \left[\epsilon^+_{p,k-1} + \sum_{j \forall t_{*,k} > t_j \ge t_{*,k-1}} e^{-\beta_p (t_{*,k}-t_j)} h_j\right]\\
-%\epsilon^-_{p,k} &=& e^{-\beta_p (t_{*,k}-t_{*,k-1})} \left[\epsilon^-_{p,k-1} - \sum_{j \forall t_{*,k} > t_j \ge t_{*,k-1}} e^{-\beta_p (t_j-t_{*,k})} h_j\right].
-%\end{eqnarray}
-%With these updates, we can then use equation \ref{prediction} to compute the expected
-%mean at $t_{*,k}$ with an additional $J$ operations.  Since there are $N$ values of
-%$t_k$, the number of operations needed to update $\epsilon$ is of order $J(N+M)$, and
-%so this procedure avoids a heavy computational burden.
-%
-%The variance may be handled in a similar manner, but with $J^2$ coefficients
-%to recursively update. For example, if $t_{*,k} > t_j \forall j,k$ then:
-%\begin{eqnarray}
-%cov(f_{*,k}) &=&  k(t_{*,k},t_{*,k}) - \sum_p \sum_q \alpha_p \alpha_q e^{-\beta_p(t_{*,k}-{\bf t}^T)} k({\bf t},{\bf t})^{-1} e^{-\beta_q (t_{*,k}-{\bf t})},\\
-%&=& k(0) - \sum_p \sum_q \alpha_p \alpha_q \zeta_{p,q,k},\\
-%\zeta_{p,q,k} &=&   e^{-\beta_p(t_{*,k}-{\bf t}^T)} k({\bf t},{\bf t})^{-1} e^{-\beta_q (t_{*,k}-{\bf t})},\\
-%&=&  e^{-(\beta_p+\beta_q)(t_{*,k}-t_{*,k-1})} \zeta_{p,q,k-1}.
-%\end{eqnarray}
-%The recursive updates to the $\zeta_{p,q,k}$ parameters can be made at each step.
-%\end{itemize}
-%
-%Problem:  if we have the case that the datapoints are interspersed, and if the sign changes,
-%then we need to resolve $K^{-1} e^{-\beta_q \vert t_{*,k}-{\bf t}\vert}$.  However, maybe we can
-%just solve for the difference in fewer operations? {\bf TBD}
-
-\vspace{1.5em}
-All of the code used in this project is available from
-\url{https://github.com/dfm/celerite} under the MIT open-source software
-license.
-This code (plus some dependencies) can be run to re-generate all of the
-figures and results in this paper; this version of the paper was generated
-with git commit \texttt{\githash} (\gitdate).
+Alongside this paper, we have released a well tested and documented open
+source software package that implements the method and all of the examples
+discussed in these pages.
+This software is available at \url{https://github.com/dfm/celerite}\footnote{%
+This version of the paper was generated with git commit \texttt{\githash}
+(\gitdate).} and it is made available under the MIT license.
 
 \acknowledgments
 It is a pleasure to thank
@@ -1567,8 +1514,9 @@ Dan Huber, and
 Jake VanderPlas
 for helpful discussions informing the ideas and code presented here.
 
-This work was performed in part under contract with the Jet Propulsion Laboratory (JPL)
-funded by NASA through the Sagan Fellowship Program executed by the NASA Exoplanet Science Institute.
+This work was performed in part under contract with the Jet Propulsion
+Laboratory (JPL) funded by NASA through the Sagan Fellowship Program executed
+by the NASA Exoplanet Science Institute.
 
 EA acknowledges support from NASA grants NNX13AF20G, NNX13A124G, NNX13AF62G,
 from National Science Foundation (NSF) grant AST-1615315, and from
