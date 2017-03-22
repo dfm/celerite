@@ -170,7 +170,8 @@ to astronomical time series
 \begin{abstract}
 
 The growing field of large-scale time domain astronomy requires methods for
-probabilistic inference that scale well with amount of data.
+probabilistic inference that are computationally tractable even with large
+datasets.
 We present a method for Gaussian Process regression in one dimension with a
 computational cost that scales linearly with the size of the dataset.
 This method exploits structure in the problem when the covariance function is
@@ -182,17 +183,16 @@ motivation for and interpretation of this choice~--~but we also demonstrate
 that it is effective in many other cases.
 We present a mathematical description of the method, the details of the
 implementation, and a comparison to existing scalable Gaussian Process methods.
-We demonstrate the application of this method by applying it to simulated and
-real astronomical time series datasets.
+We demonstrate the method by applying it to simulated and real astronomical
+time series datasets.
 These demonstrations are examples of probabilistic inference of stellar
 rotation periods, asteroseismic oscillation spectra, and transiting planet
-parameters.  The power spectrum of an irregularly sampled time series may be
-estimated with Bayesian inference, with a posterior estimate of the associated
-uncertainties, in principle avoiding the problems associated with window functions
-and aliasing.
-The method is flexible, fast, and most importantly, interpretable.
-There are a wide range of potential applications within astronomical data
-analysis and beyond.
+parameters.
+In all of these cases, we infer posterior distributions over models for the
+power spectrum of the process that generated these irregularly sampled time
+series without computing a standard algebraic estimator.
+The method is flexible, fast, and most importantly, interpretable, with a wide
+range of potential applications within astronomical data analysis and beyond.
 We provide well tested and documented open-source implementations of this
 method in \project{C++}, \project{Python}, and \project{Julia}.
 
@@ -224,8 +224,8 @@ nuclei \citep{Kelly:2014}, and the logarithmic flux of X-ray binaries
 \citep{Uttley:2005}.
 They have also been used as models for the cosmic microwave background
 \citep{Bond:1987,Bond:1999}, correlated instrumental noise
-\citep{Gibson:2012}, spectroscopic calibration \citep{Czekala:2017,Evans:2015}
-and residuals caused by model inconsistencies (CITE + better words).
+\citep{Gibson:2012}, and spectroscopic calibration
+\citep{Czekala:2017,Evans:2015}.
 While these models are widely applicable, their use has been limited, in
 practice, by the computational cost and scaling.
 In general, the cost of computing a GP likelihood scales as the third power of
@@ -245,9 +245,9 @@ However, there is no further constraint on the data or the model.
 In particular, the measurements don't need to be evenly spaced and the
 uncertainties can be heteroscedastic (non-uniform).
 This method is especially appealing compared to other similar methods~--~we
-will return to these below~--~because it is exact, flexible, simple, and fast.
+return to these below~--~because it is exact, flexible, simple, and fast.
 
-In the following pages, we will motivate the general problem of GP regression,
+In the following pages, we motivate the general problem of GP regression,
 describe the previously published scalable method \citep{Rybicki:1995,
 Ambikasaran:2015} and our generalization, and demonstrate the model's
 application on various real and simulated data sets.
@@ -309,8 +309,8 @@ cost of computing the inverse and determinant of the matrix $K_\bvec{\alpha}$
 is $\mathcal{O}(N^3)$.
 In other words, this cost is proportional to the cube of the number of data
 points $N$.
-This means that for large datasets, every evaluation of the likelihood will
-quickly become computationally intractable.
+This means that for large datasets, every evaluation of the likelihood
+quickly becomes computationally intractable.
 In this case, standard non-linear optimization or MCMC will no longer be
 practical inference methods.
 
@@ -354,7 +354,7 @@ mixtures of exponentials
 k_\bvec{\alpha}(\tau_{nm}) = \sigma_n^2\,\delta_{nm} +
     \sum_{j=1}^J a_j\,\exp(-c_j\,\tau_{nm})\quad.
 \end{eqnarray}
-In this case, the inverse will be dense but \eq{gp-likelihood} can still be
+In this case, the inverse is dense but \eq{gp-likelihood} can still be
 evaluated in $\mathcal{O}(N)$ operations where $J$ is the number of components
 in the mixture and $N$ is still the number of data points.
 
@@ -374,7 +374,7 @@ k_\bvec{\alpha}(\tau_{nm}) = \sigma_n^2\,\delta_{nm} +
 and, for this function, \eq{gp-likelihood} can still be solved with
 $\mathcal{O}(N)$ operations.
 The details of this method and a few implementation considerations are
-discussed in the following \sectionname\ but we will first discuss some
+discussed in the following \sectionname\ but we first discuss some
 properties of this covariance function.
 
 By rewriting the exponentials in \eq{celerite-kernel-complex} as sums of sine
@@ -389,7 +389,7 @@ k_\bvec{\alpha}(\tau_{nm}) = \sigma_n^2\,\delta_{nm} +
     b_j\,\exp\left(-c_j\,\tau_{nm}\right)\,\sin\left(d_j\,\tau_{nm}\right)
 \right] \quad.
 \end{eqnarray}
-For clarity, we will refer to the argument within the sum as a ``\celerite\
+For clarity, we refer to the argument within the sum as a ``\celerite\
 term'' for the remainder of this paper.
 The Fourier transform\footnote{Here and throughout we have defined the Fourier
 transform of the function $f(t)$ as $F(\omega)={(2\,\pi)}^{-1/2}\,
@@ -401,8 +401,8 @@ S(\omega) = \sum_{j=1}^J \sqrt{\frac{2}{\pi}}
 {\omega^4+2\,({c_j}^2-{d_j}^2)\,\omega^2+{({c_j}^2+{d_j}^2)}^2}\quad.
 \end{eqnarray}
 The physical interpretation of this model isn't immediately obvious and we
-will return to a more general discussion of the physical intuition in a moment
-but we can start with a discussion of some useful special cases of this model.
+return to a more general discussion of the physical intuition in a moment
+but we start with a discussion of some useful special cases of this model.
 
 If we set the imaginary amplitude $b_j$ for some component $j$ to zero, that
 term of \eq{celerite-kernel} becomes
@@ -466,7 +466,7 @@ efficient method for computing the determinant of $K$.
 
 \subsection{An example}
 
-To provide some insight for this method, we will follow
+To provide some insight for this method, we follow
 \citet{Ambikasaran:2015} and start by working through a simple example.
 In this case, we'll assume that we have three data points
 $\{y_1,\,y_2,\,y_3\}$ observed at times $\{t_1,\,t_2,\,t_3\}$ with measurement
@@ -479,7 +479,7 @@ k(\tau_{nm}) = \sigma_n^2\,\delta_{nm} + a\,\exp(-c\,\tau_{nm})\quad.
 This is the result of setting $J=1$, $b=0$, and $d=0$ in
 \eq{celerite-kernel-complex} and this is the model that was studied by
 \citet{Rybicki:1995}.
-To demonstrate this method, we will write out the full system of
+To demonstrate this method, we write out the full system of
 equations that we must solve to apply the inverse of $K$ in order to compute
 the first term of \eq{gp-likelihood}.
 In matrix notation, this can be written as
@@ -537,7 +537,7 @@ reformulation provides:
     y_1 \\ 0 \\ 0 \\ y_2 \\ 0 \\ 0 \\ y_3
 \end{pmatrix}\nonumber
 \end{eqnarray}
-where we will follow \citet{Ambikasaran:2015} and call this the ``extended''
+where we follow \citet{Ambikasaran:2015} and call this the ``extended''
 system and rewrite \eq{impl-matrix} as
 \begin{eqnarray}
     K_\mathrm{ext}\,\bvec{z}_\mathrm{ext} &=& \bvec{y}_\mathrm{ext} \quad.
@@ -552,7 +552,7 @@ general~--~and we can take advantage of these algorithms to solve our system
 exactly because the target vector $\bvec{z}$ is a subset of the elements of
 $\bvec{z}_\mathrm{ext}$.
 
-In the following section, we will discuss this method more generally but it's
+In the following section, we discuss this method more generally but it's
 worth noting a few important facts that can already be seen in this example.
 First, the fundamental reason why this matrix $K$ can be solved efficiently is
 the following property of exponentials
@@ -568,14 +568,14 @@ covariance functions like the ``exponential-squared'' function
 \end{eqnarray}
 Furthermore, our derivation of the extended matrix requires that the data
 points be monotonically sorted in time.
-Neither of these properties will be satisfied in general for multidimensional
-inputs and all of our following discussion will assume a sorted
+Neither of these properties be satisfied in general for multidimensional
+inputs and all of our following discussion assumes a sorted
 one-dimensional dataset.
 
 \citet{Ambikasaran:2015} demonstrated two key facts that allow us to use this
 extended matrix formalism in practice.
 First, even if the covariance function is a mixture of exponentials, the
-extended matrix will still be banded with a bandwidth that scales linearly
+extended matrix is still be banded with a bandwidth that scales linearly
 with the number of components $J$.
 Second, \citet{Ambikasaran:2015} proved that the determinant of
 $K_\mathrm{ext}$ is equal to the determinant of $K$ up to a sign.
@@ -886,7 +886,7 @@ oscillator provides a physically motivated model that is flexible enough to
 describe a wide range of stellar variations.
 Low $Q \approx 1$ can capture granulation noise and high $Q \gg 1$ is a good
 model for asteroseismic oscillations.
-In practice, we will take a sum over oscillators with different values of $Q$,
+In practice, we take a sum over oscillators with different values of $Q$,
 $S_0$, and $\omega_0$ to give a sufficient accounting of the power spectrum
 stellar time series.
 Since this kernel is exactly described by the exponential kernel, the
@@ -911,10 +911,10 @@ described in the previous section.
 
 \section{Examples with simulated data}
 
-To demonstrate the application of \celerite, we will start by inferring
+To demonstrate the application of \celerite, we start by inferring
 posterior constraints on the parameters of a GP model applied to several
 simulated datasets with known properties.
-In the following section, we will expand on these examples by applying
+In the following section, we expand on these examples by applying
 \celerite\ to real datasets.
 In the first example, we demonstrate that \celerite\ can be used to measure
 the power spectrum of a process when the data are generated from a \celerite\
@@ -930,7 +930,7 @@ provides computational advantages over other GP methods.
 
 \subsection{Recovery of a celerite process}
 
-In this first example, we will simulate a dataset using a known \celerite\
+In this first example, we simulate a dataset using a known \celerite\
 process and fit it with \celerite\ to demonstrate that valid inferences can be
 made in this idealized case.
 The simulated dataset is shown in the left panel of \Figure{simulated-correct}
@@ -963,7 +963,7 @@ reproduces the true PSD.
 For this example, we simulate a dataset using a known GP model with a kernel
 outside of the support of a \celerite\ process.
 This means that the true autocorrelation of the process can never be correctly
-represented by the model that we're using to fit but we will use this example
+represented by the model that we're using to fit but we use this example
 to demonstrate that, at least in this case, valid inferences can still be made
 about the physical parameters of the model.
 
@@ -988,7 +988,7 @@ that for large $\omega$ falls off exponentially.
 When compared to \eq{celerite-psd}~--~that for large $\omega$ goes as
 $\omega^{-4}$, at most~--~it is clear that a \celerite\ model can never
 perfectly reproduce the structure of this process.
-That being said, we will demonstrate that rigorous inferences can be made
+That being said, we demonstrate that rigorous inferences can be made
 about $P_\mathrm{true}$ even with an effective model.
 The left panel of \Figure{simulated-wrong} shows the simulated dataset.
 We then fit this simulated data using the product of two SHO terms
@@ -1021,11 +1021,11 @@ computation time is required for the \celerite\ inference.
 
 \section{Examples with real data}
 
-In this section we will demonstrate several use cases of \celerite\ when
+In this section we demonstrate several use cases of \celerite\ when
 applied to real datasets.
-Each of these examples touches on an active area of research so we will limit
+Each of these examples touches on an active area of research so we limit
 our examples to be qualitative in nature and make no claim of optimality but
-we hope that these examples will encourage interested readers to investigate
+we hope that these examples encourage interested readers to investigate
 the applicability of \celerite\ to their research.
 
 All of the following examples show time domain datasets with a clear bias in
@@ -1068,7 +1068,7 @@ We expect that this has the potential to push asteroseismic analysis to lower
 signal-to-noise datasets and we hope to revisit this idea in a subsequent
 paper.
 
-To demonstrate this method, we will use a very simple heuristic model based on
+To demonstrate this method, we use a very simple heuristic model based on
 where the model PSD is given by a mixture of 8 components with
 amplitudes and frequencies specified by $\nu_\mathrm{max}$, $\Delta \nu$, and
 several nuisance parameters.
@@ -1098,7 +1098,7 @@ The goal of this example is to show that, even for a low signal-to-noise
 dataset with a short baseline, it is possible to infer asteroseismic
 parameters with formal uncertainties that are consistent with the parameters
 inferred with a much larger dataset.
-Looking forward to \tess\ \citep{Ricker:2014,Campante:2016}, we will infer
+Looking forward to \tess\ \citep{Ricker:2014,Campante:2016}, we infer
 $\nu_\mathrm{max}$ and $\Delta\nu$ using only one month of \kepler\ data and
 compare our results to the results inferred from the full 4 year baseline of
 the \kepler\ mission.
@@ -1307,7 +1307,7 @@ variability.
 \section{Comparisons to other methods}
 
 There are many other methods of scaling GP models to large datasets and in
-this section we will explore some comparisons between \celerite\ and some
+this section we explore some comparisons between \celerite\ and some
 other popular methods and discuss some use cases where \celerite\ shines and
 others where it does not.
 Scalable GP methods tend to fall into two categories: approximate and
@@ -1335,7 +1335,7 @@ $\mathcal{O}(N^2)$ or approximately in $\mathcal{O}(N\,\log N)$
 \citep{Wilson:2014}.
 The Toeplitz method is, in some ways, more flexible than \celerite\ because it
 can be used with any stationary kernel but it requires uniformly spaced data
-and the scaling is worse than \celerite\ so it will, in general, be less
+and the scaling is worse than \celerite\ so it, in general, be less
 efficient when applied to large datasets.
 
 The continuous autoregressive moving average (CARMA) models introduced into
@@ -1391,7 +1391,7 @@ models more efficiently than \celerite\ for large models $J \gg 10$ with a
 small dataset where $N$ is smaller than a few thousand.
 
 Many other approximate methods for scaling GP inference exist \citep[see, for
-example,][and references therein]{Wilson:2015a} and we will make no attempt to
+example,][and references therein]{Wilson:2015a} and we make no attempt to
 discuss the comparisons exhaustively.
 
 \section{Summary}
@@ -1461,9 +1461,9 @@ harmonic oscillator power spectrum, which is an analog of stellar asteroseismic
 oscillations.  As higher signal-to-noise observations of transiting exoplanet systems
 are obtained, the effects of stellar variability will more dramatically impact the
 correct inference of planetary transit parameters, and so we expect that \celerite\
-will be important for transit detection \citep{ForemanMackey:2015}, transit timing 
-\citep{Agol:2005,Holman:2005}, transit spectroscopy \citep{Brown:2001}, Doppler 
-beaming \citep{Loeb:2003,Zucker:2007}, tidal distortion \citep{Zucker:2007}, phase 
+will be important for transit detection \citep{ForemanMackey:2015}, transit timing
+\citep{Agol:2005,Holman:2005}, transit spectroscopy \citep{Brown:2001}, Doppler
+beaming \citep{Loeb:2003,Zucker:2007}, tidal distortion \citep{Zucker:2007}, phase
 functions \citep{Knutson:2007,Zucker:2007}, and more.
 
 Although we have in mind applications of this fast method to model stellar
@@ -1586,7 +1586,7 @@ Sam Grunblatt,
 David W.\ Hogg,
 Dan Huber, and
 Jake VanderPlas
-for helpful contributions to the ideas and code presented here.
+for helpful discussions informing the ideas and code presented here.
 
 This work was performed in part under contract with the Jet Propulsion Laboratory (JPL)
 funded by NASA through the Sagan Fellowship Program executed by the NASA Exoplanet Science Institute.
@@ -1663,25 +1663,6 @@ Combining these results, we find the constraint
 \begin{eqnarray}
     -|b_j\,d_j| < a_j\,c_j < |b_j\,d_j| \quad.
 \end{eqnarray}
-
-%The general case with multiple \celerite\ terms can be checked using Sturm's
-%theorem. The power spectrum is computed from taking the square of the Fourier
-%transform of the data time series; hence, the power-spectrum must be non-negative.
-%In constructing a kernel, if any of the parameters $a_j$ or $b_j$ are negative,
-%then it is possible for the power spectrum to go negative, which violates the
-%definition of the power spectrum.
-%Consequently, if any of these coefficients is negative, it is necessary to
-%check that the power spectrum is still non-negative.  Note that a non-negative
-%power-spectrum does not require the auto-correlation
-%function to be positive for all $\tau$.  %The positive power spectrum is
-%related to the positive eigenvalues of the covariance matrix which are
-%necessary for a positive-definite matrix in limiting cases
-%\citep{Messerschmitt:2006}.  %We find empirically that requiring an everywhere
-%positive power spectrum results in positive eigenvalues for the covariance
-%matrix, and so we describe here how to ensure a positive power spectrum using
-%Sturm's theorem.
-%Relation of positive power spectrum to positive definite covariance matrix.
-%Power spectrum of a sum of kernels.
 
 In the case of $J$ \celerite\ terms, we can check for negative values of the
 PSD by solving for the roots of the power spectrum (see \eqalt{celerite-psd}),
