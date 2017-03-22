@@ -260,11 +260,10 @@ archive}.
 
 \section{Gaussian processes}\sectlabel{gps}
 
-Gaussian Processes \citep[GPs;][]{Rasmussen:2006} are a class of stochastic
-models consisting of a mean function $\mu_\bvec{\theta}(\bvec{x})$ and a
-covariance, autocorrelation, or ``kernel'' function
-$k_\bvec{\alpha}(\bvec{x}_i,\,\bvec{x}_j)$ parameterized by the parameters
-$\bvec{\theta}$ and $\bvec{\alpha}$ respectively.
+GP are stochastic models consisting of a mean function
+$\mu_\bvec{\theta}(\bvec{x})$ and a covariance, autocorrelation, or ``kernel''
+function $k_\bvec{\alpha}(\bvec{x}_i,\,\bvec{x}_j)$ parameterized by the
+parameters $\bvec{\theta}$ and $\bvec{\alpha}$ respectively.
 Under this model, the log-likelihood of observing a dataset
 \begin{eqnarray}
 \bvec{y} = \left(\begin{array}{ccccc}
@@ -1410,108 +1409,70 @@ discuss the comparisons exhaustively.
 
 \section{Summary}
 
-The computational burden of Gaussian process regression has limited its application
-to small astronomical time series.  With the linear scaling of \celerite\, we
-envision the application of Gaussian processes may be expanded to much larger
-datasets.  Despite the restrictive form of the \celerite\ kernel, with a
-sufficient number of components it is flexible enough to describe a wide
-range of astrophysical variability.  In fact, the relation of the \celerite\ kernel
-to the damped, driven harmonic oscillator matches simple models of astrophysical
-variability, and makes the parameterization interpretable in terms of resonant
-frequency, amplitude, and quality factor.  Perhaps the most significant drawback
-is the $J^2$ scaling of the solver;  however, for many problems a small value of $J$
-suffices.
-
-We envision two general varieties of applications:  those interested in the
-the \celerite\ kernel parameters (so-called ``hyper-parameters") which describe the
-astrophysical variability, versus those interested in characterizing the mean
-model, treating the correlated noise as a nuisance.  Some users may
-be interested in both applications, while other problems may require interpolation
-or extrapolation beyond the dataset that is being modeled.
-
-%Some examples of the first are determining the characteristic variability
-%timescale of a quasar \citep{Kelly:2014}, measuring the asteroseismic
-%variation of a star \citep{Brewer:2009,Corsaro:2014}, measurement of
-%granulation noise \citep{Bastien:2013,Kallinger:2016}, detection of
-%quasi-periodic variability in a high-energy source \citep{McAllister:2016}, or
-%classification of variable objects \citep{Zinn:2016}.
-%Examples of the second are detecting and characterizing transiting exoplanets
-%\citep[for example,][]{Gibson:2012, Barclay:2015, Evans:2015, Aigrain:2016,
-%Grunblatt:2016, Luger:2016}
-%and correcting for stellar activity in radial velocity measurements
-%\citep[for example,][]{Haywood:2014, Rajpaul:2015}.
-%Examples of the third are measuring time delays in multiply-imaged
-%gravitationally lensed sources \citep{Tewes:2013} and reverberation mapping of
-%AGN.
+Gaussian Process models have been fruitfully applied to many problems in
+astronomical data analysis but the fact that the computational cost scales as
+the cube of the number of data points has limited their use to relatively
+small datasets.
+With the linear scaling of \celerite\, we envision the application of Gaussian
+processes may be expanded to much larger datasets.
+Despite the restrictive form of the \celerite\ kernel, with a sufficient
+number of components it is flexible enough to describe a wide range of
+astrophysical variability.
+In fact, the relation of the \celerite\ kernel to the damped, driven harmonic
+oscillator matches simple models of astrophysical variability, and makes the
+parameterization interpretable in terms of resonant frequency, amplitude, and
+quality factor.
+A major drawback of this method is its quadratic scaling with the number of
+terms $J$ but, in many cases, small values of $J$ are sufficient.
 
 Our background is in studying transiting exoplanets, a field which has only
 recently begun to adopt full covariance matrices in analyzing the noise in
-stellar lightcurves when detecting or characterizing transiting planets
-\citep[for example,][]{Gibson:2012, Barclay:2015, Evans:2015, Aigrain:2016,
-Grunblatt:2016, Luger:2016}.
-One promising early attempt at accounting for correlated noise was the wavelet
-approach of \citet{Carter:2009}.
-Their technique allowed for a power-law spectrum for the noise scaling as
-$\omega^{-\alpha}$, which unfortunately is not a normalizable, nor
-physically-accurate, description of stellar variability.
-Their approach runs in ${\cal O}(N)$ time for $\alpha=1$, which is referred to
-as `flicker', $1/f$, or pink noise;  however, this particular type of noise
-overpredicts the power spectrum at low and high frequency compared to the Solar
-granulation power spectrum.  It also cannot describe quasi-periodic noise.
+stellar light curves when detecting or characterizing transiting planets
+\citep[for example,][]{Carter:2009, Gibson:2012, Barclay:2015, Evans:2015,
+Aigrain:2016, Foreman-Mackey:2016b, Grunblatt:2016, Luger:2016}.
+All of these analyses have been limited to small datasets or restrictive
+kernel choices.
+\celerite\ weakens these requirements by providing a scalable method for
+computing the likelihood and a physical motivation for the choice of kernel.
+\celerite\ can be used to accurately model stellar oscillations using the
+relation to the mixture of stochastically driven, damped simple harmonic
+oscillators.
+As higher signal-to-noise observations of transiting exoplanet systems are
+obtained, the effects of stellar variability will more dramatically impact the
+correct inference of planetary transit parameters.
+We expect that \celerite\ will be important for transit detection
+\citep{Pope:2016, Foreman-Mackey:2016b}, transit timing \citep{Agol:2005,
+Holman:2005}, transit spectroscopy \citep{Brown:2001}, Doppler beaming
+\citep{Loeb:2003, Zucker:2007}, tidal distortion \citep{Zucker:2007}, phase
+functions \citep{Knutson:2007, Zucker:2007}, and more.
 
-Further progress was made by parameterizing the covariance matrix with simple,
-analytic functions that describe the autocorrelation function \citep{Gibson:2012}.
-The parameters of these functions can then be optimized to best match the observed
-variability pattern of the residuals (after subtracting a transit model).  The
-disadvantage of this approach is that the functions used are chosen somewhat
-arbitrarily (e.g.\ the exponential-squared function), and the Cholesky decomposition
-of the covariance matrix for computing the likelihood takes ${\cal O}(N^3)$ operations
-which prohibits application of this technique to large datasets.
-
-Given the drawbacks of these approaches, the \celerite\ formalism allows both a fast
-computation of the likelihood in ${\cal O}(N)$ time, as well as a functional form
-that accurately describes stellar variability due to the relation to the simple
-harmonic oscillator power spectrum, which is an analog of stellar asteroseismic
-oscillations.  As higher signal-to-noise observations of transiting exoplanet systems
-are obtained, the effects of stellar variability will more dramatically impact the
-correct inference of planetary transit parameters, and so we expect that \celerite\
-will be important for transit detection \citep{ForemanMackey:2015}, transit timing
-\citep{Agol:2005,Holman:2005}, transit spectroscopy \citep{Brown:2001}, Doppler
-beaming \citep{Loeb:2003,Zucker:2007}, tidal distortion \citep{Zucker:2007}, phase
-functions \citep{Knutson:2007,Zucker:2007}, and more.
-
-Although we have in mind applications of this fast method to model stellar
-variability, the method is general for one-dimensional GP problems, and may be
-applied to other problems.
-Accreting black holes show time series which may be modeled by correlated
-noise \citep{Kelly:2014};  indeed, this was the motivation for the original
-technique developed by Rybicki \& Press \citep{Rybicki:1992,Rybicki:1995}.
+Beyond these applications to model stellar variability, the method is
+generally applicable to other one-dimensional GP models.
+Accreting black holes show time series which may be modeled using a GP
+\citep{Kelly:2014}; indeed, this was the motivation for the original technique
+developed by Rybicki \& Press \citep{Rybicki:1992, Rybicki:1995}.
 This approach may be broadly used for characterizing quasar variability
 \citep{MacLeod:2010}, measuring time lags with reverberation mapping
-\citep{Zu:2011,Pancoast:2014}, modeling time delays in multiply-imaged
-gravitationally-lensed systems \citep{Press:1998}, characterizing quasi-periodic
-variability in a high-energy source \citep{McAllister:2016}, or
+\citep{Zu:2011, Pancoast:2014}, modeling time delays in multiply-imaged
+gravitationally-lensed systems \citep{Press:1998}, characterizing
+quasi-periodic variability in a high-energy source \citep{McAllister:2016}, or
 classification of variable objects \citep{Zinn:2016}.
-Outside of astronomy, this technique may have application to terrestrial
-seismology \citep{Robinson:1967}.
-%The \celerite\ kernel may be used in lieu of a Gaussian power-spectrum for
-%non-parametric data modeling \citep{Wilson:2013}.
+We expect that there are also applications beyond astronomy.
 
-The \celerite\ formalism also allows a principled approach to the estimation
-of the power spectrum of a time series, as well as its uncertainties.
-Fourier transforms work for uniformly sampled data;  astronomical data are
-rarely (if ever) uniformly sampled.  Periodograms are affected by the window
-function and aliasing in datasets, and make estimating the significance of
-spectral features ambiguous.  The Bayesian approach to the estimation of a power
-spectrum \citep{Wilson:2013} avoids these difficulties:  it allows for the computation of
-uncertainties, it accounts for the window function on the uncertainties of
-the power spectrum, and in principle it can treat aliases if the full posterior
-is explored.  One drawback is that the number of $J$ terms to include is
-unknown, but may be inferred with computation of the evidence, or an
-approximation such as the Bayesian information criterion \citep{Kelly:2014}.
-In general, the parameters of the \celerite\ terms are more interesting due
-to their physical meaning rather than the overall shape of the power spectrum,
-as shown in the foregoing examples.
+The \celerite\ formalism can also be used for power spectrum estimation and
+quantification of its uncertainties.
+In principle, a large number of \celerite\ terms could be used to perform
+non-parametric probabilistic inference of the power spectrum despite
+unevenly-spaced data with heteroscedastic noise \citep[for
+example,][]{Wilson:2013, Kelly:2014}.
+This type of analysis will be limited by the quadratic scaling of \celerite\
+with the number of terms $J$ but this limits existing methods as well
+\citep[CARMA models,][]{Kelly:2014}.
+In general, we encourage the use of physically motivated models for parameter
+estimation instead of qualitative modeling of the power spectrum itself.
+
+There are many data analysis problems where \celerite\ will not be applicable.
+In particular, any multidimensional
 
 In the future we hope to expand the \celerite\ technique to multi-dimensional
 datasets.  The formalism presented could, for example, be used to model
