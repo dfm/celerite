@@ -782,14 +782,14 @@ section we discuss an exact physical interpretation of the \celerite\ kernel
 that will be applicable to many astrophysical systems but especially the
 time-variability of stars.
 
-Many astronomical objects have characteristic timescales determined by their
+Many astronomical objects are variable on timescales determined by their
 physical structure.
-Variability is excited by noisy physical processes, and grows most strongly
-at the characteristic timescale, but is also damped due to dissipation in the
-system.
-As a concrete example, stellar (asteroseismic) oscillations are strong at
-resonant frequencies determined by the internal stellar structure, which are
-both excited and damped by convective turbulence.
+For phenomena such as stellar (asteroseismic) oscillations, variability is
+excited by noisy physical processes and grows most strongly at the
+characteristic timescale but is also damped due to dissipation in the system.
+These oscillations are strong at resonant frequencies determined by the
+internal stellar structure, which are both excited and damped by convective
+turbulence.
 
 To relate this physical picture to \celerite, we consider the dynamics of a
 stochastically-driven damped simple harmonic oscillator.
@@ -841,8 +841,8 @@ k(\tau) = S_0\,\omega_0\,Q\,e^{-\frac{\omega_0\,\tau}{2Q}}\,
 \end{equation}
 where $\eta = \vert 1-(4\,Q^2)^{-1}\vert^{1/2}$.
 We note that, because of the damping, the characteristic oscillation frequency
-in this model $d_j$, for any finite quality factor $Q > 1/2$, is not equal to
-the frequency of the undamped oscillator $\omega_0$.
+in this model, $d_j$, for any finite quality factor $Q > 1/2$, is not equal to
+the frequency of the undamped oscillator, $\omega_0$.
 
 The power spectrum in \eq{sho-psd} has several limits of physical interest:
 \begin{itemize}
@@ -984,14 +984,14 @@ reproduces the true PSD.
 
 \subsection{Inferences with the ``wrong'' model}
 
-For this example, we simulate a dataset using a known GP model with a kernel
+For this examplewe simulate a dataset using a known GP model with a kernel
 outside of the support of a \celerite\ process.
-This means that the true autocorrelation of the process can never be correctly
+This means the true autocorrelation of the process can never be correctly
 represented by the model that we're using to fit but we use this example
 to demonstrate that, at least in this case, valid inferences can still be made
 about the physical parameters of the model.
 
-For this example, the data are simulated from a quasiperiodic GP with the
+For this example the data are simulated from a quasiperiodic GP with the
 kernel
 \begin{eqnarray}\eqlabel{sim-wrong-true}
 k_\mathrm{true} (\tau) = \alpha\,
@@ -1008,9 +1008,9 @@ S_\mathrm{true} (\omega) = \frac{\lambda\,\alpha}{2}\,\left[
         \frac{2\,\pi}{P_\mathrm{true}}\right)^2\right)
 \right]
 \end{eqnarray}
-that for large $\omega$ falls off exponentially.
-When compared to \eq{celerite-psd}~--~that for large $\omega$ goes as
-$\omega^{-4}$, at most~--~it is clear that a \celerite\ model can never
+which, for large values of $\omega$, falls off exponentially.
+When compared to \eq{celerite-psd}~--~which, for large $\omega$, goes as
+$\omega^{-4}$ at most~--~it is clear that a \celerite\ model can never
 perfectly reproduce the structure of this process.
 That being said, we demonstrate that rigorous inferences can be made
 about $P_\mathrm{true}$ even with an effective model.
@@ -1046,10 +1046,10 @@ computation time is required for the \celerite\ inference.
 
 In this section we demonstrate several use cases of \celerite\ when
 applied to real datasets.
-Each of these examples touches on an active area of research so we limit
-our examples to be qualitative in nature and make no claim of optimality but
-we hope that these examples encourage interested readers to investigate
-the applicability of \celerite\ to their research.
+Each of these examples touches on an active area of research so we limit our
+examples to be qualitative in nature and do not claim that \celerite\ is the
+optimum method but we hope these examples encourage interested readers to
+investigate the applicability of \celerite\ to their research.
 
 All of the following examples show time domain datasets with a clear bias in
 favor of large homogeneous photometric surveys but these methods can similarly
@@ -1116,7 +1116,7 @@ $\nu_\mathrm{max}$ and $\Delta \nu$ could be replaced by the fundamental
 physical parameters of the star.
 
 To demonstrate the applicability of this model, we apply it to infer the
-asteroseismic parameters of the giant star KIC~11615890 observed by the
+asteroseismic parameters of the giant star KIC~11615890, observed by the
 \kepler\ Mission.
 The goal of this example is to show that, even for a low signal-to-noise
 dataset with a short baseline, it is possible to infer asteroseismic
@@ -1197,7 +1197,7 @@ k(\tau) = A\,\exp\left(-\frac{\tau^2}{2\,\ell^2} -
 \end{eqnarray}
 where $P$ is the period of the oscillation.
 The key difference between this function and other quasiperiodic kernels is
-that it is everywhere positive.
+that it is positive everywhere.
 We can construct a simple \celerite\ covariance function with similar properties
 as follows
 \begin{eqnarray}\eqlabel{rot-kernel}
@@ -1212,13 +1212,13 @@ as a drop-in replacement for a substantial gain in computational efficiency.
 
 To demonstrate this method, we fit a \celerite\ model with a kernel given by
 \eq{rot-kernel} to a \kepler\ light curve for the star KIC~1430163.
-This star has a published rotation period of $3.88 \pm 0.58$ measured using
+This star has a published rotation period of $3.88 \pm 0.58$, measured using
 traditional periodogram and autocorrelation function approaches applied to
 \kepler\ data from Quarters 0--16 \citep{Mathur:2014}.
 We used \emcee\ to sample the joint posterior probability density for the four
-parameters in \eq{rot-kernel} conditioned on two quarters of \kepler\ data and
-find a constraint on the rotation period of $P = \rotationperiod$ in good
-agreement with the literature value.
+parameters in \eq{rot-kernel}, conditioned on two quarters of \kepler\ data,
+and find a constraint on the rotation period of $P = \rotationperiod$.
+This is in good agreement with the literature value.
 \Figure{rotation} shows a subset of the data used in this example and the
 posterior inferences of the PSD and autocorrelation function of the process.
 \Figure{rotation-period} shows the marginalized posterior distribution for the
@@ -1359,7 +1359,7 @@ $\mathcal{O}(N^2)$ or approximately in $\mathcal{O}(N\,\log N)$
 \citep{Wilson:2014}.
 The Toeplitz method is, in some ways, more flexible than \celerite\ because it
 can be used with any stationary kernel but it requires uniformly spaced data
-and the scaling is worse than \celerite\ so it, in general, be less
+and the scaling is worse than \celerite\ so it, in general, is less
 efficient when applied to large datasets.
 
 \citet{Carter:2009} improved the scaling of Toeplitz methods by introducing a
@@ -1394,17 +1394,17 @@ the model.
 Comparing \eq{carma-kernel} to \eq{celerite-kernel-complex}, we can see that
 every CARMA model corresponds to an equivalent \celerite\ model and the
 parameters $a_j$, $b_j$, $c_j$, and $d_j$ can be easily computed analytically.
-The inverse statement is not true, however, for any $J > 1$.
-This means that \celerite\ could be used to compute any CARMA model but using
+The inverse statement is not true however, for any $J > 1$.
+This means \celerite\ could be used to compute any CARMA model but using
 CARMA to compute the likelihood of a \celerite\ model would require solving
 \eq{carma-coeff} for a given set of $\{A_j\}_{j=1}^J$ numerically.
 This is an interesting distinction because, while the computational scaling of
 CARMA models is also $\mathcal{O}(N\,J^2)$, CARMA solvers are, in practice,
 somewhat faster and the memory requirements are smaller.
-However, as discussed in \sect{sho}, \celerite\ models have physical a
+However, as discussed in \sect{sho}, \celerite\ models have a physical
 interpretation as a mixture of stochastically-driven damped harmonic
 oscillators.
-This enabled, for example, the use of \celerite\ as a model for asteroseismic
+This enables, for example, the use of \celerite\ as a model for asteroseismic
 oscillations.
 A similar example using CARMA would necessarily be qualitative.
 
@@ -1428,7 +1428,7 @@ small datasets where $N$ is smaller than a few thousand.
 Many other approximate methods for scaling GP inference exist \citep[see, for
 example,][and references therein]{Wilson:2015a} and we make no attempt to make
 our discussion exhaustive.
-The key take away here is that \celerite\ provides and \emph{exact} method for
+The key take away here is that \celerite\ provides an \emph{exact} method for
 GP inference for a specific but flexible class of one-dimensional kernel
 functions.
 The closest cousin is the CARMA method with similar strengths and limitations
@@ -1447,7 +1447,7 @@ processes may be expanded to much larger datasets.
 Despite the restrictive form of the \celerite\ kernel, with a sufficient
 number of components it is flexible enough to describe a wide range of
 astrophysical variability.
-In fact, the relation of the \celerite\ kernel to the damped, driven harmonic
+In fact, the relation of the \celerite\ kernel to the damped, stochastically-driven harmonic
 oscillator matches simple models of astrophysical variability, and makes the
 parameterization interpretable in terms of resonant frequency, amplitude, and
 quality factor.
@@ -1464,7 +1464,7 @@ kernel choices.
 \celerite\ weakens these requirements by providing a scalable method for
 computing the likelihood and a physical motivation for the choice of kernel.
 \celerite\ can be used to accurately model stellar oscillations using the
-relation to the mixture of stochastically driven, damped simple harmonic
+relation to the mixture of stochastically-driven, damped simple harmonic
 oscillators.
 As higher signal-to-noise observations of transiting exoplanet systems are
 obtained, the effects of stellar variability will more dramatically impact the
@@ -1606,7 +1606,9 @@ Combining these results, we find the constraint
 \end{eqnarray}
 
 In the case of $J$ \celerite\ terms, we can check for negative values of the
-PSD by solving for the roots of the power spectrum (see \eqalt{celerite-psd}),
+PSD by solving for the roots of the power spectrum; if there are any real,
+positive roots, then the power-spectrum goes negative (or zero), and thus does not
+represent a valid kernel. We rewrite the power spectrum, \eqalt{celerite-psd}),
 abbreviating with $z = \omega^2$:
 \begin{equation}
 S(\omega)=  \sum_{j=1}^J \frac{q_j\,z + r_j}{z^2+s_j\,z + t_j} = 0
