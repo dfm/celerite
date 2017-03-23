@@ -582,7 +582,8 @@ First, even if the covariance function is a mixture of exponentials, the
 extended matrix will still be banded with a bandwidth that scales linearly
 with the number of components, $J$.
 Second, \citet{Ambikasaran:2015} proved that the absolute value of the
-determinant of $K_\mathrm{ext}$ is equal to the determinant of $K$.
+determinant of $K_\mathrm{ext}$ is equal to the absolute value of the
+determinant of $K$.
 This means we can use this extended matrix formalism to compute the
 marginalized likelihood in $\mathcal{O}(N)$ operations.
 
@@ -666,7 +667,7 @@ increase in the computational efficiency for these terms.
 In our implementation, we refer to ``real'' terms as those where $b_j=0$ and
 $d_j=0$, and the general terms are called ``complex''.
 
-\begin{figure}[p]
+\begin{figure}[tp]
 \begin{center}
 \includegraphics[width=0.7\textwidth]{figures/matrix.pdf}
 \caption{A pictorial representation of the sparse extended matrix
@@ -731,7 +732,7 @@ hardware, and \project{LAPACK}/\project{BLAS} implementation but we have found
 qualitatively similar results across popular platforms and state-of-the-art
 libraries.
 
-\begin{figure}[!htbp]
+\begin{figure}[tp]
 \begin{center}
 \includegraphics[width=\textwidth]{figures/benchmark_darwin.pdf}
 \caption{A benchmark showing the computational scaling of \celerite\ using the
@@ -1326,6 +1327,7 @@ variability.
 \end{center}
 \end{figure}
 
+\newpage
 \section{Comparisons to other methods}
 
 There are many other methods of scaling GP models to large datasets and in
