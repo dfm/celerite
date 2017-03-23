@@ -1358,7 +1358,7 @@ $\mathcal{O}(N^2)$ or approximately in $\mathcal{O}(N\,\log N)$
 \citep{Wilson:2014}.
 The Toeplitz method is, in some ways, more flexible than \celerite\ because it
 can be used with any stationary kernel but it requires uniformly spaced data
-and the scaling is worse than \celerite\ so it, in general, be less
+and the scaling is worse than \celerite\ so it, in general, is less
 efficient when applied to large datasets.
 
 \citet{Carter:2009} improved the scaling of Toeplitz methods by introducing a
@@ -1427,7 +1427,7 @@ small datasets where $N$ is smaller than a few thousand.
 Many other approximate methods for scaling GP inference exist \citep[see, for
 example,][and references therein]{Wilson:2015a} and we make no attempt to make
 our discussion exhaustive.
-The key take away here is that \celerite\ provides and \emph{exact} method for
+The key take away here is that \celerite\ provides an \emph{exact} method for
 GP inference for a specific but flexible class of one-dimensional kernel
 functions.
 The closest cousin is the CARMA method with similar strengths and limitations
@@ -1446,7 +1446,7 @@ processes may be expanded to much larger datasets.
 Despite the restrictive form of the \celerite\ kernel, with a sufficient
 number of components it is flexible enough to describe a wide range of
 astrophysical variability.
-In fact, the relation of the \celerite\ kernel to the damped, driven harmonic
+In fact, the relation of the \celerite\ kernel to the damped, stochastically-driven harmonic
 oscillator matches simple models of astrophysical variability, and makes the
 parameterization interpretable in terms of resonant frequency, amplitude, and
 quality factor.
@@ -1463,7 +1463,7 @@ kernel choices.
 \celerite\ weakens these requirements by providing a scalable method for
 computing the likelihood and a physical motivation for the choice of kernel.
 \celerite\ can be used to accurately model stellar oscillations using the
-relation to the mixture of stochastically driven, damped simple harmonic
+relation to the mixture of stochastically-driven, damped simple harmonic
 oscillators.
 As higher signal-to-noise observations of transiting exoplanet systems are
 obtained, the effects of stellar variability will more dramatically impact the
@@ -1605,7 +1605,9 @@ Combining these results, we find the constraint
 \end{eqnarray}
 
 In the case of $J$ \celerite\ terms, we can check for negative values of the
-PSD by solving for the roots of the power spectrum (see \eqalt{celerite-psd}),
+PSD by solving for the roots of the power spectrum; if there are any real,
+positive roots, then the power-spectrum goes negative (or zero), and thus does not
+represent a valid kernel. We rewrite the power spectrum, \eqalt{celerite-psd}),
 abbreviating with $z = \omega^2$:
 \begin{equation}
 S(\omega)=  \sum_{j=1}^J \frac{q_j\,z + r_j}{z^2+s_j\,z + t_j} = 0
