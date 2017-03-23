@@ -69,10 +69,10 @@
 \newcommand\subsectionprelude{\vspace{1em}}
 \makeatother
 
-\widowpenalty=10000
-\clubpenalty=10000
-
 \sloppy\sloppypar
+
+%\widowpenalty=10000
+\clubpenalty=1000000000
 
 % ------------------ %
 % end of AASTeX mods %
@@ -131,9 +131,10 @@
 \begin{document}
 
 \title{%
+\vspace{-\baselineskip}
 Fast and scalable Gaussian process modeling with applications
 to astronomical time series
-\vspace{-3\baselineskip}
+\vspace{-3.2\baselineskip}
 }
 
 \newcounter{affilcounter}
@@ -665,7 +666,7 @@ increase in the computational efficiency for these terms.
 In our implementation, we refer to ``real'' terms as those where $b_j=0$ and
 $d_j=0$, and the general terms are called ``complex''.
 
-\begin{figure}[!htbp]
+\begin{figure}[p]
 \begin{center}
 \includegraphics[width=0.7\textwidth]{figures/matrix.pdf}
 \caption{A pictorial representation of the sparse extended matrix
