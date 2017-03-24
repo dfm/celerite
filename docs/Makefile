@@ -15,7 +15,8 @@ ALLSPHINXOPTS   = -d $(BUILDDIR)/doctrees $(PAPEROPT_$(PAPER)) $(SPHINXOPTS) .
 I18NSPHINXOPTS  = $(PAPEROPT_$(PAPER)) $(SPHINXOPTS) .
 
 default: dirhtml
-TUTORIALS = tutorials/first.rst tutorials/modeling.rst tutorials/normalization.rst
+TUTORIALS = tutorials/first.rst tutorials/modeling.rst tutorials/normalization.rst \
+			tutorials/julia-first.rst
 
 xml/index.xml: ../cpp/include/celerite/*.h ../cpp/include/celerite/solver/*.h
 	doxygen Doxyfile

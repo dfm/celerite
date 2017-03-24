@@ -32,6 +32,11 @@ celerite is being actively developed in `a public repository on GitHub
 <https://github.com/dfm/celerite>`_ so if you have any trouble, `open an issue
 <https://github.com/dfm/celerite/issues>`_ there.
 
+.. note:: To work with the Julia package manager, the Julia implementation of
+    the algorithm is being developed in `a separate
+    repository <https://github.com/ericagol/celerite.jl>`_ but the
+    documentation is still included here.
+
 .. image:: https://img.shields.io/badge/GitHub-dfm%2Fcelerite-blue.svg?style=flat
     :target: https://github.com/dfm/celerite
 .. image:: http://img.shields.io/badge/license-MIT-blue.svg?style=flat
@@ -57,6 +62,13 @@ celerite is being actively developed in `a public repository on GitHub
    python/solver
    python/benchmark
 
+.. toctree::
+   :maxdepth: 1
+   :caption: Python Tutorials
+
+   tutorials/first
+   tutorials/modeling
+   tutorials/normalization
 
 .. toctree::
    :maxdepth: 2
@@ -66,14 +78,18 @@ celerite is being actively developed in `a public repository on GitHub
    cpp/start
    cpp/api
 
+.. toctree::
+   :maxdepth: 2
+   :caption: Julia Usage
+
+   julia/install
+
 
 .. toctree::
    :maxdepth: 1
-   :caption: Tutorials
+   :caption: Julia Tutorials
 
-   tutorials/first
-   tutorials/modeling
-   tutorials/normalization
+   tutorials/julia-first
 
 
 Contributors
