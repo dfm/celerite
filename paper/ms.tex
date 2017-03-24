@@ -175,8 +175,12 @@ to astronomical time series
 The growing field of large-scale time domain astronomy requires methods for
 probabilistic inference that are computationally tractable, even with large
 datasets.
-We present a method for Gaussian Process regression in one dimension with a
-computational cost that scales linearly with the size of the dataset.
+Gaussian Processes are a popular class of models used for this purpose but,
+since the computational cost scales as the cube of the number of data points,
+their application has been limited to relatively small datasets.
+In this paper, we present a method for Gaussian Process regression in
+one-dimension where the computational requirements scale linearly with the
+size of the dataset.
 This method exploits structure in the problem when the covariance function is
 expressed as a mixture of complex exponentials, without requiring evenly
 spaced observations or uniform noise.
