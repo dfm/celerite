@@ -156,8 +156,8 @@ to astronomical time series
 \altaffiltext{\columbia}{Department of Astronomy, Columbia University,
                          New York, NY}
 
-\edef \iss {\arabic{affilcounter}}\stepcounter{affilcounter}
-\altaffiltext{\iss}{Department of Computational and Data Sciences,
+\edef \iis {\arabic{affilcounter}}\stepcounter{affilcounter}
+\altaffiltext{\iis}{Department of Computational and Data Sciences,
                     Indian Institute of Science, Bangalore, India}
 
 
@@ -165,7 +165,7 @@ to astronomical time series
     Daniel~Foreman-Mackey\altaffilmark{\sagan,\uw},
     Eric~Agol\altaffilmark{\uw},
     Ruth~Angus\altaffilmark{\simons,\columbia}, and
-    Sivaram~Ambikasaran\altaffilmark{\iss}
+    Sivaram~Ambikasaran\altaffilmark{\iis}
 }
 
 
@@ -320,7 +320,7 @@ quickly becomes computationally intractable.
 In this case, the use of non-linear optimization or MCMC is no longer
 practical.
 
-In the following Section, we present a method for substantially improving this
+In the following section, we present a method for substantially improving this
 scaling in many circumstances.
 We call our method and its implementations \celerite.\footnote{The name
 \celerite\ comes from the French word \foreign{c\'elerit\'e} meaning the speed
@@ -362,7 +362,7 @@ k_\bvec{\alpha}(\tau_{nm}) = \sigma_n^2\,\delta_{nm} +
     \sum_{j=1}^J a_j\,\exp(-c_j\,\tau_{nm})\quad.
 \end{eqnarray}
 In this case, the inverse is dense but \eq{gp-likelihood} can still be
-evaluated in $\mathcal{O}(N\,J^2)$ where $J$ is the number of components
+evaluated in $\mathcal{O}(N\,J^2)$, where $J$ is the number of components
 in the mixture.
 
 This kernel function can be made even more general by
@@ -381,7 +381,7 @@ k_\bvec{\alpha}(\tau_{nm}) = \sigma_n^2\,\delta_{nm} +
 and, for this function, \eq{gp-likelihood} can still be evaluated with
 $\mathcal{O}(N\,J^2)$ operations.
 The details of this method and a few implementation considerations are
-outlined in the following \sectionname\ but we first discuss some
+outlined in the following section but we first discuss some
 properties of this covariance function.
 
 By rewriting the exponentials in \eq{celerite-kernel-complex} as sums of sine
@@ -459,13 +459,13 @@ where
     \tilde{d}_{\pm} &=& d_j \mp d_k \quad.
 \end{eqnarray}
 Therefore, the method described in the following section can be used to
-perform scalable inference on large datasets for any model where the kernel
+perform scalable inference on large datasets for any model, where the kernel
 function is a sum or product of \celerite\ terms.
 
 \section{Implementation \& performance}
 
 \citet{Rybicki:1995} demonstrated that the inverse of a matrix $K$, with
-elements given by equation \eq{kernel-simple}, could be computed
+elements given by \eq{kernel-simple}, could be computed
 efficiently by taking advantage of the structure of this covariance function.
 \citet{Ambikasaran:2015} generalized this computation to apply to the full
 mixture of $J$ terms in \eq{celerite-kernel-complex} and derived an equally
@@ -507,7 +507,7 @@ K\,\bvec{z} &=& \bvec{y}, \\
 \end{eqnarray}
 where our goal is to solve for the unknown vector \bvec{z} for a given matrix
 $K$ and vector \bvec{y}.
-In this equation, we have assumed that the mean function is zero but a
+In \eq{impl-matrix}, we have assumed that the mean function is zero but a
 non-zero mean could be included by replacing \bvec{y} by
 $\bvec{r}_\bvec{\theta}$ as defined in \sect{gps}.
 Now, if we introduce the variables
@@ -686,7 +686,7 @@ in the legend.
 
 The extended system defined in the previous section is sparse with typically fewer than
 a few percent non-zero entries and band structure.
-In this \sectionname, we empirically investigate the performance and scaling
+In this section, we empirically investigate the performance and scaling
 of three different algorithms for solving this extended system:
 
 \begin{enumerate}
@@ -708,12 +708,11 @@ of three different algorithms for solving this extended system:
 
 \end{enumerate}
 
-\citet{Ambikasaran:2015} found an empirical scaling of $\mathcal{O}(N\,J^2)$
-with their method that used the sparse LU decomposition implemented in the
-\project{SuperLU} package \citep{Demmel:1999}.
 The theoretical scaling for a band LU decomposition is $\mathcal{O}(N\,J^3)$
 because the dimension of the extended matrix scales as $N\,J$ and the
 bandwidth scales with $J$ \citep{Press:1992, Press:2007}.
+\citet{Ambikasaran:2015} found an empirical scaling of $\mathcal{O}(N\,J^2)$ that used the sparse LU decomposition implemented in the
+\project{SuperLU} package \citep{Demmel:1999}.
 We find that, while the \texttt{vanilla} solver scales as expected, the
 \texttt{lapack} implementation scales empirically as $\mathcal{O}(N\,J^2)$ and
 offers the fastest solves for $J \gtrsim 8$ on all platforms that we tested.
@@ -989,7 +988,7 @@ reproduces the true PSD.
 
 \subsection{Inferences with the ``wrong'' model}
 
-For this example we simulate a dataset using a known GP model with a kernel
+For this example, we simulate a dataset using a known GP model with a kernel
 outside of the support of a \celerite\ process.
 This means the true autocorrelation of the process can never be correctly
 represented by the model that we're using to fit but we use this example
@@ -1049,7 +1048,7 @@ computation time is required for the \celerite\ inference.
 
 \section{Examples with real data}
 
-In this section we demonstrate several use cases of \celerite\ when
+In this section, we demonstrate several use cases of \celerite\ when
 applied to real datasets.
 Each of these examples touches on an active area of research so we limit our
 examples to be qualitative in nature and do not claim that \celerite\ is the
@@ -1458,7 +1457,8 @@ In fact, the relation of the \celerite\ kernel to the damped, stochastically-dri
 oscillator matches simple models of astrophysical variability, and makes the
 parameterization interpretable in terms of resonant frequency, amplitude, and
 quality factor.
-A major drawback of this method is its quadratic scaling with the number of
+% Siva: Removed major, since $J$ is most often small as stated in the second half of the sentence
+A drawback of this method is its quadratic scaling with the number of
 terms $J$ but, in many cases, small values of $J$ are sufficient.
 
 Our background is in studying transiting exoplanets, a field which has only
@@ -1511,7 +1511,7 @@ There are many data analysis problems where \celerite\ will not be applicable.
 In particular, the restriction to one-dimensional problems is significant.
 There are many examples of multidimensional GP modeling the astrophysics
 literature \citep[recent examples from the field of exoplanet characterization
-include][]{Haywood:2014, Rajpaul:2015, Aigrain:2016} but \celerite\ could not
+include][]{Haywood:2014, Rajpaul:2015, Aigrain:2016}, where \celerite\ cannot
 be used to accelerate any of these analyses.
 It is plausible that an extension could be derived to tackle some
 multidimensional problems with the right structure~--~simultaneous parallel
@@ -1634,8 +1634,7 @@ Q_0(z) = \sum_{j=1}^J (q_j z + r_j)\prod_{k \ne j}\left(z^2+s_kz +
     t_k\right) = 0\quad,
 \end{equation}
 which is a polynomial with order $2\,(J-1)+1$.
-With $J=2$, this yields a cubic equation which may be solved exactly for the
-roots.
+With $J=2$, this yields a cubic equation whose roots can be obtained exactly.
 
 For arbitrary $J$, a procedure based upon Sturm's theorem \citep{Dorrie:1965}
 allows one to determine whether there are any real roots within the range
@@ -1652,9 +1651,9 @@ We evaluate the coefficients of each of the polynomial in the series by
 evaluating $f_0 = \{Q_0(0),\,\ldots,\,Q_{2\,(J-1)+1}(0)\}$ to give us the signs
 of these polynomials evaluated at $z=0$.
 Likewise, we evaluate the coefficients of the largest order term in each
-polynomial which gives the sign of the polynomial as $z \rightarrow \infty$,
+polynomial that gives the sign of the polynomial as $z \rightarrow \infty$,
 $f_\infty$.
-With the series of coefficients $f_0$ and $f_\infty$, we then determine how
+With the sequence of coefficients $f_0$ and $f_\infty$, we then determine how
 many times the sign changes in each of these, where $\sigma(0)$ is the number
 of sign changes at $z=0$, and $\sigma(\infty)$ is the number of sign changes
 at $z \rightarrow \infty$.
