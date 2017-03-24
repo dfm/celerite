@@ -356,6 +356,19 @@ def test_log_likelihood(method, seed=42):
     ll3 = gp.log_likelihood(y)
     assert not np.allclose(ll2, ll3)
 
+    # Test zero delta t
+    ind = len(x) // 2
+    x = np.concatenate((x[:ind], [x[ind]], x[ind:]))
+    y = np.concatenate((y[:ind], [y[ind]], y[ind:]))
+    yerr = np.concatenate((yerr[:ind], [yerr[ind]], yerr[ind:]))
+    gp.compute(x, yerr)
+    ll = gp.log_likelihood(y)
+    K = gp.get_matrix(include_diagonal=True)
+    ll0 = -0.5 * np.dot(y, np.linalg.solve(K, y))
+    ll0 -= 0.5 * np.linalg.slogdet(K)[1]
+    ll0 -= 0.5 * len(x) * np.log(2*np.pi)
+    assert np.allclose(ll, ll0)
+
 
 @method_switch
 def test_predict(method, seed=42):
