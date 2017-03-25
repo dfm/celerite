@@ -16,3 +16,7 @@ Read the documentation at: `celerite.rtfd.io <http://celerite.readthedocs.io>`_.
     :target: https://github.com/dfm/celerite/blob/master-pdf/paper/ms.pdf
 .. image:: https://img.shields.io/badge/ArXiv-TBD-orange.svg?style=flat
     :target: https://arxiv.org
+
+The Julia implementation is being developed in a different repository:
+`ericagol/celerite.jl <https://github.com/ericagol/celerite.jl>`_. Issues
+related to that implementation should be opened there.
