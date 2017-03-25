@@ -1449,6 +1449,18 @@ This means that the HODLR solver can \emph{approximately} evaluate
 models more efficiently than \celerite\ for large models $J \gg 10$ and
 small datasets where $N$ is smaller than a few thousand.
 
+The structured kernel interpolation \citep[SKI/KISS-GP][]{Wilson:2015}
+framework is another approximate method that can be used to scale GPs to large
+datasets.
+This method uses fast interpolation of the kernel into a space where Toeplitz
+or Kronecker structure can be used to scale inference and prediction.
+The SKI/KISS-GP framework can be applied to scale GP inference with a wide
+range of kernels, but the computational cost will depend on the specific
+dataset, model, and precision requirements for the approximation.
+The SKI method has an impressive $\mathcal{O}(1)$ cost for test-time
+predictions and it is interesting to consider how this could be applied to
+\celeriteterm\ models.
+
 Many other approximate methods for scaling GP inference exist \citep[see, for
 example,][and references therein]{Wilson:2015a} and we make no attempt to make
 our discussion exhaustive.
@@ -1546,11 +1558,14 @@ This version of the paper was generated with git commit \texttt{\githash}
 \acknowledgments
 It is a pleasure to thank
 Megan Bedell,
+Ian Czekala,
 Will Farr,
 Sam Grunblatt,
 David W.\ Hogg,
-Dan Huber, and
-Jake VanderPlas
+Dan Huber,
+Dennis Stello,
+Jake VanderPlas, and
+Andrew Gordon Wilson
 for helpful discussions informing the ideas and code presented here.
 
 This work was performed in part under contract with the Jet Propulsion
