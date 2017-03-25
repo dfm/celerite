@@ -70,7 +70,8 @@ for n in range(1, N):
 
 nband = len(full) * 2*(2*J+2)
 nnz = np.sum(full > 0)
-print("Sparsity: {0}".format(nnz / nband))
+print("nnz: {0}, {1}".format(nnz, (20*J+1)*N - 28*J))
+# print("nnz: {0}, {1}".format(nnz, (20*J+1)*(N-2)+12*J+2))
 
 # Legend
 d = 1
