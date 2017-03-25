@@ -215,10 +215,10 @@ ax.set_xlabel("rotation period [days]")
 fig.savefig("rotation-period.pdf", bbox_inches="tight", dpi=300)
 
 q = np.percentile(period_samps, [16, 50, 84])
-print(q, np.diff(q))
+print(q, np.diff(q), np.mean(period_samps), np.std(period_samps))
 
 with open("rotation.tex", "w") as f:
     f.write("% Automatically generated\n")
     f.write(("\\newcommand{{\\rotationperiod}}{{\\ensuremath{{{{"
-             "{0:.2f}_{{-{1:.2f}}}^{{+{2:.2f}}} }}}}}}\n")
-            .format(q[1], q[1]-q[0], q[2]-q[1]))
+             "{0:.2f} \pm {1:.2f}}}}}}}\n")
+            .format(np.mean(period_samps), np.std(period_samps)))

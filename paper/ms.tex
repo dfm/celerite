@@ -278,8 +278,8 @@ archive}.
 
 GP are stochastic models consisting of a mean function
 $\mu_\bvec{\theta}(\bvec{x})$ and a covariance, autocorrelation, or ``kernel''
-function $k_\bvec{\alpha}(\bvec{x}_i,\,\bvec{x}_j)$ parameterized by the
-parameters $\bvec{\theta}$ and $\bvec{\alpha}$ respectively.
+function $k_\bvec{\alpha}(\bvec{x}_i,\,\bvec{x}_j)$ parameterized by
+$\bvec{\theta}$ and $\bvec{\alpha}$ respectively.
 Under this model, the log-likelihood of observing a dataset
 \begin{eqnarray}
 \bvec{y} = \left(\begin{array}{ccccc}
@@ -418,8 +418,8 @@ S(\omega) = \sum_{j=1}^J \sqrt{\frac{2}{\pi}}
 {\omega^4+2\,({c_j}^2-{d_j}^2)\,\omega^2+{({c_j}^2+{d_j}^2)}^2}\quad.
 \end{eqnarray}
 The physical interpretation of this model isn't immediately obvious and we
-return to a more general discussion of the physical intuition in a moment
-but we start by investigating some special cases.
+return to a more general discussion shortly but we start by considering some
+special cases.
 
 If we set the imaginary amplitude $b_j$ for some component $j$ to zero, that
 term of \eq{celerite-kernel} becomes
@@ -1209,7 +1209,7 @@ the empirical autocorrelation function provides a reliable estimate of the
 rotation period of a star \citep{Mcquillan:2013, Mcquillan:2014, Aigrain:2015}
 and that a GP model with a
 quasiperiodic covariance function can be used to make probabilistic
-measurements even with sparsely sampled data (R.~Angus, \etal\ in prep.).
+measurements even with sparsely sampled data (R.~Angus, \etal\ submitted).
 The covariance function used for this type of analysis has the form
 \begin{eqnarray}\eqlabel{sine2}
 k(\tau) = A\,\exp\left(-\frac{\tau^2}{2\,\ell^2} -
@@ -1241,7 +1241,12 @@ traditional periodogram and autocorrelation function approaches applied to
 We used \emcee\ to sample the joint posterior probability density for the four
 parameters in \eq{rot-kernel}, conditioned on two quarters of \kepler\ data,
 and find a constraint on the rotation period of $P = \rotationperiod$.
-This is in good agreement with the literature value.
+This is in good agreement with the literature value with somewhat smaller
+uncertainties.
+A detailed comparison of GP rotation period measurements and the traditional
+methods is beyond the scope of this paper but forthcoming work (R.~Angus,
+\etal, submitted) demonstrates that GP inferences are, at a population level,
+more reliable than other methods.
 \Figure{rotation} shows a subset of the data used in this example and the
 posterior inferences of the PSD and autocorrelation function of the process.
 \Figure{rotation-period} shows the marginalized posterior distribution for the
@@ -1349,7 +1354,6 @@ variability.
 \end{center}
 \end{figure}
 
-\newpage
 \section{Comparisons to other methods}
 
 There are many other methods of scaling GP models to large datasets and in
@@ -1618,9 +1622,9 @@ Section 4.2.1 in][]{Rasmussen:2006}~--~to requiring that the kernel be the
 Fourier transform of a positive finite measure.
 This means that the power spectrum of a positive definite kernel must be
 positive for all frequencies.
-This result is also intuitive because, since the power spectrum of a process
-is defined as expected the squared amplitude of the Fourier transform of the
-time series, it must be non-negative.
+This result is intuitive because, since the power spectrum of a process is
+defined as the expected squared amplitude of the Fourier transform of the time
+series, it must be non-negative.
 
 Using \eq{celerite-psd}, we find that for a single \celeriteterm\ term, this
 requirement is met when
