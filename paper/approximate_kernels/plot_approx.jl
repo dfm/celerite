@@ -74,6 +74,7 @@ ax = axes[3]
 ax[:set_title]("(b). Gaussian")
 ax[:plot](time,gaussian,alpha=0.25,label=L"$G(z)$, exact",linewidth=linewidth,color=colors[1])
 ax[:plot](time,model_gaussian,alpha=1.0,ls="dashed",alpha=0.5,label=L"$G(z)$, approx",color=colors[1],linewidth=linewidth)
+print("ExpSq error: ",std(gaussian-model_gaussian)," ",maximum(abs(gaussian-model_gaussian)))
 ax[:legend](loc="upper right",fontsize=fontsize)
 ax[:set_xlabel](L"$\tau/\tau_0$")
 ax[:set_ylabel]("Dimensional ACF")
