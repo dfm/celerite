@@ -1145,6 +1145,13 @@ Looking forward to \tess\ \citep{Ricker:2014,Campante:2016}, we measure
 $\nu_\mathrm{max}$ and $\Delta\nu$ using only one month of \kepler\ data and
 compare our results to the results inferred from the full 4 year baseline of
 the \kepler\ mission.
+Unlike typical giants, KIC~11615890 is a member of a class of stars where the
+dipole ($\ell = 1$) oscillation modes are suppressed by strong magnetic fields
+in the core \citep{Stello:2016}.
+This makes this target simpler for the purposes of this demonstration because
+we can neglect the $\ell = 1$ modes and the model proposed above will be an
+effective model for the combined signal from the $\ell = 0$ and 2 modes.
+
 For KIC~11615890, the published asteroseismic parameters measured using several
 years of \kepler\ observations are \citep{Pinsonneault:2014}
 \begin{eqnarray}
@@ -1598,8 +1605,13 @@ Astronomy, Inc., under NASA contract NAS5-26555.
 Support for MAST is provided by the NASA Office of Space Science via grant
 NNX13AC07G and by other grants and contracts.
 
+This research made use of Astropy, a community-developed core Python package
+for Astronomy \citep{Astropy-Collaboration:2013}.
+
+
 \facility{Kepler}
 \software{%
+     \project{AtroPy} \citep{Astropy-Collaboration:2013},
      \project{corner.py} \citep{Foreman-Mackey:2016},
      \project{Eigen} \citep{Guennebaud:2010},
      \project{emcee} \citep{Foreman-Mackey:2013},
