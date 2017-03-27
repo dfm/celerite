@@ -8,7 +8,7 @@ namespace celerite {
 #define SWAP(a,b) {dum=(a);(a)=(b);(b)=dum;}
 #define TINY 1.0e-20
 
-size_t get_index (size_t i, size_t j, size_t dx)
+inline size_t get_index (size_t i, size_t j, size_t dx)
 {
   return (i-1)*dx + (j-1);
 }
