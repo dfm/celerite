@@ -7,6 +7,7 @@ import pickle
 import corner
 import numpy as np
 import matplotlib.pyplot as plt
+from scipy.ndimage.filters import gaussian_filter
 
 import emcee3
 
@@ -146,15 +147,14 @@ plt.close(fig)
 fig, axes = plt.subplots(3, 1, sharex=True, sharey=True,
                          figsize=get_figsize(2.5, 2))
 
-factor = 1.
 axes[0].plot(freq_uHz, power_all, "k", rasterized=True)
-# axes[0].plot(freq_uHz, gaussian_filter(power_all, 5) * factor, "k",
-#              rasterized=True)
+axes[0].plot(freq_uHz, gaussian_filter(power_all, 5),
+             color=COLORS["MODEL_1"], rasterized=True)
 axes[0].axhline(white_noise_all)
 
 axes[1].plot(freq_uHz, power_some, "k", rasterized=True)
-# axes[1].plot(freq_uHz, gaussian_filter(power_some, 20) * factor, "k",
-#              rasterized=True)
+axes[1].plot(freq_uHz, gaussian_filter(power_some, 20),
+             color=COLORS["MODEL_1"], rasterized=True)
 axes[1].axhline(white_noise_some)
 
 q = np.percentile(uHz_conv/(2*np.pi)*psds, [16, 50, 84], axis=0)

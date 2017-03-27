@@ -274,10 +274,14 @@ if os.path.exists("astero-{0}.h5".format(kicid)):
         sys.exit(0)
 
 # Define a custom proposal
+names = gp.get_parameter_names()
+ind_nu_max = names.index("kernel:log_nu_max")
+ind_delta_nu = names.index("kernel:log_delta_nu")
 def astero_move(rng, x0):
     x = np.array(x0)
     f = 2.0 * (rng.rand(len(x)) < 0.5) - 1.0
-    x[:, 3] = np.log(np.exp(x[:, 3]) + f * np.exp(x[:, 4]))
+    x[:, ind_nu_max] = np.log(np.exp(x[:, ind_nu_max]) +
+                              f * np.exp(x[:, ind_delta_nu]))
     return x, np.zeros(len(x))
 
 # The sampler will use a mixture of proposals
