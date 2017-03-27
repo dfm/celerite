@@ -45,6 +45,8 @@ celerite is being actively developed in `a public repository on GitHub
     :target: https://travis-ci.org/dfm/celerite
 .. image:: https://ci.appveyor.com/api/projects/status/74al24yklrlrvwni?svg=true&style=flat
     :target: https://ci.appveyor.com/project/dfm/celerite
+.. image:: https://zenodo.org/badge/DOI/10.5281/zenodo.438359.svg?style=flat
+   :target: https://doi.org/10.5281/zenodo.438359
 .. image:: https://img.shields.io/badge/PDF-latest-orange.svg?style=flat
     :target: https://github.com/dfm/celerite/blob/master-pdf/paper/ms.pdf
 .. image:: https://img.shields.io/badge/ArXiv-TBD-orange.svg?style=flat
