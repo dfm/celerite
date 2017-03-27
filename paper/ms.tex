@@ -239,7 +239,7 @@ practice, by the computational cost and scaling.
 In general, the cost of computing a GP likelihood scales as the cube of
 the number of data points $\mathcal{O}(N^3)$ and in the current era of large
 time domain surveys~--~with as many as $\sim10^{4-9}$ targets with
-$\sim10^{3-5}$ observations each~---~this scaling is prohibitive.
+$\sim10^{3-5}$ observations each~--~this scaling is prohibitive.
 
 In this paper, we present a method for computing a class of GP models that
 scales linearly with the number of data points $\mathcal{O}(N)$ for one
@@ -276,7 +276,7 @@ archive}.
 
 \section{Gaussian processes}\sectlabel{gps}
 
-GP are stochastic models consisting of a mean function
+GPs are stochastic models consisting of a mean function
 $\mu_\bvec{\theta}(\bvec{x})$ and a covariance, autocorrelation, or ``kernel''
 function $k_\bvec{\alpha}(\bvec{x}_i,\,\bvec{x}_j)$ parameterized by
 $\bvec{\theta}$ and $\bvec{\alpha}$ respectively.
@@ -407,7 +407,6 @@ k_\bvec{\alpha}(\tau_{nm}) = \sigma_n^2\,\delta_{nm} +
 \end{eqnarray}
 For clarity, we refer to the argument within the sum as a ``\celeriteterm\
 term'' for the remainder of this paper.
-The kernel function in \eq{celerite-kernel} is qualitatively similar to the
 The Fourier transform\footnote{Here and throughout we have defined the Fourier
 transform of the function $f(t)$ as $F(\omega)={(2\,\pi)}^{-1/2}\,
 \int_{-\infty}^\infty f(t)\,e^{i\,\omega\,t}\dd t$.} of this covariance
@@ -494,7 +493,7 @@ covariance function
 k(\tau_{nm}) = \sigma_n^2\,\delta_{nm} + a\,\exp(-c\,\tau_{nm})\quad.
 \end{eqnarray}
 This is the result of setting $J=1$, $b=0$, and $d=0$ in
-\eq{celerite-kernel-complex} and is the model studied by
+\eq{celerite-kernel-complex} and it is the model studied by
 \citet{Rybicki:1995}.
 To demonstrate that the likelihood of this model can be computed in
 $\mathcal{O}(N)$, we write out the full system of
@@ -697,8 +696,8 @@ in the legend.
 
 \subsection{Implementation considerations \& scaling}
 
-The extended system defined in the previous section is sparse with typically fewer than
-a few percent non-zero entries and band structure.
+The extended system defined in the previous section is sparse, with typically
+fewer than a few percent non-zero entries and band structure.
 In this section, we empirically investigate the performance and scaling
 of three different algorithms for solving this extended system:
 
@@ -744,9 +743,9 @@ $\mathcal{O}(N\,J^2)$ at the cost of some extra overhead.
 Therefore, for $J \lesssim 5$ or $10$ the \texttt{vanilla} solver is more
 efficient than the other algorithms.
 The real world performance of \celerite\ depends on the specific platform,
-hardware, and \project{LAPACK}/\project{BLAS} implementation but we have found
-qualitatively similar results across popular platforms and state-of-the-art
-libraries.
+hardware, and \project{LAPACK}/\project{BLAS} implementation, but we have
+found qualitatively similar results across popular platforms and
+state-of-the-art libraries.
 
 \begin{figure}[tp]
 \begin{center}
@@ -933,7 +932,7 @@ $S_0$, and $\omega_0$ to give a sufficient accounting of the power spectrum
 stellar time series.
 Since this kernel is exactly described by the exponential kernel, the
 likelihood (\eqalt{gp-likelihood}) can be evaluated for a time series with $N$
-measurements in $\mathcal{O}(N)$ operations using the \celerite\ method
+measurements in $\mathcal{O}(N)$ operations using the \celeriteterm\ method
 described in the previous section.
 
 \begin{figure}[!htbp]
@@ -1006,11 +1005,11 @@ reproduces the true PSD.
 For this example, we simulate a dataset using a known GP model with a kernel
 outside of the support of a \celeriteterm\ process.
 This means the true autocorrelation of the process can never be correctly
-represented by the model that we're using to fit but we use this example
+represented by the model that we are using to fit, but we use this example
 to demonstrate that, at least in this case, valid inferences can still be made
 about the physical parameters of the model.
 
-For this example the data are simulated from a quasiperiodic GP with the
+For this example, the data are simulated from a quasiperiodic GP with the
 kernel
 \begin{eqnarray}\eqlabel{sim-wrong-true}
 k_\mathrm{true} (\tau) = \alpha\,
@@ -1045,7 +1044,7 @@ The inferred distribution for the parameter $P$ is shown in the right panel of
 \Figure{simulated-wrong} and compared to the true period $P_\mathrm{true}$ and
 the inferences made using the correct model (\eqalt{sim-wrong-true}).
 The inference made using this effective \celeriteterm\ model are indistinguishable
-from the inferences made using the correct model but substantially less
+from the inferences made using the correct model and substantially less
 computation time is required for the \celerite\ inference.
 
 \begin{figure}[!htbp]
@@ -1101,7 +1100,7 @@ of the observed time series using a GP where the PSD is a sum of terms given
 by \eq{sho-psd}.
 This gives us a method of computing the likelihood function for the parameters
 of the physical model (for example, $\nu_\mathrm{max}$ and $\Delta \nu$, or
-other, more fundamental parameters) \emph{conditioned on the observed time
+other more fundamental parameters) \emph{conditioned on the observed time
 series} in $\mathcal{O}(N)$ operations.
 In other words, \celerite\ provides a computationally efficient framework that
 can be combined with physically-motivated models of stars and numerical
@@ -1130,7 +1129,7 @@ S_{0,\,j} =
 \end{eqnarray}
 where $j$ is an integer running from $-3$ to 3 and $\epsilon$, $A$, and $W$
 are shared nuisance parameters.
-This model could be easily extended to include small frequency splitting and
+This model could be extended to include more angular modes and
 $\nu_\mathrm{max}$ and $\Delta \nu$ could be replaced by the fundamental
 physical parameters of the star.
 
@@ -1145,6 +1144,13 @@ Looking forward to \tess\ \citep{Ricker:2014,Campante:2016}, we measure
 $\nu_\mathrm{max}$ and $\Delta\nu$ using only one month of \kepler\ data and
 compare our results to the results inferred from the full 4 year baseline of
 the \kepler\ mission.
+Unlike typical giants, KIC~11615890 is a member of a class of stars where the
+dipole ($\ell = 1$) oscillation modes are suppressed by strong magnetic fields
+in the core \citep{Stello:2016}.
+This makes this target simpler for the purposes of this demonstration because
+we can neglect the $\ell = 1$ modes and the model proposed above will be an
+effective model for the combined signal from the $\ell = 0$ and 2 modes.
+
 For KIC~11615890, the published asteroseismic parameters measured using several
 years of \kepler\ observations are \citep{Pinsonneault:2014}
 \begin{eqnarray}
@@ -1220,7 +1226,7 @@ GP modeling with the same kernel function has been proposed as a method of
 measuring the mean periodicity in quasiperiodic photometric time series in
 general \citep{Wang:2012}.
 The key difference between \eq{sine2} and other quasiperiodic kernels is that
-it is positive everywhere.
+it is positive for all values of $\tau$.
 We can construct a simple \celeriteterm\ covariance function with similar properties
 as follows
 \begin{eqnarray}\eqlabel{rot-kernel}
@@ -1244,7 +1250,7 @@ and find a constraint on the rotation period of $P = \rotationperiod$.
 This is in good agreement with the literature value with somewhat smaller
 uncertainties.
 A detailed comparison of GP rotation period measurements and the traditional
-methods is beyond the scope of this paper but forthcoming work (R.~Angus,
+methods is beyond the scope of this paper, but forthcoming work (R.~Angus,
 \etal, submitted) demonstrates that GP inferences are, at a population level,
 more reliable than other methods.
 \Figure{rotation} shows a subset of the data used in this example and the
@@ -1366,7 +1372,7 @@ used in one-dimension.
 
 As discussed previously, the \celerite\ method is based upon a method
 developed by Rybicki \& Press twenty years ago \citep{Rybicki:1995}.
-In the case where the kernel function has a single term of the form
+In the case where the kernel function has a single term of the form given in
 \eq{kernel-simple}, it is interesting to compare the performance of \celerite\
 and the Rybicki \& Press method.
 Their method does not require solving the extended matrix because the matrix
@@ -1386,9 +1392,9 @@ $\mathcal{O}(N\,\log N)$ and methods for computing determinants exactly in
 $\mathcal{O}(N^2)$ or approximately in $\mathcal{O}(N\,\log N)$
 \citep{Wilson:2014}.
 The Toeplitz method is, in some ways, more flexible than \celerite\ because it
-can be used with any stationary kernel but it requires uniformly spaced data
-and the scaling is worse than \celerite\ so it, in general, is less
-efficient when applied to large datasets.
+can be used with any stationary kernel, but it requires uniformly spaced data
+and the scaling is worse than \celerite\ so it is less efficient when applied
+to large datasets.
 
 \citet{Carter:2009} improved the scaling of Toeplitz methods by introducing a
 wavelet-based method for computing a GP likelihood with $\mathcal{O}(N)$
@@ -1404,10 +1410,10 @@ this method applicable for only a limited set of use cases.
 The continuous autoregressive moving average (CARMA) models introduced into
 the astrophysics literature by \citet{Kelly:2014} share many features with
 \celerite.
-Like \celerite, the likelihood function for a CARMA model conditioned on a
-sorted one-dimensional dataset can be solved in $\mathcal{O}(N)$ using a
-recursive method.
-The kernel function for CARMA$(J,\,K)$ model is \citep{Kelly:2014}
+CARMA models are derived by solving a stochastic differential equation and,
+like \celerite, the likelihood function for a CARMA model conditioned on a
+one-dimensional dataset can be solved in $\mathcal{O}(N)$.
+The kernel function for a CARMA$(J,\,K)$ model is \citep{Kelly:2014}
 \begin{eqnarray}\eqlabel{carma-kernel}
 k_\mathrm{CARMA}(\tau) = \sum_{j=1}^J A_j\,\exp\,(r_j\,\tau)
 \end{eqnarray}
@@ -1422,19 +1428,26 @@ the model.
 Comparing \eq{carma-kernel} to \eq{celerite-kernel-complex}, we can see that
 every CARMA model corresponds to an equivalent \celeriteterm\ model and the
 parameters $a_j$, $b_j$, $c_j$, and $d_j$ can be easily computed analytically.
-The inverse statement is not true however, for any $J > 1$.
-This means \celerite\ could be used to compute any CARMA model but using
-CARMA to compute the likelihood of a \celeriteterm\ model would require solving
-\eq{carma-coeff} for a given set of $\{A_j\}_{j=1}^J$ numerically.
-This is an interesting distinction because, while the computational scaling of
-CARMA models is also $\mathcal{O}(N\,J^2)$, CARMA solvers are, in practice,
-somewhat faster and the memory requirements are smaller.
-However, as discussed in \sect{sho}, \celeriteterm\ models have a physical
-interpretation as a mixture of stochastically-driven damped harmonic
-oscillators.
-This enables, for example, the use of \celeriteterm\ as a model for asteroseismic
-oscillations.
-A similar example using CARMA would necessarily be qualitative.
+The inverse statement is not as simple.
+In practice, this means that \celerite\ could be trivially used to compute any
+CARMA model.
+Using the CARMA solver to compute a \celeriteterm\ model, however, requires
+solving \eq{carma-coeff} numerically for a given set of $\{A_j\}_{j=1}^J$.
+While the computational scaling of CARMA models is also $\mathcal{O}(N\,J^2)$,
+the Kalman filtering based method for solving CARMA models \citep{Kelly:2014}
+is, in practice, somewhat faster and the memory requirements are smaller.
+One benefit of the \celeriteterm\ model is that it is parameterized in terms
+of the amplitudes directly.
+This means that the physical interpretation of these parameters is, in some
+cases, simpler.
+On the other hand, CARMA models are parameterized by modeling the power
+spectrum of the stochastic driving force and this might be the quantity of
+interest in other situations.
+Another benefit of the \celeriteterm\ framework is that, unlike
+filtering-based CARMA solvers, it directly solves matrix equations of the form
+${K_\bvec{\alpha}}^{-1}\,b$ in $\mathcal{O}(N)$.
+This is a crucial feature when GP modeling is combined with linear models
+\citep[for example][]{Luger:2017}.
 
 Another GP method that has been used extensively in astronomy is the
 hierarchical off-diagonal low rank \citep[HODLR,][]{Ambikasaran:2016} solver.
@@ -1447,8 +1460,8 @@ high for multi-dimensional inputs.
 The proportionality constant in the $N\,\log^2N$ scaling of the HODLR method
 is a function of the specific kernel and we find~--~using the \project{george}
 software package \citep{Foreman-Mackey:2014, Ambikasaran:2016}~--~that this
-scales approximately linearly with $J$ but with substantial overhead for small
-models when compared to \celerite.
+scales approximately linearly with $J$, but it requires substantial overhead
+for small models.
 This means that the HODLR solver can \emph{approximately} evaluate
 \celeriteterm\
 models more efficiently than \celerite\ for large models $J \gg 10$ and
@@ -1472,10 +1485,9 @@ our discussion exhaustive.
 The key takeaway here is that \celerite\ provides an \emph{exact} method for
 GP inference for a specific but flexible class of one-dimensional kernel
 functions.
-The closest cousin is the CARMA method with similar strengths and limitations
-but, since there is a simpler relationship between the parameters of a
-\celeriteterm\ model and its behavior, \celerite\ can be more easily integrated
-with physical or physically interpretable models.
+Furthermore, since \celeriteterm\ models can be interpreted as a mixture of
+stochastically-driven, damped simple harmonic oscillators, they are a
+physically motivated choice of covariance function in many applications.
 
 \section{Summary}
 
@@ -1505,9 +1517,8 @@ All of these analyses have been limited to small datasets or restrictive
 kernel choices.
 \celerite\ weakens these requirements by providing a scalable method for
 computing the likelihood and a physical motivation for the choice of kernel.
-\celeriteterm\ can be used to accurately model stellar oscillations using the
-relation to the mixture of stochastically-driven, damped simple harmonic
-oscillators.
+\celerite\ can be used to model stellar oscillations using the relation to the
+mixture of stochastically-driven, damped simple harmonic oscillators.
 As higher signal-to-noise observations of transiting exoplanet systems are
 obtained, the effects of stellar variability will more dramatically impact the
 correct inference of planetary transit parameters.
@@ -1598,8 +1609,13 @@ Astronomy, Inc., under NASA contract NAS5-26555.
 Support for MAST is provided by the NASA Office of Space Science via grant
 NNX13AC07G and by other grants and contracts.
 
+This research made use of Astropy, a community-developed core Python package
+for Astronomy \citep{Astropy-Collaboration:2013}.
+
+
 \facility{Kepler}
 \software{%
+     \project{AtroPy} \citep{Astropy-Collaboration:2013},
      \project{corner.py} \citep{Foreman-Mackey:2016},
      \project{Eigen} \citep{Guennebaud:2010},
      \project{emcee} \citep{Foreman-Mackey:2013},
