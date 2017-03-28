@@ -8,8 +8,9 @@
 namespace celerite {
 namespace solver {
 
-int SOLVER_DIMENSION_MISMATCH = 1;
-int SOLVER_NOT_COMPUTED = 2;
+// You should probably be using an enum class for this
+const int SOLVER_DIMENSION_MISMATCH = 1;
+const int SOLVER_NOT_COMPUTED = 2;
 
 template <typename T>
 class Solver {
