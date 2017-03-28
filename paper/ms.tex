@@ -135,7 +135,7 @@
 \vspace{-\baselineskip}
 Fast and scalable Gaussian process modeling with applications
 to astronomical time series
-\vspace{-3.2\baselineskip}
+\vspace{-2\baselineskip}
 }
 
 \newcounter{affilcounter}
@@ -433,7 +433,7 @@ term of \eq{celerite-kernel} becomes
 k_j(\tau_{nm}) =
     a_j\,\exp\left(-c_j\,\tau_{nm}\right)\,\cos\left(d_j\,\tau_{nm}\right)
 \end{eqnarray}
-and the PSD for the this component is
+and the PSD for this component is
 \begin{eqnarray}\eqlabel{lorentz-psd}
 S_j(\omega) = \frac{1}{\sqrt{2\,\pi}}\,\frac{a_j}{c_j}\,\left[
     \frac{1}{1+{\left(\frac{\omega-d_j}{c_j}\right)}^2} +
@@ -783,7 +783,7 @@ state-of-the-art libraries.
 \end{center}
 \end{figure}
 
-\begin{figure}[!htbp]
+\begin{figure}[p]
 \begin{center}
 \includegraphics[width=\textwidth]{figures/benchmark_darwin_lapack.pdf}
 \caption{The same as \Figure{benchmark} but using the \texttt{lapack} solver
@@ -792,7 +792,7 @@ state-of-the-art libraries.
 \end{center}
 \end{figure}
 
-\begin{figure}[!htbp]
+\begin{figure}[p]
 \begin{center}
 \includegraphics[width=\textwidth]{figures/benchmark_darwin_sparse.pdf}
 \caption{The same as \Figure{benchmark} but using the \texttt{sparse} solver
@@ -1016,7 +1016,7 @@ reproduces the true PSD.
 \end{center}
 \end{figure}
 
-
+\newpage
 \subsection{Inferences with the ``wrong'' model}
 
 For this example, we simulate a dataset using a known GP model with a kernel
@@ -1092,7 +1092,7 @@ similarly be applied to spectroscopy, where wavelength~--~instead of
 time~--~is the independent coordinate and other one-dimensional domains
 \citep[see][for a potential application]{Czekala:2017}.
 
-\subsection{Stellar rotation}
+\subsection{Stellar rotation} \sectlabel{rotation}
 
 A source of variability that can be measured from time series measurements of
 stars is rotation.
@@ -1147,7 +1147,7 @@ posterior inferences of the PSD and autocorrelation function of the process.
 \Figure{rotation-period} shows the marginalized posterior distribution for the
 rotation period.
 
-\begin{figure}[!htbp]
+\begin{figure}[p]
 \begin{center}
 \includegraphics[width=\textwidth]{figures/rotation.pdf}
 \caption{Inferred constraints on a quasiperiodic GP model using the covariance
@@ -1168,7 +1168,7 @@ rotation period.
 \end{center}
 \end{figure}
 
-\begin{figure}[!htbp]
+\begin{figure}[p]
 \begin{center}
 \includegraphics[width=0.5\textwidth]{figures/rotation-period.pdf}
 \caption{The posterior constraint on the rotation period of KIC~1430163 using
@@ -1327,12 +1327,14 @@ real \kepler\ light curve and then demonstrate that we can recover the true
 physical parameters of the exoplanet while modeling the stellar variability
 using \celerite.
 This example is different from all the previous examples~--~both simulated and
-real~--~because in this case, we are uninterested in the inferred parameters
-of the covariance model.
+real~--~because, in this case, we are uninterested in the parameters of the
+covariance model.
 Instead, we're interested in inferring constraints on the parameters of the
-mean model ($\mu_\bvec{\theta}(\bvec{x})$ from \sect{gps}).
-When we say ``mean model'' here, we're referring to what is normally just
-called the ``model''.
+mean model ($\mu_\bvec{\theta}(\bvec{x})$ from \sect{gps}), the model of the
+signal caused by the transit of the planet.
+We say ``mean model'' here to unambiguously distinguish it from the
+``covariance model'', but this is what would generally be called the ``model''
+in other analyses.
 In this case, we have a light curve of a rotating star with a planet
 transiting and we would like to fit for the physical parameters of the planet
 while taking our uncertainty about the star's variability into account.
@@ -1353,7 +1355,7 @@ planet $\bvec{\theta}$ and the stellar variability $\bvec{\alpha}$
 simultaneously.
 
 We take a month-long segment of the \kepler\ light curve for
-KIC~1430163~--~the target from the previous example~--~and multiply it by a
+KIC~1430163~--~the target from \sect{rotation}~--~and multiply it by a
 simulated transit model with known parameters.
 The fact that we are using a simulated transit enables us to confirm that we
 correctly measure the planet parameters but we do not use this knowledge to
@@ -1611,7 +1613,7 @@ Alongside this paper, we have released a well-tested and documented open
 source software package that implements the method and all of the examples
 discussed in these pages.
 This software is available on GitHub
-\url{https://github.com/dfm/celerite}\footnote{% This version of the paper was
+\url{https://github.com/dfm/celerite}\footnote{This version of the paper was
 generated with git commit \texttt{\githash} (\gitdate).} and Zenodo
 \citep{Foreman-Mackey:2017}, and it is made available under the MIT license.
 
@@ -1632,7 +1634,6 @@ for helpful discussions informing the ideas and code presented here.
 This work was performed in part under contract with the Jet Propulsion
 Laboratory (JPL) funded by NASA through the Sagan Fellowship Program executed
 by the NASA Exoplanet Science Institute.
-
 EA acknowledges support from NASA grants NNX13AF20G, NNX13A124G, NNX13AF62G,
 from National Science Foundation (NSF) grant AST-1615315, and from
 NASA Astrobiology Institute's Virtual Planetary Laboratory, supported
@@ -1646,7 +1647,6 @@ under contract with NASA under the Exoplanet Exploration Program.
 This paper includes data collected by the \kepler\ mission. Funding for the
 \kepler\ mission is provided by the NASA Science Mission directorate.
 We are grateful to the entire \kepler\ team, past and present.
-
 These data were obtained from the Mikulski Archive for Space Telescopes
 (MAST).
 STScI is operated by the Association of Universities for Research in
@@ -1656,7 +1656,6 @@ NNX13AC07G and by other grants and contracts.
 
 This research made use of Astropy, a community-developed core Python package
 for Astronomy \citep{Astropy-Collaboration:2013}.
-
 
 \facility{Kepler}
 \software{%
@@ -1672,6 +1671,7 @@ for Astronomy \citep{Astropy-Collaboration:2013}.
      \project{scipy} \citep{Jones:2001}.
 }
 
+\newpage
 \appendix
 
 \section{Ensuring positive definiteness}
@@ -1767,6 +1767,7 @@ roots, but only carrying out algebraic manipulation of polynomials to
 determine the number of positive real roots.
 If a non-zero real root is found, the likelihood may be set to zero.
 
+\newpage
 \bibliography{celerite}
 
 \end{document}
