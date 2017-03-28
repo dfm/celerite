@@ -212,6 +212,8 @@ ax.yaxis.set_major_locator(plt.NullLocator())
 mu, std = np.mean(period_samps), np.std(period_samps)
 ax.set_xlim(mu - 3.5*std, mu + 3.5*std)
 ax.set_xlabel("rotation period [days]")
+ax.axvline(3.80 + 0.15, color="k", ls="dashed")
+ax.axvline(3.80 - 0.15, color="k", ls="dashed")
 fig.savefig("rotation-period.pdf", bbox_inches="tight", dpi=300)
 
 q = np.percentile(period_samps, [16, 50, 84])
