@@ -52,7 +52,7 @@ extern "C" void dgtsv_(int* n,
 namespace celerite {
 
 // Real band solver:
-int band_factorize (int m, int kl, int ku, Eigen::MatrixXd& ab, Eigen::VectorXi& ipiv) {
+inline int band_factorize (int m, int kl, int ku, Eigen::MatrixXd& ab, Eigen::VectorXi& ipiv) {
   int n = ab.cols(),
       ldab = ab.outerStride(),
       info;
@@ -60,7 +60,7 @@ int band_factorize (int m, int kl, int ku, Eigen::MatrixXd& ab, Eigen::VectorXi&
   return info;
 }
 
-int band_solve (int kl, int ku,
+inline int band_solve (int kl, int ku,
                 const Eigen::MatrixXd& ab,
                 const Eigen::VectorXi& ipiv,
                 Eigen::MatrixXd& x) {
@@ -73,7 +73,7 @@ int band_solve (int kl, int ku,
   return info;
 }
 
-Eigen::MatrixXd band_dot (int kl, int ku, const Eigen::MatrixXd& a, const Eigen::MatrixXd& x) {
+inline Eigen::MatrixXd band_dot (int kl, int ku, const Eigen::MatrixXd& a, const Eigen::MatrixXd& x) {
   double one = 1.0;
   char trans = 'N';
   int ione = 1,

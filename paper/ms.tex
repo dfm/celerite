@@ -271,8 +271,8 @@ Alongside this paper, we have released well-tested and documented open source
 implementations written in \project{C++}, \project{Python}, and
 \project{Julia}.
 These are available online at \project{GitHub}
-\url{https://github.com/dfm/celerite} and \project{Zenodo} \dfmtodo{add zenodo
-archive}.
+\url{https://github.com/dfm/celerite} and \project{Zenodo}
+\citep{Foreman-Mackey:2017}.
 
 \section{Gaussian processes}\sectlabel{gps}
 
@@ -694,6 +694,7 @@ in the legend.
 \end{center}
 \end{figure}
 
+\newpage
 \subsection{Implementation considerations \& scaling}
 
 The extended system defined in the previous section is sparse, with typically
@@ -1193,7 +1194,9 @@ but we hope to revisit this opportunity in the future.
 posterior inference of the PSD as a mixture of stochastically-driven simple
 harmonic oscillators.
 (top) The periodogram of the \kepler\ light curve for KIC~11615890 computed
-    on the full four year baseline of the mission.
+    on the full four year baseline of the mission. The orange line shows a
+    smoothed periodogram and the blue line indicates the level of the
+    measurement uncertainties.
 (middle) The same periodogram computed using about a month of data.
 (bottom) The power spectrum inferred using the mixture of SHOs model described
     in the text and only one month of \kepler\ data.
@@ -1489,6 +1492,7 @@ Furthermore, since \celeriteterm\ models can be interpreted as a mixture of
 stochastically-driven, damped simple harmonic oscillators, they are a
 physically motivated choice of covariance function in many applications.
 
+\newpage
 \section{Summary}
 
 Gaussian Process models have been fruitfully applied to many problems in
@@ -1567,9 +1571,10 @@ work.
 Alongside this paper, we have released a well-tested and documented open
 source software package that implements the method and all of the examples
 discussed in these pages.
-This software is available at \url{https://github.com/dfm/celerite}\footnote{%
-This version of the paper was generated with git commit \texttt{\githash}
-(\gitdate).} and it is made available under the MIT license.
+This software is available on GitHub
+\url{https://github.com/dfm/celerite}\footnote{% This version of the paper was
+generated with git commit \texttt{\githash} (\gitdate).} and Zenodo
+\citep{Foreman-Mackey:2017}, and it is made available under the MIT license.
 
 \acknowledgments
 It is a pleasure to thank
@@ -1722,6 +1727,7 @@ roots, but only carrying out algebraic manipulation of polynomials to
 determine the number of positive real roots.
 If a non-zero real root is found, the likelihood may be set to zero.
 
+\newpage
 \bibliography{celerite}
 
 \end{document}
