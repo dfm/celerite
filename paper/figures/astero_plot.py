@@ -90,72 +90,72 @@ for i, j in enumerate(np.random.randint(len(samples), size=n)):
 gp.set_parameter_vector(samples[np.argmax(log_probs)])
 peak_freqs = gp.kernel.get_freqs()
 
-# factor = uHz_conv/(2*np.pi)
-# fig, ax = plt.subplots(1, 1, figsize=get_figsize(1, 2))
-# for t in gp.kernel.get_terms():
-#     p = t.get_psd(2*np.pi*freq)*factor
-#     ax.plot(freq_uHz, p, "k", lw=0.5, alpha=0.8)
-# p = gp.kernel.get_psd(2*np.pi*freq)*factor
-# ax.plot(freq_uHz, p, "k")
-# ax.plot(freq_uHz, gp.kernel.get_envelope(2*np.pi*freq)*factor, "--k", lw=0.75)
-# ax.axvline(np.exp(gp.kernel.log_nu_max) / uHz_conv, color="k", ls="dashed",
-#            lw=0.75)
-# ax.set_ylabel("power [$\mathrm{ppm}^2\,\mu\mathrm{Hz}^{-1}$]")
-# ax.set_xlabel("frequency [$\mu$Hz]")
-# ax.set_xlim(freq_uHz.min(), freq_uHz.max())
-# ax.set_ylim(2e-2, 2e2)
-# ax.set_yscale("log")
-# fig.savefig("astero-sketch.pdf", bbox_inches="tight")
+factor = uHz_conv/(2*np.pi)
+fig, ax = plt.subplots(1, 1, figsize=get_figsize(1, 2))
+for t in gp.kernel.get_terms():
+    p = t.get_psd(2*np.pi*freq)*factor
+    ax.plot(freq_uHz, p, "k", lw=0.5, alpha=0.8)
+p = gp.kernel.get_psd(2*np.pi*freq)*factor
+ax.plot(freq_uHz, p, "k")
+ax.plot(freq_uHz, gp.kernel.get_envelope(2*np.pi*freq)*factor, "--k", lw=0.75)
+ax.axvline(np.exp(gp.kernel.log_nu_max) / uHz_conv, color="k", ls="dashed",
+           lw=0.75)
+ax.set_ylabel("power [$\mathrm{ppm}^2\,\mu\mathrm{Hz}^{-1}$]")
+ax.set_xlabel("frequency [$\mu$Hz]")
+ax.set_xlim(freq_uHz.min(), freq_uHz.max())
+ax.set_ylim(2e-2, 2e2)
+ax.set_yscale("log")
+fig.savefig("astero-sketch.pdf", bbox_inches="tight")
 
-# # Plot the predictions
-# fig, (ax1, ax2) = plt.subplots(1, 2, figsize=get_figsize(1, 2))
+# Plot the predictions
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=get_figsize(1, 2))
 
-# q = np.percentile(psds, [16, 50, 84], axis=0)
-# ax1.fill_between(freq / uHz_conv, q[0], q[2], color="k", alpha=0.3)
-# ax1.plot(freq / uHz_conv, q[1], "k", alpha=0.8)
-# ax1.set_yscale("log")
-# ax1.set_xlabel(r"$f\,[\mu \mathrm{Hz}]$")
-# ax1.set_ylabel(r"$S(f)$")
+q = np.percentile(psds, [16, 50, 84], axis=0)
+ax1.fill_between(freq / uHz_conv, q[0], q[2], color="k", alpha=0.3)
+ax1.plot(freq / uHz_conv, q[1], "k", alpha=0.8)
+ax1.set_yscale("log")
+ax1.set_xlabel(r"$f\,[\mu \mathrm{Hz}]$")
+ax1.set_ylabel(r"$S(f)$")
 
-# q = np.percentile(acors, [16, 50, 84], axis=0)
-# ax2.fill_between(time_grid * 24, q[0], q[2], color="k", alpha=0.3)
-# ax2.plot(time_grid * 24, q[1], "k", alpha=0.8)
-# ax2.set_xlabel(r"$\tau$ [hours]")
-# ax2.set_ylabel(r"$k(\tau)$")
+q = np.percentile(acors, [16, 50, 84], axis=0)
+ax2.fill_between(time_grid * 24, q[0], q[2], color="k", alpha=0.3)
+ax2.plot(time_grid * 24, q[1], "k", alpha=0.8)
+ax2.set_xlabel(r"$\tau$ [hours]")
+ax2.set_ylabel(r"$k(\tau)$")
 
-# fig.savefig(format_filename("model"))
-# plt.close(fig)
+fig.savefig(format_filename("model"))
+plt.close(fig)
 
-# # Plot constraints on nu-max and delta-nu
-# i = [names.index("log(nu max)"), names.index("log(delta nu)")]
-# s = np.exp(samples[:, i])/uHz_conv
-# nu_max_pub = 171.94, 3.62
-# delta_nu_pub = 13.28, 0.29
-# fig = corner.corner(s, smooth=0.7, smooth1d=1.0,
-#                     labels=[r"$\nu_\mathrm{max}$", r"$\Delta \nu$"])
-# fig.axes[2].errorbar(nu_max_pub[0], delta_nu_pub[0],
-#                      xerr=nu_max_pub[1], yerr=delta_nu_pub[1],
-#                      fmt=".", color=COLORS["MODEL_1"], capsize=0,
-#                      lw=2, mec="none")
-# fig.savefig(format_filename("numax_deltanu_corner"), bbox_inches="tight")
-# plt.close(fig)
+# Plot constraints on nu-max and delta-nu
+i = [names.index("log(nu max)"), names.index("log(delta nu)")]
+s = np.exp(samples[:, i])/uHz_conv
+nu_max_pub = 171.94, 3.62
+delta_nu_pub = 13.28, 0.29
+fig = corner.corner(s, smooth=0.7, smooth1d=1.0,
+                    labels=[r"$\nu_\mathrm{max}$", r"$\Delta \nu$"])
+fig.axes[2].errorbar(nu_max_pub[0], delta_nu_pub[0],
+                     xerr=nu_max_pub[1], yerr=delta_nu_pub[1],
+                     fmt=".", color=COLORS["MODEL_1"], capsize=0,
+                     lw=2, mec="none")
+fig.savefig(format_filename("numax_deltanu_corner"), bbox_inches="tight")
+plt.close(fig)
 
-# # Plot full corner plot
-# fig = corner.corner(samples, smooth=0.7, smooth1d=1.0, labels=names)
-# fig.savefig(format_filename("full_corner"), bbox_inches="tight")
-# plt.close(fig)
+# Plot full corner plot
+fig = corner.corner(samples, smooth=0.7, smooth1d=1.0, labels=names)
+fig.savefig(format_filename("full_corner"), bbox_inches="tight")
+plt.close(fig)
 
 # Make comparison plot
 fig, axes = plt.subplots(3, 1, sharex=True, sharey=True,
                          figsize=get_figsize(2.5, 2))
 
 axes[0].plot(freq_uHz, power_all, "k", rasterized=True)
-axes[0].plot(freq_uHz, gaussian_filter(power_all, 200),
+axes[0].plot(freq_uHz, gaussian_filter(power_all, 150),
              color=COLORS["MODEL_2"], rasterized=True)
 axes[0].axhline(white_noise_all)
 
 axes[1].plot(freq_uHz, power_some, "k", rasterized=True)
-axes[1].plot(freq_uHz, gaussian_filter(power_some, 500),
+axes[1].plot(freq_uHz, gaussian_filter(power_some, 450),
              color=COLORS["MODEL_2"], rasterized=True)
 axes[1].axhline(white_noise_some)
 
