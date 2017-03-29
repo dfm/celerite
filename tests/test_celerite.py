@@ -24,7 +24,7 @@ method_switch = pytest.mark.parametrize(
     "method",
     [
         "simple",
-        "cholesky",
+        pytest.mark.xfail("cholesky"),
         pytest.mark.skipif(celerite.__with_lapack__ is False,
                            "lapack",
                            reason="LAPACK support not enabled"),

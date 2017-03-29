@@ -991,5 +991,24 @@ Returns:
 
 )delim");
 
+  cholesky_solver.def("__getstate__", [](const PicklableCholeskySolver& solver) {
+    return solver.serialize();
+  });
+
+  cholesky_solver.def("__setstate__", [](PicklableCholeskySolver& solver, py::tuple t) {
+    if (t.size() != 8) throw std::runtime_error("Invalid state!");
+    new (&solver) PicklableCholeskySolver();
+    solver.deserialize(
+      t[0].cast<bool>(),
+      t[1].cast<int>(),
+      t[2].cast<int>(),
+      t[3].cast<double>(),
+      t[4].cast<Eigen::MatrixXcd>(),
+      t[5].cast<Eigen::MatrixXcd>(),
+      t[6].cast<Eigen::VectorXcd>(),
+      t[7].cast<Eigen::VectorXd>()
+    );
+  });
+
   return m.ptr();
 }
