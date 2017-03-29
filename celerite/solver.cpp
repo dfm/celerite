@@ -60,6 +60,33 @@ public:
   };
 };
 
+class PicklableCholeskySolver : public celerite::solver::CholeskySolver<double> {
+public:
+  PicklableCholeskySolver () : celerite::solver::CholeskySolver<double>() {};
+
+  auto serialize () const {
+    return std::make_tuple(
+      this->computed_, this->n_, this->j_, this->log_det_, this->phi_,
+      this->X_, this->alpha_, this->D_
+    );
+  };
+
+  void deserialize (bool computed, int n, int j, double log_det,
+                    Eigen::MatrixXcd phi,
+                    Eigen::MatrixXcd X,
+                    Eigen::VectorXcd alpha,
+                    Eigen::VectorXd D) {
+    this->computed_ = computed;
+    this->n_        = n;
+    this->j_        = j;
+    this->log_det_  = log_det;
+    this->phi_      = phi;
+    this->X_        = X;
+    this->alpha_    = alpha;
+    this->D_        = D;
+  };
+};
+
 //
 // Below is the boilerplate code for the pybind11 extension module.
 //
@@ -795,6 +822,174 @@ Returns:
     new (&solver) celerite::solver::SparseSolver<double>();
   });
 #endif
+
+  //
+  // ------ CHOLESKY ------
+  //
+  py::class_<PicklableCholeskySolver> cholesky_solver(m, "CholeskySolver", R"delim(
+A thin wrapper around the C++ CholeskySolver class
+)delim");
+  cholesky_solver.def(py::init<>());
+
+  cholesky_solver.def("compute", [](PicklableCholeskySolver& solver,
+      const Eigen::VectorXd& alpha_real,
+      const Eigen::VectorXd& beta_real,
+      const Eigen::VectorXd& alpha_complex_real,
+      const Eigen::VectorXd& alpha_complex_imag,
+      const Eigen::VectorXd& beta_complex_real,
+      const Eigen::VectorXd& beta_complex_imag,
+      const Eigen::VectorXd& x,
+      const Eigen::VectorXd& diag) {
+    return solver.compute(
+      alpha_real,
+      beta_real,
+      alpha_complex_real,
+      alpha_complex_imag,
+      beta_complex_real,
+      beta_complex_imag,
+      x,
+      diag
+    );
+  },
+  R"delim(
+Assemble the extended matrix and perform the banded LU decomposition
+
+Args:
+    alpha_real (array[j_real]): The coefficients of the real terms.
+    beta_real (array[j_real]): The exponents of the real terms.
+    alpha_complex_real (array[j_complex]): The real part of the
+        coefficients of the complex terms.
+    alpha_complex_imag (array[j_complex]): The imaginary part of the
+        coefficients of the complex terms.
+    beta_complex_real (array[j_complex]): The real part of the
+        exponents of the complex terms.
+    beta_complex_imag (array[j_complex]): The imaginary part of the
+        exponents of the complex terms.
+    x (array[n]): The _sorted_ array of input coordinates.
+    diag (array[n]): An array that should be added to the diagonal of the
+        matrix. This often corresponds to measurement uncertainties and in
+        that case, ``diag`` should be the measurement _variance_
+        (i.e. sigma^2).
+
+Returns:
+    int: ``1`` if the dimensions are inconsistent and ``0`` otherwise. No
+    attempt is made to confirm that the matrix is positive definite. If
+    it is not positive definite, the ``solve`` and ``log_determinant``
+    methods will return incorrect results.
+
+)delim");
+
+  cholesky_solver.def("solve", [](PicklableCholeskySolver& solver, const Eigen::MatrixXd& b) {
+    return solver.solve(b);
+  },
+  R"delim(
+Solve a linear system for the matrix defined in ``compute``
+
+A previous call to :func:`solver.Solver.compute` defines a matrix ``A``
+and this method solves for ``x`` in the matrix equation ``A.x = b``.
+
+Args:
+    b (array[n] or array[n, nrhs]): The right hand side of the linear system.
+
+Returns:
+    array[n] or array[n, nrhs]: The solution of the linear system.
+
+Raises:
+    ValueError: For mismatched dimensions.
+
+)delim");
+
+  cholesky_solver.def("dot_solve", [](PicklableCholeskySolver& solver, const Eigen::MatrixXd& b) {
+    return solver.dot_solve(b);
+  },
+  R"delim(
+Solve the system ``b^T . A^-1 . b``
+
+A previous call to :func:`solver.Solver.compute` defines a matrix ``A``
+and this method solves ``b^T . A^-1 . b`` for a vector ``b``.
+
+Args:
+    b (array[n]): The right hand side of the linear system.
+
+Returns:
+    float: The solution of ``b^T . A^-1 . b``.
+
+Raises:
+    ValueError: For mismatched dimensions.
+
+)delim");
+
+//  cholesky_solver.def("dot", [](PicklableCholeskySolver& solver,
+//      const Eigen::VectorXd& alpha_real,
+//      const Eigen::VectorXd& beta_real,
+//      const Eigen::VectorXd& alpha_complex_real,
+//      const Eigen::VectorXd& alpha_complex_imag,
+//      const Eigen::VectorXd& beta_complex_real,
+//      const Eigen::VectorXd& beta_complex_imag,
+//      const Eigen::VectorXd& x,
+//      const Eigen::MatrixXd& b) {
+//    return solver.dot(
+//      alpha_real,
+//      beta_real,
+//      alpha_complex_real,
+//      alpha_complex_imag,
+//      beta_complex_real,
+//      beta_complex_imag,
+//      x,
+//      b
+//    );
+//  },
+//  R"delim(
+//Compute the dot product of a ``celerite`` matrix and another arbitrary matrix
+
+//This method computes ``A.b`` where ``A`` is defined by the parameters and
+//``b`` is an arbitrary matrix of the correct shape.
+
+//Args:
+//    alpha_real (array[j_real]): The coefficients of the real terms.
+//    beta_real (array[j_real]): The exponents of the real terms.
+//    alpha_complex_real (array[j_complex]): The real part of the
+//        coefficients of the complex terms.
+//    alpha_complex_imag (array[j_complex]): The imaginary part of the
+//        coefficients of the complex terms.
+//    beta_complex_real (array[j_complex]): The real part of the
+//        exponents of the complex terms.
+//    beta_complex_imag (array[j_complex]): The imaginary part of the
+//        exponents of the complex terms.
+//    x (array[n]): The _sorted_ array of input coordinates.
+//    b (array[n] or array[n, neq]): The matrix ``b`` described above.
+
+//Returns:
+//    array[n] or array[n, neq]: The dot product ``A.b`` as described above.
+
+//Raises:
+//    ValueError: For mismatched dimensions.
+
+//)delim");
+
+  cholesky_solver.def("log_determinant", [](PicklableCholeskySolver& solver) {
+    return solver.log_determinant();
+  },
+  R"delim(
+Get the log-determinant of the matrix defined by ``compute``
+
+Returns:
+    float: The log-determinant of the matrix defined by
+    :func:`solver.Solver.compute`.
+
+)delim");
+
+  cholesky_solver.def("computed", [](PicklableCholeskySolver& solver) {
+      return solver.computed();
+  },
+  R"delim(
+A flag that indicates if ``compute`` has been executed
+
+Returns:
+    bool: ``True`` if :func:`solver.Solver.compute` was previously executed
+    successfully.
+
+)delim");
 
   return m.ptr();
 }

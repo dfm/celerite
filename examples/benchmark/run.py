@@ -12,10 +12,13 @@ import numpy.__config__ as npconf
 import celerite
 from celerite import terms
 from celerite.timer import benchmark
-from celerite.solver import lapack_variant, Solver, SparseSolver
+from celerite.solver import (
+    lapack_variant, Solver, SparseSolver, CholeskySolver
+)
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--lapack", action="store_true")
+parser.add_argument("--cholesky", action="store_true")
 parser.add_argument("--default", action="store_true")
 parser.add_argument("--sparse", action="store_true")
 parser.add_argument("--george", action="store_true")
@@ -44,7 +47,7 @@ N = 2**np.arange(args.minnpow, args.maxnpow + 1)
 J = 2**np.arange(args.minjpow, args.maxjpow + 1)
 
 header = ""
-for k in ["lapack", "sparse", "default", "george",
+for k in ["lapack", "cholesky", "sparse", "default", "george",
           "minnpow", "maxnpow", "minjpow", "maxjpow"]:
     header += "# {0}: {1}\n".format(k, getattr(args, k))
 header += "# platform: {0}\n".format(sys.platform)
@@ -57,6 +60,8 @@ header += "xi,yi,j,n,comp_time,ll_time\n"
 fn = "benchmark_{0}".format(sys.platform)
 if args.default:
     fn += "_default"
+elif args.cholesky:
+    fn += "_cholesky"
 elif args.sparse:
     fn += "_sparse"
 elif args.lapack:
@@ -94,6 +99,8 @@ for xi, j in enumerate(J):
             k = CeleriteKernel(a=a, b=0.0, c=c, d=0.0)
             george_kernel = k if george_kernel is None else george_kernel + k
         solver = george.GP(george_kernel, solver=george.HODLRSolver)
+    elif args.cholesky:
+        solver = CholeskySolver()
     elif args.sparse:
         solver = SparseSolver()
     else:
@@ -101,7 +108,7 @@ for xi, j in enumerate(J):
         solver = Solver(use_lapack)
 
     for yi, n in enumerate(N):
-        if george:
+        if args.george:
             params = [t[:n], yerr[:n]]
             comp_time = benchmark("solver.compute(*params)",
                                   "from __main__ import solver, params")
@@ -110,7 +117,7 @@ for xi, j in enumerate(J):
             ll_time = benchmark("solver.lnlikelihood(y0)",
                                 "from __main__ import solver, y0")
         else:
-            params = list(c)
+            params = list(coeffs)
             params += [t[:n], yerr[:n]**2]
             comp_time = benchmark("solver.compute(*params)",
                                   "from __main__ import solver, params")

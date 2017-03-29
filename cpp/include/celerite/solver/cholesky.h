@@ -6,7 +6,6 @@
 #include <Eigen/Core>
 
 #include "celerite/utils.h"
-#include "celerite/extended.h"
 #include "celerite/exceptions.h"
 
 #include "celerite/solver/solver.h"
@@ -49,7 +48,6 @@ public:
 protected:
   int j_;
   Eigen::Matrix<std::complex<T>, Eigen::Dynamic, Eigen::Dynamic> phi_, X_;
-  //Eigen::Array<std::complex<T>, Eigen::Dynamic, Eigen::Dynamic> X_;
   Eigen::Array<std::complex<T>, Eigen::Dynamic, 1> alpha_;
   Eigen::Array<T, Eigen::Dynamic, 1> D_;
 

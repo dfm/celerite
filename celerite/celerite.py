@@ -17,6 +17,8 @@ def get_solver(method=None):
             return solver.Solver(True)
         if solver.with_sparse():
             return solver.SparseSolver()
+    elif method == "cholesky":
+        return solver.CholeskySolver()
     elif method == "lapack" and solver.with_lapack():
         return solver.Solver(True)
     elif method == "sparse" and solver.with_sparse():
