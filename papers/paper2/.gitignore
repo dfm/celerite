@@ -1,0 +1,14 @@
+*.aux
+*.log
+*.out
+celerite2.pdf
+*.bbl
+*.blg
+celerite2Notes.bib
+vc.tex
+*.ent
+papers
+*.png
+references
+images
+fore*
