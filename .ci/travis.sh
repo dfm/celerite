@@ -3,7 +3,7 @@
 # If building the paper, do that here
 if [[ $TEST_LANG == paper ]]
 then
-  if git diff --name-only $TRAVIS_COMMIT_RANGE | grep 'paper/'
+  if git diff --name-only $TRAVIS_COMMIT_RANGE | grep 'papers/'
   then
     echo "Building the paper..."
     export CELERITE_BUILDING_PAPER=true
