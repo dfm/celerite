@@ -96,7 +96,6 @@ int CholeskySolver<T>::compute (
   T alpha_sum = alpha_.sum().real();
   D_(0) = diag(0) + alpha_sum;
   S.setConstant(1.0 / D_(0));
-  D_(0) = sqrt(D_(0));
   X_.col(0).setConstant(1.0 / D_(0));
 
   for (int n = 1; n < N; ++n) {
@@ -106,14 +105,14 @@ int CholeskySolver<T>::compute (
       tmp(k) = (alpha_ * S.col(k)).sum();
     D_(n) = (diag(n) + alpha_sum - (alpha_ * tmp).sum()).real();
     if (D_(n) < T(0.0)) return -n;
-    D_(n) = sqrt(D_(n));
+    //D_(n) = sqrt(D_(n));
     X_.col(n).array() = (1.0 - tmp) / D_(n);
-    S += (X_.col(n) * X_.col(n).transpose()).array();
+    S += D_(n) * (X_.col(n) * X_.col(n).transpose()).array();
   }
 
   this->j_ = J;
   this->n_ = N;
-  this->log_det_ = (2.0 * log(D_).sum());
+  this->log_det_ = log(D_).sum();
   this->computed_ = true;
 
   return 0;
@@ -125,22 +124,25 @@ void CholeskySolver<T>::solve (const Eigen::MatrixXd& b, T* x) const {
   if (!(this->computed_)) throw compute_exception();
   int J = this->j_, N = this->n_, nrhs = b.cols();
   Eigen::Array<std::complex<T>, Eigen::Dynamic, 1> f(J);
+  Eigen::Map<Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> > xout(x, N, nrhs);
 
   for (int k = 0; k < nrhs; ++k) {
     // Forward pass
     f.setConstant(T(0.0));
-    x[k*N] = b(0, k) / D_(0);
+    xout(0, k) = b(0, k);
     for (int n = 1; n < N; ++n) {
-      f = phi_.col(n-1).array() * (f + alpha_ * X_.col(n-1).array() * x[k*N + n-1]);
-      x[k*N + n] = (b(n, k) - f.sum().real()) / D_(n);
+      f = phi_.col(n-1).array() * (f + alpha_ * X_.col(n-1).array() * xout(n-1, k));
+      xout(n, k) = b(n, k) - f.sum().real();
     }
+
+    xout /= D_;
 
     // Backwards pass
     f.setConstant(T(0.0));
-    x[k*N + N-1] /= D_(N-1);
+    //x[k*N + N-1] /= D_(N-1);
     for (int n = N-2; n >= 0; --n) {
-      f = phi_.col(n).array() * (f + alpha_ * x[k*N + n+1]);
-      x[k*N + n] = (x[k*N + n] - (f * X_.col(n).array()).sum().real()) / D_(n);
+      f = phi_.col(n).array() * (f + alpha_ * xout(n+1, k));
+      xout(n, k) = xout(n, k) - (f * X_.col(n).array()).sum().real();
     }
   }
 }
