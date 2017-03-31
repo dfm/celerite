@@ -135,7 +135,7 @@ void CholeskySolver<T>::solve (const Eigen::MatrixXd& b, T* x) const {
       xout(n, k) = b(n, k) - f.sum().real();
     }
 
-    xout /= D_;
+    xout.col(k) /= D_;
 
     // Backwards pass
     f.setConstant(T(0.0));
