@@ -1,20 +1,24 @@
 #include <iostream>
 #include <cmath>
 #include <complex>
-#include <sys/time.h>
 #include <Eigen/Core>
 
 #include "celerite/celerite.h"
 #include "celerite/carma.h"
 #include "celerite/utils.h"
+#include <chrono>
+
 
 // Timer for the benchmark.
+//http://jakascorner.com/blog/2016/04/time-measurement.html
 double get_timestamp ()
 {
-  struct timeval now;
-  gettimeofday (&now, NULL);
-  return double(now.tv_usec) * 1.0e-6 + double(now.tv_sec);
+  using micro_s = std::chrono::microseconds;
+  auto tnow = std::chrono::steady_clock::now();
+  auto d_micro = std::chrono::duration_cast<micro_s>(tnow.time_since_epoch()).count();
+  return double(d_micro) * 1.0e-6;
 }
+
 
 int main (int argc, char* argv[])
 {
