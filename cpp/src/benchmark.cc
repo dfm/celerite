@@ -1,20 +1,29 @@
 #include <iostream>
 #include <Eigen/Core>
-
 #include "celerite/celerite.h"
 
-#include <chrono>
-
-
 // Timer for the benchmark.
-//http://jakascorner.com/blog/2016/04/time-measurement.html
-double get_timestamp ()
-{
-  using micro_s = std::chrono::microseconds;
-  auto tnow = std::chrono::steady_clock::now();
-  auto d_micro = std::chrono::duration_cast<micro_s>(tnow.time_since_epoch()).count();
-  return double(d_micro) * 1.0e-6;
-}
+#if defined(_MSC_VER)
+    //no sys/time.h in visual c++
+    //http://jakascorner.com/blog/2016/04/time-measurement.html
+    #include <chrono>
+    double get_timestamp ()
+    {
+      using micro_s = std::chrono::microseconds;
+      auto tnow = std::chrono::steady_clock::now();
+      auto d_micro = std::chrono::duration_cast<micro_s>(tnow.time_since_epoch()).count();
+      return double(d_micro) * 1.0e-6;
+    }
+#else
+   //no std::chrono in g++ 4.8
+   #include <sys/time.h>
+   double get_timestamp ()
+   {
+     struct timeval now;
+     gettimeofday (&now, NULL);
+     return double(now.tv_usec) * 1.0e-6 + double(now.tv_sec);
+   }  
+#endif
 
 int main (int argc, char* argv[])
 {
