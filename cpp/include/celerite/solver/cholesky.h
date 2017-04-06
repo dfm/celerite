@@ -139,7 +139,6 @@ void CholeskySolver<T>::solve (const Eigen::MatrixXd& b, T* x) const {
 
     // Backwards pass
     f.setConstant(T(0.0));
-    //x[k*N + N-1] /= D_(N-1);
     for (int n = N-2; n >= 0; --n) {
       f = phi_.col(n).array() * (f + alpha_ * xout(n+1, k));
       xout(n, k) = xout(n, k) - (f * X_.col(n).array()).sum().real();

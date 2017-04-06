@@ -116,6 +116,9 @@
 \newcommand{\dd}{\ensuremath{\,\mathrm{d}}}
 \newcommand{\unit}[1]{{\ensuremath{\,\mathrm{#1}}}}
 \newcommand{\bvec}[1]{{\ensuremath{\boldsymbol{#1}}}}
+\newcommand{\diag}{{\ensuremath{\mathrm{diag}}}}
+\newcommand{\tril}{{\ensuremath{\mathrm{tril}}}}
+\newcommand{\triu}{{\ensuremath{\mathrm{triu}}}}
 
 % TO DOS
 \newcommand{\todo}[3]{{\color{#2}\emph{#1}: #3}}
@@ -136,25 +139,25 @@ Faster Gaussian process modeling
 \vspace{-2\baselineskip}
 }
 
-\newcounter{affilcounter}
-\setcounter{affilcounter}{1}
+%\newcounter{affilcounter}
+%\setcounter{affilcounter}{1}
 
-\edef \sagan {\arabic{affilcounter}}\stepcounter{affilcounter}
-\altaffiltext{\sagan}{Sagan Fellow}
+%\edef \sagan {\arabic{affilcounter}}\stepcounter{affilcounter}
+%\altaffiltext{\sagan}{Sagan Fellow}
 
-\edef \uw {\arabic{affilcounter}}\stepcounter{affilcounter}
-\altaffiltext{\uw}{Astronomy Department, University of Washington,
-                   Seattle, WA}
+%\edef \uw {\arabic{affilcounter}}\stepcounter{affilcounter}
+%\altaffiltext{\uw}{Astronomy Department, University of Washington,
+%                   Seattle, WA}
 
-\edef \iis {\arabic{affilcounter}}\stepcounter{affilcounter}
-\altaffiltext{\iis}{Department of Computational and Data Sciences,
-                    Indian Institute of Science, Bangalore, India}
+%\edef \iis {\arabic{affilcounter}}\stepcounter{affilcounter}
+%\altaffiltext{\iis}{Department of Computational and Data Sciences,
+%                    Indian Institute of Science, Bangalore, India}
 
 
 \author{%
-    Daniel~Foreman-Mackey\altaffilmark{\sagan,\uw},
-    Sivaram~Ambikasaran\altaffilmark{\iis},
-    Eric~Agol\altaffilmark{\uw}, and
+    %Daniel~Foreman-Mackey\altaffilmark{\sagan,\uw},
+    %Sivaram~Ambikasaran\altaffilmark{\iis},
+    %Eric~Agol\altaffilmark{\uw}, and
     TBD
 }
 
@@ -182,57 +185,160 @@ Faster Gaussian process modeling
 
 Gaussian Processes \citep[GPs;][]{Rasmussen:2006}. We made this faster.
 
-\section{Summary}
+\section{Cholesky method}
 
-This software is available on GitHub
-\url{https://github.com/dfm/celerite}\footnote{This version of the paper was
-generated with git commit \texttt{\githash} (\gitdate).} and Zenodo
-\dfmtodo{add link}, and it is made available under the MIT license.
+\subsection{Factorization}
 
-\acknowledgments
-It is a pleasure to thank
-\ldots
-for helpful discussions informing the ideas and code presented here.
+Semi-separable
+\begin{eqnarray}
+u_{n,j}^{(1)} &=& a_j\,e^{-c_j\,t_n}\,\cos(d_j\,t_n) +
+    b_j\,e^{-c_j\,t_n}\,\sin(d_j\,t_n) \\
+u_{n,j}^{(2)} &=& a_j\,e^{-c_j\,t_n}\,\sin(d_j\,t_n) -
+    b_j\,e^{-c_j\,t_n}\,\cos(d_j\,t_n) \\
+v_{m,j}^{(1)} &=& e^{c_j\,t_m}\,\cos(d_j\,t_n) \\
+v_{m,j}^{(2)} &=& e^{c_j\,t_m}\,\sin(d_j\,t_n)
+\end{eqnarray}
+\begin{eqnarray}
+K &=& \diag(\Sigma) + \tril(U\,V^\T) + \triu(V\,U^\T)\\
+    &=& L\,\diag(D)\,L^\T
+\end{eqnarray}
+where
+\begin{eqnarray}
+L &=& I + \tril(U\,X^\T)
+\end{eqnarray}
 
-This work was performed in part under contract with the Jet Propulsion
-Laboratory (JPL) funded by NASA through the Sagan Fellowship Program executed
-by the NASA Exoplanet Science Institute.
-EA acknowledges support from NASA grants NNX13AF20G, NNX13A124G, NNX13AF62G,
-from National Science Foundation (NSF) grant AST-1615315, and from
-NASA Astrobiology Institute's Virtual Planetary Laboratory, supported
-by NASA under cooperative agreement NNH05ZDA001C.
+Pre-condition:
+\begin{eqnarray}
+\phi_{n,j} &=& e^{-c_j\,(t_n-t_{n-1})}
+\end{eqnarray}
+and $\phi_{1,j}=1$.
+\begin{eqnarray}
+\tilde{u}_{1,n,j} &=& a_j\,\cos(d_j\,t_n) + b_j\,\sin(d_j\,t_n) \\
+\tilde{u}_{2,n,j} &=& a_j\,\sin(d_j\,t_n) - b_j\,\cos(d_j\,t_n) \\
+\tilde{v}_{1,m,j} &=& \cos(d_j\,t_n) \\
+\tilde{v}_{2,m,j} &=& \sin(d_j\,t_n) \\
+\tilde{X}_{k,n,j} &=& e^{-c_j\,t_n}\,X_{k,n,j}
+\end{eqnarray}
 
-This research made use of the NASA \project{Astrophysics Data System} and the
-NASA Exoplanet Archive.
-The Exoplanet Archive is operated by the California Institute of Technology,
-under contract with NASA under the Exoplanet Exploration Program.
+Recursion:
+\begin{eqnarray}
+S^{(j,k)}_n &=& \diag(\phi_{n})\,\left[
+    S^{(j,k)}_{n-1} + D_{n-1}\,\tilde{X}_{j,n-1}^\T\,\tilde{X}_{k,n-1}
+\right]\,\diag(\phi_{n})\\
+D_n &=& \Sigma_n
+    - \tilde{u}_{1,n}\,S^{(1,1)}_{n}\,\tilde{u}_{1,n}^\T
+    - 2\,\tilde{u}_{1,n}\,S^{(1,2)}_{n}\,\tilde{u}_{2,n}^\T
+    -\tilde{u}_{2,n}\,S^{(2,2)}_{n}\,\tilde{u}_{2,n}^\T \\
+D_n\,\tilde{X}_{1,n} &=& \tilde{v}_{1,n}
+    - \tilde{u}_{1,n}\,S^{(1,1)}_{n}
+    - {\left[S^{(1,2)}_{n}\,\tilde{u}_{2,n}^\T\right]}^\T \\
+D_n\,\tilde{X}_{2,n} &=& \tilde{v}_{2,n}
+    - \tilde{u}_{2,n}\,S^{(2,2)}_{n}
+    - \tilde{u}_{1,n}\,S^{(1,2)}_{n}
+\end{eqnarray}
+where the matrices $S^{(j,k)}_1$ are $J \times J$ matrices of zeros.
+The computational cost of this section is $\mathcal{O}(N\,J^2)$.
 
-This paper includes data collected by the \kepler\ mission. Funding for the
-\kepler\ mission is provided by the NASA Science Mission directorate.
-We are grateful to the entire \kepler\ team, past and present.
-These data were obtained from the Mikulski Archive for Space Telescopes
-(MAST).
-STScI is operated by the Association of Universities for Research in
-Astronomy, Inc., under NASA contract NAS5-26555.
-Support for MAST is provided by the NASA Office of Space Science via grant
-NNX13AC07G and by other grants and contracts.
+\subsection{Solving}
 
-This research made use of Astropy, a community-developed core Python package
-for Astronomy \citep{Astropy-Collaboration:2013}.
+To solve $L\,\bvec{z} = \bvec{y}$,
+\begin{eqnarray}
+f_{k,n} &=& \diag(\phi_n)\,\left[f_{k,n-1} + \tilde{X}_{k,{n-1}}^\T\,z_{n-1}\right] \\
+z_n &=& y_n - \left[\tilde{u}_{1,n}\,f_{1,n} + \tilde{u}_{2,n}\,f_{2,n}\right]
+\end{eqnarray}
+where $f_{k,1} = 0$.
+Start from $n = 1$ and repeat.
+The computational cost of this section is $\mathcal{O}(N\,J)$.
 
-\facility{Kepler}
-\software{%
-     \project{AtroPy} \citep{Astropy-Collaboration:2013},
-     \project{corner.py} \citep{Foreman-Mackey:2016},
-     \project{Eigen} \citep{Guennebaud:2010},
-     \project{emcee} \citep{Foreman-Mackey:2013},
-     \project{george} \citep{Ambikasaran:2016},
-     \project{LAPACK} \citep{Anderson:1999},
-     \project{matplotlib} \citep{Hunter:2007},
-     \project{numpy} \citep{Van-Der-Walt:2011},
-     \project{transit} \citep{Foreman-Mackey:2016a},
-     \project{scipy} \citep{Jones:2001}.
-}
+To solve $L^\T\,\bvec{z} = \bvec{y}$,
+\begin{eqnarray}
+f_{k,n} &=& \diag(\phi_{n+1})\,\left[f_{k,n+1} + \tilde{u}_{k,{n+1}}^\T\,z_{n+1}\right] \\
+z_n &=& y_n - \left[\tilde{X}_{1,n}\,f_{1,n} + \tilde{X}_{2,n}\,f_{2,n}\right]
+\end{eqnarray}
+where $f_{k,N} = 0$.
+Start from $n = N$ and repeat.
+The computational cost of this section is $\mathcal{O}(N\,J)$.
+
+\subsection{Dot products}
+
+To compute the dot product $L^\T\,\bvec{z} = \bvec{y}$,
+\begin{eqnarray}
+f_{k,n} &=& \diag(\phi_{n+1})\,\left[f_{k,n+1} + \tilde{u}_{k,{n+1}}^\T\,z_{n+1}\right] \\
+y_n &=& z_n + \left[\tilde{X}_{1,n}\,f_{1,n} + \tilde{X}_{2,n}\,f_{2,n}\right]
+\end{eqnarray}
+where $f_{k,N} = 0$.
+
+To compute the dot product $L\,\bvec{z} = \bvec{y}$
+\begin{eqnarray}
+f_{k,n} &=& \diag(\phi_n)\,\left[f_{k,n-1} + \tilde{X}_{k,{n-1}}^\T\,z_{n-1}\right] \\
+y_n &=& z_n + \left[\tilde{u}_{1,n}\,f_{1,n} + \tilde{u}_{2,n}\,f_{2,n}\right]
+\end{eqnarray}
+
+To compute the dot product $K\,\bvec{z} = \bvec{y}$, take two passes
+\begin{eqnarray}
+f_{k,n} &=& \diag(\phi_n)\,\left[f_{k,n-1} + \tilde{v}_{k,{n-1}}^\T\,z_{n-1}\right] \\
+y_n &=& \Sigma_n\,z_n + \tilde{u}_{1,n}\,f_{1,n} + \tilde{u}_{2,n}\,f_{2,n}
+\end{eqnarray}
+then
+\begin{eqnarray}
+f_{k,n} &=& \diag(\phi_{n+1})\,\left[f_{k,n+1} + \tilde{u}_{k,{n+1}}^\T\,z_{n+1}\right] \\
+y_n &=& y_n + \left[\tilde{v}_{1,n}\,f_{1,n} + \tilde{v}_{2,n}\,f_{2,n}\right]
+\end{eqnarray}
+
+
+
+
+%\section{Summary}
+
+%This software is available on GitHub
+%\url{https://github.com/dfm/celerite}\footnote{This version of the paper was
+%generated with git commit \texttt{\githash} (\gitdate).} and Zenodo
+%\dfmtodo{add link}, and it is made available under the MIT license.
+
+%\acknowledgments
+%It is a pleasure to thank
+%\ldots
+%for helpful discussions informing the ideas and code presented here.
+
+%This work was performed in part under contract with the Jet Propulsion
+%Laboratory (JPL) funded by NASA through the Sagan Fellowship Program executed
+%by the NASA Exoplanet Science Institute.
+%EA acknowledges support from NASA grants NNX13AF20G, NNX13A124G, NNX13AF62G,
+%from National Science Foundation (NSF) grant AST-1615315, and from
+%NASA Astrobiology Institute's Virtual Planetary Laboratory, supported
+%by NASA under cooperative agreement NNH05ZDA001C.
+
+%This research made use of the NASA \project{Astrophysics Data System} and the
+%NASA Exoplanet Archive.
+%The Exoplanet Archive is operated by the California Institute of Technology,
+%under contract with NASA under the Exoplanet Exploration Program.
+
+%This paper includes data collected by the \kepler\ mission. Funding for the
+%\kepler\ mission is provided by the NASA Science Mission directorate.
+%We are grateful to the entire \kepler\ team, past and present.
+%These data were obtained from the Mikulski Archive for Space Telescopes
+%(MAST).
+%STScI is operated by the Association of Universities for Research in
+%Astronomy, Inc., under NASA contract NAS5-26555.
+%Support for MAST is provided by the NASA Office of Space Science via grant
+%NNX13AC07G and by other grants and contracts.
+
+%This research made use of Astropy, a community-developed core Python package
+%for Astronomy \citep{Astropy-Collaboration:2013}.
+
+%\facility{Kepler}
+%\software{%
+%     \project{AtroPy} \citep{Astropy-Collaboration:2013},
+%     \project{corner.py} \citep{Foreman-Mackey:2016},
+%     \project{Eigen} \citep{Guennebaud:2010},
+%     \project{emcee} \citep{Foreman-Mackey:2013},
+%     \project{george} \citep{Ambikasaran:2016},
+%     \project{LAPACK} \citep{Anderson:1999},
+%     \project{matplotlib} \citep{Hunter:2007},
+%     \project{numpy} \citep{Van-Der-Walt:2011},
+%     \project{transit} \citep{Foreman-Mackey:2016a},
+%     \project{scipy} \citep{Jones:2001}.
+%}
 
 \bibliography{celerite2}
 
