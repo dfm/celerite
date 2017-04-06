@@ -13,7 +13,7 @@
   comp = VAR2;                                               \
   delta = std::abs(base - comp);                             \
   if (delta > 1e-10) {                                       \
-    std::cerr << "Test failed: '" << #NAME << "' - error: " << delta << std::endl; \
+    std::cerr << "Test failed: '" << #NAME << "' - error: " << delta << " " << base << " " << comp << std::endl; \
     return 1;                                                \
   } else                                                     \
     std::cerr << "Test passed: '" << #NAME << "' - error: " << delta << std::endl; \
@@ -29,7 +29,7 @@ int main (int argc, char* argv[])
   if (argc >= 3) niter = atoi(argv[2]);
 
   // Set up the coefficients.
-  size_t p_real = 2, p_complex = 1;
+  size_t p_real = 2, p_complex = 2;
   Eigen::VectorXd alpha_real(p_real),
                   alpha_complex_real(p_complex),
                   alpha_complex_imag(p_complex),
@@ -39,10 +39,10 @@ int main (int argc, char* argv[])
 
   alpha_real << 1.3, 1.5;
   beta_real  << 0.5, 0.2;
-  alpha_complex_real << 1.0;
-  alpha_complex_imag << 0.1;
-  beta_complex_real  << 1.0;
-  beta_complex_imag  << 1.0;
+  alpha_complex_real << 1.0, 2.0;
+  alpha_complex_imag << 0.1, 0.05;
+  beta_complex_real  << 1.0, 0.8;
+  beta_complex_imag  << 1.0, 0.1;
 
   // Generate some fake data.
   Eigen::VectorXd x = Eigen::VectorXd::Random(N),
@@ -90,12 +90,12 @@ int main (int argc, char* argv[])
   direct.compute(alpha_real, beta_real, alpha_complex_real, alpha_complex_imag, beta_complex_real, beta_complex_imag, x, yerr2);
   sparse.compute(alpha_real, beta_real, alpha_complex_real, alpha_complex_imag, beta_complex_real, beta_complex_imag, x, yerr2);
   cholesky.compute(alpha_real, beta_real, alpha_complex_real, alpha_complex_imag, beta_complex_real, beta_complex_imag, x, yerr2);
-  DO_TEST(band_mixed_dot_solve, direct.dot_solve(y), band.dot_solve(y))
-  DO_TEST(sparse_mixed_dot_solve, sparse.dot_solve(y), band.dot_solve(y))
-  DO_TEST(cholesky_mixed_dot_solve, cholesky.dot_solve(y), band.dot_solve(y))
   DO_TEST(band_mixed_log_det, direct.log_determinant(), band.log_determinant())
   DO_TEST(sparse_mixed_log_det, band.log_determinant(), sparse.log_determinant())
   DO_TEST(cholesky_mixed_log_det, band.log_determinant(), cholesky.log_determinant())
+  DO_TEST(band_mixed_dot_solve, direct.dot_solve(y), band.dot_solve(y))
+  DO_TEST(sparse_mixed_dot_solve, sparse.dot_solve(y), band.dot_solve(y))
+  DO_TEST(cholesky_mixed_dot_solve, cholesky.dot_solve(y), band.dot_solve(y))
 
   return 0;
 }

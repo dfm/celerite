@@ -73,7 +73,7 @@ include_directories(SYSTEM ${EIGEN_INCLUDE_DIRS})
 
 # Some tweaks for speed.
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O4")
-add_definitions(-DNDEBUG)
+#add_definitions(-DNDEBUG)
 
 # Build the examples.
 add_subdirectory(src)

@@ -66,23 +66,33 @@ public:
 
   auto serialize () const {
     return std::make_tuple(
-      this->computed_, this->n_, this->j_, this->log_det_, this->phi_,
-      this->X_, this->alpha_, this->D_
+      this->computed_, this->n_, this->J_real_, this->J_comp_, this->log_det_,
+      this->phi_real_, this->u_real_, this->X_real_,
+      this->phi_comp_, this->u1_comp_, this->u2_comp_, this->X1_comp_, this->X2_comp_,
+      this->D_
     );
   };
 
-  void deserialize (bool computed, int n, int j, double log_det,
-                    Eigen::MatrixXcd phi,
-                    Eigen::MatrixXcd X,
-                    Eigen::VectorXcd alpha,
-                    Eigen::VectorXd D) {
+  void deserialize (
+      bool computed, int n, int J_real, int J_comp, double log_det,
+      Eigen::MatrixXd phi_real, Eigen::VectorXd u_real, Eigen::MatrixXd X_real,
+      Eigen::MatrixXd phi_comp, Eigen::MatrixXd u1_comp, Eigen::MatrixXd u2_comp,
+      Eigen::MatrixXd X1_comp, Eigen::MatrixXd X2_comp,
+      Eigen::VectorXd D) {
     this->computed_ = computed;
     this->n_        = n;
-    this->j_        = j;
+    this->N_        = n;
+    this->J_real_   = J_real;
+    this->J_comp_   = J_comp;
     this->log_det_  = log_det;
-    this->phi_      = phi;
-    this->X_        = X;
-    this->alpha_    = alpha;
+    this->u_real_   = u_real;
+    this->phi_real_ = phi_real;
+    this->X_real_   = X_real;
+    this->phi_comp_ = phi_comp;
+    this->u1_comp_  = u1_comp;
+    this->u2_comp_  = u2_comp;
+    this->X1_comp_  = X1_comp;
+    this->X2_comp_  = X2_comp;
     this->D_        = D;
   };
 };
@@ -996,18 +1006,28 @@ Returns:
   });
 
   cholesky_solver.def("__setstate__", [](PicklableCholeskySolver& solver, py::tuple t) {
-    if (t.size() != 8) throw std::runtime_error("Invalid state!");
+    if (t.size() != 14) throw std::runtime_error("Invalid state!");
     new (&solver) PicklableCholeskySolver();
     solver.deserialize(
       t[0].cast<bool>(),
       t[1].cast<int>(),
       t[2].cast<int>(),
-      t[3].cast<double>(),
-      t[4].cast<Eigen::MatrixXcd>(),
-      t[5].cast<Eigen::MatrixXcd>(),
-      t[6].cast<Eigen::VectorXcd>(),
-      t[7].cast<Eigen::VectorXd>()
+      t[3].cast<int>(),
+      t[4].cast<double>(),
+
+      t[5].cast<Eigen::MatrixXd>(),
+      t[6].cast<Eigen::VectorXd>(),
+      t[7].cast<Eigen::MatrixXd>(),
+
+      t[8].cast<Eigen::MatrixXd>(),
+      t[9].cast<Eigen::MatrixXd>(),
+      t[10].cast<Eigen::MatrixXd>(),
+      t[11].cast<Eigen::MatrixXd>(),
+      t[12].cast<Eigen::MatrixXd>(),
+
+      t[13].cast<Eigen::VectorXd>()
     );
+
   });
 
   return m.ptr();
