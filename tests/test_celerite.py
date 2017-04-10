@@ -24,7 +24,7 @@ method_switch = pytest.mark.parametrize(
     "method",
     [
         "simple",
-        pytest.mark.xfail("cholesky"),
+        "cholesky",
         pytest.mark.skipif(celerite.__with_lapack__ is False,
                            "lapack",
                            reason="LAPACK support not enabled"),
@@ -220,10 +220,14 @@ def test_dot(method, seed=42):
 
     alpha_real = np.array([1.3, 0.2])
     beta_real = np.array([0.5, 0.8])
-    alpha_complex_real = np.array([0.1])
-    alpha_complex_imag = np.array([0.3])
-    beta_complex_real = np.array([0.5])
-    beta_complex_imag = np.array([3.0])
+    alpha_complex_real = np.array([])
+    alpha_complex_imag = np.array([])
+    beta_complex_real = np.array([])
+    beta_complex_imag = np.array([])
+    # alpha_complex_real = np.array([0.1])
+    # alpha_complex_imag = np.array([0.3])
+    # beta_complex_real = np.array([0.5])
+    # beta_complex_imag = np.array([3.0])
 
     K = get_kernel_value(
         alpha_real, beta_real, alpha_complex_real, alpha_complex_imag,

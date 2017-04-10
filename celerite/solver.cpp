@@ -66,29 +66,24 @@ public:
 
   auto serialize () const {
     return std::make_tuple(
-      this->computed_, this->n_, this->J1_, this->J2_, this->log_det_,
-      this->phi1_, this->phi2_, this->u1_, this->u2_, this->X1_, this->X2_,
-      this->D_
+      this->computed_, this->n_, this->J_, this->log_det_,
+      this->phi_, this->u_, this->X_, this->D_
     );
   };
 
   void deserialize (
-      bool computed, int n, int J1, int J2, double log_det,
-      Eigen::MatrixXd phi1, Eigen::MatrixXd phi2,
-      Eigen::MatrixXd u1, Eigen::MatrixXd u2,
-      Eigen::MatrixXd X1, Eigen::MatrixXd X2,
+      bool computed, int n, int J, double log_det,
+      Eigen::MatrixXd phi,
+      Eigen::MatrixXd u,
+      Eigen::MatrixXd X,
       Eigen::VectorXd D) {
     this->computed_ = computed;
     this->n_        = n;
-    this->J1_       = J1;
-    this->J2_       = J2;
+    this->J_        = J;
     this->log_det_  = log_det;
-    this->phi1_     = phi1;
-    this->phi2_     = phi2;
-    this->u1_       = u1;
-    this->u2_       = u2;
-    this->X1_       = X1;
-    this->X2_       = X2;
+    this->phi_      = phi;
+    this->u_        = u;
+    this->X_        = X;
     this->D_        = D;
   };
 };
@@ -925,53 +920,53 @@ Raises:
 
 )delim");
 
-//  cholesky_solver.def("dot", [](PicklableCholeskySolver& solver,
-//      const Eigen::VectorXd& alpha_real,
-//      const Eigen::VectorXd& beta_real,
-//      const Eigen::VectorXd& alpha_complex_real,
-//      const Eigen::VectorXd& alpha_complex_imag,
-//      const Eigen::VectorXd& beta_complex_real,
-//      const Eigen::VectorXd& beta_complex_imag,
-//      const Eigen::VectorXd& x,
-//      const Eigen::MatrixXd& b) {
-//    return solver.dot(
-//      alpha_real,
-//      beta_real,
-//      alpha_complex_real,
-//      alpha_complex_imag,
-//      beta_complex_real,
-//      beta_complex_imag,
-//      x,
-//      b
-//    );
-//  },
-//  R"delim(
-//Compute the dot product of a ``celerite`` matrix and another arbitrary matrix
+  cholesky_solver.def("dot", [](PicklableCholeskySolver& solver,
+      const Eigen::VectorXd& alpha_real,
+      const Eigen::VectorXd& beta_real,
+      const Eigen::VectorXd& alpha_complex_real,
+      const Eigen::VectorXd& alpha_complex_imag,
+      const Eigen::VectorXd& beta_complex_real,
+      const Eigen::VectorXd& beta_complex_imag,
+      const Eigen::VectorXd& x,
+      const Eigen::MatrixXd& b) {
+    return solver.dot(
+      alpha_real,
+      beta_real,
+      alpha_complex_real,
+      alpha_complex_imag,
+      beta_complex_real,
+      beta_complex_imag,
+      x,
+      b
+    );
+  },
+  R"delim(
+Compute the dot product of a ``celerite`` matrix and another arbitrary matrix
 
-//This method computes ``A.b`` where ``A`` is defined by the parameters and
-//``b`` is an arbitrary matrix of the correct shape.
+This method computes ``A.b`` where ``A`` is defined by the parameters and
+``b`` is an arbitrary matrix of the correct shape.
 
-//Args:
-//    alpha_real (array[j_real]): The coefficients of the real terms.
-//    beta_real (array[j_real]): The exponents of the real terms.
-//    alpha_complex_real (array[j_complex]): The real part of the
-//        coefficients of the complex terms.
-//    alpha_complex_imag (array[j_complex]): The imaginary part of the
-//        coefficients of the complex terms.
-//    beta_complex_real (array[j_complex]): The real part of the
-//        exponents of the complex terms.
-//    beta_complex_imag (array[j_complex]): The imaginary part of the
-//        exponents of the complex terms.
-//    x (array[n]): The _sorted_ array of input coordinates.
-//    b (array[n] or array[n, neq]): The matrix ``b`` described above.
+Args:
+    alpha_real (array[j_real]): The coefficients of the real terms.
+    beta_real (array[j_real]): The exponents of the real terms.
+    alpha_complex_real (array[j_complex]): The real part of the
+        coefficients of the complex terms.
+    alpha_complex_imag (array[j_complex]): The imaginary part of the
+        coefficients of the complex terms.
+    beta_complex_real (array[j_complex]): The real part of the
+        exponents of the complex terms.
+    beta_complex_imag (array[j_complex]): The imaginary part of the
+        exponents of the complex terms.
+    x (array[n]): The _sorted_ array of input coordinates.
+    b (array[n] or array[n, neq]): The matrix ``b`` described above.
 
-//Returns:
-//    array[n] or array[n, neq]: The dot product ``A.b`` as described above.
+Returns:
+    array[n] or array[n, neq]: The dot product ``A.b`` as described above.
 
-//Raises:
-//    ValueError: For mismatched dimensions.
+Raises:
+    ValueError: For mismatched dimensions.
 
-//)delim");
+)delim");
 
   cholesky_solver.def("log_determinant", [](PicklableCholeskySolver& solver) {
     return solver.log_determinant();
@@ -1002,23 +997,19 @@ Returns:
   });
 
   cholesky_solver.def("__setstate__", [](PicklableCholeskySolver& solver, py::tuple t) {
-    if (t.size() != 12) throw std::runtime_error("Invalid state!");
+    if (t.size() != 8) throw std::runtime_error("Invalid state!");
     new (&solver) PicklableCholeskySolver();
     solver.deserialize(
       t[0].cast<bool>(),
       t[1].cast<int>(),
       t[2].cast<int>(),
-      t[3].cast<int>(),
-      t[4].cast<double>(),
+      t[3].cast<double>(),
 
+      t[4].cast<Eigen::MatrixXd>(),
       t[5].cast<Eigen::MatrixXd>(),
       t[6].cast<Eigen::MatrixXd>(),
-      t[7].cast<Eigen::MatrixXd>(),
-      t[8].cast<Eigen::MatrixXd>(),
-      t[9].cast<Eigen::MatrixXd>(),
-      t[10].cast<Eigen::MatrixXd>(),
 
-      t[11].cast<Eigen::VectorXd>()
+      t[7].cast<Eigen::VectorXd>()
     );
   });
 
