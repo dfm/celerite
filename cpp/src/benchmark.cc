@@ -48,7 +48,7 @@ int main (int argc, char* argv[])
   // Compute the y values.
   y0 = sin(x0.array());
 
-  celerite::solver::BandSolver<double> solver;
+  celerite::solver::CholeskySolver<double> solver;
 
   for (size_t N = 64; N <= N_max; N *= 2) {
     Eigen::VectorXd x = x0.topRows(N),

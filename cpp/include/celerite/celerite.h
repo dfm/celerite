@@ -3,9 +3,6 @@
 
 #include "celerite/version.h"
 #include "celerite/solver/direct.h"
-#include "celerite/solver/band.h"
-#include "celerite/solver/sparse.h"
-#include "celerite/solver/single.h"
 #include "celerite/solver/cholesky.h"
 
 #endif

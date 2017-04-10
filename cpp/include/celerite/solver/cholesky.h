@@ -15,29 +15,33 @@ namespace solver {
 
 template <typename T>
 class CholeskySolver : public Solver<T> {
+private:
+typedef Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> matrix_t;
+typedef Eigen::Matrix<T, Eigen::Dynamic, 1> vector_t;
+
 public:
 CholeskySolver () : Solver<T>() {};
 ~CholeskySolver () {};
 
-int compute (
-  const Eigen::Matrix<T, Eigen::Dynamic, 1>& a_real,
-  const Eigen::Matrix<T, Eigen::Dynamic, 1>& c_real,
-  const Eigen::Matrix<T, Eigen::Dynamic, 1>& a_comp,
-  const Eigen::Matrix<T, Eigen::Dynamic, 1>& b_comp,
-  const Eigen::Matrix<T, Eigen::Dynamic, 1>& c_comp,
-  const Eigen::Matrix<T, Eigen::Dynamic, 1>& d_comp,
+void compute (
+  const vector_t& a_real,
+  const vector_t& c_real,
+  const vector_t& a_comp,
+  const vector_t& b_comp,
+  const vector_t& c_comp,
+  const vector_t& d_comp,
   const Eigen::VectorXd& x,
-  const Eigen::Matrix<T, Eigen::Dynamic, 1>& diag
+  const vector_t& diag
 )
 {
   this->computed_ = false;
-  if (x.rows() != diag.rows()) return SOLVER_DIMENSION_MISMATCH;
-  if (a_real.rows() != c_real.rows()) return SOLVER_DIMENSION_MISMATCH;
-  if (a_comp.rows() != b_comp.rows()) return SOLVER_DIMENSION_MISMATCH;
-  if (a_comp.rows() != c_comp.rows()) return SOLVER_DIMENSION_MISMATCH;
-  if (a_comp.rows() != d_comp.rows()) return SOLVER_DIMENSION_MISMATCH;
+  if (x.rows() != diag.rows()) throw dimension_mismatch();
+  if (a_real.rows() != c_real.rows()) throw dimension_mismatch();
+  if (a_comp.rows() != b_comp.rows()) throw dimension_mismatch();
+  if (a_comp.rows() != c_comp.rows()) throw dimension_mismatch();
+  if (a_comp.rows() != d_comp.rows()) throw dimension_mismatch();
 
-  int N = this->n_ = x.rows();
+  int N = this->N_ = x.rows();
   int J_real = a_real.rows(), J_comp = a_comp.rows();
   J_ = J_real + 2*J_comp;
   phi_.resize(J_, N-1);
@@ -66,6 +70,7 @@ int compute (
       S.array() *= (phi_.col(n-1) * phi_.col(n-1).transpose()).array();   \
       tmp = u_.col(n-1).transpose() * S;                                  \
       D_(n) = diag(n) + a_sum - tmp.transpose() * u_.col(n-1);            \
+      if (D_(n) < 0) throw linalg_exception();                            \
       X_.col(n) = (T(1.0) / D_(n)) * (X_.col(n) - tmp);                   \
       S.noalias() += D_(n) * X_.col(n) * X_.col(n).transpose();           \
     }
@@ -123,6 +128,7 @@ int compute (
       S.array() *= (phi_.col(n-1) * phi_.col(n-1).transpose()).array();     \
       tmp = u_.col(n-1).transpose() * S;                                    \
       D_(n) = diag(n) + a_sum - tmp.transpose() * u_.col(n-1);              \
+      if (D_(n) < 0) throw linalg_exception();                              \
       X_.col(n) = (T(1.0) / D_(n)) * (X_.col(n) - tmp);                     \
       S.noalias() += D_(n) * X_.col(n) * X_.col(n).transpose();             \
     }
@@ -149,46 +155,46 @@ int compute (
 
   this->log_det_ = log(D_.array()).sum();
   this->computed_ = true;
-
-  return 0;
 };
 
-void solve (const Eigen::MatrixXd& b, T* x) const {
-  if (b.rows() != this->n_) throw dimension_mismatch();
+matrix_t solve (const Eigen::MatrixXd& b) const {
+  if (b.rows() != this->N_) throw dimension_mismatch();
   if (!(this->computed_)) throw compute_exception();
 
   int nrhs = b.cols();
-  Eigen::Matrix<T, Eigen::Dynamic, 1> f(J_);
-  Eigen::Map<Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic> > xout(x, this->n_, nrhs);
+  vector_t f(J_);
+  matrix_t x(this->N_, nrhs);
 
   for (int k = 0; k < nrhs; ++k) {
     // Forward
     f.setConstant(T(0.0));
-    xout(0, k) = b(0, k);
-    for (int n = 1; n < this->n_; ++n) {
-      f = phi_.col(n-1).asDiagonal() * (f + X_.col(n-1) * xout(n-1, k));
-      xout(n, k) = b(n, k) - u_.col(n-1).transpose() * f;
+    x(0, k) = b(0, k);
+    for (int n = 1; n < this->N_; ++n) {
+      f = phi_.col(n-1).asDiagonal() * (f + X_.col(n-1) * x(n-1, k));
+      x(n, k) = b(n, k) - u_.col(n-1).transpose() * f;
     }
-    xout.col(k) /= D_.array();
+    x.col(k).array() /= D_.array();
 
     // Backward
     f.setConstant(T(0.0));
-    for (int n = this->n_-2; n >= 0; --n) {
-      f = phi_.col(n).asDiagonal() * (f + u_.col(n) * xout(n+1, k));
-      xout(n, k) = xout(n, k) - X_.col(n).transpose() * f;
+    for (int n = this->N_-2; n >= 0; --n) {
+      f = phi_.col(n).asDiagonal() * (f + u_.col(n) * x(n+1, k));
+      x(n, k) = x(n, k) - X_.col(n).transpose() * f;
     }
   }
+
+  return x;
 };
 
-Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> dot_L (const Eigen::MatrixXd& z) const {
-  if (z.rows() != this->n_) throw dimension_mismatch();
+matrix_t dot_L (const matrix_t& z) const {
+  if (z.rows() != this->N_) throw dimension_mismatch();
   if (!(this->computed_)) throw compute_exception();
 
   T tmp;
   int N = z.rows(), nrhs = z.cols();
   Eigen::Array<T, Eigen::Dynamic, 1> D = sqrt(D_.array());
-  Eigen::Matrix<T, Eigen::Dynamic, 1> f(J_);
-  Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> y(N, nrhs);
+  vector_t f(J_);
+  matrix_t y(N, nrhs);
 
   for (int k = 0; k < nrhs; ++k) {
     f.setZero();
@@ -202,30 +208,23 @@ Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> dot_L (const Eigen::MatrixXd& z
   }
 
   return y;
-
-  //z = np.array(y) * D
-  //y = np.empty(N)
-  //y[0] = z[0]
-  //f1 = 0.0
-  //f2 = 0.0
-  //for n in range(1, N):
-  //    f1 = phi[n-1] * (f1 + X1[n-1] * z[n-1])
-  //    f2 = phi[n-1] * (f2 + X2[n-1] * z[n-1])
-  //    y[n] = (z[n] + np.dot(ut1[n], f1) + np.dot(ut2[n], f2))
-  //print("Forward dot error: {0}".format(np.max(np.abs(y - np.dot(L, z)))))
 };
 
-Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> dot (
-  const Eigen::Matrix<T, Eigen::Dynamic, 1>& a_real,
-  const Eigen::Matrix<T, Eigen::Dynamic, 1>& c_real,
-  const Eigen::Matrix<T, Eigen::Dynamic, 1>& a_comp,
-  const Eigen::Matrix<T, Eigen::Dynamic, 1>& b_comp,
-  const Eigen::Matrix<T, Eigen::Dynamic, 1>& c_comp,
-  const Eigen::Matrix<T, Eigen::Dynamic, 1>& d_comp,
+matrix_t dot (
+  const vector_t& a_real,
+  const vector_t& c_real,
+  const vector_t& a_comp,
+  const vector_t& b_comp,
+  const vector_t& c_comp,
+  const vector_t& d_comp,
   const Eigen::VectorXd& x,
-  const Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>& z
+  const matrix_t& z
 ) {
   if (x.rows() != z.rows()) throw dimension_mismatch();
+  if (a_real.rows() != c_real.rows()) throw dimension_mismatch();
+  if (a_comp.rows() != b_comp.rows()) throw dimension_mismatch();
+  if (a_comp.rows() != c_comp.rows()) throw dimension_mismatch();
+  if (a_comp.rows() != d_comp.rows()) throw dimension_mismatch();
 
   int N = z.rows(), nrhs = z.cols();
   int J_real = a_real.rows(), J_comp = a_comp.rows(), J = J_real + 2*J_comp;
@@ -241,8 +240,8 @@ Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> dot (
 
   T a_sum = a1.sum() + a2.sum();
 
-  Eigen::Matrix<T, Eigen::Dynamic, 1> f(J);
-  Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> y(N, nrhs), phi(J, N-1), u(J, N-1), v(J, N-1);
+  vector_t f(J);
+  matrix_t y(N, nrhs), phi(J, N-1), u(J, N-1), v(J, N-1);
 
   cd = cos(d2*x(0));
   sd = sin(d2*x(0));
@@ -281,13 +280,12 @@ Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> dot (
   return y;
 };
 
-  using Solver<T>::compute;
-  using Solver<T>::solve;
+using Solver<T>::compute;
 
 protected:
-  int J_;
-  Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> u_, phi_, X_;
-  Eigen::Matrix<T, Eigen::Dynamic, 1> D_;
+int J_;
+matrix_t u_, phi_, X_;
+vector_t D_;
 
 };
 

@@ -2,8 +2,6 @@
 #include <Eigen/Core>
 
 #include "celerite/solver/direct.h"
-#include "celerite/solver/band.h"
-#include "celerite/solver/sparse.h"
 #include "celerite/solver/cholesky.h"
 
 #define DO_TEST(NAME, VAR1, VAR2)                            \
@@ -64,42 +62,22 @@ int main (int argc, char* argv[])
   y = sin(x.array());
 
   celerite::solver::DirectSolver<double> direct;
-  celerite::solver::BandSolver<double> band;
-  celerite::solver::SparseSolver<double> sparse;
   celerite::solver::CholeskySolver<double> cholesky;
 
   direct.compute(alpha_real, beta_real, x, yerr2);
-  band.compute(alpha_real, beta_real, x, yerr2);
-  sparse.compute(alpha_real, beta_real, x, yerr2);
   cholesky.compute(alpha_real, beta_real, x, yerr2);
-  DO_TEST(band_real_log_det, direct.log_determinant(), band.log_determinant())
-  DO_TEST(sparse_real_log_det, sparse.log_determinant(), band.log_determinant())
-  DO_TEST(cholesky_real_log_det, cholesky.log_determinant(), band.log_determinant())
-  DO_TEST(band_real_dot_solve, direct.dot_solve(y), band.dot_solve(y))
-  DO_TEST(sparse_real_dot_solve, band.dot_solve(y), sparse.dot_solve(y))
-  DO_TEST(cholesky_real_dot_solve, band.dot_solve(y), cholesky.dot_solve(y))
+  DO_TEST(cholesky_real_log_det, cholesky.log_determinant(), direct.log_determinant())
+  DO_TEST(cholesky_real_dot_solve, direct.dot_solve(y), cholesky.dot_solve(y))
 
-  band.compute(alpha_complex_real, alpha_complex_imag, beta_complex_real, beta_complex_imag, x, yerr2);
   direct.compute(alpha_complex_real, alpha_complex_imag, beta_complex_real, beta_complex_imag, x, yerr2);
-  sparse.compute(alpha_complex_real, alpha_complex_imag, beta_complex_real, beta_complex_imag, x, yerr2);
   cholesky.compute(alpha_complex_real, alpha_complex_imag, beta_complex_real, beta_complex_imag, x, yerr2);
-  DO_TEST(band_complex_log_det, direct.log_determinant(), band.log_determinant())
-  DO_TEST(sparse_complex_log_det, direct.log_determinant(), sparse.log_determinant())
   DO_TEST(cholesky_complex_log_det, direct.log_determinant(), cholesky.log_determinant())
-  DO_TEST(band_complex_dot_solve, direct.dot_solve(y), band.dot_solve(y))
-  DO_TEST(sparse_complex_dot_solve, sparse.dot_solve(y), band.dot_solve(y))
-  DO_TEST(cholesky_complex_dot_solve, cholesky.dot_solve(y), band.dot_solve(y))
+  DO_TEST(cholesky_complex_dot_solve, cholesky.dot_solve(y), direct.dot_solve(y))
 
-  band.compute(alpha_real, beta_real, alpha_complex_real, alpha_complex_imag, beta_complex_real, beta_complex_imag, x, yerr2);
   direct.compute(alpha_real, beta_real, alpha_complex_real, alpha_complex_imag, beta_complex_real, beta_complex_imag, x, yerr2);
-  sparse.compute(alpha_real, beta_real, alpha_complex_real, alpha_complex_imag, beta_complex_real, beta_complex_imag, x, yerr2);
   cholesky.compute(alpha_real, beta_real, alpha_complex_real, alpha_complex_imag, beta_complex_real, beta_complex_imag, x, yerr2);
-  DO_TEST(band_mixed_log_det, direct.log_determinant(), band.log_determinant())
-  DO_TEST(sparse_mixed_log_det, band.log_determinant(), sparse.log_determinant())
-  DO_TEST(cholesky_mixed_log_det, band.log_determinant(), cholesky.log_determinant())
-  DO_TEST(band_mixed_dot_solve, direct.dot_solve(y), band.dot_solve(y))
-  DO_TEST(sparse_mixed_dot_solve, sparse.dot_solve(y), band.dot_solve(y))
-  DO_TEST(cholesky_mixed_dot_solve, cholesky.dot_solve(y), band.dot_solve(y))
+  DO_TEST(cholesky_mixed_log_det, direct.log_determinant(), cholesky.log_determinant())
+  DO_TEST(cholesky_mixed_dot_solve, cholesky.dot_solve(y), direct.dot_solve(y))
 
   return 0;
 }

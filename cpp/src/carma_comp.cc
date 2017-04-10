@@ -75,135 +75,38 @@ int main (int argc, char* argv[])
     }
     compute_times(nterms - 1, 1) = (get_timestamp() - strt) / niter;
 
+    std::cout << "CARMA\n";
+
     // Get the celerite parameters for the CARMA model.
     celerite::carma::CARMASolver carma_solver(0.0, carma_arparams, carma_maparams);
     carma_solver.get_celerite_coeffs(alpha_real, beta_real,
       alpha_complex_real, alpha_complex_imag, beta_complex_real, beta_complex_imag);
 
+    std::cout << "coeffs\n";
+
     // Compute using the celerite model.
-    celerite::solver::BandSolver<double> solver;
-    int flag = -1;
+    celerite::solver::CholeskySolver<double> solver;
     strt = get_timestamp();
     for (size_t i = 0; i < niter; ++i) {
-      flag = solver.compute(alpha_real, beta_real, alpha_complex_real, alpha_complex_imag, beta_complex_real, beta_complex_imag, x, diag);
-      if (flag) {
-        celerite_ll = NAN;
-        break;
-      }
+      solver.compute(alpha_real, beta_real, alpha_complex_real, alpha_complex_imag, beta_complex_real, beta_complex_imag, x, diag);
       celerite_ll = -0.5*(solver.dot_solve(y) + solver.log_determinant() + x.rows() * log(2.0 * M_PI));
     }
-    double direct_ll = NAN;
-    if (!flag) {
-      celerite::solver::DirectSolver<double> dsolver;
-      dsolver.compute(alpha_real, beta_real, alpha_complex_real, alpha_complex_imag, beta_complex_real, beta_complex_imag, x, diag);
-      direct_ll = -0.5*(dsolver.dot_solve(y) + dsolver.log_determinant() + x.rows() * log(2.0 * M_PI));
+    std::cout << "celerite\n";
 
-      compute_times(nterms - 1, 2) = (get_timestamp() - strt) / niter;
-    } else {
-      compute_times(nterms - 1, 2) = NAN;
-    }
+    //if (!flag) {
+    //  celerite::solver::DirectSolver<double> dsolver;
+    //  dsolver.compute(alpha_real, beta_real, alpha_complex_real, alpha_complex_imag, beta_complex_real, beta_complex_imag, x, diag);
+    //  direct_ll = -0.5*(dsolver.dot_solve(y) + dsolver.log_determinant() + x.rows() * log(2.0 * M_PI));
 
+    //  compute_times(nterms - 1, 2) = (get_timestamp() - strt) / niter;
+    //} else {
+    //  compute_times(nterms - 1, 2) = NAN;
+    //}
 
-    std::cerr << nterms << " " << direct_ll << " " << carma_ll << " " << celerite_ll << std::endl;
-
-    // if (flag) {
-    //   std::cerr << "alpha_real: " << alpha_real.transpose() << std::endl;
-    //   std::cerr << "beta_real: "  << beta_real.transpose()  << std::endl;
-    //   std::cerr << "alpha_complex_real: " << alpha_complex_real.transpose() << std::endl;
-    //   std::cerr << "alpha_complex_imag: " << alpha_complex_imag.transpose() << std::endl;
-    //   std::cerr << "beta_complex_real: "  << beta_complex_real.transpose()  << std::endl;
-    //   std::cerr << "beta_complex_imag: "  << beta_complex_imag.transpose()  << std::endl;
-    //   std::cerr << std::endl;
-
-    //   for (double t = 0.0; t <= 5000.0; t += 0.01) {
-    //     double p = celerite::get_psd_value(alpha_real, beta_real, alpha_complex_real, alpha_complex_imag, beta_complex_real, beta_complex_imag, t);
-    //     if (p < 0.0) {
-    //       std::cerr << t << " " << p << std::endl;
-    //     }
-    //   }
-    //   std::cerr << std::endl;
-    //   // return 1;
-    // }
+    std::cerr << nterms << " " << carma_ll << " " << celerite_ll << std::endl;
   }
 
   std::cout<< compute_times << std::endl;
 
   return 0;
 }
-
-//   // Set up the coefficients.
-//   /* size_t n_complex = nterms / 2, */
-//   /*        n_real = nterms - n_complex * 2; */
-//   size_t n_complex = 0, n_real = nterms;
-//   std::cout << n_real << " " << n_complex << "\n";
-//   Eigen::VectorXd alpha_real = Eigen::VectorXd::Random(n_real),
-//                   beta_real = Eigen::VectorXd::Random(n_real),
-//                   alpha_complex = Eigen::VectorXd::Random(n_complex),
-//                   beta_complex_real = Eigen::VectorXd::Random(n_complex),
-//                   beta_complex_imag = Eigen::VectorXd::Random(n_complex);
-//   if (n_real > 0) {
-//     alpha_real.array() += 1.0;
-//     beta_real.array() += 1.0;
-//   }
-//   if (n_complex > 0) {
-//     alpha_complex.array() += 1.0;
-//     beta_complex_real.array() += 1.0;
-//     beta_complex_imag.array() += 1.0;
-//   }
-//
-//   // Generate some fake data.
-//   Eigen::VectorXd x0 = Eigen::VectorXd::Random(N_max),
-//                   yerr0 = Eigen::VectorXd::Random(N_max),
-//                   y0;
-//
-//   // Set the scale of the uncertainties.
-//   yerr0.array() *= 0.1;
-//   yerr0.array() += 1.0;
-//
-//   // The times need to be sorted.
-//   std::sort(x0.data(), x0.data() + x0.size());
-//
-//   // Compute the y values.
-//   y0 = sin(x0.array());
-//
-//   celerite::BandSolver<double> solver;
-//
-//   for (size_t N = 64; N <= N_max; N *= 2) {
-//     Eigen::VectorXd x = x0.topRows(N),
-//                     yerr = yerr0.topRows(N),
-//                     y = y0.topRows(N);
-//
-//     // Benchmark the solver.
-//     double strt, compute_time = 0.0, solve_time = 0.0, carma_time = 0.0;
-//
-//     for (size_t i = 0; i < niter; ++i) {
-//       strt = get_timestamp();
-//       solver.compute(alpha_real, beta_real, alpha_complex, beta_complex_real, beta_complex_imag, x, yerr);
-//       compute_time += get_timestamp() - strt;
-//     }
-//
-//     for (size_t i = 0; i < niter; ++i) {
-//       strt = get_timestamp();
-//       solver.dot_solve(y);
-//       solve_time += get_timestamp() - strt;
-//     }
-//
-//     for (size_t i = 0; i < niter; ++i) {
-//       strt = get_timestamp();
-//       celerite::carma::CARMASolver carma_solver(0.0, carma_arparams, carma_maparams);
-//       carma_solver.setup();
-//       carma_solver.log_likelihood(x, y, yerr);
-//       carma_time += get_timestamp() - strt;
-//     }
-//
-//     // Print the results.
-//     std::cout << N;
-//     std::cout << " ";
-//     std::cout << (compute_time + solve_time) / niter;
-//     std::cout << " ";
-//     std::cout << carma_time / niter;
-//     std::cout << "\n";
-//   }
-//
-//   return 0;
-// }

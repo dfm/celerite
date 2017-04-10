@@ -13,60 +13,47 @@ namespace solver {
 
 template <typename T>
 class DirectSolver : public Solver<T> {
-public:
-  DirectSolver () : Solver<T>() {};
-  ~DirectSolver () {};
-
-  int compute (
-    const Eigen::Matrix<T, Eigen::Dynamic, 1>& alpha_real,
-    const Eigen::Matrix<T, Eigen::Dynamic, 1>& beta_real,
-    const Eigen::Matrix<T, Eigen::Dynamic, 1>& alpha_complex_real,
-    const Eigen::Matrix<T, Eigen::Dynamic, 1>& alpha_complex_imag,
-    const Eigen::Matrix<T, Eigen::Dynamic, 1>& beta_complex_real,
-    const Eigen::Matrix<T, Eigen::Dynamic, 1>& beta_complex_imag,
-    const Eigen::VectorXd& x,
-    const Eigen::Matrix<T, Eigen::Dynamic, 1>& diag
-  );
-  void solve (const Eigen::MatrixXd& b, T* x) const;
-
-  using Solver<T>::compute;
-  using Solver<T>::solve;
 
 private:
-  Eigen::LDLT<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> > factor_;
+typedef Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> matrix_t;
+typedef Eigen::Matrix<T, Eigen::Dynamic, 1> vector_t;
+Eigen::LDLT<matrix_t> factor_;
 
-};
+public:
 
-template <typename T>
-int DirectSolver<T>::compute (
-  const Eigen::Matrix<T, Eigen::Dynamic, 1>& alpha_real,
-  const Eigen::Matrix<T, Eigen::Dynamic, 1>& beta_real,
-  const Eigen::Matrix<T, Eigen::Dynamic, 1>& alpha_complex_real,
-  const Eigen::Matrix<T, Eigen::Dynamic, 1>& alpha_complex_imag,
-  const Eigen::Matrix<T, Eigen::Dynamic, 1>& beta_complex_real,
-  const Eigen::Matrix<T, Eigen::Dynamic, 1>& beta_complex_imag,
+DirectSolver () : Solver<T>() {};
+~DirectSolver () {};
+
+void compute (
+  const vector_t& a_real,
+  const vector_t& c_real,
+  const vector_t& a_comp,
+  const vector_t& b_comp,
+  const vector_t& c_comp,
+  const vector_t& d_comp,
   const Eigen::VectorXd& x,
-  const Eigen::Matrix<T, Eigen::Dynamic, 1>& diag
-)
-{
+  const vector_t& diag
+) {
   this->computed_ = false;
-  if (x.rows() != diag.rows()) return SOLVER_DIMENSION_MISMATCH;
+  if (x.rows() != diag.rows()) throw dimension_mismatch();
+  if (a_real.rows() != c_real.rows()) throw dimension_mismatch();
+  if (a_comp.rows() != b_comp.rows()) throw dimension_mismatch();
+  if (a_comp.rows() != c_comp.rows()) throw dimension_mismatch();
+  if (a_comp.rows() != d_comp.rows()) throw dimension_mismatch();
 
   // Save the dimensions for later use
-  this->p_real_ = alpha_real.rows();
-  this->p_complex_ = alpha_complex_real.rows();
-  this->n_ = x.rows();
+  this->N_ = x.rows();
 
   // Build the matrix.
   double dx;
-  T v, asum = alpha_real.sum() + alpha_complex_real.sum();
-  Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> K(this->n_, this->n_);
-  for (int i = 0; i < this->n_; ++i) {
+  T v, asum = a_real.sum() + a_comp.sum();
+  matrix_t K(this->N_, this->N_);
+  for (int i = 0; i < this->N_; ++i) {
     K(i, i) = asum + diag(i);
 
-    for (int j = i+1; j < this->n_; ++j) {
+    for (int j = i+1; j < this->N_; ++j) {
       dx = x(j) - x(i);
-      v = get_kernel_value(alpha_real, beta_real, alpha_complex_real, alpha_complex_imag, beta_complex_real, beta_complex_imag, dx);
+      v = get_kernel_value(a_real, c_real, a_comp, b_comp, c_comp, d_comp, dx);
       K(i, j) = v;
       K(j, i) = v;
     }
@@ -74,26 +61,63 @@ int DirectSolver<T>::compute (
 
   // Factorize the matrix.
   factor_ = K.ldlt();
+  if (factor_.info() != Eigen::Success) throw linalg_exception();
+
   this->log_det_ = log(factor_.vectorD().array()).sum();
   this->computed_ = true;
+};
 
-  return 0;
-}
-
-template <typename T>
-void DirectSolver<T>::solve (const Eigen::MatrixXd& b, T* x) const {
-  if (b.rows() != this->n_) throw dimension_mismatch();
+matrix_t solve (const Eigen::MatrixXd& b) const {
+  if (b.rows() != this->N_) throw dimension_mismatch();
   if (!(this->computed_)) throw compute_exception();
-  int nrhs = b.cols();
+  return factor_.solve(b.cast<T>());
+};
 
-  Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>
-    result = factor_.solve(b.cast<T>());
+matrix_t dot (
+  const vector_t& a_real,
+  const vector_t& c_real,
+  const vector_t& a_comp,
+  const vector_t& b_comp,
+  const vector_t& c_comp,
+  const vector_t& d_comp,
+  const Eigen::VectorXd& x,
+  const matrix_t& z
+) {
+  if (x.rows() != z.rows()) throw dimension_mismatch();
+  if (a_real.rows() != c_real.rows()) throw dimension_mismatch();
+  if (a_comp.rows() != b_comp.rows()) throw dimension_mismatch();
+  if (a_comp.rows() != c_comp.rows()) throw dimension_mismatch();
+  if (a_comp.rows() != d_comp.rows()) throw dimension_mismatch();
 
-  // Copy the output.
-  for (int j = 0; j < nrhs; ++j)
-    for (int i = 0; i < this->n_; ++i)
-      x[i+j*this->n_] = result(i, j);
+  int N = z.rows();
+  double dx;
+  T v, asum = a_real.sum() + a_comp.sum();
+  matrix_t K(N, N);
+  for (int i = 0; i < N; ++i) {
+    K(i, i) = asum;
+
+    for (int j = i+1; j < N; ++j) {
+      dx = x(j) - x(i);
+      v = get_kernel_value(a_real, c_real, a_comp, b_comp, c_comp, d_comp, dx);
+      K(i, j) = v;
+      K(j, i) = v;
+    }
+  }
+
+  return K * z;
 }
+
+
+matrix_t dot_L (const Eigen::MatrixXd& b) const {
+  if (b.rows() != this->N_) throw dimension_mismatch();
+  if (!(this->computed_)) throw compute_exception();
+  vector_t sqrtD = sqrt(factor_.vectorD().array());
+  return factor_.matrixL() * (sqrtD.asDiagonal() * b);
+};
+
+using Solver<T>::compute;
+
+};
 
 };
 };

@@ -4,7 +4,6 @@ macro (CELERITE_EXEC NAME)
 endmacro (CELERITE_EXEC)
 
 celerite_exec(benchmark)
-celerite_exec(carma_comp)
 
 macro (CELERITE_TEST NAME)
     celerite_exec(${NAME})
