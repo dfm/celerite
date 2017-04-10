@@ -139,8 +139,7 @@ Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> dot (
   if (x.rows() != z.rows()) throw dimension_mismatch();
 
   int N = z.rows(), nrhs = z.cols();
-  int J_real = a_real.rows(), J_comp = a_comp.rows();
-  int J = J_real + 2*J_comp;
+  int J_real = a_real.rows(), J_comp = a_comp.rows(), J = J_real + 2*J_comp;
   Eigen::Array<T, Eigen::Dynamic, 1> a1(J_real), a2(J_comp), b2(J_comp),
                                      c1(J_real), c2(J_comp), d2(J_comp),
                                      cd, sd;
@@ -154,39 +153,48 @@ Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> dot (
   T a_sum = a1.sum() + a2.sum();
 
   Eigen::Matrix<T, Eigen::Dynamic, 1> f(J);
-  Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> y(N, nrhs),
-    phi(J, N-1), u(J, N-1), v(J, N-1);
+  Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> y(N, nrhs), phi(J, N-1), u(J, N-1), v(J, N-1);
 
+  cd = cos(d2*x(0));
+  sd = sin(d2*x(0));
   for (int n = 0; n < N-1; ++n) {
+    v.col(n).head(J_real).setOnes();
+    v.col(n).segment(J_real, J_comp) = cd;
+    v.col(n).segment(J_real+J_comp, J_comp) = sd;
+
     cd = cos(d2*x(n+1));
     sd = sin(d2*x(n+1));
     u.col(n).head(J_real) = a1;
     u.col(n).segment(J_real, J_comp) = a2 * cd + b2 * sd;
     u.col(n).segment(J_real+J_comp, J_comp) = a2 * sd - b2 * cd;
 
-    v.col(n).head(J_real).setOnes();
-    v.col(n).segment(J_real, J_comp) = cos(d2*x(n));
-    v.col(n).segment(J_real+J_comp, J_comp) = sin(d2*x(n));
-
     T dx = x(n+1) - x(n);
     phi.col(n).head(J_real) = exp(-c1*dx);
     phi.col(n).segment(J_real, J_comp) = exp(-c2*dx);
-    phi.col(n).segment(J_real+J_comp, J_comp) = phi.col(n-1).segment(J_real, J_comp);
+    phi.col(n).segment(J_real+J_comp, J_comp) = phi.col(n).segment(J_real, J_comp);
   }
 
   for (int k = 0; k < nrhs; ++k) {
-    y(0, k) = a_sum * z(0, k);
-    f.setZero();
-    for (int n = 1; n < N; ++n) {
-      f = phi.col(n-1).asDiagonal() * (f + v.col(n-1) * z(n-1, k));
-      y(n, k) = a_sum * z(n, k) + u.col(n-1).transpose() * f;
-    }
-
+    y(N-1, k) = a_sum * z(N-1, k);
     f.setZero();
     for (int n = N-2; n >= 0; --n) {
       f = phi.col(n).asDiagonal() * (f + u.col(n) * z(n+1, k));
-      y(n, k) += v.col(n).transpose() * f;
+      y(n, k) = a_sum * z(n, k) + v.col(n).transpose() * f;
     }
+
+    f.setZero();
+    for (int n = 1; n < N; ++n) {
+      f = phi.col(n-1).asDiagonal() * (f + v.col(n-1) * z(n-1, k));
+      y(n, k) += u.col(n-1).transpose() * f;
+    }
+
+    //f1 = phi[n-1] * (f1 + vt1[n-1] * z[n-1])
+    //f2 = phi[n-1] * (f2 + vt2[n-1] * z[n-1])
+    //y[n] = (diag[n] * z[n] + np.dot(ut1[n], f1) + np.dot(ut2[n], f2))
+
+    //f1 = phi[n] * (f1 + ut1[n+1] * z[n+1])
+    //f2 = phi[n] * (f2 + ut2[n+1] * z[n+1])
+    //y[n] += np.dot(vt1[n], f1) + np.dot(vt2[n], f2)
   }
 
   return y;
