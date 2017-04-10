@@ -126,6 +126,41 @@ void solve (const Eigen::MatrixXd& b, T* x) const {
   }
 };
 
+Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> dot_L (const Eigen::MatrixXd& z) const {
+  if (z.rows() != this->n_) throw dimension_mismatch();
+  if (!(this->computed_)) throw compute_exception();
+
+  T tmp;
+  int N = z.rows(), nrhs = z.cols();
+  Eigen::Array<T, Eigen::Dynamic, 1> D = sqrt(D_);
+  Eigen::Matrix<T, Eigen::Dynamic, 1> f(J_);
+  Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> y(N, nrhs);
+
+  for (int k = 0; k < nrhs; ++k) {
+    f.setZero();
+    tmp = z(0, k) * D(0);
+    y(0, k) = tmp;
+    for (int n = 1; n < N; ++n) {
+      f = phi_.col(n-1).asDiagonal() * (f + X_.col(n-1) * tmp);
+      tmp = D(n) * z(n, k);
+      y(n, k) = tmp + u_.col(n-1).transpose() * f;
+    }
+  }
+
+  return y;
+
+  //z = np.array(y) * D
+  //y = np.empty(N)
+  //y[0] = z[0]
+  //f1 = 0.0
+  //f2 = 0.0
+  //for n in range(1, N):
+  //    f1 = phi[n-1] * (f1 + X1[n-1] * z[n-1])
+  //    f2 = phi[n-1] * (f2 + X2[n-1] * z[n-1])
+  //    y[n] = (z[n] + np.dot(ut1[n], f1) + np.dot(ut2[n], f2))
+  //print("Forward dot error: {0}".format(np.max(np.abs(y - np.dot(L, z)))))
+};
+
 Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> dot (
   const Eigen::Matrix<T, Eigen::Dynamic, 1>& a_real,
   const Eigen::Matrix<T, Eigen::Dynamic, 1>& c_real,
@@ -187,14 +222,6 @@ Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> dot (
       f = phi.col(n-1).asDiagonal() * (f + v.col(n-1) * z(n-1, k));
       y(n, k) += u.col(n-1).transpose() * f;
     }
-
-    //f1 = phi[n-1] * (f1 + vt1[n-1] * z[n-1])
-    //f2 = phi[n-1] * (f2 + vt2[n-1] * z[n-1])
-    //y[n] = (diag[n] * z[n] + np.dot(ut1[n], f1) + np.dot(ut2[n], f2))
-
-    //f1 = phi[n] * (f1 + ut1[n+1] * z[n+1])
-    //f2 = phi[n] * (f2 + ut2[n+1] * z[n+1])
-    //y[n] += np.dot(vt1[n], f1) + np.dot(vt2[n], f2)
   }
 
   return y;
@@ -209,48 +236,6 @@ protected:
   Eigen::Matrix<T, Eigen::Dynamic, 1> D_;
 
 };
-
-//template <typename T>
-//Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> BandSolver<T>::dot (
-//  const Eigen::Matrix<T, Eigen::Dynamic, 1>& alpha_real,
-//  const Eigen::Matrix<T, Eigen::Dynamic, 1>& beta_real,
-//  const Eigen::Matrix<T, Eigen::Dynamic, 1>& alpha_complex_real,
-//  const Eigen::Matrix<T, Eigen::Dynamic, 1>& alpha_complex_imag,
-//  const Eigen::Matrix<T, Eigen::Dynamic, 1>& beta_complex_real,
-//  const Eigen::Matrix<T, Eigen::Dynamic, 1>& beta_complex_imag,
-//  const Eigen::VectorXd& t,
-//  const Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>& b_in
-//) {
-//  if (t.rows() != b_in.rows()) throw dimension_mismatch();
-//  Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> bex =
-//    build_b_ext(alpha_real, beta_real, alpha_complex_real, alpha_complex_imag,
-//                beta_complex_real, beta_complex_imag, t, b_in);
-
-//  int p_real = alpha_real.rows(),
-//      p_complex = alpha_complex_real.rows(),
-//      n = t.rows(),
-//      nrhs = b_in.cols();
-//  BLOCKSIZE_BASE
-//  WIDTH
-
-//  // Build the extended matrix
-//  Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> A;
-//  build_matrix(alpha_real, beta_real, alpha_complex_real, alpha_complex_imag,
-//               beta_complex_real, beta_complex_imag, 1, t, A);
-
-//  Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> b_out(b_in.rows(), b_in.cols());
-//  // Do the dot product - WARNING: this assumes symmetry!
-//  for (int j = 0; j < nrhs; ++j) {
-//    for (int i = 0; i < n; ++i) {
-//      int k = block_size * i;
-//      b_out(i, j) = 0.0;
-//      for (int kp = std::max(0, width - k); kp < std::min(2*width+1, dim_ext + width - k); ++kp)
-//        b_out(i, j) += A(kp, k) * bex(k + kp - width, j);
-//    }
-//  }
-
-//  return b_out;
-//}
 
 };
 };

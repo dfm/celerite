@@ -215,7 +215,7 @@ def test_solve(method, seed=42):
 def test_dot(method, seed=42):
     solver = get_solver(method)
     np.random.seed(seed)
-    t = np.sort(np.random.rand(5))
+    t = np.sort(np.random.rand(500))
     b = np.random.randn(len(t), 5)
 
     alpha_real = np.array([1.3, 0.2])
@@ -235,9 +235,35 @@ def test_dot(method, seed=42):
         alpha_real, beta_real, alpha_complex_real, alpha_complex_imag,
         beta_complex_real, beta_complex_imag, t, b
     )
-    print(b)
-    print(x)
-    print(x0)
+    assert np.allclose(x0, x)
+
+def test_dot_L(method="cholesky", seed=42):
+    solver = get_solver(method)
+    np.random.seed(seed)
+    t = np.sort(np.random.rand(5))
+    b = np.random.randn(len(t), 5)
+    yerr = np.random.uniform(0.1, 0.5, len(t))
+
+    alpha_real = np.array([1.3, 0.2])
+    beta_real = np.array([0.5, 0.8])
+    alpha_complex_real = np.array([0.1])
+    alpha_complex_imag = np.array([0.0])
+    beta_complex_real = np.array([1.5])
+    beta_complex_imag = np.array([0.1])
+
+    K = get_kernel_value(
+        alpha_real, beta_real, alpha_complex_real, alpha_complex_imag,
+        beta_complex_real, beta_complex_imag, t[:, None] - t[None, :]
+    )
+    K[np.diag_indices_from(K)] += yerr**2
+    L = np.linalg.cholesky(K)
+    x0 = np.dot(L, b)
+
+    solver.compute(
+        alpha_real, beta_real, alpha_complex_real, alpha_complex_imag,
+        beta_complex_real, beta_complex_imag, t, yerr**2)
+    x = solver.dot_L(b)
+    print(x0 - x)
     assert np.allclose(x0, x)
 
 @method_switch

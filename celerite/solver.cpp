@@ -920,6 +920,38 @@ Raises:
 
 )delim");
 
+  cholesky_solver.def("dot_L", [](PicklableCholeskySolver& solver,
+                                  const Eigen::MatrixXd& z) {
+    return solver.dot_L(z);
+  },
+  R"delim(
+Compute the dot product of a ``celerite`` matrix and another arbitrary matrix
+
+This method computes ``A.b`` where ``A`` is defined by the parameters and
+``b`` is an arbitrary matrix of the correct shape.
+
+Args:
+    alpha_real (array[j_real]): The coefficients of the real terms.
+    beta_real (array[j_real]): The exponents of the real terms.
+    alpha_complex_real (array[j_complex]): The real part of the
+        coefficients of the complex terms.
+    alpha_complex_imag (array[j_complex]): The imaginary part of the
+        coefficients of the complex terms.
+    beta_complex_real (array[j_complex]): The real part of the
+        exponents of the complex terms.
+    beta_complex_imag (array[j_complex]): The imaginary part of the
+        exponents of the complex terms.
+    x (array[n]): The _sorted_ array of input coordinates.
+    b (array[n] or array[n, neq]): The matrix ``b`` described above.
+
+Returns:
+    array[n] or array[n, neq]: The dot product ``A.b`` as described above.
+
+Raises:
+    ValueError: For mismatched dimensions.
+
+)delim");
+
   cholesky_solver.def("dot", [](PicklableCholeskySolver& solver,
       const Eigen::VectorXd& alpha_real,
       const Eigen::VectorXd& beta_real,
