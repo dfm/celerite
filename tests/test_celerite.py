@@ -263,7 +263,6 @@ def test_dot_L(method="cholesky", seed=42):
         alpha_real, beta_real, alpha_complex_real, alpha_complex_imag,
         beta_complex_real, beta_complex_imag, t, yerr**2)
     x = solver.dot_L(b)
-    print(x0 - x)
     assert np.allclose(x0, x)
 
 @method_switch

@@ -29,7 +29,7 @@ int main (int argc, char* argv[])
   if (argc >= 3) niter = atoi(argv[2]);
 
   // Set up the coefficients.
-  size_t p_real = 2, p_complex = 2;
+  size_t p_real = 2, p_complex = 1;
   Eigen::VectorXd alpha_real(p_real),
                   alpha_complex_real(p_complex),
                   alpha_complex_imag(p_complex),
@@ -39,10 +39,14 @@ int main (int argc, char* argv[])
 
   alpha_real << 1.3, 1.5;
   beta_real  << 0.5, 0.2;
-  alpha_complex_real << 1.0, 2.0;
-  alpha_complex_imag << 0.1, 0.05;
-  beta_complex_real  << 1.0, 0.8;
-  beta_complex_imag  << 1.0, 0.1;
+  alpha_complex_real << 1.0;
+  alpha_complex_imag << 0.1;
+  beta_complex_real  << 1.0;
+  beta_complex_imag  << 1.0;
+  //alpha_complex_real << 1.0, 2.0;
+  //alpha_complex_imag << 0.1, 0.05;
+  //beta_complex_real  << 1.0, 0.8;
+  //beta_complex_imag  << 1.0, 0.1;
 
   // Generate some fake data.
   Eigen::VectorXd x = Eigen::VectorXd::Random(N),

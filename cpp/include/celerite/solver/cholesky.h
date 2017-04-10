@@ -39,58 +39,112 @@ int compute (
 
   int N = this->n_ = x.rows();
   int J_real = a_real.rows(), J_comp = a_comp.rows();
-
   J_ = J_real + 2*J_comp;
-  Eigen::Array<T, Eigen::Dynamic, 1> a1(J_real), a2(J_comp), b2(J_comp),
-                                      c1(J_real), c2(J_comp), d2(J_comp),
-                                      cd, sd;
-  a1 << a_real;
-  a2 << a_comp;
-  b2 << b_comp;
-  c1 << c_real;
-  c2 << c_comp;
-  d2 << d_comp;
-
-  T a_sum = a1.sum() + a2.sum();
-
   phi_.resize(J_, N-1);
   u_.resize(J_, N-1);
   X_.resize(J_, N);
   D_.resize(N);
 
-  // Work arrays.
-  Eigen::Matrix<T, Eigen::Dynamic, 1> tmp;
-  Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> S;
+  if (J_comp == 0) {
 
-  // First row
-  D_(0) = diag(0) + a_sum;
-  X_.col(0).head(J_real).setConstant(T(1.0) / D_(0));
-  X_.col(0).segment(J_real, J_comp) = cos(d2*x(0)) / D_(0);
-  X_.col(0).segment(J_real+J_comp, J_comp) = sin(d2*x(0)) / D_(0);
-  S.noalias() = D_(0) * X_.col(0) * X_.col(0).transpose();
+    // We special case a few of the smallest models for speed
+#define CELERITE_CHOLESKY_ALL_REAL(NUM) \
+    Eigen::Array<T, NUM, 1> a1(J_real), c1(J_real);                       \
+    a1 << a_real;                                                         \
+    c1 << c_real;                                                         \
+    Eigen::Matrix<T, NUM, 1> tmp;                                         \
+    Eigen::Matrix<T, NUM, NUM> S;                                         \
+                                                                          \
+    T a_sum = a1.sum();                                                   \
+    D_(0) = diag(0) + a_sum;                                              \
+    X_.col(0).setConstant(T(1.0) / D_(0));                                \
+    S.noalias() = D_(0) * X_.col(0) * X_.col(0).transpose();              \
+    for (int n = 1; n < N; ++n) {                                         \
+      u_.col(n-1) = a1;                                                   \
+      X_.col(n).head(J_real).setOnes();                                   \
+      phi_.col(n-1).head(J_real) = exp(-c1*(x(n) - x(n-1)));              \
+      S.array() *= (phi_.col(n-1) * phi_.col(n-1).transpose()).array();   \
+      tmp = u_.col(n-1).transpose() * S;                                  \
+      D_(n) = diag(n) + a_sum - tmp.transpose() * u_.col(n-1);            \
+      X_.col(n) = (T(1.0) / D_(n)) * (X_.col(n) - tmp);                   \
+      S.noalias() += D_(n) * X_.col(n) * X_.col(n).transpose();           \
+    }
 
-  for (int n = 1; n < N; ++n) {
-    cd = cos(d2*x(n));
-    sd = sin(d2*x(n));
+    if (J_real == 1) {
+      CELERITE_CHOLESKY_ALL_REAL(1)
+    } else if (J_real == 2) {
+      CELERITE_CHOLESKY_ALL_REAL(2)
+    } else {
+      CELERITE_CHOLESKY_ALL_REAL(Eigen::Dynamic)
+    }
 
-    u_.col(n-1).head(J_real) = a1;
-    u_.col(n-1).segment(J_real, J_comp) = a2 * cd + b2 * sd;
-    u_.col(n-1).segment(J_real+J_comp, J_comp) = a2 * sd - b2 * cd;
+#undef CELERITE_CHOLESKY_ALL_REAL
 
-    X_.col(n).head(J_real).setOnes();
-    X_.col(n).segment(J_real, J_comp) = cd;
-    X_.col(n).segment(J_real+J_comp, J_comp) = sd;
+  } else {
 
-    T dx = x(n) - x(n-1);
-    phi_.col(n-1).head(J_real) = exp(-c1*dx);
-    phi_.col(n-1).segment(J_real, J_comp) = exp(-c2*dx);
-    phi_.col(n-1).segment(J_real+J_comp, J_comp) = phi_.col(n-1).segment(J_real, J_comp);
+#define CELERITE_CHOLESKY_MIXED(NUM, NUM_REAL, NUM_COMP) \
+    Eigen::Array<T, NUM_REAL, 1> a1(J_real), c1(J_real);                    \
+    Eigen::Array<T, NUM_COMP, 1> a2(J_comp), b2(J_comp),                    \
+                                 c2(J_comp), d2(J_comp),                    \
+                                 cd, sd;                                    \
+    a1 << a_real;                                                           \
+    a2 << a_comp;                                                           \
+    b2 << b_comp;                                                           \
+    c1 << c_real;                                                           \
+    c2 << c_comp;                                                           \
+    d2 << d_comp;                                                           \
+    Eigen::Matrix<T, NUM, 1> tmp;                                           \
+    Eigen::Matrix<T, NUM, NUM> S;                                           \
+                                                                            \
+    T a_sum = a1.sum() + a2.sum();                                          \
+    D_(0) = diag(0) + a_sum;                                                \
+    X_.col(0).head(J_real).setConstant(T(1.0) / D_(0));                     \
+    X_.col(0).segment(J_real, J_comp) = cos(d2*x(0)) / D_(0);               \
+    X_.col(0).segment(J_real+J_comp, J_comp) = sin(d2*x(0)) / D_(0);        \
+    S.noalias() = D_(0) * X_.col(0) * X_.col(0).transpose();                \
+                                                                            \
+    for (int n = 1; n < N; ++n) {                                           \
+      cd = cos(d2*x(n));                                                    \
+      sd = sin(d2*x(n));                                                    \
+                                                                            \
+      u_.col(n-1).head(J_real) = a1;                                        \
+      u_.col(n-1).segment(J_real, J_comp) = a2 * cd + b2 * sd;              \
+      u_.col(n-1).segment(J_real+J_comp, J_comp) = a2 * sd - b2 * cd;       \
+                                                                            \
+      X_.col(n).head(J_real).setOnes();                                     \
+      X_.col(n).segment(J_real, J_comp) = cd;                               \
+      X_.col(n).segment(J_real+J_comp, J_comp) = sd;                        \
+                                                                            \
+      T dx = x(n) - x(n-1);                                                 \
+      phi_.col(n-1).head(J_real) = exp(-c1*dx);                             \
+      phi_.col(n-1).segment(J_real, J_comp) = exp(-c2*dx);                  \
+      phi_.col(n-1).segment(J_real+J_comp, J_comp) = phi_.col(n-1).segment(J_real, J_comp); \
+                                                                            \
+      S.array() *= (phi_.col(n-1) * phi_.col(n-1).transpose()).array();     \
+      tmp = u_.col(n-1).transpose() * S;                                    \
+      D_(n) = diag(n) + a_sum - tmp.transpose() * u_.col(n-1);              \
+      X_.col(n) = (T(1.0) / D_(n)) * (X_.col(n) - tmp);                     \
+      S.noalias() += D_(n) * X_.col(n) * X_.col(n).transpose();             \
+    }
 
-    S.array() *= (phi_.col(n-1) * phi_.col(n-1).transpose()).array();
-    tmp = u_.col(n-1).transpose() * S;
-    D_(n) = diag(n) + a_sum - tmp.transpose() * u_.col(n-1);
-    X_.col(n) = (T(1.0) / D_(n)) * (X_.col(n) - tmp);
-    S.noalias() += D_(n) * X_.col(n) * X_.col(n).transpose();
+    if (J_real == 0 && J_comp == 1) {
+      CELERITE_CHOLESKY_MIXED(2, 0, 1)
+    } else if (J_real == 0 && J_comp == 2) {
+      CELERITE_CHOLESKY_MIXED(4, 0, 2)
+    } else if (J_real == 1 && J_comp == 1) {
+      CELERITE_CHOLESKY_MIXED(3, 1, 1)
+    } else if (J_real == 1 && J_comp == 2) {
+      CELERITE_CHOLESKY_MIXED(5, 1, 2)
+    } else if (J_real == 2 && J_comp == 1) {
+      CELERITE_CHOLESKY_MIXED(4, 2, 1)
+    } else if (J_real == 2 && J_comp == 2) {
+      CELERITE_CHOLESKY_MIXED(6, 2, 2)
+    } else {
+      CELERITE_CHOLESKY_MIXED(Eigen::Dynamic, Eigen::Dynamic, Eigen::Dynamic)
+    }
+
+#undef CELERITE_CHOLESKY_MIXED
+
   }
 
   this->log_det_ = log(D_.array()).sum();
@@ -132,7 +186,7 @@ Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> dot_L (const Eigen::MatrixXd& z
 
   T tmp;
   int N = z.rows(), nrhs = z.cols();
-  Eigen::Array<T, Eigen::Dynamic, 1> D = sqrt(D_);
+  Eigen::Array<T, Eigen::Dynamic, 1> D = sqrt(D_.array());
   Eigen::Matrix<T, Eigen::Dynamic, 1> f(J_);
   Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> y(N, nrhs);
 
