@@ -79,7 +79,7 @@ add_definitions(-DNDEBUG)
 add_subdirectory(src)
 
 # Setup installation of public headers.
-file(GLOB CELERITE_HDRS ${CMAKE_SOURCE_DIR}/include/celerite/*.h)
-install(FILES ${CELERITE_HDRS} DESTINATION include/celerite)
-file(GLOB CELERITE_SOLVER_HDRS ${CMAKE_SOURCE_DIR}/include/celerite/solver/*.h)
-install(FILES ${CELERITE_SOLVER_HDRS} DESTINATION include/celerite/solver)
+#file(GLOB CELERITE_HDRS ${CMAKE_SOURCE_DIR}/include/celerite/*.h)
+#install(FILES ${CELERITE_HDRS} DESTINATION include/celerite)
+#file(GLOB CELERITE_SOLVER_HDRS ${CMAKE_SOURCE_DIR}/include/celerite/solver/*.h)
+#install(FILES ${CELERITE_SOLVER_HDRS} DESTINATION include/celerite/solver)
