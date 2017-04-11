@@ -81,7 +81,7 @@ matrix_t dot (
   const vector_t& c_comp,
   const vector_t& d_comp,
   const Eigen::VectorXd& x,
-  const matrix_t& z
+  const Eigen::MatrixXd& z
 ) {
   if (x.rows() != z.rows()) throw dimension_mismatch();
   if (a_real.rows() != c_real.rows()) throw dimension_mismatch();

@@ -2,6 +2,7 @@
 #include <pybind11/eigen.h>
 
 #include <Eigen/Core>
+#include <unsupported/Eigen/AutoDiff>
 
 #include "celerite/celerite.h"
 #include "celerite/carma.h"
@@ -43,10 +44,42 @@ public:
   };
 };
 
+class PicklableGradCholeskySolver : public celerite::solver::CholeskySolver<Eigen::AutoDiffScalar<Eigen::VectorXd> > {
+private:
+  typedef Eigen::AutoDiffScalar<Eigen::VectorXd> g_t;
+  typedef Eigen::Matrix<g_t, Eigen::Dynamic, 1> v_t;
+  typedef Eigen::Matrix<g_t, Eigen::Dynamic, Eigen::Dynamic> m_t;
+
+public:
+  PicklableGradCholeskySolver () : celerite::solver::CholeskySolver<g_t>() {};
+
+  auto serialize () const {
+    return std::make_tuple(
+      this->computed_, this->N_, this->J_, this->log_det_,
+      this->phi_, this->u_, this->X_, this->D_
+    );
+  };
+
+  void deserialize (
+      bool computed, int n, int J, g_t log_det,
+      m_t phi, m_t u, m_t X, v_t D) {
+    this->computed_ = computed;
+    this->N_        = n;
+    this->J_        = J;
+    this->log_det_  = log_det;
+    this->phi_      = phi;
+    this->u_        = u;
+    this->X_        = X;
+    this->D_        = D;
+  };
+};
+
 //
 // Below is the boilerplate code for the pybind11 extension module.
 //
 PYBIND11_PLUGIN(solver) {
+  typedef Eigen::AutoDiffScalar<Eigen::VectorXd> grad_t;
+  typedef Eigen::Matrix<grad_t, Eigen::Dynamic, 1> vector_grad_t;
   typedef Eigen::MatrixXd matrix_t;
   typedef Eigen::VectorXd vector_t;
 
@@ -380,6 +413,87 @@ Returns:
 
       t[7].cast<vector_t>()
     );
+  });
+
+  //
+  // ------ GRAD ------
+  //
+  py::class_<PicklableGradCholeskySolver> grad_solver(m, "GradSolver", R"delim(
+Compute gradients
+)delim");
+  grad_solver.def(py::init<>());
+
+  grad_solver.def("compute", [](PicklableGradCholeskySolver& solver,
+      const vector_t& a_real,
+      const vector_t& c_real,
+      const vector_t& a_comp,
+      const vector_t& b_comp,
+      const vector_t& c_comp,
+      const vector_t& d_comp,
+      const vector_t& x,
+      const vector_t& diag,
+      const matrix_t& a_grad_real,
+      const matrix_t& c_grad_real,
+      const matrix_t& a_grad_comp,
+      const matrix_t& b_grad_comp,
+      const matrix_t& c_grad_comp,
+      const matrix_t& d_grad_comp,
+      const matrix_t& diag_grad
+  ) {
+
+    int J_real = a_real.rows(), J_comp = a_comp.rows(), N = diag.rows(), n_grad = a_grad_real.rows();
+
+    if (
+        c_real.rows() != J_real ||
+        b_comp.rows() != J_comp ||
+        c_comp.rows() != J_comp ||
+        d_comp.rows() != J_comp ||
+        a_grad_real.cols() != J_real ||
+        c_grad_real.cols() != J_real ||
+        a_grad_comp.cols() != J_comp ||
+        b_grad_comp.cols() != J_comp ||
+        c_grad_comp.cols() != J_comp ||
+        d_grad_comp.cols() != J_comp ||
+        a_grad_real.rows() != n_grad ||
+        c_grad_real.rows() != n_grad ||
+        a_grad_comp.rows() != n_grad ||
+        b_grad_comp.rows() != n_grad ||
+        c_grad_comp.rows() != n_grad ||
+        d_grad_comp.rows() != n_grad ||
+        diag_grad.cols() != N ||
+        diag_grad.rows() != n_grad
+    ) throw py::value_error();
+
+    vector_grad_t a_r(J_real), c_r(J_real),
+                  a_c(J_comp), b_c(J_comp), c_c(J_comp), d_c(J_comp),
+                  d(N);
+    for (int j = 0; j < J_real; ++j) {
+      a_r(j) = grad_t(a_real(j), a_grad_real.col(j));
+      c_r(j) = grad_t(c_real(j), c_grad_real.col(j));
+    }
+    for (int j = 0; j < J_comp; ++j) {
+      a_c(j) = grad_t(a_comp(j), a_grad_comp.col(j));
+      b_c(j) = grad_t(b_comp(j), b_grad_comp.col(j));
+      c_c(j) = grad_t(c_comp(j), c_grad_comp.col(j));
+      d_c(j) = grad_t(d_comp(j), d_grad_comp.col(j));
+    }
+    for (int n = 0; n < N; ++n) d(n) = grad_t(diag(n), diag_grad.col(n));
+
+    return solver.compute(a_r, c_r, a_c, b_c, c_c, d_c, x, d);
+  });
+
+  grad_solver.def("dot_solve", [](PicklableGradCholeskySolver& solver, const matrix_t& b) {
+    grad_t result = solver.dot_solve(b);
+    return std::make_tuple(result.value(), result.derivatives());
+  });
+
+  grad_solver.def("log_determinant", [](PicklableGradCholeskySolver& solver) {
+    grad_t result = solver.log_determinant();
+    return std::make_tuple(result.value(), result.derivatives());
+  });
+
+  grad_solver.def("computed", [](PicklableGradCholeskySolver& solver) {
+      return solver.computed();
   });
 
   return m.ptr();

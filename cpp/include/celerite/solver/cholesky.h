@@ -69,7 +69,7 @@ void compute (
       phi_.col(n-1).head(J_real) = exp(-c1*(x(n) - x(n-1)));              \
       S.array() *= (phi_.col(n-1) * phi_.col(n-1).transpose()).array();   \
       tmp = u_.col(n-1).transpose() * S;                                  \
-      D_(n) = diag(n) + a_sum - tmp.transpose() * u_.col(n-1);            \
+      D_(n) = diag(n) + a_sum - tmp.transpose().dot(u_.col(n-1));         \
       if (D_(n) < 0) throw linalg_exception();                            \
       X_.col(n) = (T(1.0) / D_(n)) * (X_.col(n) - tmp);                   \
       S.noalias() += D_(n) * X_.col(n) * X_.col(n).transpose();           \
@@ -127,7 +127,7 @@ void compute (
                                                                             \
       S.array() *= (phi_.col(n-1) * phi_.col(n-1).transpose()).array();     \
       tmp = u_.col(n-1).transpose() * S;                                    \
-      D_(n) = diag(n) + a_sum - tmp.transpose() * u_.col(n-1);              \
+      D_(n) = diag(n) + a_sum - tmp.transpose().dot(u_.col(n-1));           \
       if (D_(n) < 0) throw linalg_exception();                              \
       X_.col(n) = (T(1.0) / D_(n)) * (X_.col(n) - tmp);                     \
       S.noalias() += D_(n) * X_.col(n) * X_.col(n).transpose();             \
@@ -171,7 +171,7 @@ matrix_t solve (const Eigen::MatrixXd& b) const {
     x(0, k) = b(0, k);
     for (int n = 1; n < this->N_; ++n) {
       f = phi_.col(n-1).asDiagonal() * (f + X_.col(n-1) * x(n-1, k));
-      x(n, k) = b(n, k) - u_.col(n-1).transpose() * f;
+      x(n, k) = b(n, k) - u_.col(n-1).transpose().dot(f);
     }
     x.col(k).array() /= D_.array();
 
@@ -179,14 +179,14 @@ matrix_t solve (const Eigen::MatrixXd& b) const {
     f.setConstant(T(0.0));
     for (int n = this->N_-2; n >= 0; --n) {
       f = phi_.col(n).asDiagonal() * (f + u_.col(n) * x(n+1, k));
-      x(n, k) = x(n, k) - X_.col(n).transpose() * f;
+      x(n, k) = x(n, k) - X_.col(n).transpose().dot(f);
     }
   }
 
   return x;
 };
 
-matrix_t dot_L (const matrix_t& z) const {
+matrix_t dot_L (const Eigen::MatrixXd& z) const {
   if (z.rows() != this->N_) throw dimension_mismatch();
   if (!(this->computed_)) throw compute_exception();
 
@@ -203,7 +203,7 @@ matrix_t dot_L (const matrix_t& z) const {
     for (int n = 1; n < N; ++n) {
       f = phi_.col(n-1).asDiagonal() * (f + X_.col(n-1) * tmp);
       tmp = D(n) * z(n, k);
-      y(n, k) = tmp + u_.col(n-1).transpose() * f;
+      y(n, k) = tmp + u_.col(n-1).transpose().dot(f);
     }
   }
 
@@ -218,7 +218,7 @@ matrix_t dot (
   const vector_t& c_comp,
   const vector_t& d_comp,
   const Eigen::VectorXd& x,
-  const matrix_t& z
+  const Eigen::MatrixXd& z
 ) {
   if (x.rows() != z.rows()) throw dimension_mismatch();
   if (a_real.rows() != c_real.rows()) throw dimension_mismatch();
@@ -267,13 +267,13 @@ matrix_t dot (
     f.setZero();
     for (int n = N-2; n >= 0; --n) {
       f = phi.col(n).asDiagonal() * (f + u.col(n) * z(n+1, k));
-      y(n, k) = a_sum * z(n, k) + v.col(n).transpose() * f;
+      y(n, k) = a_sum * z(n, k) + v.col(n).transpose().dot(f);
     }
 
     f.setZero();
     for (int n = 1; n < N; ++n) {
       f = phi.col(n-1).asDiagonal() * (f + v.col(n-1) * z(n-1, k));
-      y(n, k) += u.col(n-1).transpose() * f;
+      y(n, k) += u.col(n-1).transpose().dot(f);
     }
   }
 

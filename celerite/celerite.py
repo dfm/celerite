@@ -193,6 +193,48 @@ class GP(ModelSet):
                        self.solver.log_determinant() +
                        len(y) * _const)
 
+    def grad_log_likelihood(self, y, _const=math.log(2.0*math.pi)):
+        """
+        Compute the gradient of the marginalized likelihood of the GP model
+
+        The factorized matrix from the previous call to :func:`GP.compute` is
+        used so ``compute`` must be called first.
+
+        Args:
+            y (array[n]): The observations at coordinates ``x`` from
+                :func:`GP.compute`.
+
+        Returns:
+            array[npars]: The gradient of the marginalized likelihood of the
+                GP model.
+
+        Raises:
+            ValueError: For mismatched dimensions.
+
+        """
+        y = self._process_input(y)
+        resid = y - self.mean.get_value(self._t)
+
+        if self._t is None:
+            raise RuntimeError("you must call 'compute' first")
+
+        s = solver.GradSolver()
+        (a_real, c_real, a_comp, b_comp, c_comp, d_comp) = \
+            self.kernel.coefficients
+        s.compute(
+            a_real, c_real, a_comp, b_comp, c_comp, d_comp,
+            t, self._get_diag(),
+        )
+        solver.compute(
+        )
+
+        self._recompute()
+        if len(y.shape) > 1:
+            raise ValueError("dimension mismatch")
+        return -0.5 * (self.solver.dot_solve(resid) +
+                       self.solver.log_determinant() +
+                       len(y) * _const)
+
     def apply_inverse(self, y):
         """
         Apply the inverse of the covariance matrix to a vector or matrix
