@@ -49,36 +49,6 @@ public:
   };
 };
 
-class PicklableGradCholeskySolver : public celerite::solver::CholeskySolver<Eigen::AutoDiffScalar<Eigen::VectorXd> > {
-private:
-  typedef Eigen::AutoDiffScalar<Eigen::VectorXd> g_t;
-  typedef Eigen::Matrix<g_t, Eigen::Dynamic, 1> v_t;
-  typedef Eigen::Matrix<g_t, Eigen::Dynamic, Eigen::Dynamic> m_t;
-
-public:
-  PicklableGradCholeskySolver () : celerite::solver::CholeskySolver<g_t>() {};
-
-  auto serialize () const {
-    return std::make_tuple(
-      this->computed_, this->N_, this->J_, this->log_det_,
-      this->phi_, this->u_, this->X_, this->D_
-    );
-  };
-
-  void deserialize (
-      bool computed, int n, int J, g_t log_det,
-      m_t phi, m_t u, m_t X, v_t D) {
-    this->computed_ = computed;
-    this->N_        = n;
-    this->J_        = J;
-    this->log_det_  = log_det;
-    this->phi_      = phi;
-    this->u_        = u;
-    this->X_        = X;
-    this->D_        = D;
-  };
-};
-
 //
 // Below is the boilerplate code for the pybind11 extension module.
 //
@@ -288,7 +258,7 @@ A thin wrapper around the C++ CholeskySolver class
     double* ptr = (double *) buf.ptr;
     for (size_t i = 0; i < g.size(); ++i) ptr[i] = g[i];
 
-    return result;
+    return std::make_tuple(ll.val(), result);
   });
 
   cholesky_solver.def("compute", [](PicklableCholeskySolver& solver,

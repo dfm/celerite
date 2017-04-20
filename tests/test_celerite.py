@@ -311,76 +311,49 @@ def test_log_likelihood(seed=42):
     assert np.allclose(ll, ll0)
 
 
-@pytest.mark.xfail
-def test_grad_log_likelihood(seed=42):
+@pytest.mark.parametrize(
+    "kernel",
+    [
+        terms.RealTerm(log_a=0.1, log_c=0.5),
+        terms.RealTerm(log_a=0.1, log_c=0.5) +
+        terms.RealTerm(log_a=-0.1, log_c=0.7),
+        terms.ComplexTerm(log_a=0.1, log_c=0.5, log_d=0.1),
+        terms.ComplexTerm(log_a=0.1, log_b=-0.2, log_c=0.5, log_d=0.1),
+        terms.JitterTerm(log_sigma=0.1),
+        terms.SHOTerm(log_S0=0.1, log_Q=-1, log_omega0=0.5) +
+        terms.JitterTerm(log_sigma=0.1),
+        terms.SHOTerm(log_S0=0.1, log_Q=-1, log_omega0=0.5),
+        terms.SHOTerm(log_S0=0.1, log_Q=1.0, log_omega0=0.5),
+        terms.SHOTerm(log_S0=0.1, log_Q=1.0, log_omega0=0.5) +
+        terms.RealTerm(log_a=0.1, log_c=0.4),
+        terms.SHOTerm(log_S0=0.1, log_Q=1.0, log_omega0=0.5) *
+        terms.RealTerm(log_a=0.1, log_c=0.4),
+    ]
+)
+def test_grad_log_likelihood(kernel, seed=42, eps=1.34e-7):
     np.random.seed(seed)
     x = np.sort(np.random.rand(100))
     yerr = np.random.uniform(0.1, 0.5, len(x))
     y = np.sin(x)
 
-    kernel = terms.RealTerm(0.1, 0.5) + terms.JitterTerm(-1.5)
     gp = GP(kernel)
     gp.compute(x, yerr)
-    params = [kernel.jitter] + list(kernel.coefficients) + [x, y, yerr**2]
-    print(gp.solver.grad_log_likelihood(*params))
-    assert 0
+    _, grad = gp.grad_log_likelihood(y)
+    grad0 = np.empty_like(grad)
 
-    with pytest.raises(RuntimeError):
-        gp.log_likelihood(y)
-
-    for term in [(0.6, 0.7, 1.0)]:
-        kernel += terms.ComplexTerm(*term)
-        gp = GP(kernel)
-
-        assert gp.computed is False
-
-        with pytest.raises(ValueError):
-            gp.compute(np.random.rand(len(x)), yerr)
-
-        gp.compute(x, yerr)
-        assert gp.computed is True
-        assert gp.dirty is False
-
+    v = gp.get_parameter_vector()
+    for i, pval in enumerate(v):
+        v[i] = pval + eps
+        gp.set_parameter_vector(v)
         ll = gp.log_likelihood(y)
-        K = gp.get_matrix(include_diagonal=True)
-        ll0 = -0.5 * np.dot(y, np.linalg.solve(K, y))
-        ll0 -= 0.5 * np.linalg.slogdet(K)[1]
-        ll0 -= 0.5 * len(x) * np.log(2*np.pi)
-        assert np.allclose(ll, ll0)
 
-    # Check that changing the parameters "un-computes" the likelihood.
-    gp.set_parameter_vector(gp.get_parameter_vector())
-    assert gp.dirty is True
-    assert gp.computed is False
+        v[i] = pval - eps
+        gp.set_parameter_vector(v)
+        ll -= gp.log_likelihood(y)
 
-    # Check that changing the parameters changes the likelihood.
-    gp.compute(x, yerr)
-    ll1 = gp.log_likelihood(y)
-    params = gp.get_parameter_vector()
-    params[0] += 0.1
-    gp.set_parameter_vector(params)
-    gp.compute(x, yerr)
-    ll2 = gp.log_likelihood(y)
-    assert not np.allclose(ll1, ll2)
-
-    gp[1] += 0.1
-    assert gp.dirty is True
-    gp.compute(x, yerr)
-    ll3 = gp.log_likelihood(y)
-    assert not np.allclose(ll2, ll3)
-
-    # Test zero delta t
-    ind = len(x) // 2
-    x = np.concatenate((x[:ind], [x[ind]], x[ind:]))
-    y = np.concatenate((y[:ind], [y[ind]], y[ind:]))
-    yerr = np.concatenate((yerr[:ind], [yerr[ind]], yerr[ind:]))
-    gp.compute(x, yerr)
-    ll = gp.log_likelihood(y)
-    K = gp.get_matrix(include_diagonal=True)
-    ll0 = -0.5 * np.dot(y, np.linalg.solve(K, y))
-    ll0 -= 0.5 * np.linalg.slogdet(K)[1]
-    ll0 -= 0.5 * len(x) * np.log(2*np.pi)
-    assert np.allclose(ll, ll0)
+        grad0[i] = 0.5 * ll / eps
+        v[i] = pval
+    assert np.allclose(grad, grad0)
 
 
 def test_predict(seed=42):

@@ -68,3 +68,30 @@ def test_jacobian(k, eps=1.34e-7):
         jac0[i] = 0.5 * coeffs / eps
         v[i] = pval
     assert np.allclose(jac, jac0)
+
+@pytest.mark.parametrize(
+    "k",
+    [
+        terms.JitterTerm(log_sigma=0.5),
+        terms.RealTerm(log_a=0.5, log_c=0.1),
+        terms.RealTerm(log_a=0.5, log_c=0.1) + terms.JitterTerm(log_sigma=0.3),
+        terms.JitterTerm(log_sigma=0.5) + terms.JitterTerm(log_sigma=0.1),
+    ]
+)
+def test_jitter_jacobian(k, eps=1.34e-7):
+    v = k.get_parameter_vector()
+    jac = k.get_jitter_jacobian()
+    assert len(jac) == len(v)
+    jac0 = np.empty_like(jac)
+    for i, pval in enumerate(v):
+        v[i] = pval + eps
+        k.set_parameter_vector(v)
+        jitter = k.jitter
+
+        v[i] = pval - eps
+        k.set_parameter_vector(v)
+        jitter -= k.jitter
+
+        jac0[i] = 0.5 * jitter / eps
+        v[i] = pval
+    assert np.allclose(jac, jac0)

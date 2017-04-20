@@ -164,47 +164,53 @@ class GP(ModelSet):
                        self.solver.log_determinant() +
                        len(y) * _const)
 
-    # def grad_log_likelihood(self, y, _const=math.log(2.0*math.pi)):
-    #     """
-    #     Compute the gradient of the marginalized likelihood of the GP model
+    def grad_log_likelihood(self, y):
+        """
+        Compute the marginalized likelihood of the GP model
 
-    #     The factorized matrix from the previous call to :func:`GP.compute` is
-    #     used so ``compute`` must be called first.
+        The factorized matrix from the previous call to :func:`GP.compute` is
+        used so ``compute`` must be called first.
 
-    #     Args:
-    #         y (array[n]): The observations at coordinates ``x`` from
-    #             :func:`GP.compute`.
+        Args:
+            y (array[n]): The observations at coordinates ``x`` from
+                :func:`GP.compute`.
 
-    #     Returns:
-    #         array[npars]: The gradient of the marginalized likelihood of the
-    #             GP model.
+        Returns:
+            float: The marginalized likelihood of the GP model.
 
-    #     Raises:
-    #         ValueError: For mismatched dimensions.
+        Raises:
+            ValueError: For mismatched dimensions.
 
-    #     """
-    #     y = self._process_input(y)
-    #     resid = y - self.mean.get_value(self._t)
+        """
+        if not self.kernel.vector_size:
+            return self.log_likelihood(y), np.empty(0)
 
-    #     if self._t is None:
-    #         raise RuntimeError("you must call 'compute' first")
+        y = self._process_input(y)
+        if len(y.shape) > 1:
+            raise ValueError("dimension mismatch")
+        resid = y - self.mean.get_value(self._t)
 
-    #     s = solver.GradSolver()
-    #     (a_real, c_real, a_comp, b_comp, c_comp, d_comp) = \
-    #         self.kernel.coefficients
-    #     s.compute(
-    #         a_real, c_real, a_comp, b_comp, c_comp, d_comp,
-    #         t, self._get_diag(),
-    #     )
-    #     solver.compute(
-    #     )
+        if self.solver is None:
+            self.solver = solver.CholeskySolver()
+        (alpha_real, beta_real, alpha_complex_real, alpha_complex_imag,
+         beta_complex_real, beta_complex_imag) = self.kernel.coefficients
+        val, grad = self.solver.grad_log_likelihood(
+            self.kernel.jitter,
+            alpha_real, beta_real,
+            alpha_complex_real, alpha_complex_imag,
+            beta_complex_real, beta_complex_imag,
+            self._t, resid, self._yerr**2
+        )
 
-    #     self._recompute()
-    #     if len(y.shape) > 1:
-    #         raise ValueError("dimension mismatch")
-    #     return -0.5 * (self.solver.dot_solve(resid) +
-    #                    self.solver.log_determinant() +
-    #                    len(y) * _const)
+        if self.kernel._has_coeffs:
+            coeffs_jac = self.kernel.get_coeffs_jacobian()
+            full_grad = np.dot(coeffs_jac, grad[1:])
+        else:
+            full_grad = np.zeros(self.kernel.vector_size)
+        if self.kernel._has_jitter:
+            jitter_jac = self.kernel.get_jitter_jacobian()
+            full_grad += jitter_jac * grad[0]
+        return val, full_grad
 
     def apply_inverse(self, y):
         """

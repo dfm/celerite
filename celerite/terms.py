@@ -3,7 +3,8 @@
 from __future__ import division, print_function
 
 import autograd.numpy as np
-from autograd import jacobian
+from autograd import jacobian, elementwise_grad
+
 from itertools import chain, product
 
 from .modeling import Model, ModelSet
@@ -23,6 +24,9 @@ class Term(Model):
     and :func:`terms.Term.get_complex_coefficients` methods.
 
     """
+
+    _has_jitter = False
+    _has_coeffs = True
 
     @property
     def terms(self):
@@ -176,15 +180,16 @@ class Term(Model):
             raise ValueError("coefficient blocks must have the same shape")
         return pars
 
-    def get_jitter(self):
+    def get_jitter(self, params):
         return 0.0
 
     @property
     def jitter(self):
-        return self.get_jitter()
+        return self.get_jitter(self.get_parameter_vector(include_frozen=True))
 
     def get_jitter_jacobian(self, include_frozen=False):
-        jac = self.get_djitter_dparams()
+        jac = elementwise_grad(self.get_jitter)
+        jac = jac(self.get_parameter_vector(include_frozen=True))
         if include_frozen:
             return jac
         return jac[self.unfrozen_mask]
@@ -200,6 +205,9 @@ class Term(Model):
 class TermProduct(Term, ModelSet):
 
     def __init__(self, k1, k2):
+        if k1._has_jitter or k2._has_jitter:
+            raise ValueError("Products are not implemented for terms with "
+                             "jitter")
         super(TermProduct, self).__init__([("k1", k1), ("k2", k2)])
 
     def __repr__(self):
@@ -272,6 +280,14 @@ class TermSum(Term, ModelSet):
     def terms(self):
         return list(self.models.values())
 
+    @property
+    def _has_jitter(self):
+        return any(t._has_jitter for t in self.models.values())
+
+    @property
+    def _has_coeffs(self):
+        return any(t._has_coeffs for t in self.models.values())
+
     def get_all_coefficients(self, params=None):
         if params is None:
             params = self.get_parameter_vector(include_frozen=True)
@@ -283,8 +299,16 @@ class TermSum(Term, ModelSet):
             n += d
         return [np.concatenate(a) for a in zip(*coeffs)]
 
-    def get_jitter(self):
-        return sum(t.get_jitter() for t in self.models.values())
+    def get_jitter(self, params=None):
+        if params is None:
+            params = self.get_parameter_vector(include_frozen=True)
+        jitter = 0.0
+        n = 0
+        for t in self.models.values():
+            d = t.full_size
+            jitter += t.get_jitter(params[n:n+d])
+            n += d
+        return jitter
 
 
 class JitterTerm(Term):
@@ -304,16 +328,15 @@ class JitterTerm(Term):
 
     """
 
+    _has_jitter = True
+    _has_coeffs = False
     parameter_names = ("log_sigma", )
 
     def __repr__(self):
         return "JitterTerm({0.log_sigma})".format(self)
 
     def get_jitter(self, params):
-        return np.exp(2.0 * float(params[0]))
-
-    def get_djitter_dparams(self):
-        return np.array([2 * self.get_jitter()])
+        return np.exp(2.0 * params[0])
 
 
 class RealTerm(Term):
