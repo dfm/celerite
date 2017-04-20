@@ -1,11 +1,16 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/eigen.h>
 
+#include <cmath>
+#include <vector>
+#include <stan/math.hpp>
+
 #include <Eigen/Core>
 #include <unsupported/Eigen/AutoDiff>
 
 #include "celerite/celerite.h"
 #include "celerite/carma.h"
+
 
 namespace py = pybind11;
 
@@ -78,8 +83,6 @@ public:
 // Below is the boilerplate code for the pybind11 extension module.
 //
 PYBIND11_PLUGIN(solver) {
-  typedef Eigen::AutoDiffScalar<Eigen::VectorXd> grad_t;
-  typedef Eigen::Matrix<grad_t, Eigen::Dynamic, 1> vector_grad_t;
   typedef Eigen::MatrixXd matrix_t;
   typedef Eigen::VectorXd vector_t;
 
@@ -230,7 +233,66 @@ A thin wrapper around the C++ CholeskySolver class
 )delim");
   cholesky_solver.def(py::init<>());
 
+  cholesky_solver.def("grad_log_likelihood", [](
+      PicklableCholeskySolver& nothing,
+      double jitter,
+      const vector_t& a_real,
+      const vector_t& c_real,
+      const vector_t& a_comp,
+      const vector_t& b_comp,
+      const vector_t& c_comp,
+      const vector_t& d_comp,
+      const vector_t& x,
+      const vector_t& y,
+      const vector_t& diag
+  ) {
+
+    typedef stan::math::var g_t;
+    typedef Eigen::Matrix<g_t, Eigen::Dynamic, 1> v_t;
+
+    int J_real = a_real.rows();
+    int J_comp = a_comp.rows();
+
+    celerite::solver::CholeskySolver<g_t> solver;
+    g_t jitter_ = g_t(jitter);
+    v_t a_real_(J_real), c_real_(J_real),
+        a_comp_(J_comp), b_comp_(J_comp), c_comp_(J_comp), d_comp_(J_comp);
+
+    a_real_ << a_real;
+    c_real_ << c_real;
+    a_comp_ << a_comp;
+    b_comp_ << b_comp;
+    c_comp_ << c_comp;
+    d_comp_ << d_comp;
+
+    solver.compute(
+      jitter_, a_real_, c_real_, a_comp_, b_comp_, c_comp_, d_comp_, x, diag
+    );
+
+    g_t ll = -0.5 * (solver.dot_solve(y) + solver.log_determinant() + M_PI * log(x.rows()));
+
+    std::vector<g_t> params;
+    params.push_back(jitter_);
+    for (int i = 0; i < J_real; ++i) params.push_back(a_real_(i));
+    for (int i = 0; i < J_real; ++i) params.push_back(c_real_(i));
+    for (int i = 0; i < J_comp; ++i) params.push_back(a_comp_(i));
+    for (int i = 0; i < J_comp; ++i) params.push_back(b_comp_(i));
+    for (int i = 0; i < J_comp; ++i) params.push_back(c_comp_(i));
+    for (int i = 0; i < J_comp; ++i) params.push_back(d_comp_(i));
+    std::vector<double> g;
+
+    ll.grad(params, g);
+
+    auto result = py::array_t<double>(g.size());
+    auto buf = result.request();
+    double* ptr = (double *) buf.ptr;
+    for (size_t i = 0; i < g.size(); ++i) ptr[i] = g[i];
+
+    return result;
+  });
+
   cholesky_solver.def("compute", [](PicklableCholeskySolver& solver,
+      double jitter,
       const vector_t& a_real,
       const vector_t& c_real,
       const vector_t& a_comp,
@@ -240,7 +302,7 @@ A thin wrapper around the C++ CholeskySolver class
       const vector_t& x,
       const vector_t& diag) {
     return solver.compute(
-      a_real, c_real, a_comp, b_comp, c_comp, d_comp, x, diag
+      jitter, a_real, c_real, a_comp, b_comp, c_comp, d_comp, x, diag
     );
   },
   R"delim(
@@ -332,6 +394,7 @@ Raises:
 )delim");
 
   cholesky_solver.def("dot", [](PicklableCholeskySolver& solver,
+      double jitter,
       const vector_t& a_real,
       const vector_t& c_real,
       const vector_t& a_comp,
@@ -340,7 +403,7 @@ Raises:
       const vector_t& d_comp,
       const vector_t& x,
       const matrix_t& b) {
-    return solver.dot(a_real, c_real, a_comp, b_comp, c_comp, d_comp, x, b);
+    return solver.dot(jitter, a_real, c_real, a_comp, b_comp, c_comp, d_comp, x, b);
   },
   R"delim(
 Compute the dot product of a ``celerite`` matrix and another arbitrary matrix
@@ -413,87 +476,6 @@ Returns:
 
       t[7].cast<vector_t>()
     );
-  });
-
-  //
-  // ------ GRAD ------
-  //
-  py::class_<PicklableGradCholeskySolver> grad_solver(m, "GradSolver", R"delim(
-Compute gradients
-)delim");
-  grad_solver.def(py::init<>());
-
-  grad_solver.def("compute", [](PicklableGradCholeskySolver& solver,
-      const vector_t& a_real,
-      const vector_t& c_real,
-      const vector_t& a_comp,
-      const vector_t& b_comp,
-      const vector_t& c_comp,
-      const vector_t& d_comp,
-      const vector_t& x,
-      const vector_t& diag,
-      const matrix_t& a_grad_real,
-      const matrix_t& c_grad_real,
-      const matrix_t& a_grad_comp,
-      const matrix_t& b_grad_comp,
-      const matrix_t& c_grad_comp,
-      const matrix_t& d_grad_comp,
-      const matrix_t& diag_grad
-  ) {
-
-    int J_real = a_real.rows(), J_comp = a_comp.rows(), N = diag.rows(), n_grad = a_grad_real.rows();
-
-    if (
-        c_real.rows() != J_real ||
-        b_comp.rows() != J_comp ||
-        c_comp.rows() != J_comp ||
-        d_comp.rows() != J_comp ||
-        a_grad_real.cols() != J_real ||
-        c_grad_real.cols() != J_real ||
-        a_grad_comp.cols() != J_comp ||
-        b_grad_comp.cols() != J_comp ||
-        c_grad_comp.cols() != J_comp ||
-        d_grad_comp.cols() != J_comp ||
-        a_grad_real.rows() != n_grad ||
-        c_grad_real.rows() != n_grad ||
-        a_grad_comp.rows() != n_grad ||
-        b_grad_comp.rows() != n_grad ||
-        c_grad_comp.rows() != n_grad ||
-        d_grad_comp.rows() != n_grad ||
-        diag_grad.cols() != N ||
-        diag_grad.rows() != n_grad
-    ) throw py::value_error();
-
-    vector_grad_t a_r(J_real), c_r(J_real),
-                  a_c(J_comp), b_c(J_comp), c_c(J_comp), d_c(J_comp),
-                  d(N);
-    for (int j = 0; j < J_real; ++j) {
-      a_r(j) = grad_t(a_real(j), a_grad_real.col(j));
-      c_r(j) = grad_t(c_real(j), c_grad_real.col(j));
-    }
-    for (int j = 0; j < J_comp; ++j) {
-      a_c(j) = grad_t(a_comp(j), a_grad_comp.col(j));
-      b_c(j) = grad_t(b_comp(j), b_grad_comp.col(j));
-      c_c(j) = grad_t(c_comp(j), c_grad_comp.col(j));
-      d_c(j) = grad_t(d_comp(j), d_grad_comp.col(j));
-    }
-    for (int n = 0; n < N; ++n) d(n) = grad_t(diag(n), diag_grad.col(n));
-
-    return solver.compute(a_r, c_r, a_c, b_c, c_c, d_c, x, d);
-  });
-
-  grad_solver.def("dot_solve", [](PicklableGradCholeskySolver& solver, const matrix_t& b) {
-    grad_t result = solver.dot_solve(b);
-    return std::make_tuple(result.value(), result.derivatives());
-  });
-
-  grad_solver.def("log_determinant", [](PicklableGradCholeskySolver& solver) {
-    grad_t result = solver.log_determinant();
-    return std::make_tuple(result.value(), result.derivatives());
-  });
-
-  grad_solver.def("computed", [](PicklableGradCholeskySolver& solver) {
-      return solver.computed();
   });
 
   return m.ptr();

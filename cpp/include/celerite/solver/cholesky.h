@@ -24,6 +24,7 @@ CholeskySolver () : Solver<T>() {};
 ~CholeskySolver () {};
 
 void compute (
+  const T& jitter,
   const vector_t& a_real,
   const vector_t& c_real,
   const vector_t& a_comp,
@@ -59,7 +60,7 @@ void compute (
     Eigen::Matrix<T, NUM, 1> tmp;                                         \
     Eigen::Matrix<T, NUM, NUM> S;                                         \
                                                                           \
-    T a_sum = a1.sum();                                                   \
+    T a_sum = jitter + a1.sum();                                          \
     D_(0) = diag(0) + a_sum;                                              \
     X_.col(0).setConstant(T(1.0) / D_(0));                                \
     S.noalias() = D_(0) * X_.col(0) * X_.col(0).transpose();              \
@@ -101,7 +102,7 @@ void compute (
     Eigen::Matrix<T, NUM, 1> tmp;                                           \
     Eigen::Matrix<T, NUM, NUM> S;                                           \
                                                                             \
-    T a_sum = a1.sum() + a2.sum();                                          \
+    T a_sum = jitter + a1.sum() + a2.sum();                                 \
     D_(0) = diag(0) + a_sum;                                                \
     X_.col(0).head(J_real).setConstant(T(1.0) / D_(0));                     \
     X_.col(0).segment(J_real, J_comp) = cos(d2*x(0)) / D_(0);               \
@@ -211,6 +212,7 @@ matrix_t dot_L (const Eigen::MatrixXd& z) const {
 };
 
 matrix_t dot (
+  const T& jitter,
   const vector_t& a_real,
   const vector_t& c_real,
   const vector_t& a_comp,
@@ -238,7 +240,7 @@ matrix_t dot (
   c2 << c_comp;
   d2 << d_comp;
 
-  T a_sum = a1.sum() + a2.sum();
+  T a_sum = jitter + a1.sum() + a2.sum();
 
   vector_t f(J);
   matrix_t y(N, nrhs), phi(J, N-1), u(J, N-1), v(J, N-1);

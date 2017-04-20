@@ -2,7 +2,6 @@
 #include <Eigen/Core>
 #include <unsupported/Eigen/AutoDiff>
 
-#include "celerite/solver/direct.h"
 #include "celerite/solver/cholesky.h"
 
 #define DO_TEST(NAME, VAR1, VAR2)                            \
@@ -33,6 +32,7 @@ int main (int argc, char* argv[])
 
   // Set up the coefficients.
   size_t p_real = 2, p_complex = 1;
+  g_t jitter = g_t(0.01);
   v_t a_real(p_real), c_real(p_real),
       a_comp(p_complex), b_comp(p_complex), c_comp(p_complex), d_comp(p_complex);
 
@@ -62,7 +62,7 @@ int main (int argc, char* argv[])
   y = sin(x.array());
 
   celerite::solver::CholeskySolver<g_t> cholesky;
-  cholesky.compute(a_real, c_real, a_comp, b_comp, c_comp, d_comp, x, yerr2);
+  cholesky.compute(jitter, a_real, c_real, a_comp, b_comp, c_comp, d_comp, x, yerr2);
   std::cout << cholesky.log_determinant().derivatives() << std::endl;
   std::cout << cholesky.dot_solve(y).derivatives() << std::endl;
 

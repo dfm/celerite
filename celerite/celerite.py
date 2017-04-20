@@ -21,15 +21,6 @@ class GP(ModelSet):
         fit_mean (optional): If ``False``, all of the parameters of ``mean``
             will be frozen. Otherwise, the parameter states are unaffected.
             (default: ``False``)
-        log_white_noise (Optional): A white noise model for the process. The
-            ``exp`` of this will be added to the diagonal of the matrix in
-            :func:`GP.compute`. In other words this model should be for the
-            log of the _variance_ of the white noise. This can either be a
-            ``float`` or a subclass of :class:`modeling.Model`.
-            (default: ``-inf``)
-        fit_white_noise (Optional): If ``False``, all of the parameters of
-            ``log_white_noise`` will be frozen. Otherwise, the parameter
-            states are unaffected. (default: ``False``)
         method: Select a matrix solver method by name. This can be one of
             (a) ``simple``: a simple banded Gaussian elimination based method,
             (b) ``lapack``: an optimized band solver if compiled with LAPACK,
@@ -42,7 +33,6 @@ class GP(ModelSet):
     def __init__(self,
                  kernel,
                  mean=0.0, fit_mean=False,
-                 log_white_noise=-float("inf"), fit_white_noise=False,
                  method=None):
         self.solver = None
         self._computed = False
@@ -51,21 +41,6 @@ class GP(ModelSet):
 
         # Build up a list of models for the ModelSet
         models = [("kernel", kernel)]
-
-        # Interpret the white noise model
-        try:
-            float(log_white_noise)
-        except TypeError:
-            pass
-        else:
-            log_white_noise = ConstantModel(float(log_white_noise))
-
-        # If this model is supposed to be constant, go through and freeze
-        # all of the parameters
-        if not fit_white_noise:
-            for k in log_white_noise.get_parameter_names():
-                log_white_noise.freeze_parameter(k)
-        models += [("log_white_noise", log_white_noise)]
 
         # And the mean model
         try:
@@ -87,11 +62,6 @@ class GP(ModelSet):
     def mean(self):
         """The mean :class:`modeling.Model`"""
         return self.models["mean"]
-
-    @property
-    def log_white_noise(self):
-        """The white noise :class:`modeling.Model`"""
-        return self.models["log_white_noise"]
 
     @property
     def kernel(self):
@@ -146,10 +116,11 @@ class GP(ModelSet):
         (alpha_real, beta_real, alpha_complex_real, alpha_complex_imag,
          beta_complex_real, beta_complex_imag) = self.kernel.coefficients
         self.solver.compute(
+            self.kernel.jitter,
             alpha_real, beta_real,
             alpha_complex_real, alpha_complex_imag,
             beta_complex_real, beta_complex_imag,
-            t, self._get_diag()
+            t, self._yerr**2
         )
         self.dirty = False
 
@@ -193,47 +164,47 @@ class GP(ModelSet):
                        self.solver.log_determinant() +
                        len(y) * _const)
 
-    def grad_log_likelihood(self, y, _const=math.log(2.0*math.pi)):
-        """
-        Compute the gradient of the marginalized likelihood of the GP model
+    # def grad_log_likelihood(self, y, _const=math.log(2.0*math.pi)):
+    #     """
+    #     Compute the gradient of the marginalized likelihood of the GP model
 
-        The factorized matrix from the previous call to :func:`GP.compute` is
-        used so ``compute`` must be called first.
+    #     The factorized matrix from the previous call to :func:`GP.compute` is
+    #     used so ``compute`` must be called first.
 
-        Args:
-            y (array[n]): The observations at coordinates ``x`` from
-                :func:`GP.compute`.
+    #     Args:
+    #         y (array[n]): The observations at coordinates ``x`` from
+    #             :func:`GP.compute`.
 
-        Returns:
-            array[npars]: The gradient of the marginalized likelihood of the
-                GP model.
+    #     Returns:
+    #         array[npars]: The gradient of the marginalized likelihood of the
+    #             GP model.
 
-        Raises:
-            ValueError: For mismatched dimensions.
+    #     Raises:
+    #         ValueError: For mismatched dimensions.
 
-        """
-        y = self._process_input(y)
-        resid = y - self.mean.get_value(self._t)
+    #     """
+    #     y = self._process_input(y)
+    #     resid = y - self.mean.get_value(self._t)
 
-        if self._t is None:
-            raise RuntimeError("you must call 'compute' first")
+    #     if self._t is None:
+    #         raise RuntimeError("you must call 'compute' first")
 
-        s = solver.GradSolver()
-        (a_real, c_real, a_comp, b_comp, c_comp, d_comp) = \
-            self.kernel.coefficients
-        s.compute(
-            a_real, c_real, a_comp, b_comp, c_comp, d_comp,
-            t, self._get_diag(),
-        )
-        solver.compute(
-        )
+    #     s = solver.GradSolver()
+    #     (a_real, c_real, a_comp, b_comp, c_comp, d_comp) = \
+    #         self.kernel.coefficients
+    #     s.compute(
+    #         a_real, c_real, a_comp, b_comp, c_comp, d_comp,
+    #         t, self._get_diag(),
+    #     )
+    #     solver.compute(
+    #     )
 
-        self._recompute()
-        if len(y.shape) > 1:
-            raise ValueError("dimension mismatch")
-        return -0.5 * (self.solver.dot_solve(resid) +
-                       self.solver.log_determinant() +
-                       len(y) * _const)
+    #     self._recompute()
+    #     if len(y.shape) > 1:
+    #         raise ValueError("dimension mismatch")
+    #     return -0.5 * (self.solver.dot_solve(resid) +
+    #                    self.solver.log_determinant() +
+    #                    len(y) * _const)
 
     def apply_inverse(self, y):
         """
@@ -285,6 +256,7 @@ class GP(ModelSet):
         (alpha_real, beta_real, alpha_complex_real, alpha_complex_imag,
          beta_complex_real, beta_complex_imag) = kernel.coefficients
         return self.solver.dot(
+            self.kernel.jitter,
             alpha_real, beta_real,
             alpha_complex_real, alpha_complex_imag,
             beta_complex_real, beta_complex_imag,
@@ -344,7 +316,7 @@ class GP(ModelSet):
         alpha = self.solver.solve(resid).flatten()
 
         if t is None:
-            alpha = resid - self._get_diag() * alpha
+            alpha = resid - (self._yerr**2 + self.kernel.jitter) * alpha
         else:
             Kxs = self.get_matrix(xs, self._t)
             alpha = np.dot(Kxs, alpha)
@@ -367,10 +339,6 @@ class GP(ModelSet):
         cov -= np.dot(Kxs, self.apply_inverse(KxsT))
         return mu, cov
 
-    def _get_diag(self):
-        return self._yerr**2 + np.exp(self.log_white_noise
-                                      .get_value(self._t))
-
     def get_matrix(self, x1=None, x2=None, include_diagonal=None):
         """
         Get the covariance matrix at given independent coordinates
@@ -392,7 +360,9 @@ class GP(ModelSet):
                 raise RuntimeError("you must call 'compute' first")
             K = self.kernel.get_value(self._t[:, None] - self._t[None, :])
             if include_diagonal is None or include_diagonal:
-                K[np.diag_indices_from(K)] += self._get_diag()
+                K[np.diag_indices_from(K)] += (
+                    self._yerr**2 + self.kernel.jitter
+                )
             return K
 
         incl = False
@@ -402,8 +372,7 @@ class GP(ModelSet):
             incl = include_diagonal is not None and include_diagonal
         K = self.kernel.get_value(x1[:, None] - x2[None, :])
         if incl:
-            K[np.diag_indices_from(K)] += np.exp(self.log_white_noise
-                                                 .get_value(x1))
+            K[np.diag_indices_from(K)] += self.kernel.jitter
         return K
 
     def sample(self, size=None):

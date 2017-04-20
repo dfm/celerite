@@ -9,6 +9,10 @@ namespace solver {
 
 template <typename T>
 class Solver {
+private:
+typedef Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> matrix_t;
+typedef Eigen::Matrix<T, Eigen::Dynamic, 1> vector_t;
+
 protected:
 
 bool computed_;
@@ -37,17 +41,18 @@ virtual ~Solver () {};
 ///
 /// @return ``0`` on success. ``1`` for mismatched dimensions.
 virtual void compute (
-  const Eigen::Matrix<T, Eigen::Dynamic, 1>& a_real,
-  const Eigen::Matrix<T, Eigen::Dynamic, 1>& c_real,
-  const Eigen::Matrix<T, Eigen::Dynamic, 1>& a_comp,
-  const Eigen::Matrix<T, Eigen::Dynamic, 1>& b_comp,
-  const Eigen::Matrix<T, Eigen::Dynamic, 1>& c_comp,
-  const Eigen::Matrix<T, Eigen::Dynamic, 1>& d_comp,
+  const T& jitter,
+  const vector_t& a_real,
+  const vector_t& c_real,
+  const vector_t& a_comp,
+  const vector_t& b_comp,
+  const vector_t& c_comp,
+  const vector_t& d_comp,
   const Eigen::VectorXd& x,
-  const Eigen::Matrix<T, Eigen::Dynamic, 1>& diag
+  const vector_t& diag
 ) = 0;
-virtual Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> solve (const Eigen::MatrixXd& b) const = 0;
-virtual Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> dot_L (const Eigen::MatrixXd& z) const = 0;
+virtual matrix_t solve (const Eigen::MatrixXd& b) const = 0;
+virtual matrix_t dot_L (const Eigen::MatrixXd& z) const = 0;
 
 
 /// Solve the system ``b^T . A^-1 . b``
@@ -58,7 +63,7 @@ virtual Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> dot_L (const Eigen::Mat
 /// @param b The right hand side of the linear system.
 T dot_solve (const Eigen::VectorXd& b) const {
   if (!(this->computed_)) throw compute_exception();
-  Eigen::Matrix<T, Eigen::Dynamic, 1> out = solve(b);
+  vector_t out = solve(b);
   return b.transpose().cast<T>() * out;
 };
 
@@ -88,17 +93,18 @@ bool computed () const { return computed_; };
 ///
 /// @return ``0`` on success. ``1`` for mismatched dimensions.
 void compute (
-  const Eigen::Matrix<T, Eigen::Dynamic, 1>& a_real,
-  const Eigen::Matrix<T, Eigen::Dynamic, 1>& c_real,
-  const Eigen::Matrix<T, Eigen::Dynamic, 1>& a_comp,
-  const Eigen::Matrix<T, Eigen::Dynamic, 1>& c_comp,
-  const Eigen::Matrix<T, Eigen::Dynamic, 1>& d_comp,
+  const T& jitter,
+  const vector_t& a_real,
+  const vector_t& c_real,
+  const vector_t& a_comp,
+  const vector_t& c_comp,
+  const vector_t& d_comp,
   const Eigen::VectorXd& x,
-  const Eigen::Matrix<T, Eigen::Dynamic, 1>& diag
+  const vector_t& diag
 ) {
-  Eigen::Matrix<T, Eigen::Dynamic, 1> b_comp(a_comp.rows());
+  vector_t b_comp(a_comp.rows());
   b_comp.setZero();
-  return this->compute(a_real, c_real, a_comp, b_comp, c_comp, d_comp, x, diag);
+  return this->compute(jitter, a_real, c_real, a_comp, b_comp, c_comp, d_comp, x, diag);
 };
 
 
@@ -113,13 +119,14 @@ void compute (
 ///
 /// @return ``0`` on success. ``1`` for mismatched dimensions.
 void compute (
-  const Eigen::Matrix<T, Eigen::Dynamic, 1>& a_real,
-  const Eigen::Matrix<T, Eigen::Dynamic, 1>& c_real,
+  const T& jitter,
+  const vector_t& a_real,
+  const vector_t& c_real,
   const Eigen::VectorXd& x,
-  const Eigen::Matrix<T, Eigen::Dynamic, 1>& diag
+  const vector_t& diag
 ) {
-  Eigen::Matrix<T, Eigen::Dynamic, 1> nothing;
-  return this->compute(a_real, c_real, nothing, nothing, nothing, nothing, x, diag);
+  vector_t nothing;
+  return this->compute(jitter, a_real, c_real, nothing, nothing, nothing, nothing, x, diag);
 };
 
 /// Compute the matrix and factorize for purely complex terms with real alphas
@@ -134,16 +141,17 @@ void compute (
 ///
 /// @return ``0`` on success. ``1`` for mismatched dimensions.
 void compute (
-  const Eigen::Matrix<T, Eigen::Dynamic, 1>& a_comp,
-  const Eigen::Matrix<T, Eigen::Dynamic, 1>& c_comp,
-  const Eigen::Matrix<T, Eigen::Dynamic, 1>& d_comp,
+  const T& jitter,
+  const vector_t& a_comp,
+  const vector_t& c_comp,
+  const vector_t& d_comp,
   const Eigen::VectorXd& x,
-  const Eigen::Matrix<T, Eigen::Dynamic, 1>& diag
+  const vector_t& diag
 ) {
-  Eigen::Matrix<T, Eigen::Dynamic, 1> nothing;
-  Eigen::Matrix<T, Eigen::Dynamic, 1> b_comp(a_comp.rows());
+  vector_t nothing;
+  vector_t b_comp(a_comp.rows());
   b_comp.setZero();
-  return this->compute(nothing, nothing, a_comp, b_comp, c_comp, d_comp, x, diag);
+  return this->compute(jitter, nothing, nothing, a_comp, b_comp, c_comp, d_comp, x, diag);
 };
 
 
@@ -160,15 +168,16 @@ void compute (
 ///
 /// @return ``0`` on success. ``1`` for mismatched dimensions.
 void compute (
-  const Eigen::Matrix<T, Eigen::Dynamic, 1>& a_comp,
-  const Eigen::Matrix<T, Eigen::Dynamic, 1>& b_comp,
-  const Eigen::Matrix<T, Eigen::Dynamic, 1>& c_comp,
-  const Eigen::Matrix<T, Eigen::Dynamic, 1>& d_comp,
+  const T& jitter,
+  const vector_t& a_comp,
+  const vector_t& b_comp,
+  const vector_t& c_comp,
+  const vector_t& d_comp,
   const Eigen::VectorXd& x,
-  const Eigen::Matrix<T, Eigen::Dynamic, 1>& diag
+  const vector_t& diag
 ) {
-  Eigen::Matrix<T, Eigen::Dynamic, 1> nothing;
-  return this->compute(nothing, nothing, a_comp, b_comp, c_comp, d_comp, x, diag);
+  vector_t nothing;
+  return this->compute(jitter, nothing, nothing, a_comp, b_comp, c_comp, d_comp, x, diag);
 };
 
 }; // class Solver

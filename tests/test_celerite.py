@@ -4,7 +4,6 @@ from __future__ import division, print_function
 
 import pytest
 import numpy as np
-from itertools import product
 
 try:
     import cPickle as pickle
@@ -19,30 +18,6 @@ __all__ = ["test_carma", "test_log_determinant", "test_solve", "test_dot",
            "test_pickle", "test_build_gp", "test_log_likelihood",
            "test_predict", "test_nyquist_singularity"]
 
-
-def test_kernel(seed=42):
-    np.random.seed(seed)
-    t = np.sort(np.random.uniform(0, 5, 100))
-    tau = t[:, None] - t[None, :]
-
-    k1 = terms.RealTerm(log_a=0.1, log_c=0.5)
-    k2 = terms.ComplexTerm(0.2, -3.0, 0.5, 0.01)
-    k3 = terms.SHOTerm(1.0, 0.2, 3.0)
-
-    K1 = k1.get_value(tau)
-    K2 = k2.get_value(tau)
-    K3 = k3.get_value(tau)
-
-    assert np.allclose((k1 + k2).get_value(tau), K1 + K2)
-    assert np.allclose((k3 + k2).get_value(tau), K3 + K2)
-    assert np.allclose((k1 + k2 + k3).get_value(tau), K1 + K2 + K3)
-
-    for (a, b), (A, B) in zip(product((k1, k2, k3, k1+k2, k1+k3, k2+k3),
-                                      (k1, k2, k3)),
-                              product((K1, K2, K3, K1+K2, K1+K3, K2+K3),
-                                      (K1, K2, K3))):
-        assert np.allclose((a * b).get_value(tau), A*B)
-
 def test_carma(seed=42):
     solver = celerite.CholeskySolver()
     np.random.seed(seed)
@@ -56,7 +31,7 @@ def test_carma(seed=42):
     params = carma_solver.get_celerite_coeffs()
 
     solver.compute(
-        params[0], params[1], params[2], params[3], params[4], params[5],
+        0.0, params[0], params[1], params[2], params[3], params[4], params[5],
         t, yerr**2
     )
     celerite_ll = -0.5*(
@@ -74,7 +49,7 @@ def _test_log_determinant(alpha_real, beta_real, alpha_complex_real,
     diag = np.random.uniform(0.1, 0.5, len(t))
 
     solver.compute(
-        alpha_real, beta_real, alpha_complex_real, alpha_complex_imag,
+        0.0, alpha_real, beta_real, alpha_complex_real, alpha_complex_imag,
         beta_complex_real, beta_complex_imag, t, diag
     )
     K = get_kernel_value(
@@ -120,7 +95,7 @@ def _test_solve(alpha_real, beta_real, alpha_complex_real, alpha_complex_imag,
         solver.dot_solve(b)
 
     solver.compute(
-        alpha_real, beta_real, alpha_complex_real, alpha_complex_imag,
+        0.0, alpha_real, beta_real, alpha_complex_real, alpha_complex_imag,
         beta_complex_real, beta_complex_imag, t, diag
     )
     K = get_kernel_value(
@@ -173,7 +148,7 @@ def test_dot(seed=42):
     x0 = np.dot(K, b)
 
     x = solver.dot(
-        alpha_real, beta_real, alpha_complex_real, alpha_complex_imag,
+        0.0, alpha_real, beta_real, alpha_complex_real, alpha_complex_imag,
         beta_complex_real, beta_complex_imag, t, b
     )
     assert np.allclose(x0, x)
@@ -201,7 +176,7 @@ def test_dot_L(seed=42):
     x0 = np.dot(L, b)
 
     solver.compute(
-        alpha_real, beta_real, alpha_complex_real, alpha_complex_imag,
+        0.0, alpha_real, beta_real, alpha_complex_real, alpha_complex_imag,
         beta_complex_real, beta_complex_imag, t, yerr**2)
     x = solver.dot_L(b)
     assert np.allclose(x0, x)
@@ -234,7 +209,7 @@ def test_pickle(seed=42):
     compare(solver, solver2)
 
     solver.compute(
-        alpha_real, beta_real, alpha_complex_real, alpha_complex_imag,
+        0.0, alpha_real, beta_real, alpha_complex_real, alpha_complex_imag,
         beta_complex_real, beta_complex_imag, t, diag
     )
     solver2 = pickle.loads(pickle.dumps(solver, -1))
@@ -278,6 +253,78 @@ def test_log_likelihood(seed=42):
 
     kernel = terms.RealTerm(0.1, 0.5)
     gp = GP(kernel)
+    with pytest.raises(RuntimeError):
+        gp.log_likelihood(y)
+
+    for term in [(0.6, 0.7, 1.0)]:
+        kernel += terms.ComplexTerm(*term)
+        gp = GP(kernel)
+
+        assert gp.computed is False
+
+        with pytest.raises(ValueError):
+            gp.compute(np.random.rand(len(x)), yerr)
+
+        gp.compute(x, yerr)
+        assert gp.computed is True
+        assert gp.dirty is False
+
+        ll = gp.log_likelihood(y)
+        K = gp.get_matrix(include_diagonal=True)
+        ll0 = -0.5 * np.dot(y, np.linalg.solve(K, y))
+        ll0 -= 0.5 * np.linalg.slogdet(K)[1]
+        ll0 -= 0.5 * len(x) * np.log(2*np.pi)
+        assert np.allclose(ll, ll0)
+
+    # Check that changing the parameters "un-computes" the likelihood.
+    gp.set_parameter_vector(gp.get_parameter_vector())
+    assert gp.dirty is True
+    assert gp.computed is False
+
+    # Check that changing the parameters changes the likelihood.
+    gp.compute(x, yerr)
+    ll1 = gp.log_likelihood(y)
+    params = gp.get_parameter_vector()
+    params[0] += 0.1
+    gp.set_parameter_vector(params)
+    gp.compute(x, yerr)
+    ll2 = gp.log_likelihood(y)
+    assert not np.allclose(ll1, ll2)
+
+    gp[1] += 0.1
+    assert gp.dirty is True
+    gp.compute(x, yerr)
+    ll3 = gp.log_likelihood(y)
+    assert not np.allclose(ll2, ll3)
+
+    # Test zero delta t
+    ind = len(x) // 2
+    x = np.concatenate((x[:ind], [x[ind]], x[ind:]))
+    y = np.concatenate((y[:ind], [y[ind]], y[ind:]))
+    yerr = np.concatenate((yerr[:ind], [yerr[ind]], yerr[ind:]))
+    gp.compute(x, yerr)
+    ll = gp.log_likelihood(y)
+    K = gp.get_matrix(include_diagonal=True)
+    ll0 = -0.5 * np.dot(y, np.linalg.solve(K, y))
+    ll0 -= 0.5 * np.linalg.slogdet(K)[1]
+    ll0 -= 0.5 * len(x) * np.log(2*np.pi)
+    assert np.allclose(ll, ll0)
+
+
+@pytest.mark.xfail
+def test_grad_log_likelihood(seed=42):
+    np.random.seed(seed)
+    x = np.sort(np.random.rand(100))
+    yerr = np.random.uniform(0.1, 0.5, len(x))
+    y = np.sin(x)
+
+    kernel = terms.RealTerm(0.1, 0.5) + terms.JitterTerm(-1.5)
+    gp = GP(kernel)
+    gp.compute(x, yerr)
+    params = [kernel.jitter] + list(kernel.coefficients) + [x, y, yerr**2]
+    print(gp.solver.grad_log_likelihood(*params))
+    assert 0
+
     with pytest.raises(RuntimeError):
         gp.log_likelihood(y)
 

@@ -29,7 +29,7 @@
      struct timeval now;
      gettimeofday (&now, NULL);
      return double(now.tv_usec) * 1.0e-6 + double(now.tv_sec);
-   }  
+   }
 #endif
 
 
@@ -48,6 +48,7 @@ int main (int argc, char* argv[])
   double sigma = 1.0;
 
   // Generate some fake data.
+  double jitter = 0.0;
   Eigen::VectorXd x = Eigen::VectorXd::Random(N),
                   yerr = Eigen::VectorXd::Random(N),
                   y, diag;
@@ -93,33 +94,18 @@ int main (int argc, char* argv[])
     }
     compute_times(nterms - 1, 1) = (get_timestamp() - strt) / niter;
 
-    std::cout << "CARMA\n";
-
     // Get the celerite parameters for the CARMA model.
     celerite::carma::CARMASolver carma_solver(0.0, carma_arparams, carma_maparams);
     carma_solver.get_celerite_coeffs(alpha_real, beta_real,
       alpha_complex_real, alpha_complex_imag, beta_complex_real, beta_complex_imag);
 
-    std::cout << "coeffs\n";
-
     // Compute using the celerite model.
     celerite::solver::CholeskySolver<double> solver;
     strt = get_timestamp();
     for (size_t i = 0; i < niter; ++i) {
-      solver.compute(alpha_real, beta_real, alpha_complex_real, alpha_complex_imag, beta_complex_real, beta_complex_imag, x, diag);
+      solver.compute(jitter, alpha_real, beta_real, alpha_complex_real, alpha_complex_imag, beta_complex_real, beta_complex_imag, x, diag);
       celerite_ll = -0.5*(solver.dot_solve(y) + solver.log_determinant() + x.rows() * log(2.0 * M_PI));
     }
-    std::cout << "celerite\n";
-
-    //if (!flag) {
-    //  celerite::solver::DirectSolver<double> dsolver;
-    //  dsolver.compute(alpha_real, beta_real, alpha_complex_real, alpha_complex_imag, beta_complex_real, beta_complex_imag, x, diag);
-    //  direct_ll = -0.5*(dsolver.dot_solve(y) + dsolver.log_determinant() + x.rows() * log(2.0 * M_PI));
-
-    //  compute_times(nterms - 1, 2) = (get_timestamp() - strt) / niter;
-    //} else {
-    //  compute_times(nterms - 1, 2) = NAN;
-    //}
 
     std::cerr << nterms << " " << carma_ll << " " << celerite_ll << std::endl;
   }

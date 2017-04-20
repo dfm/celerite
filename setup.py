@@ -27,6 +27,10 @@ if os.name == "posix":
 
 compile_args["include_dirs"] = [
     localincl,
+    os.path.join("cpp", "lib", "boost_1.62.0"),
+    os.path.join("cpp", "lib", "cvodes_2.9.0"),
+    os.path.join("cpp", "lib", "eigen_3.3.3"),
+    os.path.join("cpp", "lib", "math_2.15.0"),
     numpy.get_include(),
 ]
 

@@ -50,8 +50,7 @@ conda update -q conda
 conda info -a
 conda create --yes -n test python=$PYTHON_VERSION
 source activate test
-conda install -c conda-forge numpy=$NUMPY_VERSION setuptools eigen pytest mkl pip
-pip install pybind11
+conda install -c conda-forge numpy=$NUMPY_VERSION setuptools pytest autograd pybind11
 
 if [[ "$TRAVIS_OS_NAME" == "mkl" ]]; then
   conda install mkl

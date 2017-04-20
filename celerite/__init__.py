@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-__version__ = "0.1.3"
+__version__ = "0.2.0.dev0"
 
 try:
     __CELERITE_SETUP__

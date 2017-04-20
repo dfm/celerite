@@ -28,6 +28,7 @@ int main (int argc, char* argv[])
 
   // Set up the coefficients.
   size_t p_real = 2, p_complex = 1;
+  double jitter = 0.01;
   Eigen::VectorXd alpha_real(p_real),
                   alpha_complex_real(p_complex),
                   alpha_complex_imag(p_complex),
@@ -64,18 +65,18 @@ int main (int argc, char* argv[])
   celerite::solver::DirectSolver<double> direct;
   celerite::solver::CholeskySolver<double> cholesky;
 
-  direct.compute(alpha_real, beta_real, x, yerr2);
-  cholesky.compute(alpha_real, beta_real, x, yerr2);
+  direct.compute(jitter, alpha_real, beta_real, x, yerr2);
+  cholesky.compute(jitter, alpha_real, beta_real, x, yerr2);
   DO_TEST(cholesky_real_log_det, cholesky.log_determinant(), direct.log_determinant())
   DO_TEST(cholesky_real_dot_solve, direct.dot_solve(y), cholesky.dot_solve(y))
 
-  direct.compute(alpha_complex_real, alpha_complex_imag, beta_complex_real, beta_complex_imag, x, yerr2);
-  cholesky.compute(alpha_complex_real, alpha_complex_imag, beta_complex_real, beta_complex_imag, x, yerr2);
+  direct.compute(jitter, alpha_complex_real, alpha_complex_imag, beta_complex_real, beta_complex_imag, x, yerr2);
+  cholesky.compute(jitter, alpha_complex_real, alpha_complex_imag, beta_complex_real, beta_complex_imag, x, yerr2);
   DO_TEST(cholesky_complex_log_det, direct.log_determinant(), cholesky.log_determinant())
   DO_TEST(cholesky_complex_dot_solve, cholesky.dot_solve(y), direct.dot_solve(y))
 
-  direct.compute(alpha_real, beta_real, alpha_complex_real, alpha_complex_imag, beta_complex_real, beta_complex_imag, x, yerr2);
-  cholesky.compute(alpha_real, beta_real, alpha_complex_real, alpha_complex_imag, beta_complex_real, beta_complex_imag, x, yerr2);
+  direct.compute(jitter, alpha_real, beta_real, alpha_complex_real, alpha_complex_imag, beta_complex_real, beta_complex_imag, x, yerr2);
+  cholesky.compute(jitter, alpha_real, beta_real, alpha_complex_real, alpha_complex_imag, beta_complex_real, beta_complex_imag, x, yerr2);
   DO_TEST(cholesky_mixed_log_det, direct.log_determinant(), cholesky.log_determinant())
   DO_TEST(cholesky_mixed_dot_solve, cholesky.dot_solve(y), direct.dot_solve(y))
 

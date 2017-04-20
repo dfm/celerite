@@ -25,6 +25,7 @@ DirectSolver () : Solver<T>() {};
 ~DirectSolver () {};
 
 void compute (
+  const T& jitter,
   const vector_t& a_real,
   const vector_t& c_real,
   const vector_t& a_comp,
@@ -46,7 +47,7 @@ void compute (
 
   // Build the matrix.
   double dx;
-  T v, asum = a_real.sum() + a_comp.sum();
+  T v, asum = jitter + a_real.sum() + a_comp.sum();
   matrix_t K(this->N_, this->N_);
   for (int i = 0; i < this->N_; ++i) {
     K(i, i) = asum + diag(i);
@@ -74,6 +75,7 @@ matrix_t solve (const Eigen::MatrixXd& b) const {
 };
 
 matrix_t dot (
+  const T& jitter,
   const vector_t& a_real,
   const vector_t& c_real,
   const vector_t& a_comp,
@@ -91,7 +93,7 @@ matrix_t dot (
 
   int N = z.rows();
   double dx;
-  T v, asum = a_real.sum() + a_comp.sum();
+  T v, asum = jitter + a_real.sum() + a_comp.sum();
   matrix_t K(N, N);
   for (int i = 0; i < N; ++i) {
     K(i, i) = asum;
