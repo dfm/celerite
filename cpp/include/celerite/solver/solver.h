@@ -49,7 +49,7 @@ virtual void compute (
   const vector_t& c_comp,
   const vector_t& d_comp,
   const Eigen::VectorXd& x,
-  const vector_t& diag
+  const Eigen::VectorXd& diag
 ) = 0;
 virtual matrix_t solve (const Eigen::MatrixXd& b) const = 0;
 virtual matrix_t dot_L (const Eigen::MatrixXd& z) const = 0;
@@ -100,7 +100,7 @@ void compute (
   const vector_t& c_comp,
   const vector_t& d_comp,
   const Eigen::VectorXd& x,
-  const vector_t& diag
+  const Eigen::VectorXd& diag
 ) {
   vector_t b_comp(a_comp.rows());
   b_comp.setZero();
@@ -123,7 +123,7 @@ void compute (
   const vector_t& a_real,
   const vector_t& c_real,
   const Eigen::VectorXd& x,
-  const vector_t& diag
+  const Eigen::VectorXd& diag
 ) {
   vector_t nothing;
   return this->compute(jitter, a_real, c_real, nothing, nothing, nothing, nothing, x, diag);
@@ -146,7 +146,7 @@ void compute (
   const vector_t& c_comp,
   const vector_t& d_comp,
   const Eigen::VectorXd& x,
-  const vector_t& diag
+  const Eigen::VectorXd& diag
 ) {
   vector_t nothing;
   vector_t b_comp(a_comp.rows());
@@ -174,7 +174,7 @@ void compute (
   const vector_t& c_comp,
   const vector_t& d_comp,
   const Eigen::VectorXd& x,
-  const vector_t& diag
+  const Eigen::VectorXd& diag
 ) {
   vector_t nothing;
   return this->compute(jitter, nothing, nothing, a_comp, b_comp, c_comp, d_comp, x, diag);

@@ -355,6 +355,11 @@ def test_grad_log_likelihood(kernel, seed=42, eps=1.34e-7):
         v[i] = pval
     assert np.allclose(grad, grad0)
 
+if __name__ == "__main__":
+    test_grad_log_likelihood(
+        terms.ComplexTerm(log_a=0.1, log_c=0.5, log_d=0.1)
+    )
+
 
 def test_predict(seed=42):
     np.random.seed(seed)

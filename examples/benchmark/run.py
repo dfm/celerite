@@ -7,20 +7,13 @@ import os
 import sys
 import argparse
 import numpy as np
-import numpy.__config__ as npconf
 
-import celerite
 from celerite import terms
 from celerite.timer import benchmark
-from celerite.solver import (
-    lapack_variant, Solver, SparseSolver, CholeskySolver
-)
+from celerite.solver import CholeskySolver
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--lapack", action="store_true")
-parser.add_argument("--cholesky", action="store_true")
-parser.add_argument("--default", action="store_true")
-parser.add_argument("--sparse", action="store_true")
+parser.add_argument("--grad", action="store_true")
 parser.add_argument("--george", action="store_true")
 parser.add_argument("--minnpow", type=int, default=6)
 parser.add_argument("--maxnpow", type=int, default=19)
@@ -39,35 +32,24 @@ if args.george:
               "of george with the 'CeleriteKernel' included")
         raise
 
-# BLAS info
-blas_opt_info = npconf.get_info("blas_opt_info")
-
 # The dimension of the problem
 N = 2**np.arange(args.minnpow, args.maxnpow + 1)
 J = 2**np.arange(args.minjpow, args.maxjpow + 1)
 
 header = ""
-for k in ["lapack", "cholesky", "sparse", "default", "george",
-          "minnpow", "maxnpow", "minjpow", "maxjpow"]:
+for k in ["grad", "george", "minnpow", "maxnpow", "minjpow", "maxjpow"]:
     header += "# {0}: {1}\n".format(k, getattr(args, k))
 header += "# platform: {0}\n".format(sys.platform)
-header += "# with_lapack: {0}\n".format(celerite.__with_lapack__)
-header += "# lapack_variant: {0}\n".format(lapack_variant())
 header += "# N: {0}\n".format(list(N))
 header += "# J: {0}\n".format(list(J))
 header += "xi,yi,j,n,comp_time,ll_time\n"
 
 fn = "benchmark_{0}".format(sys.platform)
-if args.default:
-    fn += "_default"
-elif args.cholesky:
-    fn += "_cholesky"
-elif args.sparse:
-    fn += "_sparse"
-elif args.lapack:
-    fn += "_lapack"
+if args.grad:
+    fn += "_grad"
 elif args.george:
     fn += "_george"
+
 fn += ".csv"
 fn = os.path.join(args.outdir, fn)
 print("filename: {0}".format(fn))
@@ -99,13 +81,8 @@ for xi, j in enumerate(J):
             k = CeleriteKernel(a=a, b=0.0, c=c, d=0.0)
             george_kernel = k if george_kernel is None else george_kernel + k
         solver = george.GP(george_kernel, solver=george.HODLRSolver)
-    elif args.cholesky:
-        solver = CholeskySolver()
-    elif args.sparse:
-        solver = SparseSolver()
     else:
-        use_lapack = bool(args.lapack if not args.default else j >= 4)
-        solver = Solver(use_lapack)
+        solver = CholeskySolver()
 
     for yi, n in enumerate(N):
         if args.george:
@@ -116,8 +93,14 @@ for xi, j in enumerate(J):
             y0 = y[:n]
             ll_time = benchmark("solver.lnlikelihood(y0)",
                                 "from __main__ import solver, y0")
+        elif args.grad:
+            params = [0.0] + list(coeffs)
+            params += [t[:n], y[:n], yerr[:n]**2]
+            comp_time = benchmark("solver.grad_log_likelihood(*params)",
+                                  "from __main__ import solver, params")
+            ll_time = 0.0
         else:
-            params = list(coeffs)
+            params = [0.0] + list(coeffs)
             params += [t[:n], yerr[:n]**2]
             comp_time = benchmark("solver.compute(*params)",
                                   "from __main__ import solver, params")

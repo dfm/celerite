@@ -32,7 +32,7 @@ void compute (
   const vector_t& c_comp,
   const vector_t& d_comp,
   const Eigen::VectorXd& x,
-  const vector_t& diag
+  const Eigen::VectorXd& diag
 )
 {
   this->computed_ = false;
@@ -60,7 +60,7 @@ void compute (
     Eigen::Matrix<T, NUM, 1> tmp;                                         \
     Eigen::Matrix<T, NUM, NUM> S;                                         \
                                                                           \
-    T a_sum = jitter + a1.sum();                                          \
+    T a_sum = a1.sum() + jitter;                                          \
     D_(0) = diag(0) + a_sum;                                              \
     X_.col(0).setConstant(T(1.0) / D_(0));                                \
     S.noalias() = D_(0) * X_.col(0) * X_.col(0).transpose();              \
@@ -102,7 +102,7 @@ void compute (
     Eigen::Matrix<T, NUM, 1> tmp;                                           \
     Eigen::Matrix<T, NUM, NUM> S;                                           \
                                                                             \
-    T a_sum = jitter + a1.sum() + a2.sum();                                 \
+    T a_sum = a1.sum() + a2.sum() + jitter;                                 \
     D_(0) = diag(0) + a_sum;                                                \
     X_.col(0).head(J_real).setConstant(T(1.0) / D_(0));                     \
     X_.col(0).segment(J_real, J_comp) = cos(d2*x(0)) / D_(0);               \

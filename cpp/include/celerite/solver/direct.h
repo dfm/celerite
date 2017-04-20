@@ -33,7 +33,7 @@ void compute (
   const vector_t& c_comp,
   const vector_t& d_comp,
   const Eigen::VectorXd& x,
-  const vector_t& diag
+  const Eigen::VectorXd& diag
 ) {
   this->computed_ = false;
   if (x.rows() != diag.rows()) throw dimension_mismatch();
