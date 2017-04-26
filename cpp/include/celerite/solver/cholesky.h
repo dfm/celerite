@@ -58,22 +58,22 @@ void compute (
     a1 << a_real;                                                         \
     c1 << c_real;                                                         \
     Eigen::Matrix<T, NUM, 1> tmp;                                         \
-    Eigen::Matrix<T, NUM, NUM> S;                                         \
+    Eigen::Matrix<T, NUM, NUM> S(J_, J_);                                 \
                                                                           \
     T a_sum = a1.sum() + jitter;                                          \
     D_(0) = diag(0) + a_sum;                                              \
     X_.col(0).setConstant(T(1.0) / D_(0));                                \
-    S.noalias() = D_(0) * X_.col(0) * X_.col(0).transpose();              \
+    S.setZero();                                                          \
     for (int n = 1; n < N; ++n) {                                         \
+      phi_.col(n-1).head(J_real) = exp(-c1*(x(n) - x(n-1)));              \
+      S.noalias() += D_(n-1) * X_.col(n-1) * X_.col(n-1).transpose();     \
+      S.array() *= (phi_.col(n-1) * phi_.col(n-1).transpose()).array();   \
       u_.col(n-1) = a1;                                                   \
       X_.col(n).head(J_real).setOnes();                                   \
-      phi_.col(n-1).head(J_real) = exp(-c1*(x(n) - x(n-1)));              \
-      S.array() *= (phi_.col(n-1) * phi_.col(n-1).transpose()).array();   \
       tmp = u_.col(n-1).transpose() * S;                                  \
       D_(n) = diag(n) + a_sum - tmp.transpose().dot(u_.col(n-1));         \
       if (D_(n) < 0) throw linalg_exception();                            \
       X_.col(n) = (T(1.0) / D_(n)) * (X_.col(n) - tmp);                   \
-      S.noalias() += D_(n) * X_.col(n) * X_.col(n).transpose();           \
     }
 
     if (J_real == 1) {
@@ -100,18 +100,25 @@ void compute (
     c2 << c_comp;                                                           \
     d2 << d_comp;                                                           \
     Eigen::Matrix<T, NUM, 1> tmp;                                           \
-    Eigen::Matrix<T, NUM, NUM> S;                                           \
+    Eigen::Matrix<T, NUM, NUM> S(J_, J_);                                   \
                                                                             \
     T a_sum = a1.sum() + a2.sum() + jitter;                                 \
     D_(0) = diag(0) + a_sum;                                                \
     X_.col(0).head(J_real).setConstant(T(1.0) / D_(0));                     \
     X_.col(0).segment(J_real, J_comp) = cos(d2*x(0)) / D_(0);               \
     X_.col(0).segment(J_real+J_comp, J_comp) = sin(d2*x(0)) / D_(0);        \
-    S.noalias() = D_(0) * X_.col(0) * X_.col(0).transpose();                \
+    S.setZero();                                                            \
                                                                             \
     for (int n = 1; n < N; ++n) {                                           \
       cd = cos(d2*x(n));                                                    \
       sd = sin(d2*x(n));                                                    \
+                                                                            \
+      T dx = x(n) - x(n-1);                                                 \
+      phi_.col(n-1).head(J_real) = exp(-c1*dx);                             \
+      phi_.col(n-1).segment(J_real, J_comp) = exp(-c2*dx);                  \
+      phi_.col(n-1).segment(J_real+J_comp, J_comp) = phi_.col(n-1).segment(J_real, J_comp); \
+      S.noalias() += D_(n-1) * X_.col(n-1) * X_.col(n-1).transpose();       \
+      S.array() *= (phi_.col(n-1) * phi_.col(n-1).transpose()).array();     \
                                                                             \
       u_.col(n-1).head(J_real) = a1;                                        \
       u_.col(n-1).segment(J_real, J_comp) = a2 * cd + b2 * sd;              \
@@ -121,17 +128,10 @@ void compute (
       X_.col(n).segment(J_real, J_comp) = cd;                               \
       X_.col(n).segment(J_real+J_comp, J_comp) = sd;                        \
                                                                             \
-      T dx = x(n) - x(n-1);                                                 \
-      phi_.col(n-1).head(J_real) = exp(-c1*dx);                             \
-      phi_.col(n-1).segment(J_real, J_comp) = exp(-c2*dx);                  \
-      phi_.col(n-1).segment(J_real+J_comp, J_comp) = phi_.col(n-1).segment(J_real, J_comp); \
-                                                                            \
-      S.array() *= (phi_.col(n-1) * phi_.col(n-1).transpose()).array();     \
       tmp = u_.col(n-1).transpose() * S;                                    \
       D_(n) = diag(n) + a_sum - tmp.transpose().dot(u_.col(n-1));           \
       if (D_(n) < 0) throw linalg_exception();                              \
       X_.col(n) = (T(1.0) / D_(n)) * (X_.col(n) - tmp);                     \
-      S.noalias() += D_(n) * X_.col(n) * X_.col(n).transpose();             \
     }
 
     if (J_real == 0 && J_comp == 1) {
