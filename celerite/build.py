@@ -67,10 +67,10 @@ class build_ext(_build_ext):
             opts.append('-DVERSION_INFO="{0:s}"'
                         .format(self.distribution.get_version()))
             opts.append(cpp_flag(self.compiler))
-            if has_flag(self.compiler, '-fvisibility=hidden'):
-                opts.append('-fvisibility=hidden')
-            for flag in ["-Wno-unused-function", "-Wno-uninitialized",
-                         "-Wno-unused-local-typedefs", "-O4"]:
+            for flag in ["-fvisibility=hidden",
+                         "-Wno-unused-function", "-Wno-uninitialized",
+                         "-Wno-unused-local-typedefs", "-O4",
+                         "-march=native", "-mtune=native"]:
                 if has_flag(self.compiler, flag):
                     opts.append(flag)
         elif ct == 'msvc':

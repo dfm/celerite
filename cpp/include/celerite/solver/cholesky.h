@@ -67,48 +67,56 @@ void compute (
     }
 
     int j, k;
-    T dx, tmp, cd, sd, uj, xj;
+    T dx, tmp, cd, sd, phij, uj, xj;
+    Eigen::Matrix<T, Eigen::Dynamic, 1> Xnm1, Xn, phin;
     S.setZero();
     for (int n = 1; n < N; ++n) {
+      Xnm1 = X_.col(n-1);
+      Xn = X_.col(n);
+      phin = phi_.col(n-1);
+
       dx = x(n) - x(n-1);
       for (j = 0; j < J_real; ++j) {
-        phi_(j, n-1) = exp(-c_real(j)*dx);
+        phin(j) = exp(-c_real(j)*dx);
         u_(j, n-1) = a_real(j);
-        X_(j, n) = T(1.0);
+        Xn(j) = T(1.0);
       }
       for (j = 0, k = J_real; j < J_comp; ++j, k += 2) {
         value = exp(-c_comp(j)*dx);
-        phi_(k,   n-1) = value;
-        phi_(k+1, n-1) = value;
+        phin(k)   = value;
+        phin(k+1) = value;
         cd = cos(d_comp(j)*x(n));
         sd = sin(d_comp(j)*x(n));
         u_(k,   n-1) = a_comp(j)*cd + b_comp(j)*sd;
         u_(k+1, n-1) = a_comp(j)*sd - b_comp(j)*cd;
-        X_(k,   n) = cd;
-        X_(k+1, n) = sd;
+        Xn(k,   n) = cd;
+        Xn(k+1, n) = sd;
       }
 
       for (j = 0; j < J; ++j) {
+        phij = phin(j);
+        xj = D_(n-1)*Xnm1(j);
         for (k = 0; k <= j; ++k) {
-          S(k, j) = phi_(j, n-1)*phi_(k, n-1)*(S(k, j) + D_(n-1)*X_(j, n-1)*X_(k, n-1));
+          S(k, j) = phij*phin(k)*(S(k, j) + xj*Xnm1(k));
         }
       }
 
       D_(n) = diag(n) + a_sum;
       for (j = 0; j < J; ++j) {
         uj = u_(j, n-1);
-        xj = X_(j, n);
+        xj = Xn(j);
         for (k = 0; k < j; ++k) {
           tmp = u_(k, n-1) * S(k, j);
           D_(n) -= 2.0*uj*tmp;
           xj -= tmp;
-          X_(k, n) -= uj*S(k, j);
+          Xn(k) -= uj*S(k, j);
         }
         tmp = uj*S(j, j);
         D_(n) -= uj*tmp;
-        X_(j, n) = xj - tmp;
+        Xn(j) = xj - tmp;
       }
-      X_.col(n) /= D_(n);
+      X_.col(n) = Xn / D_(n);
+      phi_.col(n-1) = phin;
     }
 
   } else if (J_comp == 0) {
