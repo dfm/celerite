@@ -256,8 +256,14 @@ def test_log_likelihood(seed=42):
     with pytest.raises(RuntimeError):
         gp.log_likelihood(y)
 
-    for term in [(0.6, 0.7, 1.0)]:
-        kernel += terms.ComplexTerm(*term)
+    termlist = [(0.1 + 10./j, 0.5 + 10./j) for j in range(1, 4)]
+    termlist += [(1.0 + 10./j, 0.01 + 10./j, 0.5, 0.01) for j in range(1, 10)]
+    termlist += [(0.6, 0.7, 1.0), (0.3, 0.05, 0.5, 0.6)]
+    for term in termlist:
+        if len(term) > 2:
+            kernel += terms.ComplexTerm(*term)
+        else:
+            kernel += terms.RealTerm(*term)
         gp = GP(kernel)
 
         assert gp.computed is False
@@ -285,13 +291,13 @@ def test_log_likelihood(seed=42):
     gp.compute(x, yerr)
     ll1 = gp.log_likelihood(y)
     params = gp.get_parameter_vector()
-    params[0] += 0.1
+    params[0] += 10.0
     gp.set_parameter_vector(params)
     gp.compute(x, yerr)
     ll2 = gp.log_likelihood(y)
     assert not np.allclose(ll1, ll2)
 
-    gp[1] += 0.1
+    gp[1] += 10.0
     assert gp.dirty is True
     gp.compute(x, yerr)
     ll3 = gp.log_likelihood(y)
@@ -308,7 +314,7 @@ def test_log_likelihood(seed=42):
     ll0 = -0.5 * np.dot(y, np.linalg.solve(K, y))
     ll0 -= 0.5 * np.linalg.slogdet(K)[1]
     ll0 -= 0.5 * len(x) * np.log(2*np.pi)
-    assert np.allclose(ll, ll0)
+    assert np.allclose(ll, ll0), "face"
 
 
 @pytest.mark.parametrize(
