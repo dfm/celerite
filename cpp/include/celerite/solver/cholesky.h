@@ -52,15 +52,18 @@ void compute (
   phi_.resize(J, N-1);
   u_.resize(J, N-1);
   X_.resize(J, N);
-  D_.resize(N);
+  //D_.resize(N);
+
+  D_ = diag.array() + a_real.sum() + a_comp.sum() + jitter;
 
   if (J <= CHOLTURN) {
 
     // We unroll the loops for the smallest models for speed.
-    T a_sum = a_real.sum() + a_comp.sum() + jitter, value;
+    int j, k;
+    T value, dx, tmp, cd, sd, phij, uj, xj;
+    T *Xnm1, *Xn, *phin;
     Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> S(J, J);
 
-    D_(0) = diag(0) + a_sum;
     value = T(1.0) / D_(0);
     for (int j = 0; j < J_real; ++j) {
       X_(j, 0) = value;
@@ -70,80 +73,72 @@ void compute (
       X_(k+1, 0) = sin(d_comp(j) * x(0)) * value;
     }
 
-    int j, k;
-    T dx, tmp, cd, sd, phij, uj, xj;
-    Eigen::Matrix<T, Eigen::Dynamic, 1> Xnm1, Xn, phin;
     S.setZero();
     for (int n = 1; n < N; ++n) {
-      Xnm1 = X_.col(n-1);
-      Xn = X_.col(n);
-      phin = phi_.col(n-1);
+      Xnm1 = X_.data() + J * (n-1);
+      Xn = X_.data() + J * n;
+      phin = phi_.data() + J * (n-1);
 
       dx = x(n) - x(n-1);
       for (j = 0; j < J_real; ++j) {
-        phin(j) = exp(-c_real(j)*dx);
+        phin[j] = exp(-c_real(j)*dx);
         u_(j, n-1) = a_real(j);
-        Xn(j) = T(1.0);
+        Xn[j] = T(1.0);
       }
       for (j = 0, k = J_real; j < J_comp; ++j, k += 2) {
         value = exp(-c_comp(j)*dx);
-        phin(k)   = value;
-        phin(k+1) = value;
+        phin[k]   = value;
+        phin[k+1] = value;
         cd = cos(d_comp(j)*x(n));
         sd = sin(d_comp(j)*x(n));
         u_(k,   n-1) = a_comp(j)*cd + b_comp(j)*sd;
         u_(k+1, n-1) = a_comp(j)*sd - b_comp(j)*cd;
-        Xn(k,   n) = cd;
-        Xn(k+1, n) = sd;
+        Xn[k]   = cd;
+        Xn[k+1] = sd;
       }
 
       for (j = 0; j < J; ++j) {
-        phij = phin(j);
-        xj = D_(n-1)*Xnm1(j);
+        phij = phin[j];
+        xj = D_(n-1)*Xnm1[j];
         for (k = 0; k <= j; ++k) {
-          S(k, j) = phij*phin(k)*(S(k, j) + xj*Xnm1(k));
+          S(k, j) = phij*phin[k]*(S(k, j) + xj*Xnm1[k]);
         }
       }
 
-      D_(n) = diag(n) + a_sum;
+      //D_(n) = diag(n) + a_sum;
       for (j = 0; j < J; ++j) {
         uj = u_(j, n-1);
-        xj = Xn(j);
+        xj = Xn[j];
         for (k = 0; k < j; ++k) {
           tmp = u_(k, n-1) * S(k, j);
           D_(n) -= 2.0*uj*tmp;
           xj -= tmp;
-          Xn(k) -= uj*S(k, j);
+          Xn[k] -= uj*S(k, j);
         }
         tmp = uj*S(j, j);
         D_(n) -= uj*tmp;
-        Xn(j) = xj - tmp;
+        Xn[j] = xj - tmp;
       }
-      X_.col(n) = Xn / D_(n);
-      phi_.col(n-1) = phin;
+      if (D_(n) < 0) throw linalg_exception();
+      X_.col(n) /= D_(n);
     }
 
   } else if (J_comp == 0) {
 
     // Real only.
-    Eigen::Array<T, Eigen::Dynamic, 1> a1(J_real), c1(J_real);
-    a1 << a_real;
-    c1 << c_real;
     Eigen::Matrix<T, Eigen::Dynamic, 1> tmp;
     Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> S(J, J);
 
-    T a_sum = a1.sum() + jitter;
-    D_(0) = diag(0) + a_sum;
     X_.col(0).setConstant(T(1.0) / D_(0));
     S.setZero();
     for (int n = 1; n < N; ++n) {
-      phi_.col(n-1) = exp(-c1*(x(n) - x(n-1)));
+      phi_.col(n-1) = exp(-c_real.array()*(x(n) - x(n-1)));
       S.noalias() += D_(n-1) * X_.col(n-1) * X_.col(n-1).transpose();
       S.array() *= (phi_.col(n-1) * phi_.col(n-1).transpose()).array();
-      u_.col(n-1) = a1;
+      u_.col(n-1) = a_real;
       X_.col(n).setOnes();
       tmp = u_.col(n-1).transpose() * S;
-      D_(n) = diag(n) + a_sum - tmp.transpose().dot(u_.col(n-1));
+      D_(n) -= tmp.transpose().dot(u_.col(n-1));
       if (D_(n) < 0) throw linalg_exception();
       X_.col(n) = (T(1.0) / D_(n)) * (X_.col(n) - tmp);
     }
@@ -151,47 +146,38 @@ void compute (
   } else {
 
     // General case.
-    Eigen::Array<T, Eigen::Dynamic, 1> a1(J_real), c1(J_real);
-    Eigen::Array<T, Eigen::Dynamic, 1> a2(J_comp), b2(J_comp),
-                                 c2(J_comp), d2(J_comp),
-                                 cd, sd;
-    a1 << a_real;
-    a2 << a_comp;
-    b2 << b_comp;
-    c1 << c_real;
-    c2 << c_comp;
-    d2 << d_comp;
+    Eigen::Array<T, Eigen::Dynamic, 1> cd, sd;
     Eigen::Matrix<T, Eigen::Dynamic, 1> tmp;
     Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> S(J, J);
 
-    T a_sum = a1.sum() + a2.sum() + jitter;
-    D_(0) = diag(0) + a_sum;
+    //T a_sum = a_real.sum() + a_comp.sum() + jitter;
+    //D_(0) = diag(0) + a_sum;
     X_.col(0).head(J_real).setConstant(T(1.0) / D_(0));
-    X_.col(0).segment(J_real, J_comp) = cos(d2*x(0)) / D_(0);
-    X_.col(0).segment(J_real+J_comp, J_comp) = sin(d2*x(0)) / D_(0);
+    X_.col(0).segment(J_real, J_comp) = cos(d_comp.array()*x(0)) / D_(0);
+    X_.col(0).segment(J_real+J_comp, J_comp) = sin(d_comp.array()*x(0)) / D_(0);
     S.setZero();
 
     for (int n = 1; n < N; ++n) {
-      cd = cos(d2*x(n));
-      sd = sin(d2*x(n));
+      cd = cos(d_comp.array()*x(n));
+      sd = sin(d_comp.array()*x(n));
 
       T dx = x(n) - x(n-1);
-      phi_.col(n-1).head(J_real) = exp(-c1*dx);
-      phi_.col(n-1).segment(J_real, J_comp) = exp(-c2*dx);
+      phi_.col(n-1).head(J_real) = exp(-c_real.array()*dx);
+      phi_.col(n-1).segment(J_real, J_comp) = exp(-c_comp.array()*dx);
       phi_.col(n-1).segment(J_real+J_comp, J_comp) = phi_.col(n-1).segment(J_real, J_comp);
       S.noalias() += D_(n-1) * X_.col(n-1) * X_.col(n-1).transpose();
       S.array() *= (phi_.col(n-1) * phi_.col(n-1).transpose()).array();
 
-      u_.col(n-1).head(J_real) = a1;
-      u_.col(n-1).segment(J_real, J_comp) = a2 * cd + b2 * sd;
-      u_.col(n-1).segment(J_real+J_comp, J_comp) = a2 * sd - b2 * cd;
+      u_.col(n-1).head(J_real) = a_real;
+      u_.col(n-1).segment(J_real, J_comp) = a_comp.array() * cd + b_comp.array() * sd;
+      u_.col(n-1).segment(J_real+J_comp, J_comp) = a_comp.array() * sd - b_comp.array() * cd;
 
       X_.col(n).head(J_real).setOnes();
       X_.col(n).segment(J_real, J_comp) = cd;
       X_.col(n).segment(J_real+J_comp, J_comp) = sd;
 
       tmp = u_.col(n-1).transpose() * S;
-      D_(n) = diag(n) + a_sum - tmp.transpose().dot(u_.col(n-1));
+      D_(n) -= tmp.transpose().dot(u_.col(n-1));
       if (D_(n) < 0) throw linalg_exception();
       X_.col(n) = (T(1.0) / D_(n)) * (X_.col(n) - tmp);
     }
