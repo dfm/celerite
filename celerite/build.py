@@ -69,8 +69,7 @@ class build_ext(_build_ext):
             opts.append(cpp_flag(self.compiler))
             for flag in ["-fvisibility=hidden",
                          "-Wno-unused-function", "-Wno-uninitialized",
-                         "-Wno-unused-local-typedefs", "-O4",
-                         "-march=native", "-mtune=native"]:
+                         "-Wno-unused-local-typedefs"]:
                 if has_flag(self.compiler, flag):
                     opts.append(flag)
         elif ct == 'msvc':
