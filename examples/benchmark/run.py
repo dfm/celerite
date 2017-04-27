@@ -15,6 +15,7 @@ from celerite.solver import CholeskySolver
 parser = argparse.ArgumentParser()
 parser.add_argument("--grad", action="store_true")
 parser.add_argument("--george", action="store_true")
+parser.add_argument("--carma", action="store_true")
 parser.add_argument("--minnpow", type=int, default=6)
 parser.add_argument("--maxnpow", type=int, default=19)
 parser.add_argument("--minjpow", type=int, default=0)
@@ -49,6 +50,8 @@ if args.grad:
     fn += "_grad"
 elif args.george:
     fn += "_george"
+elif args.carma:
+    fn += "_carma"
 
 fn += ".csv"
 fn = os.path.join(args.outdir, fn)
@@ -81,6 +84,9 @@ for xi, j in enumerate(J):
             k = CeleriteKernel(a=a, b=0.0, c=c, d=0.0)
             george_kernel = k if george_kernel is None else george_kernel + k
         solver = george.GP(george_kernel, solver=george.HODLRSolver)
+    elif args.carma:
+        arparams = np.random.randn(2*j)
+        maparams = np.random.randn(2*j - 1)
     else:
         solver = CholeskySolver()
 
@@ -93,6 +99,16 @@ for xi, j in enumerate(J):
             y0 = y[:n]
             ll_time = benchmark("solver.lnlikelihood(y0)",
                                 "from __main__ import solver, y0")
+        elif args.carma:
+            params = [arparams, maparams]
+            funcargs = [t[:n], y[:n], yerr[:n]**2]
+            comp_time = benchmark(
+                "solver = CARMASolver(0.0, *params)\n"
+                "solver.log_likelihood(*funcargs)",
+                "from __main__ import params, funcargs\n"
+                "from celerite.solver import CARMASolver"
+            )
+            ll_time = 0.0
         elif args.grad:
             params = [0.0] + list(coeffs)
             params += [t[:n], y[:n], yerr[:n]**2]

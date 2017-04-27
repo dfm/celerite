@@ -12,7 +12,7 @@
 namespace celerite {
 namespace carma {
 
-Eigen::VectorXcd roots_from_params (const Eigen::VectorXd& params) {
+inline Eigen::VectorXcd roots_from_params (const Eigen::VectorXd& params) {
   int n = params.rows();
   std::complex<double> b, c, arg;
   Eigen::VectorXcd roots(n);
@@ -28,7 +28,7 @@ Eigen::VectorXcd roots_from_params (const Eigen::VectorXd& params) {
   return roots;
 }
 
-Eigen::VectorXcd poly_from_roots (const Eigen::VectorXcd& roots) {
+inline Eigen::VectorXcd poly_from_roots (const Eigen::VectorXcd& roots) {
   int n = roots.rows() + 1;
   if (n == 1) return Eigen::VectorXcd::Ones(1);
   Eigen::VectorXcd poly = Eigen::VectorXcd::Zero(n);
@@ -172,10 +172,6 @@ void reset (double t) {
 
 void predict (double yerr) {
   // Steps 3 and 9 from Kelly et al.
-  //std::complex<double> tmp = b_ * state_.x;
-  //expectation_ = tmp.real();
-  //std::complex<double> tmp2 = b_ * state_.P * b_.adjoint();
-  //variance_ = yerr * yerr + tmp2.real();
   expectation_ = 0.0;
   variance_ = yerr * yerr;
   for (int i = 0; i < p_; ++i) {
@@ -192,9 +188,6 @@ void predict (double yerr) {
 
 void update_state (double y) {
   // Steps 4-6 and 10-12 from Kelly et al.
-  //Eigen::VectorXcd K = state_.P * b_.adjoint() / variance_;
-  //state_.x += (y - expectation_) * K;
-  //state_.P -= variance_ * K * K.adjoint();
   Eigen::VectorXcd K(p_, p_);
   K.setConstant(0.0);
   for (int i = 0; i < p_; ++i) {
@@ -210,7 +203,7 @@ void update_state (double y) {
 
 void advance_time (double dt) {
   // Steps 7 and 8 from Kelly et al.
-  Eigen::VectorXcd lam(p_);  // = pow(lambda_base_, dt).matrix();
+  Eigen::VectorXcd lam(p_);
   state_.time += dt;
   for (int i = 0; i < p_; ++i) {
     lam(i) = pow(lambda_base_(i), dt);
@@ -223,7 +216,6 @@ void advance_time (double dt) {
       state_.P(i, j) += lam(i) * (P(i, j) - V_(i, j)) * std::conj(lam(j));
     }
   }
-  //state_.P = lam.asDiagonal() * (state_.P - V_) * lam.conjugate().asDiagonal() + V_;
 };
 
 double log_likelihood (const Eigen::VectorXd& t, const Eigen::VectorXd& y, const Eigen::VectorXd& yerr) {
