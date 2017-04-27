@@ -7,7 +7,6 @@ macro (CELERITE_EXEC NAME)
 endmacro (CELERITE_EXEC)
 
 celerite_exec(benchmark)
-celerite_exec(stan_grad)
 
 macro (CELERITE_TEST NAME)
     celerite_exec(${NAME})

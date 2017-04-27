@@ -60,7 +60,7 @@ then
   tar -xf v2.15.0.tar.gz --strip-components 1
   cd ..
 
-  export BUILD_ARGS=-Istan/stan -Istan/lib/boost_1.62.0 -Istan/lib/cvodes_2.9.0/include -DUSE_STAN_MATH
+  export BUILD_ARGS="-Istan/stan -Istan/lib/boost_1.62.0 -Istan/lib/cvodes_2.9.0/include -DUSE_STAN_MATH"
 fi
 
 # Build the extension

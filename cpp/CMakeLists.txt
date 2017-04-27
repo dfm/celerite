@@ -29,16 +29,10 @@ endif()
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
-include(ReadCeleriteVersionFromSource)
-read_celerite_version_from_source(${CMAKE_SOURCE_DIR})
-
 enable_testing()
 
 # Includes.
 include_directories(include)
-include_directories(lib/math_2.15.0)
-include_directories(lib/boost_1.62.0)
-include_directories(lib/cvodes_2.9.0)
 include_directories(lib/eigen_3.3.3)
 
 # Some tweaks for speed.
