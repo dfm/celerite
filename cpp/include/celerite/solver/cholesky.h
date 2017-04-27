@@ -10,6 +10,10 @@
 
 #include "celerite/solver/solver.h"
 
+#ifndef CHOLTURN
+#define CHOLTURN 32
+#endif
+
 namespace celerite {
 namespace solver {
 
@@ -50,7 +54,7 @@ void compute (
   X_.resize(J, N);
   D_.resize(N);
 
-  if (J <= 32) {
+  if (J <= CHOLTURN) {
 
     // We unroll the loops for the smallest models for speed.
     T a_sum = a_real.sum() + a_comp.sum() + jitter, value;
