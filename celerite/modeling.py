@@ -99,6 +99,24 @@ class Model(object):
         """
         raise NotImplementedError("overloaded by subclasses")
 
+    def compute_gradient(self, *args, **kwargs):
+        """
+        Compute the "gradient" of the model for the current parameters
+
+        This method should be overloaded by subclasses to implement the actual
+        functionality of the model. The output of this function should be an
+        array where the first dimension is ``full_size``.
+
+        """
+        raise NotImplementedError("overloaded by subclasses")
+
+    def get_gradient(self, *args, **kwargs):
+        include_frozen = kwargs.pop("include_frozen", False)
+        g = self.compute_gradient(*args, **kwargs)
+        if include_frozen:
+            return g
+        return g[self.unfrozen_mask]
+
     def __len__(self):
         return self.vector_size
 
@@ -417,3 +435,6 @@ class ConstantModel(Model):
 
     def get_value(self, x):
         return self.value + np.zeros_like(x)
+
+    def compute_gradient(self, x):
+        return np.array([np.ones_like(x)])

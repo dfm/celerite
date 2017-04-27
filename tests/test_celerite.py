@@ -342,29 +342,25 @@ def test_grad_log_likelihood(kernel, seed=42, eps=1.34e-7):
     yerr = np.random.uniform(0.1, 0.5, len(x))
     y = np.sin(x)
 
-    gp = GP(kernel)
-    gp.compute(x, yerr)
-    _, grad = gp.grad_log_likelihood(y)
-    grad0 = np.empty_like(grad)
+    for fit_mean in [True, False]:
+        gp = GP(kernel, fit_mean=fit_mean)
+        gp.compute(x, yerr)
+        _, grad = gp.grad_log_likelihood(y)
+        grad0 = np.empty_like(grad)
 
-    v = gp.get_parameter_vector()
-    for i, pval in enumerate(v):
-        v[i] = pval + eps
-        gp.set_parameter_vector(v)
-        ll = gp.log_likelihood(y)
+        v = gp.get_parameter_vector()
+        for i, pval in enumerate(v):
+            v[i] = pval + eps
+            gp.set_parameter_vector(v)
+            ll = gp.log_likelihood(y)
 
-        v[i] = pval - eps
-        gp.set_parameter_vector(v)
-        ll -= gp.log_likelihood(y)
+            v[i] = pval - eps
+            gp.set_parameter_vector(v)
+            ll -= gp.log_likelihood(y)
 
-        grad0[i] = 0.5 * ll / eps
-        v[i] = pval
-    assert np.allclose(grad, grad0)
-
-if __name__ == "__main__":
-    test_grad_log_likelihood(
-        terms.ComplexTerm(log_a=0.1, log_c=0.5, log_d=0.1)
-    )
+            grad0[i] = 0.5 * ll / eps
+            v[i] = pval
+        assert np.allclose(grad, grad0)
 
 
 def test_predict(seed=42):

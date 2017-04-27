@@ -6,10 +6,10 @@
 #include <cmath>
 #include <cfloat>
 #include <vector>
-#include <stan/math.hpp>
 
 #include <Eigen/Core>
 //#include <unsupported/Eigen/AutoDiff>
+#include <stan/math.hpp>
 
 #include "celerite/celerite.h"
 #include "celerite/carma.h"

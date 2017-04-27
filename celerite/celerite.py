@@ -210,6 +210,13 @@ class GP(ModelSet):
         if self.kernel._has_jitter:
             jitter_jac = self.kernel.get_jitter_jacobian()
             full_grad += jitter_jac * grad[0]
+
+        if self.mean.vector_size:
+            self._recompute()
+            alpha = self.solver.solve(resid)
+            g = self.mean.get_gradient(self._t)
+            full_grad = np.append(full_grad, np.dot(g, alpha))
+
         return val, full_grad
 
     def apply_inverse(self, y):

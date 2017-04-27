@@ -52,7 +52,6 @@ void compute (
   phi_.resize(J, N-1);
   u_.resize(J, N-1);
   X_.resize(J, N);
-  //D_.resize(N);
 
   D_ = diag.array() + a_real.sum() + a_comp.sum() + jitter;
 
@@ -105,7 +104,6 @@ void compute (
         }
       }
 
-      //D_(n) = diag(n) + a_sum;
       for (j = 0; j < J; ++j) {
         uj = u_(j, n-1);
         xj = Xn[j];
@@ -126,7 +124,7 @@ void compute (
   } else if (J_comp == 0) {
 
     // Real only.
-    Eigen::Matrix<T, Eigen::Dynamic, 1> tmp;
+    Eigen::Matrix<T, Eigen::Dynamic, 1> tmp(J);
     Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> S(J, J);
 
     X_.col(0).setConstant(T(1.0) / D_(0));
@@ -150,13 +148,10 @@ void compute (
     Eigen::Matrix<T, Eigen::Dynamic, 1> tmp;
     Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> S(J, J);
 
-    //T a_sum = a_real.sum() + a_comp.sum() + jitter;
-    //D_(0) = diag(0) + a_sum;
     X_.col(0).head(J_real).setConstant(T(1.0) / D_(0));
     X_.col(0).segment(J_real, J_comp) = cos(d_comp.array()*x(0)) / D_(0);
     X_.col(0).segment(J_real+J_comp, J_comp) = sin(d_comp.array()*x(0)) / D_(0);
     S.setZero();
-
     for (int n = 1; n < N; ++n) {
       cd = cos(d_comp.array()*x(n));
       sd = sin(d_comp.array()*x(n));
