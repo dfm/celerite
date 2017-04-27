@@ -14,6 +14,7 @@ env:
         - EIGEN_VERSION=3.2.9
           TEST_LANG='python'
           AUTOGRAD=autograd
+          AUTODIFF_LIBRARY=eigen
 
 matrix:
     include:
@@ -49,6 +50,8 @@ matrix:
           env: PYTHON_VERSION=3.6 NUMPY_VERSION=1.12
         - os: linux
           env: PYTHON_VERSION=3.6 NUMPY_VERSION=1.12 AUTOGRAD=''
+        - os: linux
+          env: PYTHON_VERSION=3.6 NUMPY_VERSION=1.12 AUTODIFF_LIBRARY=stan
 
         # OSX
         - os: osx
