@@ -7,8 +7,7 @@ The core implementation of celerite is written in C++ so this will need to be
 compiled to be called from Python. The easiest way for a new user to do this
 will be by following the directions in the :ref:`using-conda` section below.
 Power users might be able to eke out a bit more performance by tuning the
-linear algebra library and installing :ref:`source` and following the
-discussion in :ref:`lapack`.
+linear algebra library and installing :ref:`source`.
 
 .. _using-conda:
 
@@ -22,15 +21,6 @@ The easiest way to install celerite is using `conda
 .. code-block:: bash
 
     conda install -c conda-forge celerite
-
-This version of celerite will be linked to the OpenBLAS implementation
-available on conda-forge. It's possible that power users might be able to get
-some extra performance by linking to an implementation that is more tuned for
-your system (e.g. MKL) by following the instructions in :ref:`lapack` below.
-
-.. note:: On Windows, celerite is not linked to a LAPACK implementation
-    because OpenBLAS is not available for Windows on conda-forge so users with
-    wide models will need to install from source.
 
 
 Using pip

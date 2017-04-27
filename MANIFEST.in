@@ -1,1 +1,3 @@
-include README.rst LICENSE HISTORY.rst AUTHORS.rst cpp/include/celerite/*h cpp/include/celerite/solver/*h
+include README.rst LICENSE HISTORY.rst AUTHORS.rst
+graft cpp/include
+graft cpp/lib

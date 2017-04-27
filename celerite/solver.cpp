@@ -8,8 +8,12 @@
 #include <vector>
 
 #include <Eigen/Core>
-//#include <unsupported/Eigen/AutoDiff>
+
+#ifdef USE_STAN_MATH
 #include <stan/math.hpp>
+#else
+#include <unsupported/Eigen/AutoDiff>
+#endif
 
 #include "celerite/celerite.h"
 #include "celerite/carma.h"
@@ -206,82 +210,7 @@ A thin wrapper around the C++ CholeskySolver class
 )delim");
   cholesky_solver.def(py::init<>());
 
-  //cholesky_solver.def("grad_log_likelihood", [](
-  //    PicklableCholeskySolver& nothing,
-  //    double jitter,
-  //    const vector_t& a_real,
-  //    const vector_t& c_real,
-  //    const vector_t& a_comp,
-  //    const vector_t& b_comp,
-  //    const vector_t& c_comp,
-  //    const vector_t& d_comp,
-  //    const vector_t& x,
-  //    const vector_t& y,
-  //    const vector_t& diag
-  //) {
-
-  //  typedef Eigen::AutoDiffScalar<Eigen::VectorXd> g_t;
-  //  typedef Eigen::Matrix<g_t, Eigen::Dynamic, 1> v_t;
-
-  //  int J_real = a_real.rows();
-  //  int J_comp = a_comp.rows();
-  //  int g_tot = 2 * J_real + 4 * J_comp;
-
-  //  celerite::solver::CholeskySolver<g_t> solver;
-  //  v_t a_real_(J_real), c_real_(J_real),
-  //      a_comp_(J_comp), b_comp_(J_comp), c_comp_(J_comp), d_comp_(J_comp);
-
-  //  bool compute_jitter = false;
-  //  int i0 = 0, i = 0;
-  //  g_t jitter_ = g_t(jitter);
-  //  if (jitter > DBL_EPSILON) {
-  //    compute_jitter = true;
-  //    i0 = 1;
-  //    g_tot ++;
-  //    jitter_ = g_t(jitter, g_tot, 0);
-  //  } else {
-  //    jitter_ = g_t(jitter);
-  //  }
-
-  //  if (J_real) {
-  //    for (i = 0; i < J_real; ++i) a_real_(i) = g_t(a_real(i), g_tot, i0+i);
-  //    i0 += i;
-  //    for (i = 0; i < J_real; ++i) c_real_(i) = g_t(c_real(i), g_tot, i0+i);
-  //    i0 += i;
-  //  }
-  //  if (J_comp) {
-  //    for (i = 0; i < J_comp; ++i) a_comp_(i) = g_t(a_comp(i), g_tot, i0+i);
-  //    i0 += i;
-  //    for (i = 0; i < J_comp; ++i) b_comp_(i) = g_t(b_comp(i), g_tot, i0+i);
-  //    i0 += i;
-  //    for (i = 0; i < J_comp; ++i) c_comp_(i) = g_t(c_comp(i), g_tot, i0+i);
-  //    i0 += i;
-  //    for (i = 0; i < J_comp; ++i) d_comp_(i) = g_t(d_comp(i), g_tot, i0+i);
-  //  }
-
-  //  solver.compute(
-  //    jitter_, a_real_, c_real_, a_comp_, b_comp_, c_comp_, d_comp_, x, diag
-  //  );
-
-  //  g_t ll = -0.5 * (solver.dot_solve(y) + solver.log_determinant() + M_PI * log(x.rows()));
-  //  double ll_val = ll.value();
-  //  Eigen::VectorXd g;
-  //  if (compute_jitter) {
-  //    g = ll.derivatives();
-  //  } else {
-  //    g.resize(g_tot + 1);
-  //    g(0) = 0.0;
-  //    g.tail(g_tot) = ll.derivatives();
-  //  }
-
-  //  auto result = py::array_t<double>(g.size());
-  //  auto buf = result.request();
-  //  double* ptr = (double *) buf.ptr;
-  //  for (int i = 0; i < g.rows(); ++i) ptr[i] = g(i);
-
-  //  return std::make_tuple(ll_val, result);
-  //});
-
+#ifdef USE_STAN_MATH
   cholesky_solver.def("grad_log_likelihood", [](
       PicklableCholeskySolver& nothing,
       double jitter,
@@ -342,6 +271,86 @@ A thin wrapper around the C++ CholeskySolver class
 
     return std::make_tuple(ll_val, result);
   });
+
+#else
+
+  cholesky_solver.def("grad_log_likelihood", [](
+      PicklableCholeskySolver& nothing,
+      double jitter,
+      const vector_t& a_real,
+      const vector_t& c_real,
+      const vector_t& a_comp,
+      const vector_t& b_comp,
+      const vector_t& c_comp,
+      const vector_t& d_comp,
+      const vector_t& x,
+      const vector_t& y,
+      const vector_t& diag
+  ) {
+
+    typedef Eigen::AutoDiffScalar<Eigen::VectorXd> g_t;
+    typedef Eigen::Matrix<g_t, Eigen::Dynamic, 1> v_t;
+
+    int J_real = a_real.rows();
+    int J_comp = a_comp.rows();
+    int g_tot = 2 * J_real + 4 * J_comp;
+
+    celerite::solver::CholeskySolver<g_t> solver;
+    v_t a_real_(J_real), c_real_(J_real),
+        a_comp_(J_comp), b_comp_(J_comp), c_comp_(J_comp), d_comp_(J_comp);
+
+    bool compute_jitter = false;
+    int i0 = 0, i = 0;
+    g_t jitter_ = g_t(jitter);
+    if (jitter > DBL_EPSILON) {
+      compute_jitter = true;
+      i0 = 1;
+      g_tot ++;
+      jitter_ = g_t(jitter, g_tot, 0);
+    } else {
+      jitter_ = g_t(jitter);
+    }
+
+    if (J_real) {
+      for (i = 0; i < J_real; ++i) a_real_(i) = g_t(a_real(i), g_tot, i0+i);
+      i0 += i;
+      for (i = 0; i < J_real; ++i) c_real_(i) = g_t(c_real(i), g_tot, i0+i);
+      i0 += i;
+    }
+    if (J_comp) {
+      for (i = 0; i < J_comp; ++i) a_comp_(i) = g_t(a_comp(i), g_tot, i0+i);
+      i0 += i;
+      for (i = 0; i < J_comp; ++i) b_comp_(i) = g_t(b_comp(i), g_tot, i0+i);
+      i0 += i;
+      for (i = 0; i < J_comp; ++i) c_comp_(i) = g_t(c_comp(i), g_tot, i0+i);
+      i0 += i;
+      for (i = 0; i < J_comp; ++i) d_comp_(i) = g_t(d_comp(i), g_tot, i0+i);
+    }
+
+    solver.compute(
+      jitter_, a_real_, c_real_, a_comp_, b_comp_, c_comp_, d_comp_, x, diag
+    );
+
+    g_t ll = -0.5 * (solver.dot_solve(y) + solver.log_determinant() + M_PI * log(x.rows()));
+    double ll_val = ll.value();
+    Eigen::VectorXd g;
+    if (compute_jitter) {
+      g = ll.derivatives();
+    } else {
+      g.resize(g_tot + 1);
+      g(0) = 0.0;
+      g.tail(g_tot) = ll.derivatives();
+    }
+
+    auto result = py::array_t<double>(g.size());
+    auto buf = result.request();
+    double* ptr = (double *) buf.ptr;
+    for (int i = 0; i < g.rows(); ++i) ptr[i] = g(i);
+
+    return std::make_tuple(ll_val, result);
+  });
+
+#endif
 
   cholesky_solver.def("compute", [](PicklableCholeskySolver& solver,
       double jitter,
