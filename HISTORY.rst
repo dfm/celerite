@@ -1,5 +1,12 @@
 .. :changelog:
 
+0.2.0 (upcoming)
+++++++++++++++++
+
+- Switched to faster Cholesky factorization.
+- Added O(N) simulation method using Cholesky factor.
+- Implemented gradients using automatic differentiation.
+
 0.1.3 (2017-03-27)
 ++++++++++++++++++
 
