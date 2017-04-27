@@ -2,8 +2,15 @@
 
 from __future__ import division, print_function
 
-import autograd.numpy as np
-from autograd import jacobian, elementwise_grad
+try:
+    import autograd  # NOQA
+except ImportError:
+    import numpy as np
+    HAS_AUTOGRAD = False
+else:
+    import autograd.numpy as np
+    from autograd import jacobian, elementwise_grad
+    HAS_AUTOGRAD = True
 
 from itertools import chain, product
 
@@ -188,6 +195,9 @@ class Term(Model):
         return self.get_jitter(self.get_parameter_vector(include_frozen=True))
 
     def get_jitter_jacobian(self, include_frozen=False):
+        if not HAS_AUTOGRAD:
+            raise ImportError("'autograd' must be installed to compute "
+                              "gradients")
         jac = elementwise_grad(self.get_jitter)
         jac = jac(self.get_parameter_vector(include_frozen=True))
         if include_frozen:
@@ -195,6 +205,9 @@ class Term(Model):
         return jac[self.unfrozen_mask]
 
     def get_coeffs_jacobian(self, include_frozen=False):
+        if not HAS_AUTOGRAD:
+            raise ImportError("'autograd' must be installed to compute "
+                              "gradients")
         jac = jacobian(lambda p: np.concatenate(self.get_all_coefficients(p)))
         jac = jac(self.get_parameter_vector(include_frozen=True)).T
         if include_frozen:

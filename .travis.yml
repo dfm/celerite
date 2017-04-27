@@ -13,6 +13,7 @@ env:
     global:
         - EIGEN_VERSION=3.2.9
           TEST_LANG='python'
+          AUTOGRAD=autograd
 
 matrix:
     include:
@@ -46,6 +47,8 @@ matrix:
           env: PYTHON_VERSION=3.6 NUMPY_VERSION=1.11
         - os: linux
           env: PYTHON_VERSION=3.6 NUMPY_VERSION=1.12
+        - os: linux
+          env: PYTHON_VERSION=3.6 NUMPY_VERSION=1.12 AUTOGRAD=''
 
         # OSX
         - os: osx

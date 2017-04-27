@@ -51,6 +51,11 @@ def test_product(seed=42):
     ]
 )
 def test_jacobian(k, eps=1.34e-7):
+    if not terms.HAS_AUTOGRAD:
+        with pytest.raises(ImportError):
+            jac = k.get_coeffs_jacobian()
+        return
+
     v = k.get_parameter_vector()
     c = np.concatenate(k.coefficients)
     jac = k.get_coeffs_jacobian()
@@ -79,6 +84,11 @@ def test_jacobian(k, eps=1.34e-7):
     ]
 )
 def test_jitter_jacobian(k, eps=1.34e-7):
+    if not terms.HAS_AUTOGRAD:
+        with pytest.raises(ImportError):
+            jac = k.get_jitter_jacobian()
+        return
+
     v = k.get_parameter_vector()
     jac = k.get_jitter_jacobian()
     assert len(jac) == len(v)

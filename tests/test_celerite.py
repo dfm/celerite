@@ -342,6 +342,13 @@ def test_grad_log_likelihood(kernel, seed=42, eps=1.34e-7):
     yerr = np.random.uniform(0.1, 0.5, len(x))
     y = np.sin(x)
 
+    if not terms.HAS_AUTOGRAD:
+        gp = GP(kernel)
+        gp.compute(x, yerr)
+        with pytest.raises(ImportError):
+            _, grad = gp.grad_log_likelihood(y)
+        return
+
     for fit_mean in [True, False]:
         gp = GP(kernel, fit_mean=fit_mean)
         gp.compute(x, yerr)
