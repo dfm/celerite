@@ -48,7 +48,7 @@ class build_ext(_build_ext):
     }
 
     if sys.platform == 'darwin':
-        c_opts['unix'] += ['-stdlib=libc++', '-mmacosx-version-min=10.7']
+        c_opts['unix'] += ["-mmacosx-version-min=10.7"]
 
     def build_extensions(self):
         # Add the pybind11 include directory
@@ -67,7 +67,7 @@ class build_ext(_build_ext):
             opts.append('-DVERSION_INFO="{0:s}"'
                         .format(self.distribution.get_version()))
             opts.append(cpp_flag(self.compiler))
-            for flag in ["-fvisibility=hidden",
+            for flag in ["-stdlib=libc++", "-fvisibility=hidden",
                          "-Wno-unused-function", "-Wno-uninitialized",
                          "-Wno-unused-local-typedefs"]:
                 if has_flag(self.compiler, flag):

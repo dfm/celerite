@@ -50,7 +50,7 @@ void compute (
   X_.resize(J, N);
   D_.resize(N);
 
-  if (J < 32) {
+  if (J <= 32) {
 
     // We unroll the loops for the smallest models for speed.
     T a_sum = a_real.sum() + a_comp.sum() + jitter, value;
