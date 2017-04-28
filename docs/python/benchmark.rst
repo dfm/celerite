@@ -29,3 +29,8 @@ legend.
 **Example 2**: On Linux with Eigen 3.3.3, pybind11 2.0.1, and NumPy 1.12.0.
 
 .. image:: benchmark_linux.png
+
+**Example 3**: For comparison, a CARMA solver using a Kalman filter.
+On Linux with Eigen 3.3.3, pybind11 2.0.1, and NumPy 1.12.0.
+
+.. image:: benchmark_linux_carma.png
