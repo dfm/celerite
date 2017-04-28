@@ -2,6 +2,7 @@
 
 from __future__ import division, print_function
 
+import os
 import sys
 import tempfile
 
@@ -78,6 +79,10 @@ class build_ext(_build_ext):
 
         for ext in self.extensions:
             ext.extra_compile_args = opts
+
+        # Building the autodiff extensions takes too long on RTD
+        if os.environ.get("READTHEDOCS", None) == "True":
+            opts.append("-DNO_AUTODIFF")
 
         # Run the standard build procedure.
         _build_ext.build_extensions(self)

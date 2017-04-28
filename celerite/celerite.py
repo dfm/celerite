@@ -182,6 +182,10 @@ class GP(ModelSet):
             ValueError: For mismatched dimensions.
 
         """
+        if not solver.has_autodiff():
+            raise RuntimeError("celerite must be compiled with autodiff "
+                               "support to use the gradient methods")
+
         if not self.kernel.vector_size:
             return self.log_likelihood(y), np.empty(0)
 
