@@ -61,6 +61,13 @@ class build_ext(_build_ext):
         for ext in self.extensions:
             ext.include_dirs += include_dirs
 
+        # Building on RTDs takes a bit of special care
+        if os.environ.get("READTHEDOCS", None) == "True":
+            for ext in self.extensions:
+                ext.extra_compile_args = ["-std=c++14", "-stdlib=libc++"]
+            _build_ext.build_extensions(self)
+            return
+
         # Set up pybind11
         ct = self.compiler.compiler_type
         opts = self.c_opts.get(ct, [])
@@ -79,10 +86,6 @@ class build_ext(_build_ext):
 
         for ext in self.extensions:
             ext.extra_compile_args = opts
-
-        # Building the autodiff extensions takes too long on RTD
-        if os.environ.get("READTHEDOCS", None) == "True":
-            opts.append("-DNO_AUTODIFF")
 
         # Run the standard build procedure.
         _build_ext.build_extensions(self)

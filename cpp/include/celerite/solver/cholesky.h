@@ -27,6 +27,19 @@ public:
 CholeskySolver () : Solver<T>() {};
 ~CholeskySolver () {};
 
+/// Compute the Cholesky factorization of the matrix
+///
+/// @param jitter The jitter of the kernel.
+/// @param a_real The coefficients of the real terms.
+/// @param c_real The exponents of the real terms.
+/// @param a_comp The real part of the coefficients of the complex terms.
+/// @param b_comp The imaginary part of the of the complex terms.
+/// @param c_comp The real part of the exponents of the complex terms.
+/// @param d_comp The imaginary part of the exponents of the complex terms.
+/// @param x The _sorted_ array of input coordinates.
+/// @param diag An array that should be added to the diagonal of the matrix.
+///             This often corresponds to measurement uncertainties and in that case,
+///             ``diag`` should be the measurement _variance_ (i.e. sigma^2).
 void compute (
   const T& jitter,
   const vector_t& a_real,
@@ -183,6 +196,12 @@ void compute (
   this->computed_ = true;
 };
 
+/// Solve the system ``b^T . A^-1 . b``
+///
+/// A previous call to `solver::CholeskySolver::compute` defines a matrix
+/// ``A`` and this method solves ``b^T . A^-1 . b`` for a vector ``b``.
+///
+/// @param b The right hand side of the linear system.
 matrix_t solve (const Eigen::MatrixXd& b) const {
   if (b.rows() != this->N_) throw dimension_mismatch();
   if (!(this->computed_)) throw compute_exception();
@@ -242,6 +261,12 @@ matrix_t solve (const Eigen::MatrixXd& b) const {
   return x;
 };
 
+/// Compute the dot product of the square root of a celerite matrix
+///
+/// This method computes ``L.z`` where ``A = L.L^T`` is the matrix defined in
+/// ``compute``.
+///
+/// @param z The matrix z from above.
 matrix_t dot_L (const Eigen::MatrixXd& z) const {
   if (z.rows() != this->N_) throw dimension_mismatch();
   if (!(this->computed_)) throw compute_exception();
@@ -266,6 +291,17 @@ matrix_t dot_L (const Eigen::MatrixXd& z) const {
   return y;
 };
 
+/// Compute the dot product of a celerite matrix with another matrix
+///
+/// @param jitter The jitter of the kernel.
+/// @param a_real The coefficients of the real terms.
+/// @param c_real The exponents of the real terms.
+/// @param a_comp The real part of the coefficients of the complex terms.
+/// @param b_comp The imaginary part of the of the complex terms.
+/// @param c_comp The real part of the exponents of the complex terms.
+/// @param d_comp The imaginary part of the exponents of the complex terms.
+/// @param x The _sorted_ array of input coordinates.
+/// @param z The matrix that will be dotted with the celerite matrix.
 matrix_t dot (
   const T& jitter,
   const vector_t& a_real,

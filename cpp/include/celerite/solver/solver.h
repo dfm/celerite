@@ -28,6 +28,7 @@ virtual ~Solver () {};
 ///
 /// This method is overloaded by subclasses to provide the specific implementation.
 ///
+/// @param jitter The jitter of the kernel.
 /// @param a_real The coefficients of the real terms.
 /// @param c_real The exponents of the real terms.
 /// @param a_comp The real part of the coefficients of the complex terms.
@@ -38,8 +39,6 @@ virtual ~Solver () {};
 /// @param diag An array that should be added to the diagonal of the matrix.
 ///             This often corresponds to measurement uncertainties and in that case,
 ///             ``diag`` should be the measurement _variance_ (i.e. sigma^2).
-///
-/// @return ``0`` on success. ``1`` for mismatched dimensions.
 virtual void compute (
   const T& jitter,
   const vector_t& a_real,
@@ -81,17 +80,16 @@ bool computed () const { return computed_; };
 
 /// Compute the matrix and factorize for purely real alphas
 ///
-/// @param alpha_real The coefficients of the real terms.
-/// @param beta_real The exponents of the real terms.
-/// @param alpha_complex_real The real part of the coefficients of the complex terms.
-/// @param beta_complex_real The real part of the exponents of the complex terms.
-/// @param beta_complex_imag The imaginary part of the exponents of the complex terms.
+/// @param jitter The jitter of the kernel.
+/// @param a_real The coefficients of the real terms.
+/// @param c_real The exponents of the real terms.
+/// @param a_comp The real part of the coefficients of the complex terms.
+/// @param c_comp The real part of the exponents of the complex terms.
+/// @param d_comp The imaginary part of the exponents of the complex terms.
 /// @param x The _sorted_ array of input coordinates.
 /// @param diag An array that should be added to the diagonal of the matrix.
 ///             This often corresponds to measurement uncertainties and in that case,
 ///             ``diag`` should be the measurement _variance_ (i.e. sigma^2).
-///
-/// @return ``0`` on success. ``1`` for mismatched dimensions.
 void compute (
   const T& jitter,
   const vector_t& a_real,
@@ -110,14 +108,13 @@ void compute (
 
 /// Compute the matrix and factorize for a set of purely real terms
 ///
+/// @param jitter The jitter of the kernel.
 /// @param a_real The coefficients of the real terms.
 /// @param c_real The exponents of the real terms.
 /// @param x The _sorted_ array of input coordinates.
 /// @param diag An array that should be added to the diagonal of the matrix.
 ///             This often corresponds to measurement uncertainties and in that case,
 ///             ``diag`` should be the measurement _variance_ (i.e. sigma^2).
-///
-/// @return ``0`` on success. ``1`` for mismatched dimensions.
 void compute (
   const T& jitter,
   const vector_t& a_real,
@@ -131,6 +128,7 @@ void compute (
 
 /// Compute the matrix and factorize for purely complex terms with real alphas
 ///
+/// @param jitter The jitter of the kernel.
 /// @param a_comp The real part of the coefficients of the complex terms.
 /// @param c_comp The real part of the exponents of the complex terms.
 /// @param d_comp The imaginary part of the exponents of the complex terms.
@@ -138,8 +136,6 @@ void compute (
 /// @param diag An array that should be added to the diagonal of the matrix.
 ///             This often corresponds to measurement uncertainties and in that case,
 ///             ``diag`` should be the measurement _variance_ (i.e. sigma^2).
-///
-/// @return ``0`` on success. ``1`` for mismatched dimensions.
 void compute (
   const T& jitter,
   const vector_t& a_comp,
@@ -157,6 +153,7 @@ void compute (
 
 /// Compute the matrix and factorize for purely complex terms
 ///
+/// @param jitter The jitter of the kernel.
 /// @param a_comp The real part of the coefficients of the complex terms.
 /// @param b_comp The imaginary part of the coefficients of the complex terms.
 /// @param c_comp The real part of the exponents of the complex terms.
@@ -165,8 +162,6 @@ void compute (
 /// @param diag An array that should be added to the diagonal of the matrix.
 ///             This often corresponds to measurement uncertainties and in that case,
 ///             ``diag`` should be the measurement _variance_ (i.e. sigma^2).
-///
-/// @return ``0`` on success. ``1`` for mismatched dimensions.
 void compute (
   const T& jitter,
   const vector_t& a_comp,
