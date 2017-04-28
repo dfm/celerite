@@ -65,8 +65,7 @@ class build_ext(_build_ext):
         if os.environ.get("READTHEDOCS", None) == "True":
             for ext in self.extensions:
                 ext.include_dirs = [
-                    os.path.join(os.environ["CONDA_PREFIX"], "include",
-                                 "eigen3")
+                    "/home/docs/checkouts/readthedocs.org/user_builds/celerite/conda/latest/include/eigen3"
                 ] + ext.include_dirs
                 ext.extra_compile_args = ["-std=c++14", "-O0"]
             _build_ext.build_extensions(self)
