@@ -1,18 +1,15 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/eigen.h>
 
-#include <iostream>
-
-#include <cmath>
-#include <cfloat>
-#include <vector>
-
 #include <Eigen/Core>
 
 #ifndef NO_AUTODIFF
+#include <cmath>
 #ifdef USE_STAN_MATH
+#include <vector>
 #include <stan/math.hpp>
 #else
+#include <cfloat>
 #include <unsupported/Eigen/AutoDiff>
 #endif
 #endif
