@@ -27,10 +27,7 @@ if os.name == "posix":
 
 compile_args["include_dirs"] = [
     localincl,
-    os.path.join("cpp", "lib", "boost_1.62.0"),
-    os.path.join("cpp", "lib", "cvodes_2.9.0"),
     os.path.join("cpp", "lib", "eigen_3.3.3"),
-    os.path.join("cpp", "lib", "math_2.15.0"),
     numpy.get_include(),
 ]
 
@@ -61,13 +58,11 @@ setup(
     ext_modules=[ext],
     description="Scalable 1D Gaussian Processes",
     long_description=open("README.rst").read(),
-    package_data={"": ["README.rst", "LICENSE",
-                       os.path.join(localincl, "*.h"),
-                       os.path.join(localincl, "*", "*.h")]},
+    package_data={"": ["README.rst", "LICENSE"]},
     include_package_data=True,
     cmdclass=dict(build_ext=build_ext),
     classifiers=[
-        # "Development Status :: 5 - Production/Stable",
+        "Development Status :: 5 - Production/Stable",
         "Intended Audience :: Developers",
         "Intended Audience :: Science/Research",
         "License :: OSI Approved :: MIT License",
