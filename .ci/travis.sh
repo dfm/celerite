@@ -54,18 +54,20 @@ conda install -c conda-forge numpy=$NUMPY_VERSION setuptools pytest pybind11 $AU
 
 if [[ $AUTODIFF_LIBRARY == stan ]]
 then
+  echo "hi"
   mkdir -p stan
   cd stan
-  wget --quiet "https://github.com/stan-dev/math/archive/v2.15.0.tar.gz"
+  wget "https://github.com/stan-dev/math/archive/v2.15.0.tar.gz"
   tar -xf v2.15.0.tar.gz --strip-components 1
   cd ..
 
   export BUILD_ARGS="-Istan/stan -Istan/lib/boost_1.62.0 -Istan/lib/cvodes_2.9.0/include -DUSE_STAN_MATH"
+  echo "wtf"
 fi
 
 # Build the extension
 if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
-  python setup.py build_ext $BUILD_ARGS install
+  python setup.py build_ext "$BUILD_ARGS" install
 else
-  CXX=g++-4.8 CC=gcc-4.8 python setup.py build_ext $BUILD_ARGS install
+  CXX=g++-4.8 CC=gcc-4.8 python setup.py build_ext "$BUILD_ARGS" install
 fi
