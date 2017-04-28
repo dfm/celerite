@@ -64,7 +64,7 @@ class build_ext(_build_ext):
         # Building on RTDs takes a bit of special care
         if os.environ.get("READTHEDOCS", None) == "True":
             for ext in self.extensions:
-                ext.extra_compile_args = ["-std=c++14", "-stdlib=libc++"]
+                ext.extra_compile_args = ["-std=c++14"]
             _build_ext.build_extensions(self)
             return
 
