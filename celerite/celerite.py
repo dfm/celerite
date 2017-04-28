@@ -412,4 +412,4 @@ class GP(ModelSet):
         n = self.solver.dot_L(n)
         if size is None:
             return self.mean.get_value(self._t) + n[:, 0]
-        return self.mean.get_value(self._t)[:, None] + n
+        return self.mean.get_value(self._t)[None, :] + n.T

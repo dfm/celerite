@@ -39,8 +39,9 @@ FFT and Lomb-Scargle estimators of the power spectrum.
         
         # Simulate K datasets with N points
         t = np.linspace(0, 10, N)
+        gp.compute(t)
         np.random.seed(42)
-        y = gp.sample(t, size=K)
+        y = gp.sample(size=K)
         
         # Compute the FFT based power spectrum estimates
         f = np.fft.rfftfreq(len(t), t[1] - t[0])
@@ -84,11 +85,17 @@ FFT and Lomb-Scargle estimators of the power spectrum.
     simulate_and_compute_psds(1000)
 
 
+.. parsed-literal::
 
-.. image:: normalization_files/normalization_2_0.png
+    (1500, 500)
+    (1500, 1000)
 
 
 
 .. image:: normalization_files/normalization_2_1.png
+
+
+
+.. image:: normalization_files/normalization_2_2.png
 
 

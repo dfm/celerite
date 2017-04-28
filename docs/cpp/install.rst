@@ -32,16 +32,3 @@ The unit tests can be run using `CMake <https://cmake.org/>`_. Navigate to the
     cmake .
     make
     make test
-
-
-LAPACK Support
---------------
-
-If you compile with the ``-DWITH_LAPACK`` macro and link to an appropriate
-BLAS/LAPACK implementation, celerite will be able to use LAPACK to solve the
-extended band system. This can yield performance gains for "wide" problems. To
-compile the examples with this support, run:
-
-.. code-block:: bash
-
-    cmake . -DLAPACK=ON

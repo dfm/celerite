@@ -64,9 +64,6 @@ class build_ext(_build_ext):
         # Building on RTDs takes a bit of special care
         if os.environ.get("READTHEDOCS", None) == "True":
             for ext in self.extensions:
-                # ext.include_dirs = [
-                #     "/home/docs/checkouts/readthedocs.org/user_builds/celerite/conda/latest/include/eigen3"
-                # ] + ext.include_dirs
                 ext.extra_compile_args = ["-std=c++14", "-O0", "-DNO_AUTODIFF"]
             _build_ext.build_extensions(self)
             return

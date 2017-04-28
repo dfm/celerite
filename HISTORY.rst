@@ -6,6 +6,8 @@
 - Switched to faster Cholesky factorization.
 - Added O(N) simulation method using Cholesky factor.
 - Implemented gradients using automatic differentiation.
+- Changed implementation of white noise to ``JitterTerm`` instead of
+  ``log_white_noise`` parameter.
 
 0.1.3 (2017-03-27)
 ++++++++++++++++++
