@@ -330,21 +330,21 @@ class GP(ModelSet):
 
         # Compute the predictive mean.
         resid = y - self.mean.get_value(self._t)
-        alpha = self.solver.solve(resid).flatten()
 
         if t is None:
+            alpha = self.solver.solve(resid).flatten()
             alpha = resid - (self._yerr**2 + self.kernel.jitter) * alpha
         else:
-            Kxs = self.get_matrix(xs, self._t)
-            alpha = np.dot(Kxs, alpha)
+            # Kxs = self.get_matrix(xs, self._t)
+            # alpha = np.dot(Kxs, alpha)
+            alpha = self.solver.predict(resid, xs)
 
         mu = self.mean.get_value(xs) + alpha
         if not (return_var or return_cov):
             return mu
 
         # Predictive variance.
-        if t is None:
-            Kxs = self.get_matrix(xs, self._t)
+        Kxs = self.get_matrix(xs, self._t)
         KxsT = np.ascontiguousarray(Kxs.T, dtype=np.float64)
         if return_var:
             var = -np.sum(KxsT*self.apply_inverse(KxsT), axis=0)

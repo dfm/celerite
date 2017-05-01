@@ -591,6 +591,40 @@ Raises:
 
 )delim");
 
+  cholesky_solver.def("predict", [](PicklableCholeskySolver& solver,
+      const vector_t& y,
+      const vector_t& x) {
+    return solver.predict(y, x);
+  },
+  R"delim(
+Compute the dot product of a ``celerite`` matrix and another arbitrary matrix
+
+This method computes ``A.b`` where ``A`` is defined by the parameters and
+``b`` is an arbitrary matrix of the correct shape.
+
+Args:
+    jitter (float): The jitter of the kernel.
+    a_real (array[j_real]): The coefficients of the real terms.
+    c_real (array[j_real]): The exponents of the real terms.
+    a_comp (array[j_complex]): The real part of the coefficients of the
+        complex terms.
+    b_comp (array[j_complex]): The imaginary part of the coefficients of
+        the complex terms.
+    c_comp (array[j_complex]): The real part of the exponents of the
+        complex terms.
+    d_comp (array[j_complex]): The imaginary part of the exponents of the
+        complex terms.
+    x (array[n]): The _sorted_ array of input coordinates.
+    b (array[n] or array[n, neq]): The matrix ``b`` described above.
+
+Returns:
+    array[n] or array[n, neq]: The dot product ``A.b`` as described above.
+
+Raises:
+    ValueError: For mismatched dimensions.
+
+)delim");
+
   cholesky_solver.def("log_determinant", [](PicklableCholeskySolver& solver) {
     return solver.log_determinant();
   },

@@ -372,17 +372,30 @@ def test_grad_log_likelihood(kernel, seed=42, eps=1.34e-7):
 
 def test_predict(seed=42):
     np.random.seed(seed)
-    x = np.sort(np.random.rand(10))
-    yerr = np.random.uniform(0.1, 0.5, len(x))
-    y = np.sin(x)
+    x = np.linspace(1, 59, 300)
+    t = np.sort(np.random.uniform(10, 50, 100))
+    yerr = np.random.uniform(0.1, 0.5, len(t))
+    y = np.sin(t)
 
     kernel = terms.RealTerm(0.1, 0.5)
-    for term in [(0.6, 0.7, 1.0)]:
+    for term in [(0.6, 0.7, 1.0), (0.1, 0.05, 0.5, -0.1)]:
         kernel += terms.ComplexTerm(*term)
     gp = GP(kernel)
-    gp.compute(x, yerr)
 
-    mu0, cov0 = gp.predict(y, x)
+    gp.compute(t, yerr)
+    K = gp.get_matrix(include_diagonal=True)
+    Ks = gp.get_matrix(x, t)
+    true_mu = np.dot(Ks, np.linalg.solve(K, y))
+    true_cov = gp.get_matrix(x, x) - np.dot(Ks, np.linalg.solve(K, Ks.T))
+
+    mu, cov = gp.predict(y, x)
+
+    _, var = gp.predict(y, x, return_var=True)
+    assert np.allclose(mu, true_mu)
+    assert np.allclose(cov, true_cov)
+    assert np.allclose(var, np.diag(true_cov))
+
+    mu0, cov0 = gp.predict(y, t)
     mu, cov = gp.predict(y)
     assert np.allclose(mu0, mu)
     assert np.allclose(cov0, cov)

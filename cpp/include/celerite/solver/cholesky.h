@@ -66,6 +66,16 @@ void compute (
   u_.resize(J, N-1);
   X_.resize(J, N);
 
+  // Save the inputs. We need these for the 'predict' method.
+  a_real_ = a_real;
+  c_real_ = c_real;
+  a_comp_ = a_comp;
+  b_comp_ = b_comp;
+  c_comp_ = c_comp;
+  d_comp_ = d_comp;
+  t_ = x;
+
+  // Initialize the diagonal.
   D_ = diag.array() + a_real.sum() + a_comp.sum() + jitter;
 
   if (J <= CHOLTURN) {
@@ -373,12 +383,120 @@ matrix_t dot (
   return y;
 };
 
+/// Compute the dot product of the square root of a celerite matrix
+///
+/// This method computes ``L.z`` where ``A = L.L^T`` is the matrix defined in
+/// ``compute``.
+///
+/// @param z The matrix z from above.
+vector_t predict (const Eigen::VectorXd& y, const Eigen::VectorXd& x) const {
+  if (y.rows() != this->N_) throw dimension_mismatch();
+  if (!(this->computed_)) throw compute_exception();
+
+  T tmp, cd, sd, pm, alphan;
+  double tref, dt, tn, xm;
+  int m, n, j, k, N = y.rows(), M = x.rows(), J = J_,
+      J_real = a_real_.rows(), J_comp = a_comp_.rows();
+
+  vector_t alpha = this->solve(y),
+           pred(M);
+  pred.setZero();
+  Eigen::Array<T, Eigen::Dynamic, 1> Q(J);
+  Q.setZero();
+
+  // Forward pass
+  m = 0;
+  while (m < M && x(m) <= t_(0)) ++m;
+  for (n = 0; n < N; ++n) {
+    alphan = alpha(n);
+    if (n < N-1) tref = t_(n+1);
+    else tref = t_(N-1);
+
+    tn = t_(n);
+    dt = tref - tn;
+    for (j = 0; j < J_real; ++j) {
+      Q(j) += alphan;
+      Q(j) *= exp(-c_real_(j)*dt);
+    }
+    for (j = 0, k = J_real; j < J_comp; ++j, k+=2) {
+      tmp = exp(-c_comp_(j)*dt);
+      Q(k)   += alphan * cos(d_comp_(j)*tn);
+      Q(k)   *= tmp;
+      Q(k+1) += alphan * sin(d_comp_(j)*tn);
+      Q(k+1) *= tmp;
+    }
+
+    while (m < M && (n == N-1 || x(m) <= tref)) {
+      xm = x(m);
+      dt = xm - tref;
+      pm = T(0.0);
+      for (j = 0; j < J_real; ++j) {
+        pm += a_real_(j)*exp(-c_real_(j)*dt) * Q(j);
+      }
+      for (j = 0, k = J_real; j < J_comp; ++j, k+=2) {
+        cd = cos(d_comp_(j)*xm);
+        sd = sin(d_comp_(j)*xm);
+        tmp = exp(-c_comp_(j)*dt);
+        pm += (a_comp_(j)*cd + b_comp_(j)*sd)*tmp * Q(k);
+        pm += (a_comp_(j)*sd - b_comp_(j)*cd)*tmp * Q(k+1);
+      }
+      pred(m) = pm;
+      ++m;
+    }
+  }
+
+  // Backward pass
+  m = M - 1;
+  while (m >= 0 && x(m) > t_(N-1)) --m;
+  Q.setZero();
+  for (n = N-1; n >= 0; --n) {
+    alphan = alpha(n);
+    if (n > 0) tref = t_(n-1);
+    else tref = t_(0);
+    tn = t_(n);
+    dt = tn - tref;
+
+    for (j = 0; j < J_real; ++j) {
+      Q(j) += alphan*a_real_(j);
+      Q(j) *= exp(-c_real_(j)*dt);
+    }
+    for (j = 0, k = J_real; j < J_comp; ++j, k+=2) {
+      cd = cos(d_comp_(j)*tn);
+      sd = sin(d_comp_(j)*tn);
+      tmp = exp(-c_comp_(j)*dt);
+      Q(k)   += alphan*(a_comp_(j)*cd + b_comp_(j)*sd);
+      Q(k)   *= tmp;
+      Q(k+1) += alphan*(a_comp_(j)*sd - b_comp_(j)*cd);
+      Q(k+1) *= tmp;
+    }
+
+    while (m >= 0 && (n == 0 || x(m) > tref)) {
+      xm = x(m);
+      dt = tref-xm;
+      pm = T(0.0);
+      for (j = 0; j < J_real; ++j) {
+        pm += exp(-c_real_(j)*dt) * Q(j);
+      }
+      for (j = 0, k = J_real; j < J_comp; ++j, k+=2) {
+        tmp = exp(-c_comp_(j)*dt);
+        pm += cos(d_comp_(j)*xm)*tmp * Q(k);
+        pm += sin(d_comp_(j)*xm)*tmp * Q(k+1);
+      }
+      pred(m) += pm;
+      --m;
+    }
+  }
+
+  return pred;
+};
+
 using Solver<T>::compute;
 
 protected:
 int J_;
 matrix_t u_, phi_, X_;
-vector_t D_;
+vector_t D_, a_real_, c_real_, a_comp_, b_comp_, c_comp_, d_comp_;
+Eigen::VectorXd t_;
 
 };
 
