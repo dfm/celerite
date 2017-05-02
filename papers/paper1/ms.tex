@@ -482,326 +482,123 @@ Therefore, the method described in the following section can be used to
 perform scalable inference on large datasets for any model, where the kernel
 function is a sum or product of \celeriteterm\ terms.
 
-\section{Implementation \& performance}
+\section{Semi-separable matrix factorization}
 
-\citet{Rybicki:1995} demonstrated that the inverse of a matrix $K$, with
-elements given by \eq{kernel-simple}, could be computed
-efficiently by taking advantage of the structure of this covariance function.
-\citet{Ambikasaran:2015} generalized this computation to apply to the full
-mixture of $J$ terms in \eq{celerite-kernel-complex} and derived an equally
-efficient method for computing the determinant of $K$.
+\subsection{Cholesky factorization}
 
-\subsection{An example}
-
-To provide some insight for this method, we follow
-\citet{Ambikasaran:2015} and start by working through a simple example.
-In this case, we assume that we have three data points
-$\{y_1,\,y_2,\,y_3\}$ observed at times $\{t_1,\,t_2,\,t_3\}$ with measurement
-variances $\{{\sigma_1}^2,\,{\sigma_2}^2,\,{\sigma_3}^2\}$ and we would
-like to compute the likelihood of these data under a GP model with the
-covariance function
+The relationship between the \celeriteterm\ model and semi-separable linear
+algebra was first recognized by Ambikasaran \citep{Ambikasaran:2015}.
+A rank-$R$ semi-separable matrix is a matrix $K$ where the elements can be
+written as
 \begin{eqnarray}
-k(\tau_{nm}) = \sigma_n^2\,\delta_{nm} + a\,\exp(-c\,\tau_{nm})\quad.
+K_{n,m} = \left\{\begin{array}{ll}
+    \sum_{r=1}^R U_{n,r}\,V_{m,r} & \mathrm{if}\,m<n \\
+    A_{n,n} & \mathrm{if}\,m=n \\
+    \sum_{r=1}^R U_{m,r}\,V_{n,r} & \mathrm{otherwise}
+\end{array}\right.
 \end{eqnarray}
-This is the result of setting $J=1$, $b=0$, and $d=0$ in
-\eq{celerite-kernel-complex} and it is the model studied by
-\citet{Rybicki:1995}.
-To demonstrate that the likelihood of this model can be computed in
-$\mathcal{O}(N)$, we write out the full system of
-equations that must be solved to apply the inverse of $K$ and compute
-the first term of \eq{gp-likelihood}.
-In matrix notation, this is
-\begin{eqnarray}\eqlabel{impl-matrix}
-K\,\bvec{z} &=& \bvec{y}, \\
-\begin{pmatrix}
-    a+{\sigma_1}^2 & a\,e^{-c\,\tau_{2,1}} & a\,e^{-c\,\tau_{3,1}}\\
-    a\,e^{-c\,\tau_{2,1}} & a+{\sigma_2}^2 & a\,e^{-c\,\tau_{3,2}}\\
-    a\,e^{-c\,\tau_{3,1}} & a\,e^{-c\,\tau_{3,2}} & a+{\sigma_3}^2
-\end{pmatrix}\,
-\begin{pmatrix}
-    z_1 \\ z_2 \\ z_3
-\end{pmatrix} &=&
-\begin{pmatrix}
-    y_1 \\ y_2 \\ y_3
-\end{pmatrix}
+for some $N \times R$-dimensional matrices $U$ and $V$, and an $N \times
+N$-dimensional diagonal matrix $A$.
+This definition can be equivalently written as
+\begin{eqnarray}\eqlabel{semi-sep}
+K = A + \mathrm{tril}(U\,V^\T) + \mathrm{triu}(V\,U^\T)
 \end{eqnarray}
-where our goal is to solve for the unknown vector \bvec{z} for a given matrix
-$K$ and vector \bvec{y}.
-In \eq{impl-matrix}, we have assumed that the mean function is zero but a
-non-zero mean could be included by replacing \bvec{y} by
-$\bvec{r}_\bvec{\theta}$ as defined in \sect{gps}.
-Now, if we introduce the variables
+where the $\mathrm{tril}$ function extracts the strict lower triangular
+component of its argument and $\mathrm{triu}$ is the equivalent strict upper
+triangular operation.
+For the \celeriteterm\ model described in the previous section, the rank of
+the semi-separable matrix is $R = 2\,J$ and the components of the relevant
+matrices are
 \begin{eqnarray}
-    g_n = e^{-c\,\tau_{n+1,n}}\,g_{n-1} + e^{-c\,\tau_{n+1,n}}\,z_{n}
+U_{n,2\,j} &=& a_j\,e^{-c_j\,t_n}\,\cos(d_j\,t_n) +
+    b_j\,e^{-c_j\,t_n}\,\sin(d_j\,t_n) \\
+U_{n,2\,j+1} &=& a_j\,e^{-c_j\,t_n}\,\sin(d_j\,t_n) -
+    b_j\,e^{-c_j\,t_n}\,\cos(d_j\,t_n) \\
+V_{m,2\,j} &=& e^{c_j\,t_m}\,\cos(d_j\,t_m) \\
+V_{m,2\,j+1} &=& e^{c_j\,t_m}\,\sin(d_j\,t_m) \\
+A_{n,n} &=& \sigma_n^2 + \sum_{j=1}^J a_j \quad.
 \end{eqnarray}
-where $g_{0} = 0$, and
-\begin{eqnarray}\eqlabel{algo-first}
-    u_n = e^{-c\,\tau_{n+2,n+1}}\,u_{n+1} + a\,z_{n+1}
-\end{eqnarray}
-where $u_{N} = 0$,
-the system of equations can be rewritten as
+
+To compute the marginalized likelihood defined in \eq{gp-likelihood}, we must
+compute the log-determinant of $K$ and solve linear systems of the form
+$K\,\bvec{b}=\bvec{y}$ for $\bvec{b}$, where $K$ is a rank-$2\,J$
+semi-separable matrix.
+If $K$ is positive semi-definite, these can be computed using the Cholesky
+factorization of $K$:
 \begin{eqnarray}
-(a+{\sigma_1}^2)\,z_1 + e^{-c\,\tau_{2,1}}\,u_1 &=& y_1 \\
-a\,g_1 + (a+{\sigma_2}^2)\,z_2 + e^{-c\,\tau_{3,2}}\,u_2 &=& y_2 \\
-a\,g_2 + (a+{\sigma_3}^2)\,z_3 &=& y_3 \quad. \eqlabel{algo-last}
+K = L\,D\,L^\T
 \end{eqnarray}
-Rewriting the system defined by \eq{algo-first} through \eq{algo-last}
-as a matrix equation shows the benefit that this seemingly trivial
-reformulation provides:
+where $L$ is a lower triangular matrix with unit diagonal and $D$ is a
+diagonal matrix.
+We use the ansatz that $L$ has the form
 \begin{eqnarray}
-\begin{pmatrix}
-    a+{\sigma_1}^2 & e^{-c\,\tau_{2,1}} & 0 & 0 & 0 & 0 & 0 \\
-    e^{-c\,\tau_{2,1}} & 0 & -1 & 0 & 0 & 0 & 0 \\
-    0 & -1 & 0 & a & e^{-c\,\tau_{3,2}} & 0 & 0 \\
-    0 & 0 & a & a+{\sigma_2}^2 & e^{-c\,\tau_{3,2}} & 0 & 0 \\
-    0 & 0 & e^{-c\,\tau_{3,2}} & e^{-c\,\tau_{3,2}} & 0 & -1 & 0 \\
-    0 & 0 & 0 & 0 & -1 & 0 & a \\
-    0 & 0 & 0 & 0 & 0 & a & a+{\sigma_3}^2 \\
-\end{pmatrix}\,
-\begin{pmatrix}
-    z_1 \\ u_1 \\ g_1 \\ z_2 \\ u_2 \\ g_2 \\ z_3
-\end{pmatrix} &=&
-\begin{pmatrix}
-    y_1 \\ 0 \\ 0 \\ y_2 \\ 0 \\ 0 \\ y_3
-\end{pmatrix}\nonumber
+    L = I + \mathrm{tril} (U\,X^T)
 \end{eqnarray}
-Following \citet{Ambikasaran:2015} we call this the ``extended'' system and
-rewrite \eq{impl-matrix} as
+where $I$ is the identity, $U$ is the matrix from above, and $X$ is an unknown
+$N \times 2\,J$ matrix.
+Combining this with \eq{semi-sep}, we find the equation
+\begin{eqnarray}\eqlabel{cholesky}
+A + \mathrm{tril}(U\,V^\T) + \mathrm{triu}(V\,U^\T)
+&=& \left[I + \mathrm{tril} (U\,X^T)\right]\,D\,
+    {\left[I + \mathrm{tril} (U\,X^T)\right]}^\T \\
+&=& D + \mathrm{tril}(U\,X^\T)\,D
+    + D\,\mathrm{triu}(X\,U^\T) \nonumber\\
+&& +\, \mathrm{tril}(U\,X^\T)\,D\,\mathrm{triu}(X\,U^\T) \nonumber
+\end{eqnarray}
+that we can solve for $X$.
+Setting each element on the left side of \eq{cholesky} equal to the
+corresponding element on the right side, we derive the following recursion
+relations
 \begin{eqnarray}
-    K_\mathrm{ext}\,\bvec{z}_\mathrm{ext} &=& \bvec{y}_\mathrm{ext} \quad.
+S_{n,j,k} &=& S_{n-1,j,k} + D_{n-1,n-1}\,X_{n-1,j}\,X_{n-1,k} \nonumber\\
+D_{n,n} &=& A_{n,n} -
+    \sum_{j=1}^{2\,J}\sum_{k=1}^{2\,J} U_{n,j}\,S_{n,j,k}\,U_{n,k}
+    \nonumber\\
+X_{n,j} &=& \frac{1}{D_{n,n}}\left[ V_{n,j} -
+    \sum_{k=1}^{2\,J}U_{n,k}\,S_{n,j,k} \right]
+    \eqlabel{algorithm}
 \end{eqnarray}
-Even though $K_\mathrm{ext}$ is a larger matrix than the $K$ we started
-with, it is now sparse with banded structure that can be exploited to solve
-the system efficiently.
-In particular, sparse solvers are available that can perform a
-LU-decomposition of matrices like this in $\mathcal{O}(N)$
-operations~--~instead of the $\mathcal{O}(N^3)$ that would be required in
-general~--~and we can use these algorithms to solve our system
-exactly because the target vector $\bvec{z}$ is a subset of the elements of
-$\bvec{z}_\mathrm{ext}$.
+where $S_n$ is a symmetric $2\,J \times 2\,J$ matrix and every element
+$S_{0,j,k}=0$.
+The computational cost of one iteration of the update in \eq{algorithm} is
+$\mathcal{O}(J^2)$ and this must be run $N$ times~--~once for each
+observation~--~so the total cost of this factorization scales as
+$\mathcal{O}(N\,J^2)$.
 
-In the following section we discuss this method more generally, but it's
-worth noting a few important facts that can already be seen in this example.
-First, the fundamental reason why this matrix $K$ can be solved efficiently is
-the following property of exponentials
+\subsection{Solving}
+
+After computing the Cholesky factorization of the matrix $K$, we can apply
+the inverse of $K$ and compute its log-determinant in $\mathcal{O}(N\,J)$ and
+$\mathcal{O}(N)$ operations respectively.
+The log-determinant of $K$ is given by
 \begin{eqnarray}
-    e^{-c\,(t_3 - t_2)} \, e^{-c\,(t_2 - t_1)} =
-    e^{-c\,(t_3 - t_2 + t_2 - t_1)} =
-    e^{-c\,(t_3 - t_1)}
+    \log \det K = \sum_{n=1}^N \log D_{n,n}
 \end{eqnarray}
-and it is important to note that this property does not extend to other common
-covariance functions like the ``exponential-squared'' function
+where, if $K$ is positive semi-definite, $D_{n,n}>0$ for all $n$.
+
+The inverse of $K$ can be applied using the relationship
 \begin{eqnarray}
-    k(\tau) \propto e^{-c\,\tau^2} \quad.
+\bvec{b} = K^{-1}\,\bvec{y} = {(L^\T)}^{-1}\,D^{-1}\,L^{-1}\,\bvec{y} \quad.
 \end{eqnarray}
-Second, our derivation of the extended matrix requires that the data
-points be monotonically sorted.
-This is the motivation for our previous statement that this method can only be
-applied in one dimension since neither of these properties will be satisfied
-by multidimensional inputs.
-
-\citet{Ambikasaran:2015} demonstrated two key facts that allow us to use this
-extended matrix formalism in practice.
-First, even if the covariance function is a mixture of exponentials, the
-extended matrix will still be banded with a bandwidth that scales linearly
-with the number of components, $J$.
-Second, \citet{Ambikasaran:2015} proved that the absolute value of the
-determinant of $K_\mathrm{ext}$ is equal to the absolute value of the
-determinant of $K$.
-This means we can use this extended matrix formalism to compute the
-marginalized likelihood in $\mathcal{O}(N)$ operations.
-
-\subsection{The algorithm}
-
-In this section, we generalize the method from the previous section to the
-covariance function given by \eq{celerite-kernel}.
-This derivation follows \citet{Ambikasaran:2015} but it includes explicit
-treatment of complex parameters, and their complex conjugates.
-
-In the case of the full \celeriteterm\ covariance function
-(\eqalt{celerite-kernel}), we introduce the following auxiliary variables in
-analogy to the $u_n$ and $g_n$ that we introduced in the previous section
-\begin{eqnarray}\eqlabel{full-system-first}
-\phi_{n,j} &=& e^{-c_j\,\tau_{n+1,n}}\,\cos\left(d_j\,\tau_{n+1,n}\right)\\
-\psi_{n,j} &=& -e^{-c_j\,\tau_{n+1,n}}\,\sin\left(d_j\,\tau_{n+1,n}\right)\\
-g_{n,j} &=& \phi_{n,j}\,g_{n-1,j} + \phi_{n,j}\,z_n + \psi_{n,j}\,h_{n-1,j}\\
-h_{n,j} &=& \phi_{n,j}\,h_{n-1,j} - \psi_{n,j}\,z_n - \psi_{n,j}\,g_{n-1,j}\\
-u_{n,j} &=& \phi_{n+1,j}\,u_{n+1,j} + a_j\,z_{n+1} + \psi_{n+1,j}\,v_{n+1,j}\\
-v_{n,j} &=& \phi_{n+1,j}\,v_{n+1,j} - b_j\,z_{n+1} - \psi_{n+1,j}\,u_{n+1,j}
-\end{eqnarray}
-with the boundary conditions
+First, we solve for $\bvec{z} = L^{-1}\,\bvec{y}$ using the following forward
+substitution algorithm
 \begin{eqnarray}
-    g_{0,j} = 0 \quad, \quad
-    h_{0,j} = 0 \quad, \quad
-    u_{N,j} = 0 \quad, \quad\mathrm{and}\quad
-    v_{N,j} = 0
+    f_{n,j} &=& f_{n-1,j} + X_{n-1,j}\,z_{n-1} \nonumber\\
+    z_n &=& y_n - \sum_{j=1}^{2\,J} U_{n,j}\,f_{n,j}
 \end{eqnarray}
-for all $j$.
-Using these variables and some algebra, we find that the following expression
-\begin{eqnarray}\eqlabel{full-system-last}
-\sum_{j=1}^J \left[a_j\,g_{n,j}+b_j\,h_{n,j}\right]
-+ \left[{\sigma_n}^2+\sum_{j=1}^J a_j\right]
-+ \sum_{j=1}^J \left[\phi_{n,j}\,u_{n,j}+\psi_{n,j}\,v_{n,j}\right]
-    &=& r_{\bvec{\theta},n}
-\end{eqnarray}
-is equivalent to the target matrix equation
+where $f_{0,j} = 0$ for all $j$.
+Using this result and the following backward substitution algorithm, we can
+compute $\bvec{b}$
 \begin{eqnarray}
-K\,\bvec{z} &=& \bvec{r}_\bvec{\theta}
+    f_{n,j} &=& f_{n+1,j} + U_{n+1,j}\,b_{n+1} \nonumber\\
+    b_n &=& \frac{z_n}{D_{n,n}} - \sum_{j=1}^{2\,J} X_{n,j}\,f_{n,j}
 \end{eqnarray}
-if $r_{\bvec{\theta},n}$ is the $n$-th element of the residual vector
-$\bvec{r}_\bvec{\theta}$ defined in \sect{gps}.
-\eq{full-system-first} through \eq{full-system-last} define a banded matrix
-equation in the ``extended'' space
-\begin{eqnarray}\eqlabel{kext-full}
-    K_\mathrm{ext}\,\bvec{z}_\mathrm{ext} &=&
-    \bvec{r}_{\bvec{\theta},\,\mathrm{ext}} \quad,
-\end{eqnarray}
-and, as before, this can be used to solve
-for $K^{-1}\,\bvec{r}_\bvec{\theta}$ and $\det K$ in $\mathcal{O}(N)$
-operations.
-\Figure{matrix} shows a pictorial representation of the sparsity pattern of
-the extended matrix $K_\mathrm{ext}$.
-The extended matrix has the dimension $N_\mathrm{ext} = (4\,J+1)\,N-4\,J$,
-with a bandwidth $W = 2\,J+2$ and $N_\mathrm{nz} = (20\,J+1)\,N-28\,J$
-non-zero entries.
-Given this definition of $K_\mathrm{ext}$, the corresponding extended vectors
-$\bvec{z}_\mathrm{ext}$ and $\bvec{r}_\mathrm{ext}$ are defined schematically
-as
-\begin{eqnarray}
-{\bvec{z}_\mathrm{ext}} ^\T =
-\left(\begin{array}{cccccccccc}
-    z_1 & u_{1,j} & v_{1,j} & g_{1,j} & h_{1,j} & z_2 & u_{2,j} & \cdots &
-    h_{N-1,j} & z_N
-\end{array}\right)
-\end{eqnarray}
-and
-\begin{eqnarray}
-{\bvec{r}_\mathrm{ext}} ^\T =
-\left(\begin{array}{cccccccccc}
-    r_{\bvec{\theta},1} & 0 & 0 & 0 & 0 & r_{\bvec{\theta},2} &
-    0 & \cdots & 0 & r_{\bvec{\theta},N}
-\end{array}\right) \quad.
-\end{eqnarray}
-After constructing the extended matrix (using a compact storage format), the
-extended matrix can be factorized using a LU-decomposition\footnote{Even
-though $K_\mathrm{ext}$ is symmetric, it is not positive definite so a
-Cholesky solver cannot be used for increased efficiency.} routine optimized
-for band or sparse matrices.
-This decomposition can then be used to compute the determinant of $K$, solve
-$K^{-1}\,\bvec{r}_\bvec{\theta}$, and subsequently calculate the marginalized
-likelihood in \eq{gp-likelihood}.
+where $f_{N+1,j} = 0$ for all $j$.
+The total cost of the forward and backward substitution passes scales as
+$\mathcal{O}(N\,J)$.
 
-In practice, it is worth treating terms with $b_j=0$ and $d_j=0$ as a special
-case because, for this term $j$, $\psi_{n,\,j}$, $h_{n,\,j}$, and $v_{n,\,j}$
-will also be identically zero for all $n$.
-Removing these trivial rows from the extended matrix results in factor of two
-increase in the computational efficiency for these terms.
-In our implementation, we refer to ``real'' terms as those where $b_j=0$ and
-$d_j=0$, and the general terms are called ``complex''.
+\subsection{Pre-conditioning}
 
-\begin{figure}[tp]
-\begin{center}
-\includegraphics[width=0.7\textwidth]{figures/matrix.pdf}
-\caption{A pictorial representation of the sparse extended matrix
-$K_\mathrm{ext}$ (\eqalt{kext-full}) with $N=5$ and $J=2$.
-Each colored block corresponds to a non-zero entry in the matrix as described
-in the legend.
-    \figurelabel{matrix}}
-\end{center}
-\end{figure}
-
-\subsection{Implementation considerations \& scaling}
-
-The extended system defined in the previous section is sparse, with typically
-fewer than a few percent non-zero entries and band structure.
-In this section, we empirically investigate the performance and scaling
-of three different algorithms for solving this extended system:
-
-\begin{enumerate}
-
-\item \texttt{vanilla}: A simple algorithm for computing the LU decomposition
-    for banded matrices using Gaussian elimination \citep[we implemented this
-    method following][]{Press:1992, Press:2007},
-
-\item \texttt{lapack}: The general banded LU decomposition implementation from
-    \project{LAPACK}\footnote{We use the \texttt{dgbtrf} and \texttt{dgbtrs}
-    methods from \project{LAPACK}.} \citep{Anderson:1999} using optimized
-    \project{BLAS} routines,\footnote{The experiments in this paper use the
-    Intel Math Kernel Library (\project{MKL}):
-    \url{https://software.intel.com/en-us/intel-mkl}.} and
-
-\item \texttt{sparse}: A general sparse LU solver~--~the \texttt{SparseLU}
-    solver from \project{Eigen} \citep{Guennebaud:2010}~--~that exploits the
-    sparsity but not the band structure.
-
-\end{enumerate}
-
-The theoretical scaling for a band LU decomposition is $\mathcal{O}(N\,J^3)$
-because the dimension of the extended matrix scales as $N\,J$ and the
-bandwidth scales with $J$ \citep{Press:1992, Press:2007}.
-\citet{Ambikasaran:2015} found an empirical scaling of $\mathcal{O}(N\,J^2)$ that used the sparse LU decomposition implemented in the
-\project{SuperLU} package \citep{Demmel:1999}.
-We find that, while the \texttt{vanilla} solver scales as expected, the
-\texttt{lapack} implementation scales empirically as $\mathcal{O}(N\,J^2)$ and
-offers the fastest solves for $J \gtrsim 8$ on all platforms that we tested.
-
-The benchmark experiments shown here were performed on a MacBook Pro with two
-2.6~GHz CPUs but we find similar results on a Dell workstation with 16 2.7~GHz
-CPUs and running Ubuntu.
-\Figure{benchmark} shows how the cost of computing \eq{gp-likelihood} scales
-with $N$ and $J$ using the \texttt{vanilla} solver.
-As expected theoretically, the scaling is linear in $N$ for all $N$ and cubic
-in $J$ for large $J$.
-\Figure{benchmark-lapack} and \Figure{benchmark-sparse} are the same plots for
-the \texttt{lapack} and \texttt{sparse} solvers respectively.
-For each of these optimized solvers, the empirical scaling is
-$\mathcal{O}(N\,J^2)$ at the cost of some extra overhead.
-Therefore, for $J \lesssim 5$ or $10$ the \texttt{vanilla} solver is more
-efficient than the other algorithms.
-The real world performance of \celerite\ depends on the specific platform,
-hardware, and \project{LAPACK}/\project{BLAS} implementation, but we have
-found qualitatively similar results across popular platforms and
-state-of-the-art libraries.
-
-\begin{figure}[tp]
-\begin{center}
-\includegraphics[width=\textwidth]{figures/benchmark_darwin.pdf}
-\caption{A benchmark showing the computational scaling of \celerite\ using the
-    \texttt{vanilla} band solver as a function of the number of data points
-    and the number of terms.
-    \emph{(left)} The cost of computing \eq{gp-likelihood} with a covariance
-    matrix given by \eq{celerite-kernel} as a function of the number of data
-    points $N$.
-    The different lines show the cost for different numbers of terms $J$
-    increasing from bottom to top.
-    To guide the eye, the straight black line without points
-    shows linear scaling in $N$.
-    \emph{(right)} The same information plotted as a function of $J$ for
-    different values of $N$.
-    Each line shows the scaling for a specific value of $N$ increasing from
-    bottom to top.
-    The black line shows quadratic scaling in $J$.
-    \figurelabel{benchmark}}
-\end{center}
-\end{figure}
-
-\begin{figure}[p]
-\begin{center}
-\includegraphics[width=\textwidth]{figures/benchmark_darwin_lapack.pdf}
-\caption{The same as \Figure{benchmark} but using the \texttt{lapack} solver
-    with the \project{MKL} \project{BLAS} library.
-    \figurelabel{benchmark-lapack}}
-\end{center}
-\end{figure}
-
-\begin{figure}[p]
-\begin{center}
-\includegraphics[width=\textwidth]{figures/benchmark_darwin_sparse.pdf}
-\caption{The same as \Figure{benchmark} but using the \texttt{sparse} solver
-    from \project{Eigen} \citep{Guennebaud:2010}.
-    \figurelabel{benchmark-sparse}}
-\end{center}
-\end{figure}
 
 \section{celerite as a model of stellar variations}\sectlabel{sho}
 
@@ -1675,6 +1472,328 @@ for Astronomy \citep{Astropy-Collaboration:2013}.
 
 \newpage
 \appendix
+
+\section{An alternative solver using the extended matrix formalism}
+
+\citet{Rybicki:1995} demonstrated that the inverse of a matrix $K$, with
+elements given by \eq{kernel-simple}, could be computed
+efficiently by taking advantage of the structure of this covariance function.
+\citet{Ambikasaran:2015} generalized this computation to apply to the full
+mixture of $J$ terms in \eq{celerite-kernel-complex} and derived an equally
+efficient method for computing the determinant of $K$.
+
+\subsection{An example}
+
+To provide some insight for this method, we follow
+\citet{Ambikasaran:2015} and start by working through a simple example.
+In this case, we assume that we have three data points
+$\{y_1,\,y_2,\,y_3\}$ observed at times $\{t_1,\,t_2,\,t_3\}$ with measurement
+variances $\{{\sigma_1}^2,\,{\sigma_2}^2,\,{\sigma_3}^2\}$ and we would
+like to compute the likelihood of these data under a GP model with the
+covariance function
+\begin{eqnarray}
+k(\tau_{nm}) = \sigma_n^2\,\delta_{nm} + a\,\exp(-c\,\tau_{nm})\quad.
+\end{eqnarray}
+This is the result of setting $J=1$, $b=0$, and $d=0$ in
+\eq{celerite-kernel-complex} and it is the model studied by
+\citet{Rybicki:1995}.
+To demonstrate that the likelihood of this model can be computed in
+$\mathcal{O}(N)$, we write out the full system of
+equations that must be solved to apply the inverse of $K$ and compute
+the first term of \eq{gp-likelihood}.
+In matrix notation, this is
+\begin{eqnarray}\eqlabel{impl-matrix}
+K\,\bvec{z} &=& \bvec{y}, \\
+\begin{pmatrix}
+    a+{\sigma_1}^2 & a\,e^{-c\,\tau_{2,1}} & a\,e^{-c\,\tau_{3,1}}\\
+    a\,e^{-c\,\tau_{2,1}} & a+{\sigma_2}^2 & a\,e^{-c\,\tau_{3,2}}\\
+    a\,e^{-c\,\tau_{3,1}} & a\,e^{-c\,\tau_{3,2}} & a+{\sigma_3}^2
+\end{pmatrix}\,
+\begin{pmatrix}
+    z_1 \\ z_2 \\ z_3
+\end{pmatrix} &=&
+\begin{pmatrix}
+    y_1 \\ y_2 \\ y_3
+\end{pmatrix}
+\end{eqnarray}
+where our goal is to solve for the unknown vector \bvec{z} for a given matrix
+$K$ and vector \bvec{y}.
+In \eq{impl-matrix}, we have assumed that the mean function is zero but a
+non-zero mean could be included by replacing \bvec{y} by
+$\bvec{r}_\bvec{\theta}$ as defined in \sect{gps}.
+Now, if we introduce the variables
+\begin{eqnarray}
+    g_n = e^{-c\,\tau_{n+1,n}}\,g_{n-1} + e^{-c\,\tau_{n+1,n}}\,z_{n}
+\end{eqnarray}
+where $g_{0} = 0$, and
+\begin{eqnarray}\eqlabel{algo-first}
+    u_n = e^{-c\,\tau_{n+2,n+1}}\,u_{n+1} + a\,z_{n+1}
+\end{eqnarray}
+where $u_{N} = 0$,
+the system of equations can be rewritten as
+\begin{eqnarray}
+(a+{\sigma_1}^2)\,z_1 + e^{-c\,\tau_{2,1}}\,u_1 &=& y_1 \\
+a\,g_1 + (a+{\sigma_2}^2)\,z_2 + e^{-c\,\tau_{3,2}}\,u_2 &=& y_2 \\
+a\,g_2 + (a+{\sigma_3}^2)\,z_3 &=& y_3 \quad. \eqlabel{algo-last}
+\end{eqnarray}
+Rewriting the system defined by \eq{algo-first} through \eq{algo-last}
+as a matrix equation shows the benefit that this seemingly trivial
+reformulation provides:
+\begin{eqnarray}
+\begin{pmatrix}
+    a+{\sigma_1}^2 & e^{-c\,\tau_{2,1}} & 0 & 0 & 0 & 0 & 0 \\
+    e^{-c\,\tau_{2,1}} & 0 & -1 & 0 & 0 & 0 & 0 \\
+    0 & -1 & 0 & a & e^{-c\,\tau_{3,2}} & 0 & 0 \\
+    0 & 0 & a & a+{\sigma_2}^2 & e^{-c\,\tau_{3,2}} & 0 & 0 \\
+    0 & 0 & e^{-c\,\tau_{3,2}} & e^{-c\,\tau_{3,2}} & 0 & -1 & 0 \\
+    0 & 0 & 0 & 0 & -1 & 0 & a \\
+    0 & 0 & 0 & 0 & 0 & a & a+{\sigma_3}^2 \\
+\end{pmatrix}\,
+\begin{pmatrix}
+    z_1 \\ u_1 \\ g_1 \\ z_2 \\ u_2 \\ g_2 \\ z_3
+\end{pmatrix} &=&
+\begin{pmatrix}
+    y_1 \\ 0 \\ 0 \\ y_2 \\ 0 \\ 0 \\ y_3
+\end{pmatrix}\nonumber
+\end{eqnarray}
+Following \citet{Ambikasaran:2015} we call this the ``extended'' system and
+rewrite \eq{impl-matrix} as
+\begin{eqnarray}
+    K_\mathrm{ext}\,\bvec{z}_\mathrm{ext} &=& \bvec{y}_\mathrm{ext} \quad.
+\end{eqnarray}
+Even though $K_\mathrm{ext}$ is a larger matrix than the $K$ we started
+with, it is now sparse with banded structure that can be exploited to solve
+the system efficiently.
+In particular, sparse solvers are available that can perform a
+LU-decomposition of matrices like this in $\mathcal{O}(N)$
+operations~--~instead of the $\mathcal{O}(N^3)$ that would be required in
+general~--~and we can use these algorithms to solve our system
+exactly because the target vector $\bvec{z}$ is a subset of the elements of
+$\bvec{z}_\mathrm{ext}$.
+
+In the following section we discuss this method more generally, but it's
+worth noting a few important facts that can already be seen in this example.
+First, the fundamental reason why this matrix $K$ can be solved efficiently is
+the following property of exponentials
+\begin{eqnarray}
+    e^{-c\,(t_3 - t_2)} \, e^{-c\,(t_2 - t_1)} =
+    e^{-c\,(t_3 - t_2 + t_2 - t_1)} =
+    e^{-c\,(t_3 - t_1)}
+\end{eqnarray}
+and it is important to note that this property does not extend to other common
+covariance functions like the ``exponential-squared'' function
+\begin{eqnarray}
+    k(\tau) \propto e^{-c\,\tau^2} \quad.
+\end{eqnarray}
+Second, our derivation of the extended matrix requires that the data
+points be monotonically sorted.
+This is the motivation for our previous statement that this method can only be
+applied in one dimension since neither of these properties will be satisfied
+by multidimensional inputs.
+
+\citet{Ambikasaran:2015} demonstrated two key facts that allow us to use this
+extended matrix formalism in practice.
+First, even if the covariance function is a mixture of exponentials, the
+extended matrix will still be banded with a bandwidth that scales linearly
+with the number of components, $J$.
+Second, \citet{Ambikasaran:2015} proved that the absolute value of the
+determinant of $K_\mathrm{ext}$ is equal to the absolute value of the
+determinant of $K$.
+This means we can use this extended matrix formalism to compute the
+marginalized likelihood in $\mathcal{O}(N)$ operations.
+
+\subsection{The algorithm}
+
+In this section, we generalize the method from the previous section to the
+covariance function given by \eq{celerite-kernel}.
+This derivation follows \citet{Ambikasaran:2015} but it includes explicit
+treatment of complex parameters, and their complex conjugates.
+
+In the case of the full \celeriteterm\ covariance function
+(\eqalt{celerite-kernel}), we introduce the following auxiliary variables in
+analogy to the $u_n$ and $g_n$ that we introduced in the previous section
+\begin{eqnarray}\eqlabel{full-system-first}
+\phi_{n,j} &=& e^{-c_j\,\tau_{n+1,n}}\,\cos\left(d_j\,\tau_{n+1,n}\right)\\
+\psi_{n,j} &=& -e^{-c_j\,\tau_{n+1,n}}\,\sin\left(d_j\,\tau_{n+1,n}\right)\\
+g_{n,j} &=& \phi_{n,j}\,g_{n-1,j} + \phi_{n,j}\,z_n + \psi_{n,j}\,h_{n-1,j}\\
+h_{n,j} &=& \phi_{n,j}\,h_{n-1,j} - \psi_{n,j}\,z_n - \psi_{n,j}\,g_{n-1,j}\\
+u_{n,j} &=& \phi_{n+1,j}\,u_{n+1,j} + a_j\,z_{n+1} + \psi_{n+1,j}\,v_{n+1,j}\\
+v_{n,j} &=& \phi_{n+1,j}\,v_{n+1,j} - b_j\,z_{n+1} - \psi_{n+1,j}\,u_{n+1,j}
+\end{eqnarray}
+with the boundary conditions
+\begin{eqnarray}
+    g_{0,j} = 0 \quad, \quad
+    h_{0,j} = 0 \quad, \quad
+    u_{N,j} = 0 \quad, \quad\mathrm{and}\quad
+    v_{N,j} = 0
+\end{eqnarray}
+for all $j$.
+Using these variables and some algebra, we find that the following expression
+\begin{eqnarray}\eqlabel{full-system-last}
+\sum_{j=1}^J \left[a_j\,g_{n,j}+b_j\,h_{n,j}\right]
++ \left[{\sigma_n}^2+\sum_{j=1}^J a_j\right]
++ \sum_{j=1}^J \left[\phi_{n,j}\,u_{n,j}+\psi_{n,j}\,v_{n,j}\right]
+    &=& r_{\bvec{\theta},n}
+\end{eqnarray}
+is equivalent to the target matrix equation
+\begin{eqnarray}
+K\,\bvec{z} &=& \bvec{r}_\bvec{\theta}
+\end{eqnarray}
+if $r_{\bvec{\theta},n}$ is the $n$-th element of the residual vector
+$\bvec{r}_\bvec{\theta}$ defined in \sect{gps}.
+\eq{full-system-first} through \eq{full-system-last} define a banded matrix
+equation in the ``extended'' space
+\begin{eqnarray}\eqlabel{kext-full}
+    K_\mathrm{ext}\,\bvec{z}_\mathrm{ext} &=&
+    \bvec{r}_{\bvec{\theta},\,\mathrm{ext}} \quad,
+\end{eqnarray}
+and, as before, this can be used to solve
+for $K^{-1}\,\bvec{r}_\bvec{\theta}$ and $\det K$ in $\mathcal{O}(N)$
+operations.
+\Figure{matrix} shows a pictorial representation of the sparsity pattern of
+the extended matrix $K_\mathrm{ext}$.
+The extended matrix has the dimension $N_\mathrm{ext} = (4\,J+1)\,N-4\,J$,
+with a bandwidth $W = 2\,J+2$ and $N_\mathrm{nz} = (20\,J+1)\,N-28\,J$
+non-zero entries.
+Given this definition of $K_\mathrm{ext}$, the corresponding extended vectors
+$\bvec{z}_\mathrm{ext}$ and $\bvec{r}_\mathrm{ext}$ are defined schematically
+as
+\begin{eqnarray}
+{\bvec{z}_\mathrm{ext}} ^\T =
+\left(\begin{array}{cccccccccc}
+    z_1 & u_{1,j} & v_{1,j} & g_{1,j} & h_{1,j} & z_2 & u_{2,j} & \cdots &
+    h_{N-1,j} & z_N
+\end{array}\right)
+\end{eqnarray}
+and
+\begin{eqnarray}
+{\bvec{r}_\mathrm{ext}} ^\T =
+\left(\begin{array}{cccccccccc}
+    r_{\bvec{\theta},1} & 0 & 0 & 0 & 0 & r_{\bvec{\theta},2} &
+    0 & \cdots & 0 & r_{\bvec{\theta},N}
+\end{array}\right) \quad.
+\end{eqnarray}
+After constructing the extended matrix (using a compact storage format), the
+extended matrix can be factorized using a LU-decomposition\footnote{Even
+though $K_\mathrm{ext}$ is symmetric, it is not positive definite so a
+Cholesky solver cannot be used for increased efficiency.} routine optimized
+for band or sparse matrices.
+This decomposition can then be used to compute the determinant of $K$, solve
+$K^{-1}\,\bvec{r}_\bvec{\theta}$, and subsequently calculate the marginalized
+likelihood in \eq{gp-likelihood}.
+
+In practice, it is worth treating terms with $b_j=0$ and $d_j=0$ as a special
+case because, for this term $j$, $\psi_{n,\,j}$, $h_{n,\,j}$, and $v_{n,\,j}$
+will also be identically zero for all $n$.
+Removing these trivial rows from the extended matrix results in factor of two
+increase in the computational efficiency for these terms.
+In our implementation, we refer to ``real'' terms as those where $b_j=0$ and
+$d_j=0$, and the general terms are called ``complex''.
+
+\begin{figure}[tp]
+\begin{center}
+\includegraphics[width=0.7\textwidth]{figures/matrix.pdf}
+\caption{A pictorial representation of the sparse extended matrix
+$K_\mathrm{ext}$ (\eqalt{kext-full}) with $N=5$ and $J=2$.
+Each colored block corresponds to a non-zero entry in the matrix as described
+in the legend.
+    \figurelabel{matrix}}
+\end{center}
+\end{figure}
+
+\subsection{Implementation considerations \& scaling}
+
+The extended system defined in the previous section is sparse, with typically
+fewer than a few percent non-zero entries and band structure.
+In this section, we empirically investigate the performance and scaling
+of three different algorithms for solving this extended system:
+
+\begin{enumerate}
+
+\item \texttt{vanilla}: A simple algorithm for computing the LU decomposition
+    for banded matrices using Gaussian elimination \citep[we implemented this
+    method following][]{Press:1992, Press:2007},
+
+\item \texttt{lapack}: The general banded LU decomposition implementation from
+    \project{LAPACK}\footnote{We use the \texttt{dgbtrf} and \texttt{dgbtrs}
+    methods from \project{LAPACK}.} \citep{Anderson:1999} using optimized
+    \project{BLAS} routines,\footnote{The experiments in this paper use the
+    Intel Math Kernel Library (\project{MKL}):
+    \url{https://software.intel.com/en-us/intel-mkl}.} and
+
+\item \texttt{sparse}: A general sparse LU solver~--~the \texttt{SparseLU}
+    solver from \project{Eigen} \citep{Guennebaud:2010}~--~that exploits the
+    sparsity but not the band structure.
+
+\end{enumerate}
+
+The theoretical scaling for a band LU decomposition is $\mathcal{O}(N\,J^3)$
+because the dimension of the extended matrix scales as $N\,J$ and the
+bandwidth scales with $J$ \citep{Press:1992, Press:2007}.
+\citet{Ambikasaran:2015} found an empirical scaling of $\mathcal{O}(N\,J^2)$ that used the sparse LU decomposition implemented in the
+\project{SuperLU} package \citep{Demmel:1999}.
+We find that, while the \texttt{vanilla} solver scales as expected, the
+\texttt{lapack} implementation scales empirically as $\mathcal{O}(N\,J^2)$ and
+offers the fastest solves for $J \gtrsim 8$ on all platforms that we tested.
+
+The benchmark experiments shown here were performed on a MacBook Pro with two
+2.6~GHz CPUs but we find similar results on a Dell workstation with 16 2.7~GHz
+CPUs and running Ubuntu.
+\Figure{benchmark} shows how the cost of computing \eq{gp-likelihood} scales
+with $N$ and $J$ using the \texttt{vanilla} solver.
+As expected theoretically, the scaling is linear in $N$ for all $N$ and cubic
+in $J$ for large $J$.
+\Figure{benchmark-lapack} and \Figure{benchmark-sparse} are the same plots for
+the \texttt{lapack} and \texttt{sparse} solvers respectively.
+For each of these optimized solvers, the empirical scaling is
+$\mathcal{O}(N\,J^2)$ at the cost of some extra overhead.
+Therefore, for $J \lesssim 5$ or $10$ the \texttt{vanilla} solver is more
+efficient than the other algorithms.
+The real world performance of \celerite\ depends on the specific platform,
+hardware, and \project{LAPACK}/\project{BLAS} implementation, but we have
+found qualitatively similar results across popular platforms and
+state-of-the-art libraries.
+
+\begin{figure}[tp]
+\begin{center}
+\includegraphics[width=\textwidth]{figures/benchmark_darwin.pdf}
+\caption{A benchmark showing the computational scaling of \celerite\ using the
+    \texttt{vanilla} band solver as a function of the number of data points
+    and the number of terms.
+    \emph{(left)} The cost of computing \eq{gp-likelihood} with a covariance
+    matrix given by \eq{celerite-kernel} as a function of the number of data
+    points $N$.
+    The different lines show the cost for different numbers of terms $J$
+    increasing from bottom to top.
+    To guide the eye, the straight black line without points
+    shows linear scaling in $N$.
+    \emph{(right)} The same information plotted as a function of $J$ for
+    different values of $N$.
+    Each line shows the scaling for a specific value of $N$ increasing from
+    bottom to top.
+    The black line shows quadratic scaling in $J$.
+    \figurelabel{benchmark}}
+\end{center}
+\end{figure}
+
+\begin{figure}[p]
+\begin{center}
+\includegraphics[width=\textwidth]{figures/benchmark_darwin_lapack.pdf}
+\caption{The same as \Figure{benchmark} but using the \texttt{lapack} solver
+    with the \project{MKL} \project{BLAS} library.
+    \figurelabel{benchmark-lapack}}
+\end{center}
+\end{figure}
+
+\begin{figure}[p]
+\begin{center}
+\includegraphics[width=\textwidth]{figures/benchmark_darwin_sparse.pdf}
+\caption{The same as \Figure{benchmark} but using the \texttt{sparse} solver
+    from \project{Eigen} \citep{Guennebaud:2010}.
+    \figurelabel{benchmark-sparse}}
+\end{center}
+\end{figure}
+
 
 \section{Ensuring positive definiteness}
 
