@@ -15,7 +15,7 @@ Read the documentation at: `celerite.rtfd.io <http://celerite.readthedocs.io>`_.
 .. image:: https://zenodo.org/badge/DOI/10.5281/zenodo.438359.svg?style=flat
    :target: https://doi.org/10.5281/zenodo.438359
 .. image:: https://img.shields.io/badge/PDF-latest-orange.svg?style=flat
-    :target: https://github.com/dfm/celerite/blob/master-pdf/paper/ms.pdf
+    :target: https://github.com/dfm/celerite/blob/master-pdf/papers/paper1/ms.pdf
 .. image:: https://img.shields.io/badge/ArXiv-1703.09710-orange.svg?style=flat
     :target: https://arxiv.org/abs/1703.09710
 
