@@ -12,29 +12,10 @@ if "publish" in sys.argv[-1]:
     os.system("python setup.py sdist upload")
     sys.exit()
 
-# The include directory for the celerite headers
-localincl = os.path.join("cpp", "include")
-if not os.path.exists(os.path.join(localincl, "celerite", "version.h")):
-    raise RuntimeError("couldn't find celerite headers")
-
 # Default compile arguments.
-compile_args = dict(
-    libraries=[],
-    define_macros=[("NDEBUG", None)],
-)
-if os.name == "posix":
-    compile_args["libraries"] += ["m", "stdc++"]
-
-compile_args["include_dirs"] = [
-    localincl,
-    os.path.join("cpp", "lib", "eigen_3.3.3"),
-    numpy.get_include(),
-]
-
 ext = Extension("celerite.solver",
                 sources=[os.path.join("celerite", "solver.cpp")],
-                language="c++",
-                **compile_args)
+                language="c++")
 
 # Hackishly inject a constant into builtins to enable importing of the
 # package before the library is built.
