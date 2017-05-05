@@ -3,7 +3,6 @@
 
 import os
 import sys
-import numpy
 
 from setuptools import setup, Extension
 
