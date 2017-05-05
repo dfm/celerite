@@ -34,18 +34,13 @@ class GP(ModelSet):
                  kernel,
                  mean=0.0, fit_mean=False,
                  method=None):
-        self.solver = None
+        self._solver = None
         self._computed = False
         self._t = None
         self._y_var = None
 
         # Choose the method
-        self.method = dict(
-            adaptive=solver.CholeskySolver.adaptive,
-            direct=solver.CholeskySolver.direct,
-            local=solver.CholeskySolver.local,
-            general=solver.CholeskySolver.general,
-        ).get(method, solver.CholeskySolver.adaptive)
+        self.method = method
 
         # Build up a list of models for the ModelSet
         models = [("kernel", kernel)]
@@ -65,6 +60,18 @@ class GP(ModelSet):
 
         # Init the superclass
         super(GP, self).__init__(models)
+
+    @property
+    def solver(self):
+        if self._solver is None:
+            method = dict(
+                adaptive=solver.CholeskySolver.adaptive,
+                direct=solver.CholeskySolver.direct,
+                local=solver.CholeskySolver.local,
+                general=solver.CholeskySolver.general,
+            ).get(self.method, solver.CholeskySolver.adaptive)
+            self._solver = solver.CholeskySolver(method)
+        return self._solver
 
     @property
     def mean(self):
@@ -87,7 +94,7 @@ class GP(ModelSet):
     @property
     def computed(self):
         return (
-            self.solver is not None and
+            self._solver is not None and
             self.solver.computed() and
             not self.dirty
         )
@@ -119,8 +126,6 @@ class GP(ModelSet):
         self._t = t
         self._yerr = np.empty_like(self._t)
         self._yerr[:] = yerr
-        if self.solver is None:
-            self.solver = solver.CholeskySolver(self.method)
         (alpha_real, beta_real, alpha_complex_real, alpha_complex_imag,
          beta_complex_real, beta_complex_imag) = self.kernel.coefficients
         self.solver.compute(
@@ -202,8 +207,6 @@ class GP(ModelSet):
             raise ValueError("dimension mismatch")
         resid = y - self.mean.get_value(self._t)
 
-        if self.solver is None:
-            self.solver = solver.CholeskySolver(self.method)
         (alpha_real, beta_real, alpha_complex_real, alpha_complex_imag,
          beta_complex_real, beta_complex_imag) = self.kernel.coefficients
         val, grad = self.solver.grad_log_likelihood(

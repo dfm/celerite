@@ -36,19 +36,19 @@ public:
 
   auto serialize () const {
     return std::make_tuple(
-      this->method_, this->computed_, this->N_, this->J_, this->log_det_,
+      int(this->method_), this->computed_, this->N_, this->J_, this->log_det_,
       this->phi_, this->u_, this->X_, this->D_
     );
   };
 
   void deserialize (
-      Method method,
+      int method,
       bool computed, int n, int J, double log_det,
       Eigen::MatrixXd phi,
       Eigen::MatrixXd u,
       Eigen::MatrixXd X,
       Eigen::VectorXd D) {
-    this->method_   = method;
+    this->method_   = static_cast<Method>(method);
     this->computed_ = computed;
     this->N_        = n;
     this->J_        = J;
@@ -661,7 +661,7 @@ Returns:
     if (t.size() != 9) throw std::runtime_error("Invalid state!");
     new (&solver) PicklableCholeskySolver();
     solver.deserialize(
-      t[0].cast<PicklableCholeskySolver::Method>(),
+      t[0].cast<int>(),
       t[1].cast<bool>(),
       t[2].cast<int>(),
       t[3].cast<int>(),
