@@ -63,7 +63,7 @@ int main (int argc, char* argv[])
   y = sin(x.array());
 
   celerite::solver::DirectSolver<double> direct;
-  celerite::solver::CholeskySolver<double> cholesky(celerite::solver::CholeskySolver<double>::Method::general);
+  celerite::solver::CholeskySolver<double> cholesky;
 
   direct.compute(jitter, alpha_real, beta_real, x, yerr2);
   cholesky.compute(jitter, alpha_real, beta_real, x, yerr2);
