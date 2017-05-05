@@ -4,6 +4,7 @@ from __future__ import division, print_function
 
 import pytest
 import numpy as np
+from itertools import product
 
 try:
     import cPickle as pickle
@@ -42,8 +43,8 @@ def test_carma(seed=42):
 
 def _test_log_determinant(alpha_real, beta_real, alpha_complex_real,
                           alpha_complex_imag, beta_complex_real,
-                          beta_complex_imag, seed=42):
-    solver = celerite.CholeskySolver()
+                          beta_complex_imag, method, seed=42):
+    solver = celerite.CholeskySolver(method)
     np.random.seed(seed)
     t = np.sort(np.random.rand(5))
     diag = np.random.uniform(0.1, 0.5, len(t))
@@ -59,7 +60,13 @@ def _test_log_determinant(alpha_real, beta_real, alpha_complex_real,
     K[np.diag_indices_from(K)] += diag
     assert np.allclose(solver.log_determinant(), np.linalg.slogdet(K)[1])
 
-def test_log_determinant(seed=42):
+@pytest.mark.parametrize("method", [
+    celerite.CholeskySolver.adaptive,
+    celerite.CholeskySolver.direct,
+    celerite.CholeskySolver.local,
+    celerite.CholeskySolver.general,
+])
+def test_log_determinant(method, seed=42):
     alpha_real = np.array([1.5, 0.1])
     beta_real = np.array([1.0, 0.3])
     alpha_complex_real = np.array([1.0])
@@ -68,7 +75,7 @@ def test_log_determinant(seed=42):
     beta_complex_imag = np.array([1.0])
     _test_log_determinant(alpha_real, beta_real, alpha_complex_real,
                           alpha_complex_imag, beta_complex_real,
-                          beta_complex_imag, seed=seed)
+                          beta_complex_imag, method, seed=seed)
 
     alpha_real = np.array([1.5, 0.1, 0.6, 0.3, 0.8, 0.7])
     beta_real = np.array([1.0, 0.3, 0.05, 0.01, 0.1, 0.2])
@@ -78,12 +85,13 @@ def test_log_determinant(seed=42):
     beta_complex_imag = np.array([1.0, 1.0])
     _test_log_determinant(alpha_real, beta_real, alpha_complex_real,
                           alpha_complex_imag, beta_complex_real,
-                          beta_complex_imag, seed=seed)
+                          beta_complex_imag, method, seed=seed)
 
 
 def _test_solve(alpha_real, beta_real, alpha_complex_real, alpha_complex_imag,
-                beta_complex_real, beta_complex_imag, seed=42):
-    solver = celerite.CholeskySolver()
+                beta_complex_real, beta_complex_imag,
+                method, seed=42):
+    solver = celerite.CholeskySolver(method)
     np.random.seed(seed)
     t = np.sort(np.random.rand(500))
     diag = np.random.uniform(0.1, 0.5, len(t))
@@ -108,7 +116,13 @@ def _test_solve(alpha_real, beta_real, alpha_complex_real, alpha_complex_imag,
     b = np.random.randn(len(t), 5)
     assert np.allclose(solver.solve(b), np.linalg.solve(K, b))
 
-def test_solve(seed=42):
+@pytest.mark.parametrize("method", [
+    celerite.CholeskySolver.adaptive,
+    celerite.CholeskySolver.direct,
+    celerite.CholeskySolver.local,
+    celerite.CholeskySolver.general,
+])
+def test_solve(method, seed=42):
     alpha_real = np.array([1.5, 0.1])
     beta_real = np.array([1.0, 0.3])
     alpha_complex_real = np.array([1.0])
@@ -116,7 +130,7 @@ def test_solve(seed=42):
     beta_complex_real = np.array([1.0])
     beta_complex_imag = np.array([1.0])
     _test_solve(alpha_real, beta_real, alpha_complex_real, alpha_complex_imag,
-                beta_complex_real, beta_complex_imag, seed=seed)
+                beta_complex_real, beta_complex_imag, method, seed=seed)
 
     alpha_real = np.array([1.5, 0.1, 0.6, 0.3, 0.8, 0.7])
     beta_real = np.array([1.0, 0.3, 0.05, 0.01, 0.1, 0.2])
@@ -125,7 +139,7 @@ def test_solve(seed=42):
     beta_complex_real = np.array([1.0, 1.0])
     beta_complex_imag = np.array([1.0, 1.0])
     _test_solve(alpha_real, beta_real, alpha_complex_real, alpha_complex_imag,
-                beta_complex_real, beta_complex_imag, seed=seed)
+                beta_complex_real, beta_complex_imag, method, seed=seed)
 
 
 def test_dot(seed=42):
@@ -153,8 +167,14 @@ def test_dot(seed=42):
     )
     assert np.allclose(x0, x)
 
-def test_dot_L(seed=42):
-    solver = celerite.CholeskySolver()
+@pytest.mark.parametrize("method", [
+    celerite.CholeskySolver.adaptive,
+    celerite.CholeskySolver.direct,
+    celerite.CholeskySolver.local,
+    celerite.CholeskySolver.general,
+])
+def test_dot_L(method, seed=42):
+    solver = celerite.CholeskySolver(method)
     np.random.seed(seed)
     t = np.sort(np.random.rand(5))
     b = np.random.randn(len(t), 5)
@@ -181,8 +201,15 @@ def test_dot_L(seed=42):
     x = solver.dot_L(b)
     assert np.allclose(x0, x)
 
-def test_pickle(seed=42):
-    solver = celerite.CholeskySolver()
+
+@pytest.mark.parametrize("method", [
+    celerite.CholeskySolver.adaptive,
+    celerite.CholeskySolver.direct,
+    celerite.CholeskySolver.local,
+    celerite.CholeskySolver.general,
+])
+def test_pickle(method, seed=42):
+    solver = celerite.CholeskySolver(method)
     np.random.seed(seed)
     t = np.sort(np.random.rand(500))
     diag = np.random.uniform(0.1, 0.5, len(t))
@@ -245,14 +272,15 @@ def test_build_gp(seed=42):
         gp.set_parameter_vector("face1")
 
 
-def test_log_likelihood(seed=42):
+@pytest.mark.parametrize("method", ["adaptive", "direct", "local", "general"])
+def test_log_likelihood(method, seed=42):
     np.random.seed(seed)
     x = np.sort(np.random.rand(10))
     yerr = np.random.uniform(0.1, 0.5, len(x))
     y = np.sin(x)
 
     kernel = terms.RealTerm(0.1, 0.5)
-    gp = GP(kernel)
+    gp = GP(kernel, method=method)
     with pytest.raises(RuntimeError):
         gp.log_likelihood(y)
 
@@ -264,7 +292,7 @@ def test_log_likelihood(seed=42):
             kernel += terms.ComplexTerm(*term)
         else:
             kernel += terms.RealTerm(*term)
-        gp = GP(kernel)
+        gp = GP(kernel, method=method)
 
         assert gp.computed is False
 
@@ -318,8 +346,8 @@ def test_log_likelihood(seed=42):
 
 
 @pytest.mark.parametrize(
-    "kernel",
-    [
+    "kernel,method",
+    product([
         terms.RealTerm(log_a=0.1, log_c=0.5),
         terms.RealTerm(log_a=0.1, log_c=0.5) +
         terms.RealTerm(log_a=-0.1, log_c=0.7),
@@ -334,23 +362,25 @@ def test_log_likelihood(seed=42):
         terms.RealTerm(log_a=0.1, log_c=0.4),
         terms.SHOTerm(log_S0=0.1, log_Q=1.0, log_omega0=0.5) *
         terms.RealTerm(log_a=0.1, log_c=0.4),
-    ]
+    ], [
+        None, "direct", "local", "general",
+    ])
 )
-def test_grad_log_likelihood(kernel, seed=42, eps=1.34e-7):
+def test_grad_log_likelihood(kernel, method, seed=42, eps=1.34e-7):
     np.random.seed(seed)
     x = np.sort(np.random.rand(100))
     yerr = np.random.uniform(0.1, 0.5, len(x))
     y = np.sin(x)
 
     if not terms.HAS_AUTOGRAD:
-        gp = GP(kernel)
+        gp = GP(kernel, method=method)
         gp.compute(x, yerr)
         with pytest.raises(ImportError):
             _, grad = gp.grad_log_likelihood(y)
         return
 
     for fit_mean in [True, False]:
-        gp = GP(kernel, fit_mean=fit_mean)
+        gp = GP(kernel, fit_mean=fit_mean, method=method)
         gp.compute(x, yerr)
         _, grad = gp.grad_log_likelihood(y)
         grad0 = np.empty_like(grad)
@@ -369,8 +399,8 @@ def test_grad_log_likelihood(kernel, seed=42, eps=1.34e-7):
             v[i] = pval
         assert np.allclose(grad, grad0)
 
-
-def test_predict(seed=42):
+@pytest.mark.parametrize("method", ["adaptive", "direct", "local", "general"])
+def test_predict(method, seed=42):
     np.random.seed(seed)
     x = np.linspace(1, 59, 300)
     t = np.sort(np.random.uniform(10, 50, 100))
@@ -380,7 +410,7 @@ def test_predict(seed=42):
     kernel = terms.RealTerm(0.1, 0.5)
     for term in [(0.6, 0.7, 1.0), (0.1, 0.05, 0.5, -0.1)]:
         kernel += terms.ComplexTerm(*term)
-    gp = GP(kernel)
+    gp = GP(kernel, method=method)
 
     gp.compute(t, yerr)
     K = gp.get_matrix(include_diagonal=True)

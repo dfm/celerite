@@ -22,10 +22,10 @@ class GP(ModelSet):
             will be frozen. Otherwise, the parameter states are unaffected.
             (default: ``False``)
         method: Select a matrix solver method by name. This can be one of
-            (a) ``simple``: a simple banded Gaussian elimination based method,
-            (b) ``lapack``: an optimized band solver if compiled with LAPACK,
-            (c) ``sparse``: a sparse solver if compiled with Eigen/Sparse, or
-            (d) ``default``: uses heuristics to select the fastest method that
+            (a) ``adaptive``
+            (b) ``direct``
+            (c) ``local``
+            (d) ``general``
             is available.
 
     """
@@ -38,6 +38,14 @@ class GP(ModelSet):
         self._computed = False
         self._t = None
         self._y_var = None
+
+        # Choose the method
+        self.method = dict(
+            adaptive=solver.CholeskySolver.adaptive,
+            direct=solver.CholeskySolver.direct,
+            local=solver.CholeskySolver.local,
+            general=solver.CholeskySolver.general,
+        ).get(method, solver.CholeskySolver.adaptive)
 
         # Build up a list of models for the ModelSet
         models = [("kernel", kernel)]
@@ -112,7 +120,7 @@ class GP(ModelSet):
         self._yerr = np.empty_like(self._t)
         self._yerr[:] = yerr
         if self.solver is None:
-            self.solver = solver.CholeskySolver()
+            self.solver = solver.CholeskySolver(self.method)
         (alpha_real, beta_real, alpha_complex_real, alpha_complex_imag,
          beta_complex_real, beta_complex_imag) = self.kernel.coefficients
         self.solver.compute(
@@ -195,7 +203,7 @@ class GP(ModelSet):
         resid = y - self.mean.get_value(self._t)
 
         if self.solver is None:
-            self.solver = solver.CholeskySolver()
+            self.solver = solver.CholeskySolver(self.method)
         (alpha_real, beta_real, alpha_complex_real, alpha_complex_imag,
          beta_complex_real, beta_complex_imag) = self.kernel.coefficients
         val, grad = self.solver.grad_log_likelihood(
