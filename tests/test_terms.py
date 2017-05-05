@@ -38,6 +38,7 @@ def test_bounds(seed=42):
     bounds = [(-1.0, 0.3), (-2.0, 5.0)]
     kernel = terms.RealTerm(log_a=0.1, log_c=0.5, bounds=bounds)
     b0 = kernel.get_parameter_bounds()
+    assert all(np.allclose(a, b) for a, b in zip(b0, bounds))
 
     kernel = terms.RealTerm(log_a=0.1, log_c=0.5,
                             bounds=dict(zip(["log_a", "log_c"], bounds)))
