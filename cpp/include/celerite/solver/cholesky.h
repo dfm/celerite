@@ -254,37 +254,48 @@ void compute (
   } else {
 
     // General case.
+    T Dn;
     Eigen::Array<T, Eigen::Dynamic, 1> cd, sd;
-    Eigen::Matrix<T, Eigen::Dynamic, 1> tmp;
+    Eigen::Matrix<T, Eigen::Dynamic, 1> tmp, phin(J), Xn(J), un(J);
     Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> S(J, J);
 
-    X_.col(0).head(J_real).setConstant(T(1.0) / D_(0));
-    X_.col(0).segment(J_real, J_comp) = cos(d_comp.array()*x(0)) / D_(0);
-    X_.col(0).segment(J_real+J_comp, J_comp) = sin(d_comp.array()*x(0)) / D_(0);
+    Dn = D_(0);
+    Xn.head(J_real).setConstant(T(1.0) / Dn);
+    Xn.segment(J_real, J_comp) = cos(d_comp.array()*x(0)) / Dn;
+    Xn.segment(J_real+J_comp, J_comp) = sin(d_comp.array()*x(0)) / Dn;
+
     S.setZero();
+    X_.col(0) = Xn;
     for (int n = 1; n < N; ++n) {
-      cd = cos(d_comp.array()*x(n));
-      sd = sin(d_comp.array()*x(n));
+      T dx = x(n);
+      cd = cos(d_comp.array()*dx);
+      sd = sin(d_comp.array()*dx);
+      dx -= x(n-1);
 
-      T dx = x(n) - x(n-1);
-      phi_.col(n-1).head(J_real) = exp(-c_real.array()*dx);
-      phi_.col(n-1).segment(J_real, J_comp) = exp(-c_comp.array()*dx);
-      phi_.col(n-1).segment(J_real+J_comp, J_comp) = phi_.col(n-1).segment(J_real, J_comp);
-      S.noalias() += D_(n-1) * X_.col(n-1) * X_.col(n-1).transpose();
-      S.array() *= (phi_.col(n-1) * phi_.col(n-1).transpose()).array();
+      phin.head(J_real) = exp(-c_real.array()*dx);
+      phin.segment(J_real, J_comp) = exp(-c_comp.array()*dx);
+      phin.segment(J_real+J_comp, J_comp) = phin.segment(J_real, J_comp);
+      S.noalias() += Dn * Xn * Xn.transpose();
+      S.array() *= (phin * phin.transpose()).array();
 
-      u_.col(n-1).head(J_real) = a_real;
-      u_.col(n-1).segment(J_real, J_comp) = a_comp.array() * cd + b_comp.array() * sd;
-      u_.col(n-1).segment(J_real+J_comp, J_comp) = a_comp.array() * sd - b_comp.array() * cd;
+      un.head(J_real) = a_real;
+      un.segment(J_real, J_comp) = a_comp.array() * cd + b_comp.array() * sd;
+      un.segment(J_real+J_comp, J_comp) = a_comp.array() * sd - b_comp.array() * cd;
 
-      X_.col(n).head(J_real).setOnes();
-      X_.col(n).segment(J_real, J_comp) = cd;
-      X_.col(n).segment(J_real+J_comp, J_comp) = sd;
+      Xn.head(J_real).setOnes();
+      Xn.segment(J_real, J_comp) = cd;
+      Xn.segment(J_real+J_comp, J_comp) = sd;
 
-      tmp = u_.col(n-1).transpose() * S;
-      D_(n) -= tmp.transpose().dot(u_.col(n-1));
-      if (D_(n) < 0) throw linalg_exception();
-      X_.col(n) = (T(1.0) / D_(n)) * (X_.col(n) - tmp);
+      tmp = un.transpose() * S;
+      Dn = D_(n) - tmp.transpose().dot(un);
+      if (Dn < 0) throw linalg_exception();
+      Xn.noalias() -= tmp;
+      Xn /= Dn;
+
+      D_(n) = Dn;
+      X_.col(n) = Xn;
+      u_.col(n-1) = un;
+      phi_.col(n-1) = phin;
     }
 
   }
