@@ -158,56 +158,35 @@ matrix_t solve (const Eigen::MatrixXd& b) const {
   if (b.rows() != this->N_) throw dimension_mismatch();
   if (!(this->computed_)) throw compute_exception();
 
-  int j, k, n, nrhs = b.cols(), N = this->N_, J = J_;
+  int nrhs = b.cols(), N = this->N_, J = J_;
   vector_t f(J);
   matrix_t x(N, nrhs);
 
-  if (J < 16) {
-
-    // Unroll smaller loops.
-    for (k = 0; k < nrhs; ++k) {
-      // Forward
-      f.setConstant(T(0.0));
-      x(0, k) = b(0, k);
-      for (n = 1; n < N; ++n) {
-        x(n, k) = b(n, k);
-        for (j = 0; j < J; ++j) {
-          f(j) = phi_(j, n-1) * (f(j) + X_(j, n-1) * x(n-1, k));
-          x(n, k) -= u_(j, n-1) * f(j);
-        }
-      }
-      x.col(k).array() /= D_.array();
-
-      // Backward
-      f.setConstant(T(0.0));
-      for (n = N-2; n >= 0; --n) {
-        for (j = 0; j < J; ++j) {
-          f(j) = phi_(j, n) * (f(j) + u_(j, n) * x(n+1, k));
-          x(n, k) -= X_(j, n) * f(j);
-        }
+  for (int k = 0; k < nrhs; ++k) {
+    // Forward
+    f.setZero();
+    x(0, k) = b(0, k);
+    for (int n = 1; n < N; ++n) {
+      T xnm1 = x(n-1, k);
+      x(n, k) = b(n, k);
+      for (int j = 0; j < J; ++j) {
+        T value = phi_(j, n-1) * (f(j) + X_(j, n-1) * xnm1);
+        f(j) = value;
+        x(n, k) -= u_(j, n-1) * value;
       }
     }
+    x.col(k).array() /= D_.array();
 
-  } else {
-
-    for (k = 0; k < nrhs; ++k) {
-      // Forward
-      f.setConstant(T(0.0));
-      x(0, k) = b(0, k);
-      for (n = 1; n < N; ++n) {
-        f = phi_.col(n-1).asDiagonal() * (f + X_.col(n-1) * x(n-1, k));
-        x(n, k) = b(n, k) - u_.col(n-1).transpose().dot(f);
-      }
-      x.col(k).array() /= D_.array();
-
-      // Backward
-      f.setConstant(T(0.0));
-      for (n = N-2; n >= 0; --n) {
-        f = phi_.col(n).asDiagonal() * (f + u_.col(n) * x(n+1, k));
-        x(n, k) = x(n, k) - X_.col(n).transpose().dot(f);
+    // Backward
+    f.setZero();
+    for (int n = N-2; n >= 0; --n) {
+      T xnp1 = x(n+1, k);
+      for (int j = 0; j < J; ++j) {
+        T value = phi_(j, n) * (f(j) + u_(j, n) * xnp1);
+        f(j) = value;
+        x(n, k) -= X_(j, n) * value;
       }
     }
-
   }
 
   return x;
