@@ -92,59 +92,89 @@ void compute (
     }
   }
 
-  // Initialize the work matrix S
-  Eigen::Matrix<T, SIZE, SIZE> S(J, J);
-  S.setZero();
+  // We'll write the algorithm using a pre-processor macro because that lets
+  // us use fixed size matrices for small problems.
 
-  for (int n = 1; n < N; ++n) {
-    T t = x(n),
-      dx = t - x(n-1);
-    for (int j = 0; j < J_real; ++j) {
-      phi_(j, n-1) = exp(-c_real(j)*dx);
-      u_(j, n-1) = a_real(j);
-      X_(j, n) = T(1.0);
-    }
-    for (int j = 0, k = J_real; j < J_comp; ++j, k += 2) {
-      T a = a_comp(j),
-        b = b_comp(j),
-        d = d_comp(j) * t,
-        cd = cos(d),
-        sd = sin(d);
-      T value = exp(-c_comp(j)*dx);
-      phi_(k,   n-1) = value;
-      phi_(k+1, n-1) = value;
-      u_(k,   n-1) = a*cd + b*sd;
-      u_(k+1, n-1) = a*sd - b*cd;
-      X_(k,   n) = cd;
-      X_(k+1, n) = sd;
-    }
-
-    for (int j = 0; j < J; ++j) {
-      T phij = phi_(j, n-1),
-        xj = Dn*X_(j, n-1);
-      for (int k = 0; k <= j; ++k) {
-        S(k, j) = phij*phi_(k, n-1)*(S(k, j) + xj*X_(k, n-1));
-      }
-    }
-
-    Dn = D_(n);
-    for (int j = 0; j < J; ++j) {
-      T uj = u_(j, n-1),
-        xj = X_(j, n);
-      for (int k = 0; k < j; ++k) {
-        T tmp = u_(k, n-1) * S(k, j);
-        Dn -= 2.0*uj*tmp;
-        xj -= tmp;
-        X_(k, n) -= uj*S(k, j);
-      }
-      T tmp = uj*S(j, j);
-      Dn -= uj*tmp;
-      X_(j, n) = xj - tmp;
-    }
-    if (Dn < 0) throw linalg_exception();
-    D_(n) = Dn;
-    X_.col(n) /= Dn;
+#define FIXED_SIZE_HACKZ(SIZE_MACRO)                                          \
+  Eigen::Matrix<T, SIZE_MACRO, SIZE_MACRO> S(J, J);                           \
+  S.setZero();                                                                \
+                                                                              \
+  for (int n = 1; n < N; ++n) {                                               \
+    T t = x(n),                                                               \
+      dx = t - x(n-1);                                                        \
+    for (int j = 0; j < J_real; ++j) {                                        \
+      phi_(j, n-1) = exp(-c_real(j)*dx);                                      \
+      u_(j, n-1) = a_real(j);                                                 \
+      X_(j, n) = T(1.0);                                                      \
+    }                                                                         \
+    for (int j = 0, k = J_real; j < J_comp; ++j, k += 2) {                    \
+      T a = a_comp(j),                                                        \
+        b = b_comp(j),                                                        \
+        d = d_comp(j) * t,                                                    \
+        cd = cos(d),                                                          \
+        sd = sin(d);                                                          \
+      T value = exp(-c_comp(j)*dx);                                           \
+      phi_(k,   n-1) = value;                                                 \
+      phi_(k+1, n-1) = value;                                                 \
+      u_(k,   n-1) = a*cd + b*sd;                                             \
+      u_(k+1, n-1) = a*sd - b*cd;                                             \
+      X_(k,   n) = cd;                                                        \
+      X_(k+1, n) = sd;                                                        \
+    }                                                                         \
+                                                                              \
+    for (int j = 0; j < J; ++j) {                                             \
+      T phij = phi_(j, n-1),                                                  \
+        xj = Dn*X_(j, n-1);                                                   \
+      for (int k = 0; k <= j; ++k) {                                          \
+        S(k, j) = phij*phi_(k, n-1)*(S(k, j) + xj*X_(k, n-1));                \
+      }                                                                       \
+    }                                                                         \
+                                                                              \
+    Dn = D_(n);                                                               \
+    for (int j = 0; j < J; ++j) {                                             \
+      T uj = u_(j, n-1),                                                      \
+        xj = X_(j, n);                                                        \
+      for (int k = 0; k < j; ++k) {                                           \
+        T tmp = u_(k, n-1) * S(k, j);                                         \
+        Dn -= 2.0*uj*tmp;                                                     \
+        xj -= tmp;                                                            \
+        X_(k, n) -= uj*S(k, j);                                               \
+      }                                                                       \
+      T tmp = uj*S(j, j);                                                     \
+      Dn -= uj*tmp;                                                           \
+      X_(j, n) = xj - tmp;                                                    \
+    }                                                                         \
+    if (Dn < 0) throw linalg_exception();                                     \
+    D_(n) = Dn;                                                               \
+    X_.col(n) /= Dn;                                                          \
   }
+
+  if (SIZE == Eigen::Dynamic) {
+    switch (J) {
+      case 1:  { FIXED_SIZE_HACKZ(1)  break; }
+      case 2:  { FIXED_SIZE_HACKZ(2)  break; }
+      case 3:  { FIXED_SIZE_HACKZ(3)  break; }
+      case 4:  { FIXED_SIZE_HACKZ(4)  break; }
+      case 5:  { FIXED_SIZE_HACKZ(5)  break; }
+      case 6:  { FIXED_SIZE_HACKZ(6)  break; }
+      case 7:  { FIXED_SIZE_HACKZ(7)  break; }
+      case 8:  { FIXED_SIZE_HACKZ(8)  break; }
+      case 9:  { FIXED_SIZE_HACKZ(9)  break; }
+      case 10: { FIXED_SIZE_HACKZ(10) break; }
+      case 11: { FIXED_SIZE_HACKZ(11) break; }
+      case 12: { FIXED_SIZE_HACKZ(12) break; }
+      case 13: { FIXED_SIZE_HACKZ(13) break; }
+      case 14: { FIXED_SIZE_HACKZ(14) break; }
+      case 15: { FIXED_SIZE_HACKZ(15) break; }
+      case 16: { FIXED_SIZE_HACKZ(16) break; }
+      default: FIXED_SIZE_HACKZ(Eigen::Dynamic)
+    }
+  } else {
+    // The size was already specified at compile time.
+    FIXED_SIZE_HACKZ(SIZE)
+  }
+
+#undef FIXED_SIZE_HACKZ
 
   this->log_det_ = log(D_.array()).sum();
   this->computed_ = true;
@@ -161,40 +191,67 @@ matrix_t solve (const Eigen::MatrixXd& b) const {
   if (!(this->computed_)) throw compute_exception();
 
   int nrhs = b.cols(), N = this->N_, J = J_;
-  vector_j_t f(J);
   matrix_t x(N, nrhs);
 
   if (J < 16) {
 
-    for (int k = 0; k < nrhs; ++k) {
-      // Forward
-      f.setZero();
-      x(0, k) = b(0, k);
-      for (int n = 1; n < N; ++n) {
-        T xnm1 = x(n-1, k);
-        x(n, k) = b(n, k);
-        for (int j = 0; j < J; ++j) {
-          T value = phi_(j, n-1) * (f(j) + X_(j, n-1) * xnm1);
-          f(j) = value;
-          x(n, k) -= u_(j, n-1) * value;
-        }
-      }
-      x.col(k).array() /= D_.array();
-
-      // Backward
-      f.setZero();
-      for (int n = N-2; n >= 0; --n) {
-        T xnp1 = x(n+1, k);
-        for (int j = 0; j < J; ++j) {
-          T value = phi_(j, n) * (f(j) + u_(j, n) * xnp1);
-          f(j) = value;
-          x(n, k) -= X_(j, n) * value;
-        }
-      }
+#define FIXED_SIZE_HACKZ(SIZE_MACRO)                                          \
+    Eigen::Matrix<T, SIZE_MACRO, 1> f(J);                                     \
+    for (int k = 0; k < nrhs; ++k) {                                          \
+      f.setZero();                                                            \
+      x(0, k) = b(0, k);                                                      \
+      for (int n = 1; n < N; ++n) {                                           \
+        T xnm1 = x(n-1, k);                                                   \
+        x(n, k) = b(n, k);                                                    \
+        for (int j = 0; j < J; ++j) {                                         \
+          T value = phi_(j, n-1) * (f(j) + X_(j, n-1) * xnm1);                \
+          f(j) = value;                                                       \
+          x(n, k) -= u_(j, n-1) * value;                                      \
+        }                                                                     \
+      }                                                                       \
+      x.col(k).array() /= D_.array();                                         \
+                                                                              \
+      f.setZero();                                                            \
+      for (int n = N-2; n >= 0; --n) {                                        \
+        T xnp1 = x(n+1, k);                                                   \
+        for (int j = 0; j < J; ++j) {                                         \
+          T value = phi_(j, n) * (f(j) + u_(j, n) * xnp1);                    \
+          f(j) = value;                                                       \
+          x(n, k) -= X_(j, n) * value;                                        \
+        }                                                                     \
+      }                                                                       \
     }
+
+    if (SIZE == Eigen::Dynamic) {
+      switch (J) {
+        case 1:  { FIXED_SIZE_HACKZ(1)  break; }
+        case 2:  { FIXED_SIZE_HACKZ(2)  break; }
+        case 3:  { FIXED_SIZE_HACKZ(3)  break; }
+        case 4:  { FIXED_SIZE_HACKZ(4)  break; }
+        case 5:  { FIXED_SIZE_HACKZ(5)  break; }
+        case 6:  { FIXED_SIZE_HACKZ(6)  break; }
+        case 7:  { FIXED_SIZE_HACKZ(7)  break; }
+        case 8:  { FIXED_SIZE_HACKZ(8)  break; }
+        case 9:  { FIXED_SIZE_HACKZ(9)  break; }
+        case 10: { FIXED_SIZE_HACKZ(10) break; }
+        case 11: { FIXED_SIZE_HACKZ(11) break; }
+        case 12: { FIXED_SIZE_HACKZ(12) break; }
+        case 13: { FIXED_SIZE_HACKZ(13) break; }
+        case 14: { FIXED_SIZE_HACKZ(14) break; }
+        case 15: { FIXED_SIZE_HACKZ(15) break; }
+        case 16: { FIXED_SIZE_HACKZ(16) break; }
+        default: FIXED_SIZE_HACKZ(Eigen::Dynamic)
+      }
+  } else {
+    // The size was already specified at compile time.
+    FIXED_SIZE_HACKZ(SIZE)
+  }
+
+#undef FIXED_SIZE_HACKZ
 
   } else {
 
+    vector_j_t f(J);
     for (int k = 0; k < nrhs; ++k) {
 
       // Forward
