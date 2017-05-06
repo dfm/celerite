@@ -31,24 +31,21 @@ namespace py = pybind11;
 //
 class PicklableCholeskySolver : public celerite::solver::CholeskySolver<double> {
 public:
-  PicklableCholeskySolver (Method method = adaptive)
-    : celerite::solver::CholeskySolver<double>(method) {};
+  PicklableCholeskySolver () : celerite::solver::CholeskySolver<double>() {};
 
   auto serialize () const {
     return std::make_tuple(
-      int(this->method_), this->computed_, this->N_, this->J_, this->log_det_,
+      this->computed_, this->N_, this->J_, this->log_det_,
       this->phi_, this->u_, this->X_, this->D_
     );
   };
 
   void deserialize (
-      int method,
       bool computed, int n, int J, double log_det,
       Eigen::MatrixXd phi,
       Eigen::MatrixXd u,
       Eigen::MatrixXd X,
       Eigen::VectorXd D) {
-    this->method_   = static_cast<Method>(method);
     this->computed_ = computed;
     this->N_        = n;
     this->J_        = J;
@@ -242,7 +239,6 @@ Compute the coefficients of the celerite model for the given CARMA model
 A thin wrapper around the C++ CholeskySolver class
 )delim");
   cholesky_solver.def(py::init<>());
-  cholesky_solver.def(py::init<PicklableCholeskySolver::Method>());
 
 #ifdef USE_STAN_MATH
   cholesky_solver.def("grad_log_likelihood",
@@ -658,29 +654,21 @@ Returns:
   });
 
   cholesky_solver.def("__setstate__", [](PicklableCholeskySolver& solver, py::tuple t) {
-    if (t.size() != 9) throw std::runtime_error("Invalid state!");
+    if (t.size() != 8) throw std::runtime_error("Invalid state!");
     new (&solver) PicklableCholeskySolver();
     solver.deserialize(
-      t[0].cast<int>(),
-      t[1].cast<bool>(),
+      t[0].cast<bool>(),
+      t[1].cast<int>(),
       t[2].cast<int>(),
-      t[3].cast<int>(),
-      t[4].cast<double>(),
+      t[3].cast<double>(),
 
+      t[4].cast<matrix_t>(),
       t[5].cast<matrix_t>(),
       t[6].cast<matrix_t>(),
-      t[7].cast<matrix_t>(),
 
-      t[8].cast<vector_t>()
+      t[7].cast<vector_t>()
     );
   });
-
-  py::enum_<PicklableCholeskySolver::Method>(cholesky_solver, "Method")
-      .value("adaptive", PicklableCholeskySolver::Method::adaptive)
-      .value("direct", PicklableCholeskySolver::Method::direct)
-      .value("local", PicklableCholeskySolver::Method::local)
-      .value("general", PicklableCholeskySolver::Method::general)
-      .export_values();
 
   return m.ptr();
 }

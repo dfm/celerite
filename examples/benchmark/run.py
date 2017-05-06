@@ -13,9 +13,6 @@ from celerite.timer import benchmark
 from celerite.solver import CholeskySolver
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--method", default=None, choices=[
-    "direct", "local", "general",
-])
 parser.add_argument("--grad", action="store_true")
 parser.add_argument("--george", action="store_true")
 parser.add_argument("--carma", action="store_true")
@@ -41,7 +38,7 @@ N = 2**np.arange(args.minnpow, args.maxnpow + 1)
 J = 2**np.arange(args.minjpow, args.maxjpow + 1)
 
 header = ""
-for k in ["method", "grad", "george",
+for k in ["grad", "george",
           "minnpow", "maxnpow", "minjpow", "maxjpow"]:
     header += "# {0}: {1}\n".format(k, getattr(args, k))
 header += "# platform: {0}\n".format(sys.platform)
@@ -50,8 +47,6 @@ header += "# J: {0}\n".format(list(J))
 header += "xi,yi,j,n,comp_time,ll_time\n"
 
 fn = "benchmark_{0}".format(sys.platform)
-if args.method is not None:
-    fn += "_{0}".format(args.method)
 if args.grad:
     fn += "_grad"
 elif args.george:
@@ -94,12 +89,7 @@ for xi, j in enumerate(J):
         arparams = np.random.randn(2*j)
         maparams = np.random.randn(2*j - 1)
     else:
-        method = dict(
-            direct=CholeskySolver.direct,
-            local=CholeskySolver.local,
-            general=CholeskySolver.general,
-        ).get(args.method, CholeskySolver.adaptive)
-        solver = CholeskySolver(method)
+        solver = CholeskySolver()
 
     for yi, n in enumerate(N):
         if args.george:

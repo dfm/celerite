@@ -10,14 +10,6 @@
 
 #include "celerite/solver/solver.h"
 
-#ifndef CHOLTURN
-#define CHOLTURN 32
-#endif
-
-#ifndef CHOLTINY
-#define CHOLTINY 16
-#endif
-
 namespace celerite {
 namespace solver {
 
@@ -28,8 +20,7 @@ typedef Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> matrix_t;
 typedef Eigen::Matrix<T, Eigen::Dynamic, 1> vector_t;
 
 public:
-enum Method { adaptive, direct, local, general };
-CholeskySolver (Method method = adaptive) : Solver<T>(), method_(method) {};
+CholeskySolver () : Solver<T>() {};
 ~CholeskySolver () {};
 
 /// Compute the Cholesky factorization of the matrix
@@ -82,222 +73,75 @@ void compute (
 
   // Initialize the diagonal.
   D_ = diag.array() + a_real.sum() + a_comp.sum() + jitter;
+  T Dn = D_(0);
 
-  if (method_ == direct || (method_ == adaptive && J <= CHOLTINY)) {
-
-    // We unroll the loops for the smallest models for speed.
-    int j, k;
-    T value, dx, tmp, cd, sd, phij, uj, xj, tn, Dn, a, b, d;
-    Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> S(J, J);
-
-    value = T(1.0) / D_(0);
+  // Compute the values at x[0]
+  {
+    T value = 1.0 / Dn,
+      t = x(0);
     for (int j = 0; j < J_real; ++j) {
       X_(j, 0) = value;
     }
-    tn = x(0);
     for (int j = 0, k = J_real; j < J_comp; ++j, k += 2) {
-      d = d_comp(j) * tn;
+      T d = d_comp(j) * t;
       X_(k,   0) = cos(d)*value;
       X_(k+1, 0) = sin(d)*value;
     }
+  }
 
-    S.setZero();
-    Dn = D_(0);
-    for (int n = 1; n < N; ++n) {
-      tn = x(n);
-      dx = tn - x(n-1);
-      for (j = 0; j < J_real; ++j) {
-        phi_(j, n-1) = exp(-c_real(j)*dx);
-        u_(j, n-1) = a_real(j);
-        X_(j, n) = T(1.0);
-      }
-      for (j = 0, k = J_real; j < J_comp; ++j, k += 2) {
-        a = a_comp(j);
-        b = b_comp(j);
-        d = d_comp(j) * tn;
-        value = exp(-c_comp(j)*dx);
-        phi_(k,   n-1) = value;
-        phi_(k+1, n-1) = value;
-        cd = cos(d);
+  // Initialize the work matrix S
+  Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> S(J, J);
+  S.setZero();
+
+  // Loop over the rest of the data points
+  for (int n = 1; n < N; ++n) {
+    T t = x(n),
+      dx = t - x(n-1);
+    for (int j = 0; j < J_real; ++j) {
+      phi_(j, n-1) = exp(-c_real(j)*dx);
+      u_(j, n-1) = a_real(j);
+      X_(j, n) = T(1.0);
+    }
+    for (int j = 0, k = J_real; j < J_comp; ++j, k += 2) {
+      T a = a_comp(j),
+        b = b_comp(j),
+        d = d_comp(j) * t,
+        cd = cos(d),
         sd = sin(d);
-        u_(k,   n-1) = a*cd + b*sd;
-        u_(k+1, n-1) = a*sd - b*cd;
-        X_(k,   n) = cd;
-        X_(k+1, n) = sd;
-      }
+      T value = exp(-c_comp(j)*dx);
+      phi_(k,   n-1) = value;
+      phi_(k+1, n-1) = value;
+      u_(k,   n-1) = a*cd + b*sd;
+      u_(k+1, n-1) = a*sd - b*cd;
+      X_(k,   n) = cd;
+      X_(k+1, n) = sd;
+    }
 
-      for (j = 0; j < J; ++j) {
-        phij = phi_(j, n-1);
+    for (int j = 0; j < J; ++j) {
+      T phij = phi_(j, n-1),
         xj = Dn*X_(j, n-1);
-        for (k = 0; k <= j; ++k) {
-          S(k, j) = phij*phi_(k, n-1)*(S(k, j) + xj*X_(k, n-1));
-        }
+      for (int k = 0; k <= j; ++k) {
+        S(k, j) = phij*phi_(k, n-1)*(S(k, j) + xj*X_(k, n-1));
       }
+    }
 
-      Dn = D_(n);
-      for (j = 0; j < J; ++j) {
-        uj = u_(j, n-1);
+    Dn = D_(n);
+    for (int j = 0; j < J; ++j) {
+      T uj = u_(j, n-1),
         xj = X_(j, n);
-        for (k = 0; k < j; ++k) {
-          tmp = u_(k, n-1) * S(k, j);
-          Dn -= 2.0*uj*tmp;
-          xj -= tmp;
-          X_(k, n) -= uj*S(k, j);
-        }
-        tmp = uj*S(j, j);
-        Dn -= uj*tmp;
-        X_(j, n) = xj - tmp;
+      for (int k = 0; k < j; ++k) {
+        T tmp = u_(k, n-1) * S(k, j);
+        Dn -= 2.0*uj*tmp;
+        xj -= tmp;
+        X_(k, n) -= uj*S(k, j);
       }
-      if (Dn < 0) throw linalg_exception();
-      D_(n) = Dn;
-      X_.col(n) /= Dn;
+      T tmp = uj*S(j, j);
+      Dn -= uj*tmp;
+      X_(j, n) = xj - tmp;
     }
-
-  } else if (method_ == local || (method_ == adaptive && J <= CHOLTURN)) {
-
-    // We unroll the loops for the smallest models for speed.
-    int j, k;
-    T value, dx, tmp, cd, sd, phij, uj, xj, tn, Dn, a, b, d;
-    Eigen::Array<T, Eigen::Dynamic, 1> Xnm1(J), Xn(J), phin(J), un(J);
-    Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> S(J, J);
-
-    value = T(1.0) / D_(0);
-    for (int j = 0; j < J_real; ++j) {
-      X_(j, 0) = value;
-    }
-    tn = x(0);
-    for (int j = 0, k = J_real; j < J_comp; ++j, k += 2) {
-      d = d_comp(j) * tn;
-      X_(k,   0) = cos(d)*value;
-      X_(k+1, 0) = sin(d)*value;
-    }
-
-    S.setZero();
-    Dn = D_(0);
-    for (int n = 1; n < N; ++n) {
-      Xn = X_.col(n);
-      phin = phi_.col(n-1);
-      un = u_.col(n-1);
-
-      tn = x(n);
-      dx = tn - x(n-1);
-      for (j = 0; j < J_real; ++j) {
-        phin(j) = exp(-c_real(j)*dx);
-        un(j) = a_real(j);
-        Xn(j) = T(1.0);
-      }
-      for (j = 0, k = J_real; j < J_comp; ++j, k += 2) {
-        a = a_comp(j);
-        b = b_comp(j);
-        d = d_comp(j) * tn;
-        value = exp(-c_comp(j)*dx);
-        phin(k)   = value;
-        phin(k+1) = value;
-        cd = cos(d);
-        sd = sin(d);
-        un(k)   = a*cd + b*sd;
-        un(k+1) = a*sd - b*cd;
-        Xn(k)   = cd;
-        Xn(k+1) = sd;
-      }
-
-      Xnm1 = X_.col(n-1);
-      for (j = 0; j < J; ++j) {
-        phij = phin(j);
-        xj = Dn*Xnm1(j);
-        for (k = 0; k <= j; ++k) {
-          S(k, j) = phij*phin(k)*(S(k, j) + xj*Xnm1(k));
-        }
-      }
-
-      Dn = D_(n);
-      for (j = 0; j < J; ++j) {
-        uj = un(j);
-        xj = Xn(j);
-        for (k = 0; k < j; ++k) {
-          tmp = un(k) * S(k, j);
-          Dn -= 2.0*uj*tmp;
-          xj -= tmp;
-          Xn(k) -= uj*S(k, j);
-        }
-        tmp = uj*S(j, j);
-        Dn -= uj*tmp;
-        Xn(j) = xj - tmp;
-      }
-      if (Dn < 0) throw linalg_exception();
-      D_(n) = Dn;
-      X_.col(n) = Xn / Dn;
-      phi_.col(n-1) = phin;
-      u_.col(n-1) = un;
-    }
-
-  } else if (J_comp == 0) {
-
-    // Real only.
-    Eigen::Matrix<T, Eigen::Dynamic, 1> tmp(J);
-    Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> S(J, J);
-
-    X_.col(0).setConstant(T(1.0) / D_(0));
-    S.setZero();
-    for (int n = 1; n < N; ++n) {
-      phi_.col(n-1) = exp(-c_real.array()*(x(n) - x(n-1)));
-      S.noalias() += D_(n-1) * X_.col(n-1) * X_.col(n-1).transpose();
-      S.array() *= (phi_.col(n-1) * phi_.col(n-1).transpose()).array();
-      u_.col(n-1) = a_real;
-      X_.col(n).setOnes();
-      tmp = u_.col(n-1).transpose() * S;
-      D_(n) -= tmp.transpose().dot(u_.col(n-1));
-      if (D_(n) < 0) throw linalg_exception();
-      X_.col(n) = (T(1.0) / D_(n)) * (X_.col(n) - tmp);
-    }
-
-  } else {
-
-    // General case.
-    T Dn;
-    Eigen::Array<T, Eigen::Dynamic, 1> cd, sd;
-    Eigen::Matrix<T, Eigen::Dynamic, 1> tmp, phin(J), Xn(J), un(J);
-    Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> S(J, J);
-
-    Dn = D_(0);
-    Xn.head(J_real).setConstant(T(1.0) / Dn);
-    Xn.segment(J_real, J_comp) = cos(d_comp.array()*x(0)) / Dn;
-    Xn.segment(J_real+J_comp, J_comp) = sin(d_comp.array()*x(0)) / Dn;
-
-    S.setZero();
-    X_.col(0) = Xn;
-    for (int n = 1; n < N; ++n) {
-      T dx = x(n);
-      cd = cos(d_comp.array()*dx);
-      sd = sin(d_comp.array()*dx);
-      dx -= x(n-1);
-
-      phin.head(J_real) = exp(-c_real.array()*dx);
-      phin.segment(J_real, J_comp) = exp(-c_comp.array()*dx);
-      phin.segment(J_real+J_comp, J_comp) = phin.segment(J_real, J_comp);
-      S.noalias() += Dn * Xn * Xn.transpose();
-      S.array() *= (phin * phin.transpose()).array();
-
-      un.head(J_real) = a_real;
-      un.segment(J_real, J_comp) = a_comp.array() * cd + b_comp.array() * sd;
-      un.segment(J_real+J_comp, J_comp) = a_comp.array() * sd - b_comp.array() * cd;
-
-      Xn.head(J_real).setOnes();
-      Xn.segment(J_real, J_comp) = cd;
-      Xn.segment(J_real+J_comp, J_comp) = sd;
-
-      tmp = un.transpose() * S;
-      Dn = D_(n) - tmp.transpose().dot(un);
-      if (Dn < 0) throw linalg_exception();
-      Xn.noalias() -= tmp;
-      Xn /= Dn;
-
-      D_(n) = Dn;
-      X_.col(n) = Xn;
-      u_.col(n-1) = un;
-      phi_.col(n-1) = phin;
-    }
-
+    if (Dn < 0) throw linalg_exception();
+    D_(n) = Dn;
+    X_.col(n) /= Dn;
   }
 
   this->log_det_ = log(D_.array()).sum();
@@ -591,7 +435,6 @@ vector_t predict (const Eigen::VectorXd& y, const Eigen::VectorXd& x) const {
 using Solver<T>::compute;
 
 protected:
-Method method_;
 int J_;
 matrix_t u_, phi_, X_;
 vector_t D_, a_real_, c_real_, a_comp_, b_comp_, c_comp_, d_comp_;

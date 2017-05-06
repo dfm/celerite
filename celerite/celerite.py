@@ -21,26 +21,16 @@ class GP(ModelSet):
         fit_mean (optional): If ``False``, all of the parameters of ``mean``
             will be frozen. Otherwise, the parameter states are unaffected.
             (default: ``False``)
-        method: Select a matrix solver method by name. This can be one of
-            (a) ``adaptive``
-            (b) ``direct``
-            (c) ``local``
-            (d) ``general``
-            is available.
 
     """
 
     def __init__(self,
                  kernel,
-                 mean=0.0, fit_mean=False,
-                 method=None):
+                 mean=0.0, fit_mean=False):
         self._solver = None
         self._computed = False
         self._t = None
         self._y_var = None
-
-        # Choose the method
-        self.method = method
 
         # Build up a list of models for the ModelSet
         models = [("kernel", kernel)]
@@ -64,13 +54,7 @@ class GP(ModelSet):
     @property
     def solver(self):
         if self._solver is None:
-            method = dict(
-                adaptive=solver.CholeskySolver.adaptive,
-                direct=solver.CholeskySolver.direct,
-                local=solver.CholeskySolver.local,
-                general=solver.CholeskySolver.general,
-            ).get(self.method, solver.CholeskySolver.adaptive)
-            self._solver = solver.CholeskySolver(method)
+            self._solver = solver.CholeskySolver()
         return self._solver
 
     @property
