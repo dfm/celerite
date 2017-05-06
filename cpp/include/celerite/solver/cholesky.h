@@ -13,11 +13,13 @@
 namespace celerite {
 namespace solver {
 
-template <typename T>
+template <typename T, int SIZE = Eigen::Dynamic>
 class CholeskySolver : public Solver<T> {
 private:
 typedef Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> matrix_t;
+typedef Eigen::Matrix<T, SIZE, Eigen::Dynamic> matrix_j_t;
 typedef Eigen::Matrix<T, Eigen::Dynamic, 1> vector_t;
+typedef Eigen::Matrix<T, SIZE, 1> vector_j_t;
 
 public:
 CholeskySolver () : Solver<T>() {};
@@ -58,6 +60,7 @@ void compute (
   int N = this->N_ = x.rows();
   int J_real = a_real.rows(), J_comp = a_comp.rows();
   int J = J_ = J_real + 2*J_comp;
+  if (SIZE != Eigen::Dynamic && J != SIZE) throw dimension_mismatch();
   phi_.resize(J, N-1);
   u_.resize(J, N-1);
   X_.resize(J, N);
@@ -90,10 +93,9 @@ void compute (
   }
 
   // Initialize the work matrix S
-  Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> S(J, J);
+  Eigen::Matrix<T, SIZE, SIZE> S(J, J);
   S.setZero();
 
-  // Loop over the rest of the data points
   for (int n = 1; n < N; ++n) {
     T t = x(n),
       dx = t - x(n-1);
@@ -159,34 +161,63 @@ matrix_t solve (const Eigen::MatrixXd& b) const {
   if (!(this->computed_)) throw compute_exception();
 
   int nrhs = b.cols(), N = this->N_, J = J_;
-  vector_t f(J);
+  vector_j_t f(J);
   matrix_t x(N, nrhs);
 
-  for (int k = 0; k < nrhs; ++k) {
-    // Forward
-    f.setZero();
-    x(0, k) = b(0, k);
-    for (int n = 1; n < N; ++n) {
-      T xnm1 = x(n-1, k);
-      x(n, k) = b(n, k);
-      for (int j = 0; j < J; ++j) {
-        T value = phi_(j, n-1) * (f(j) + X_(j, n-1) * xnm1);
-        f(j) = value;
-        x(n, k) -= u_(j, n-1) * value;
-      }
-    }
-    x.col(k).array() /= D_.array();
+  if (J < 16) {
 
-    // Backward
-    f.setZero();
-    for (int n = N-2; n >= 0; --n) {
-      T xnp1 = x(n+1, k);
-      for (int j = 0; j < J; ++j) {
-        T value = phi_(j, n) * (f(j) + u_(j, n) * xnp1);
-        f(j) = value;
-        x(n, k) -= X_(j, n) * value;
+    for (int k = 0; k < nrhs; ++k) {
+      // Forward
+      f.setZero();
+      x(0, k) = b(0, k);
+      for (int n = 1; n < N; ++n) {
+        T xnm1 = x(n-1, k);
+        x(n, k) = b(n, k);
+        for (int j = 0; j < J; ++j) {
+          T value = phi_(j, n-1) * (f(j) + X_(j, n-1) * xnm1);
+          f(j) = value;
+          x(n, k) -= u_(j, n-1) * value;
+        }
+      }
+      x.col(k).array() /= D_.array();
+
+      // Backward
+      f.setZero();
+      for (int n = N-2; n >= 0; --n) {
+        T xnp1 = x(n+1, k);
+        for (int j = 0; j < J; ++j) {
+          T value = phi_(j, n) * (f(j) + u_(j, n) * xnp1);
+          f(j) = value;
+          x(n, k) -= X_(j, n) * value;
+        }
       }
     }
+
+  } else {
+
+    for (int k = 0; k < nrhs; ++k) {
+
+      // Forward
+      f.setZero();
+      T value = b(0, k);
+      x(0, k) = value;
+      for (int n = 1; n < N; ++n) {
+        f = phi_.col(n-1).asDiagonal() * (f + X_.col(n-1) * value);
+        value = b(n, k) - u_.col(n-1).transpose().dot(f);
+        x(n, k) = value;
+      }
+      x.col(k).array() /= D_.array();
+
+      // Backward
+      f.setZero();
+      value = x(N-1, k);
+      for (int n = N-2; n >= 0; --n) {
+        f = phi_.col(n).asDiagonal() * (f + u_.col(n) * value);
+        value = x(n, k) - X_.col(n).transpose().dot(f);
+        x(n, k) = value;
+      }
+    }
+
   }
 
   return x;
@@ -205,7 +236,7 @@ matrix_t dot_L (const Eigen::MatrixXd& z) const {
   T tmp;
   int N = z.rows(), nrhs = z.cols();
   Eigen::Array<T, Eigen::Dynamic, 1> D = sqrt(D_.array());
-  vector_t f(J_);
+  vector_j_t f(J_);
   matrix_t y(N, nrhs);
 
   for (int k = 0; k < nrhs; ++k) {
@@ -252,6 +283,7 @@ matrix_t dot (
 
   int N = z.rows(), nrhs = z.cols();
   int J_real = a_real.rows(), J_comp = a_comp.rows(), J = J_real + 2*J_comp;
+  if (SIZE != Eigen::Dynamic && J != SIZE) throw dimension_mismatch();
   Eigen::Array<T, Eigen::Dynamic, 1> a1(J_real), a2(J_comp), b2(J_comp),
                                      c1(J_real), c2(J_comp), d2(J_comp),
                                      cd, sd;
@@ -264,7 +296,7 @@ matrix_t dot (
 
   T a_sum = jitter + a1.sum() + a2.sum();
 
-  vector_t f(J);
+  vector_j_t f(J);
   matrix_t y(N, nrhs), phi(J, N-1), u(J, N-1), v(J, N-1);
 
   cd = cos(d2*x(0));
@@ -322,7 +354,7 @@ vector_t predict (const Eigen::VectorXd& y, const Eigen::VectorXd& x) const {
   vector_t alpha = this->solve(y),
            pred(M);
   pred.setZero();
-  Eigen::Array<T, Eigen::Dynamic, 1> Q(J);
+  Eigen::Array<T, SIZE, 1> Q(J);
   Q.setZero();
 
   // Forward pass
@@ -415,7 +447,7 @@ using Solver<T>::compute;
 
 protected:
 int J_;
-matrix_t u_, phi_, X_;
+matrix_j_t u_, phi_, X_;
 vector_t D_, a_real_, c_real_, a_comp_, b_comp_, c_comp_, d_comp_;
 Eigen::VectorXd t_;
 
