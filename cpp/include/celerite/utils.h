@@ -20,12 +20,12 @@ inline bool isclose (const T1& a, const T2& b) {
 }
 
 template <typename T>
-T _logsumexp (const T& a, const T& b) {
+inline T _logsumexp (const T& a, const T& b) {
   return b + log(T(1.0) + exp(a - b));
 }
 
 template <typename Derived>
-bool check_coefficients (
+inline bool check_coefficients (
   const Eigen::DenseBase<Derived>& alpha_real,
   const Eigen::DenseBase<Derived>& beta_real,
   const Eigen::DenseBase<Derived>& alpha_complex_real,
@@ -104,7 +104,8 @@ bool check_coefficients (
 }
 
 template <typename Derived>
-typename Derived::Scalar get_kernel_value (
+typename Derived::Scalar
+inline get_kernel_value (
   const Eigen::DenseBase<Derived>& alpha_real,
   const Eigen::DenseBase<Derived>& beta_real,
   const Eigen::DenseBase<Derived>& alpha_complex_real,
@@ -131,7 +132,8 @@ typename Derived::Scalar get_kernel_value (
 }
 
 template <typename Derived>
-typename Derived::Scalar get_psd_value (
+typename Derived::Scalar
+inline get_psd_value (
   const Eigen::DenseBase<Derived>& alpha_real,
   const Eigen::DenseBase<Derived>& beta_real,
   const Eigen::DenseBase<Derived>& alpha_complex_real,
