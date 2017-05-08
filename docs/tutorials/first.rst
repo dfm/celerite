@@ -170,16 +170,16 @@ model.
 
 .. parsed-literal::
 
-          fun: -16.563201709335942
+          fun: -16.563201712507777
      hess_inv: <5x5 LbfgsInvHessProduct with dtype=float64>
-          jac: array([ -1.70530257e-05,   1.42108547e-05,   5.68434189e-06,
-             5.68434189e-06,   2.84217094e-05])
+          jac: array([  5.68434189e-06,  -2.84217094e-06,  -2.84217094e-05,
+            -1.70530257e-05,   8.52651283e-06])
       message: b'CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH'
-         nfev: 252
+         nfev: 246
           nit: 30
        status: 0
       success: True
-            x: array([ 3.27772777, -2.02443035, -4.16135078,  2.34184241,  1.13554507])
+            x: array([ 3.27786213, -2.02449009, -4.16135174,  2.34183985,  1.13554507])
 
 
 With a small dataset like this, this optimization should have only taken
@@ -195,11 +195,11 @@ are the following:
 
 .. parsed-literal::
 
-    OrderedDict([('kernel:terms[0]:log_S0', 3.2777277708622319),
-                 ('kernel:terms[0]:log_omega0', -2.0244303539928121),
-                 ('kernel:terms[1]:log_S0', -4.1613507808507766),
-                 ('kernel:terms[1]:log_Q', 2.3418424058376339),
-                 ('kernel:terms[1]:log_omega0', 1.1355450688503568)])
+    OrderedDict([('kernel:terms[0]:log_S0', 3.2778621345806491),
+                 ('kernel:terms[0]:log_omega0', -2.0244900869918547),
+                 ('kernel:terms[1]:log_S0', -4.1613517441164882),
+                 ('kernel:terms[1]:log_Q', 2.3418398473757835),
+                 ('kernel:terms[1]:log_omega0', 1.1355450686118842)])
 
 
 
