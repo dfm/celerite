@@ -11,14 +11,14 @@ namespace celerite {
 #define POLYTOL 1e-10
 
 template <typename T>
-T polyval (const Eigen::Matrix<T, Eigen::Dynamic, 1>& p, const double x) {
+inline T polyval (const Eigen::Matrix<T, Eigen::Dynamic, 1>& p, const double x) {
   T result = T(0.0);
   for (int i = 0; i < p.rows(); ++i) result = result * x + p[i];
   return result;
 }
 
 template <typename T>
-Eigen::Matrix<T, Eigen::Dynamic, 1> polyadd (const Eigen::Matrix<T, Eigen::Dynamic, 1>& p1, const Eigen::Matrix<T, Eigen::Dynamic, 1>& p2) {
+inline Eigen::Matrix<T, Eigen::Dynamic, 1> polyadd (const Eigen::Matrix<T, Eigen::Dynamic, 1>& p1, const Eigen::Matrix<T, Eigen::Dynamic, 1>& p2) {
   int n1 = p1.rows(),
       n2 = p2.rows(),
       n = std::max(p1.rows(), p2.rows());
@@ -32,7 +32,7 @@ Eigen::Matrix<T, Eigen::Dynamic, 1> polyadd (const Eigen::Matrix<T, Eigen::Dynam
 }
 
 template <typename T>
-Eigen::Matrix<T, Eigen::Dynamic, 1> polymul (const Eigen::Matrix<T, Eigen::Dynamic, 1>& p1, const Eigen::Matrix<T, Eigen::Dynamic, 1>& p2) {
+inline Eigen::Matrix<T, Eigen::Dynamic, 1> polymul (const Eigen::Matrix<T, Eigen::Dynamic, 1>& p1, const Eigen::Matrix<T, Eigen::Dynamic, 1>& p2) {
   int n1 = p1.rows(),
       n2 = p2.rows(),
       n = n1 + n2 - 1;
@@ -46,7 +46,7 @@ Eigen::Matrix<T, Eigen::Dynamic, 1> polymul (const Eigen::Matrix<T, Eigen::Dynam
 }
 
 template <typename T>
-Eigen::Matrix<T, Eigen::Dynamic, 1> polyrem (const Eigen::Matrix<T, Eigen::Dynamic, 1>& u, const Eigen::Matrix<T, Eigen::Dynamic, 1>& v) {
+inline Eigen::Matrix<T, Eigen::Dynamic, 1> polyrem (const Eigen::Matrix<T, Eigen::Dynamic, 1>& u, const Eigen::Matrix<T, Eigen::Dynamic, 1>& v) {
   int m = u.rows() - 1,
       n = v.rows() - 1,
       p = m - n + 1;
@@ -69,7 +69,7 @@ Eigen::Matrix<T, Eigen::Dynamic, 1> polyrem (const Eigen::Matrix<T, Eigen::Dynam
 }
 
 template <typename T>
-Eigen::Matrix<T, Eigen::Dynamic, 1> polyder (const Eigen::Matrix<T, Eigen::Dynamic, 1>& p) {
+inline Eigen::Matrix<T, Eigen::Dynamic, 1> polyder (const Eigen::Matrix<T, Eigen::Dynamic, 1>& p) {
   int n = p.rows() - 1;
   Eigen::Matrix<T, Eigen::Dynamic, 1> d = p;  // Copy.
   for (int i = 0; i < n; ++i) {
@@ -79,7 +79,7 @@ Eigen::Matrix<T, Eigen::Dynamic, 1> polyder (const Eigen::Matrix<T, Eigen::Dynam
 }
 
 template <typename T>
-std::vector<Eigen::Matrix<T, Eigen::Dynamic, 1> > polysturm (const Eigen::Matrix<T, Eigen::Dynamic, 1>& p) {
+inline std::vector<Eigen::Matrix<T, Eigen::Dynamic, 1> > polysturm (const Eigen::Matrix<T, Eigen::Dynamic, 1>& p) {
   int n = p.rows() - 1;
   std::vector<Eigen::Matrix<T, Eigen::Dynamic, 1> > sturm;
   Eigen::Matrix<T, Eigen::Dynamic, 1> p0 = p, p1 = polyder(p0), tmp;
@@ -97,13 +97,13 @@ std::vector<Eigen::Matrix<T, Eigen::Dynamic, 1> > polysturm (const Eigen::Matrix
 }
 
 template <typename T>
-int sgn(T val) {
+inline int sgn(T val) {
     return (T(0) < val) - (val < T(0));
 }
 
 // Count the positive roots of a polynomial using Sturm's theorem.
 template <typename T>
-int polycountroots (const Eigen::Matrix<T, Eigen::Dynamic, 1>& p) {
+inline int polycountroots (const Eigen::Matrix<T, Eigen::Dynamic, 1>& p) {
   if (p.rows() <= 1) return 0;
 
   int n = p.rows() - 1,

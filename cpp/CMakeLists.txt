@@ -29,57 +29,14 @@ endif()
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
-include(ReadCeleriteVersionFromSource)
-read_celerite_version_from_source(${CMAKE_SOURCE_DIR})
-
-find_package(Eigen REQUIRED)
-if (EIGEN_VERSION VERSION_LESS 3.1.0)
-message(FATAL_ERROR "-- celerite requires Eigen version >= 3.1.0 in order "
-    "that Eigen/SparseCore be available, detected version of Eigen is: "
-    "${EIGEN_VERSION}")
-endif (EIGEN_VERSION VERSION_LESS 3.1.0)
-
-# LAPACK (& BLAS).
-set(CELERITE_LIBRARIES)
-option(LAPACK "Enable use of LAPACK." OFF)
-if (LAPACK)
-  find_package(LAPACK QUIET)
-  if (LAPACK_FOUND)
-    message("-- Found LAPACK library: ${LAPACK_LIBRARIES}")
-  else (LAPACK_FOUND)
-    message("-- Did not find LAPACK library, disabling LAPACK support.")
-  endif (LAPACK_FOUND)
-
-  find_package(BLAS QUIET)
-  if (BLAS_FOUND)
-    message("-- Found BLAS library: ${BLAS_LIBRARIES}")
-  else (BLAS_FOUND)
-    message("-- Did not find BLAS library, disabling LAPACK support.")
-  endif (BLAS_FOUND)
-
-  if (LAPACK_FOUND AND BLAS_FOUND)
-    add_definitions(-DWITH_LAPACK)
-    list(APPEND CELERITE_LIBRARIES ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES})
-  endif (LAPACK_FOUND AND BLAS_FOUND)
-else (LAPACK)
-  message("-- Building without LAPACK.")
-endif (LAPACK)
-
 enable_testing()
 
 # Includes.
 include_directories(include)
-include_directories(SYSTEM ${EIGEN_INCLUDE_DIRS})
+include_directories(lib/eigen_3.3.3)
 
 # Some tweaks for speed.
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O4")
 add_definitions(-DNDEBUG)
 
 # Build the examples.
 add_subdirectory(src)
-
-# Setup installation of public headers.
-file(GLOB CELERITE_HDRS ${CMAKE_SOURCE_DIR}/include/celerite/*.h)
-install(FILES ${CELERITE_HDRS} DESTINATION include/celerite)
-file(GLOB CELERITE_SOLVER_HDRS ${CMAKE_SOURCE_DIR}/include/celerite/solver/*.h)
-install(FILES ${CELERITE_SOLVER_HDRS} DESTINATION include/celerite/solver)

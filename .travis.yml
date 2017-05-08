@@ -13,6 +13,8 @@ env:
     global:
         - EIGEN_VERSION=3.2.9
           TEST_LANG='python'
+          AUTOGRAD=autograd
+          AUTODIFF_LIBRARY=eigen
 
 matrix:
     include:
@@ -47,19 +49,15 @@ matrix:
         - os: linux
           env: PYTHON_VERSION=3.6 NUMPY_VERSION=1.12
         - os: linux
-          env: PYTHON_VERSION=3.6 NUMPY_VERSION=1.12 LAPACK_VARIANT='mkl'
+          env: PYTHON_VERSION=3.6 NUMPY_VERSION=1.12 AUTOGRAD=''
         - os: linux
-          env: PYTHON_VERSION=3.6 NUMPY_VERSION=1.12 LAPACK_VARIANT='openblas'
+          env: PYTHON_VERSION=3.6 NUMPY_VERSION=1.12 AUTODIFF_LIBRARY=stan
 
         # OSX
         - os: osx
           env: PYTHON_VERSION=2.7 NUMPY_VERSION=1.12
         - os: osx
           env: PYTHON_VERSION=3.6 NUMPY_VERSION=1.12
-        - os: osx
-          env: PYTHON_VERSION=3.6 NUMPY_VERSION=1.12 LAPACK_VARIANT='mkl'
-        - os: osx
-          env: PYTHON_VERSION=3.6 NUMPY_VERSION=1.12 LAPACK_VARIANT='openblas'
 
 install:
     - source .ci/travis.sh

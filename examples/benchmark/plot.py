@@ -26,20 +26,19 @@ if args.suffix is not None:
 
 fn = "benchmark_{0}{1}.csv".format(args.platform, suffix)
 fn = os.path.join(args.directory, fn)
-with_lapack = pd.read_csv(fn, comment="#")
-with_lapack_matrix = np.empty((with_lapack.xi.max() + 1,
-                               with_lapack.yi.max() + 1))
-with_lapack_matrix[:] = np.nan
-with_lapack_matrix[with_lapack.xi, with_lapack.yi] = with_lapack.comp_time
+data = pd.read_csv(fn, comment="#")
+data_matrix = np.empty((data.xi.max() + 1, data.yi.max() + 1))
+data_matrix[:] = np.nan
+data_matrix[data.xi, data.yi] = data.comp_time + data.ll_time
 
-J = np.sort(np.array(with_lapack.j.unique()))
-N = np.sort(np.array(with_lapack.n.unique()))
+J = np.sort(np.array(data.j.unique()))
+N = np.sort(np.array(data.n.unique()))
 
 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=get_figsize(1, 2), sharey=True)
 
 for i, j in enumerate(J):
     x = N
-    y = with_lapack_matrix[i]
+    y = data_matrix[i]
     m = np.isfinite(y)
     ax1.plot(x[m], y[m], ".-", color=COLOR_CYCLE[i],
              label="{0:.0f}".format(j))
@@ -47,12 +46,12 @@ for i, j in enumerate(J):
 if suffix == "_george":
     f = N * np.log(N)**2
     ax1.plot(N, 4.0 * f / f[-1], ":k", label=r"$\mathcal{O}(N\,\log^2N)$")
-ax1.plot(N, 9e-2 * N / N[-1], "k", label=r"$\mathcal{O}(N)$")
+ax1.plot(N, 4e-2 * N / N[-1], "k", label=r"$\mathcal{O}(N)$")
 ax1.legend(loc="lower right", bbox_to_anchor=(1.05, 0), fontsize=8)
 
 for i, n in enumerate(N[::2]):
     x = J
-    y = with_lapack_matrix[:, 2*i]
+    y = data_matrix[:, 2*i]
     m = np.isfinite(y)
     ax2.plot(x[m], y[m], ".-", color=COLOR_CYCLE[i % len(COLOR_CYCLE)],
              label="{0:.0f}".format(n))
@@ -60,7 +59,7 @@ for i, n in enumerate(N[::2]):
 if suffix == "_george":
     f = J
     ax2.plot(J, 0.1 * f / f[-1], ":k", label=r"$\mathcal{O}(J)$")
-ax2.plot(J, 0.5 * J**2 / J[-1]**2, "k",
+ax2.plot(J, 2e-2 * J**2 / J[-1]**2, "k",
          label=r"$\mathcal{O}(J^2)$")
 ax2.legend(loc="lower right", bbox_to_anchor=(1.05, 0), fontsize=8)
 
@@ -70,7 +69,7 @@ ax2.set_xscale("log")
 ax1.set_yscale("log")
 ax1.set_xlim(N.min(), N.max())
 ax2.set_xlim(1, J.max())
-ax2.set_ylim(2e-5, 8.0)
+ax2.set_ylim(6e-6, 9.0)
 
 ax1.set_ylabel("computational cost [seconds]")
 ax1.set_xlabel("number of data points [$N$]")

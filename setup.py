@@ -3,7 +3,6 @@
 
 import os
 import sys
-import numpy
 
 from setuptools import setup, Extension
 
@@ -12,28 +11,10 @@ if "publish" in sys.argv[-1]:
     os.system("python setup.py sdist upload")
     sys.exit()
 
-# The include directory for the celerite headers
-localincl = os.path.join("cpp", "include")
-if not os.path.exists(os.path.join(localincl, "celerite", "version.h")):
-    raise RuntimeError("couldn't find celerite headers")
-
 # Default compile arguments.
-compile_args = dict(
-    libraries=[],
-    define_macros=[("NDEBUG", None)],
-)
-if os.name == "posix":
-    compile_args["libraries"] += ["m", "stdc++"]
-
-compile_args["include_dirs"] = [
-    localincl,
-    numpy.get_include(),
-]
-
 ext = Extension("celerite.solver",
                 sources=[os.path.join("celerite", "solver.cpp")],
-                language="c++",
-                **compile_args)
+                language="c++")
 
 # Hackishly inject a constant into builtins to enable importing of the
 # package before the library is built.
@@ -57,13 +38,11 @@ setup(
     ext_modules=[ext],
     description="Scalable 1D Gaussian Processes",
     long_description=open("README.rst").read(),
-    package_data={"": ["README.rst", "LICENSE",
-                       os.path.join(localincl, "*.h"),
-                       os.path.join(localincl, "*", "*.h")]},
+    package_data={"": ["README.rst", "LICENSE"]},
     include_package_data=True,
     cmdclass=dict(build_ext=build_ext),
     classifiers=[
-        # "Development Status :: 5 - Production/Stable",
+        "Development Status :: 5 - Production/Stable",
         "Intended Audience :: Developers",
         "Intended Audience :: Science/Research",
         "License :: OSI Approved :: MIT License",

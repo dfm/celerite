@@ -30,6 +30,7 @@ For more details of the kernel structure supported by celerite, check out
     int main () {
         // Choose some demo parameters for the solver
         int j_real = 2, j_complex = 1;
+        double jitter = 0.0;
         VectorXd alpha_real(j_real),
                  beta_real(j_real),
                  alpha_complex_real(j_complex),
@@ -55,8 +56,9 @@ For more details of the kernel structure supported by celerite, check out
         y = sin(x.array());
 
         // Set up the solver
-        celerite::solver::BandSolver<double> solver;
+        celerite::solver::CholeskySolver<double> solver;
         solver.compute(
+            jitter,
             alpha_real, beta_real,
             alpha_complex_real, alpha_complex_imag,
             beta_complex_real, beta_complex_imag,

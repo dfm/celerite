@@ -1,16 +1,29 @@
 #include <iostream>
-#include <sys/time.h>
 #include <Eigen/Core>
-
 #include "celerite/celerite.h"
 
 // Timer for the benchmark.
-double get_timestamp ()
-{
-  struct timeval now;
-  gettimeofday (&now, NULL);
-  return double(now.tv_usec) * 1.0e-6 + double(now.tv_sec);
-}
+#if defined(_MSC_VER)
+    //no sys/time.h in visual c++
+    //http://jakascorner.com/blog/2016/04/time-measurement.html
+    #include <chrono>
+    double get_timestamp ()
+    {
+      using micro_s = std::chrono::microseconds;
+      auto tnow = std::chrono::steady_clock::now();
+      auto d_micro = std::chrono::duration_cast<micro_s>(tnow.time_since_epoch()).count();
+      return double(d_micro) * 1.0e-6;
+    }
+#else
+   //no std::chrono in g++ 4.8
+   #include <sys/time.h>
+   double get_timestamp ()
+   {
+     struct timeval now;
+     gettimeofday (&now, NULL);
+     return double(now.tv_usec) * 1.0e-6 + double(now.tv_sec);
+   }
+#endif
 
 int main (int argc, char* argv[])
 {
@@ -24,6 +37,7 @@ int main (int argc, char* argv[])
   if (argc >= 4) niter = atoi(argv[3]);
 
   // Set up the coefficients.
+  double jitter = 0.01;
   Eigen::VectorXd alpha = Eigen::VectorXd::Random(nterms),
                   beta_real = Eigen::VectorXd::Random(nterms),
                   beta_complex_real = Eigen::VectorXd::Random(nterms),
@@ -48,7 +62,7 @@ int main (int argc, char* argv[])
   // Compute the y values.
   y0 = sin(x0.array());
 
-  celerite::solver::BandSolver<double> solver;
+  celerite::solver::CholeskySolver<double> solver;
 
   for (size_t N = 64; N <= N_max; N *= 2) {
     Eigen::VectorXd x = x0.topRows(N),
@@ -61,7 +75,7 @@ int main (int argc, char* argv[])
            complex_compute_time = 0.0, complex_solve_time = 0.0;
     for (size_t i = 0; i < niter; ++i) {
       strt = get_timestamp();
-      solver.compute(alpha, beta_real, x, yerr);
+      solver.compute(jitter, alpha, beta_real, x, yerr);
       real_compute_time += get_timestamp() - strt;
     }
 
@@ -73,7 +87,7 @@ int main (int argc, char* argv[])
 
     for (size_t i = 0; i < niter; ++i) {
       strt = get_timestamp();
-      solver.compute(alpha, beta_real, alpha, beta_complex_real, beta_complex_imag, x, yerr);
+      solver.compute(jitter, alpha, beta_real, alpha, beta_complex_real, beta_complex_imag, x, yerr);
       complex_compute_time += get_timestamp() - strt;
     }
 

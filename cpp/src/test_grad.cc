@@ -1,59 +1,50 @@
 #include <iostream>
 #include <Eigen/Core>
 #include <unsupported/Eigen/AutoDiff>
-#include "celerite/solvers/band.h"
 
-#define DO_TEST(FUNC, VAR1, VAR2)                            \
+#include "celerite/solver/cholesky.h"
+
+#define DO_TEST(NAME, VAR1, VAR2)                            \
 {                                                            \
-  int flag = 1;                                              \
-  double value, delta, eps0 = eps;                                       \
-  while (flag != 0) {                                        \
-    VAR1 += eps0;                                               \
-    flag = solver.compute(alpha_real, beta_real,                      \
-        alpha_complex, beta_complex_real, beta_complex_imag,   \
-        x, yerr2);                                             \
-    value = FUNC;                                              \
-    VAR1 -= 2.0*eps0;                                           \
-    flag += solver.compute(alpha_real, beta_real,                      \
-        alpha_complex, beta_complex_real, beta_complex_imag,   \
-        x, yerr2);                                             \
-    value -= FUNC;                                             \
-    VAR1 += eps0;                                               \
-    value /= 2.0 * eps0;                                        \
-    eps0 /= 2.0;                                               \
-  }                                                              \
-  delta = std::abs(value - VAR2);                            \
-  if (delta > 7e-5) {                                        \
-    std::cerr << "Test failed: '" << #FUNC << ", " << #VAR1 << "': |" << value << " - " << VAR2 << "| = " << delta << std::endl; \
+  double base, comp, delta;                                  \
+  base = VAR1;                                               \
+  comp = VAR2;                                               \
+  delta = std::abs(base - comp);                             \
+  if (delta > 1e-10) {                                       \
+    std::cerr << "Test failed: '" << #NAME << "' - error: " << delta << " " << base << " " << comp << std::endl; \
     return 1;                                                \
   } else                                                     \
-    std::cerr << "Test passed: '" << #FUNC << " " << #VAR1 << "' - error: " << delta << std::endl; \
+    std::cerr << "Test passed: '" << #NAME << "' - error: " << delta << std::endl; \
 }
 
 int main (int argc, char* argv[])
 {
-  typedef Eigen::AutoDiffScalar<Eigen::VectorXd> ad_t;
+  typedef Eigen::AutoDiffScalar<Eigen::VectorXd> g_t;
+  typedef Eigen::Matrix<g_t, Eigen::Dynamic, 1> v_t;
+  typedef Eigen::Matrix<g_t, Eigen::Dynamic, Eigen::Dynamic> m_t;
 
   srand(42);
 
-  size_t nterms = 3;
-  if (argc >= 2) nterms = atoi(argv[1]);
   size_t N = 1024;
-  if (argc >= 3) N = atoi(argv[2]);
+  if (argc >= 2) N = atoi(argv[1]);
   size_t niter = 10;
-  if (argc >= 4) niter = atoi(argv[3]);
+  if (argc >= 3) niter = atoi(argv[2]);
 
   // Set up the coefficients.
-  Eigen::VectorXd alpha_real = Eigen::VectorXd::Random(nterms),
-                  beta_real = Eigen::VectorXd::Random(nterms),
-                  alpha_complex = Eigen::VectorXd::Random(nterms),
-                  beta_complex_real = Eigen::VectorXd::Random(nterms),
-                  beta_complex_imag = Eigen::VectorXd::Random(nterms);
-  alpha_real.array() += 1.;
-  alpha_complex.array() += 1.;
-  beta_real.array() += 1.;
-  beta_complex_real.array() += 1.;
-  beta_complex_imag.array() += 1.;
+  size_t p_real = 2, p_complex = 1;
+  g_t jitter = g_t(0.01);
+  v_t a_real(p_real), c_real(p_real),
+      a_comp(p_complex), b_comp(p_complex), c_comp(p_complex), d_comp(p_complex);
+
+  int nder = 8, j = 0;
+  a_real << g_t(1.3, nder, j), g_t(1.5, nder, j+1);
+  j += 2;
+  c_real  << g_t(0.5, nder, j), g_t(0.2, nder, j+1);
+  j += 2;
+  a_comp << g_t(1.0, nder, j++);
+  b_comp << g_t(0.1, nder, j++);
+  c_comp << g_t(1.0, nder, j++);
+  d_comp << g_t(1.0, nder, j++);
 
   // Generate some fake data.
   Eigen::VectorXd x = Eigen::VectorXd::Random(N),
@@ -62,7 +53,7 @@ int main (int argc, char* argv[])
 
   // Set the scale of the uncertainties.
   yerr2.array() *= 0.1;
-  yerr2.array() += 2.5;
+  yerr2.array() += 0.3;
 
   // The times need to be sorted.
   std::sort(x.data(), x.data() + x.size());
@@ -70,56 +61,10 @@ int main (int argc, char* argv[])
   // Compute the y values.
   y = sin(x.array());
 
-  // Set up the gradients
-  size_t nparams = 5 * nterms + 1;
-  Eigen::Matrix<ad_t, Eigen::Dynamic, 1> alpha_real_grad(nterms),
-                                         beta_real_grad(nterms),
-                                         alpha_complex_grad(nterms),
-                                         beta_complex_real_grad(nterms),
-                                         beta_complex_imag_grad(nterms),
-                                         yerr2_grad(N);
-  for (size_t i = 0; i < N; ++i)
-    yerr2_grad(i) = ad_t(yerr2(i), nparams, 0);
-
-  size_t par = 1;
-  for (size_t i = 0; i < nterms; ++i) {
-    alpha_real_grad(i) = ad_t(alpha_real(i), nparams, par++);
-    beta_real_grad(i) = ad_t(beta_real(i), nparams, par++);
-    alpha_complex_grad(i) = ad_t(alpha_complex(i), nparams, par++);
-    beta_complex_real_grad(i) = ad_t(beta_complex_real(i), nparams, par++);
-    beta_complex_imag_grad(i) = ad_t(beta_complex_imag(i), nparams, par++);
-  }
-
-  celerite::BandSolver<double> solver;
-  celerite::BandSolver<ad_t> grad_solver;
-  grad_solver.compute(alpha_real_grad, beta_real_grad,
-      alpha_complex_grad, beta_complex_real_grad, beta_complex_imag_grad,
-      x, yerr2_grad);
-
-  ad_t grad_log_det = grad_solver.log_determinant(),
-       grad_dot_solve = grad_solver.dot_solve(y);
-
-  double eps = 1.23e-6;
-  DO_TEST(solver.log_determinant(), yerr2.array(), grad_log_det.derivatives()(0))
-  DO_TEST(solver.dot_solve(y), yerr2.array(), grad_dot_solve.derivatives()(0))
-
-  par = 1;
-  for (size_t i = 0; i < nterms; ++i) {
-    DO_TEST(solver.log_determinant(), alpha_real(i), grad_log_det.derivatives()(par))
-    DO_TEST(solver.dot_solve(y), alpha_real(i), grad_dot_solve.derivatives()(par++))
-
-    DO_TEST(solver.log_determinant(), beta_real(i), grad_log_det.derivatives()(par))
-    DO_TEST(solver.dot_solve(y), beta_real(i), grad_dot_solve.derivatives()(par++))
-
-    DO_TEST(solver.log_determinant(), alpha_complex(i), grad_log_det.derivatives()(par))
-    DO_TEST(solver.dot_solve(y), alpha_complex(i), grad_dot_solve.derivatives()(par++))
-
-    DO_TEST(solver.log_determinant(), beta_complex_real(i), grad_log_det.derivatives()(par))
-    DO_TEST(solver.dot_solve(y), beta_complex_real(i), grad_dot_solve.derivatives()(par++))
-
-    DO_TEST(solver.log_determinant(), beta_complex_imag(i), grad_log_det.derivatives()(par))
-    DO_TEST(solver.dot_solve(y), beta_complex_imag(i), grad_dot_solve.derivatives()(par++))
-  }
+  celerite::solver::CholeskySolver<g_t> cholesky;
+  cholesky.compute(jitter, a_real, c_real, a_comp, b_comp, c_comp, d_comp, x, yerr2);
+  std::cout << cholesky.log_determinant().derivatives() << std::endl;
+  std::cout << cholesky.dot_solve(y).derivatives() << std::endl;
 
   return 0;
 }

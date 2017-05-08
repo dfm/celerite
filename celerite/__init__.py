@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-__version__ = "0.1.2"
+__version__ = "0.2.0.dev0"
 
 try:
     __CELERITE_SETUP__
@@ -9,16 +9,11 @@ except NameError:
 
 if not __CELERITE_SETUP__:
     __all__ = [
-        "terms", "solver", "modeling", "get_solver", "GP", "Solver",
-        "__library_version__", "__with_lapack__", "__lapack_variant__",
-        "__with_sparse__",
+        "terms", "solver", "modeling", "GP", "CholeskySolver",
+        "__library_version__",
     ]
 
     from . import terms, solver, modeling
-    from .celerite import get_solver, GP
-    from .solver import Solver
-
+    from .celerite import GP
+    from .solver import CholeskySolver
     __library_version__ = solver.get_library_version()
-    __with_lapack__ = solver.with_lapack()
-    __lapack_variant__ = solver.lapack_variant()
-    __with_sparse__ = solver.with_sparse()

@@ -3,97 +3,21 @@
 from __future__ import division, print_function
 
 import os
-import re
 import sys
-import logging
+import numpy
 import tempfile
-from numpy.distutils.system_info import get_info
 
 import setuptools
 from setuptools.command.build_ext import build_ext as _build_ext
 
 __all__ = ["build_ext"]
 
-def find_eigen(hint=None, verbose=False):
-    """
-    Find the location of the Eigen 3 include directory. This will return
-    ``None`` on failure.
-    """
-    # List the standard locations including a user supplied hint.
-    search_dirs = [] if hint is None else list(hint)
-
-    # Look in the conda include directory in case eigen was installed using
-    # conda.
-    if "CONDA_PREFIX" in os.environ:
-        search_dirs.append(os.path.join(os.environ["CONDA_PREFIX"], "include"))
-        search_dirs.append(os.path.join(os.environ["CONDA_PREFIX"], "Library",
-                                        "include"))
-
-    if "CONDA_ENV_PATH" in os.environ:
-        search_dirs.append(os.path.join(os.environ["CONDA_ENV_PATH"],
-                                        "include"))
-        search_dirs.append(os.path.join(os.environ["CONDA_ENV_PATH"],
-                                        "Library", "include"))
-
-    # Another hack to find conda include directory if the environment variable
-    # doesn't exist. This seems to be necessary for RTD.
-    for d in search_dirs:
-        el = os.path.split(d)
-        if len(re.findall(r"python[0-9\.].+m", el[-1])):
-            search_dirs += [os.path.join(*el[:-1])]
-
-    # Some other common installation locations on UNIX-ish platforms
-    search_dirs += [
-        "/"
-        "/usr/local/include",
-        "/usr/local/homebrew/include",
-        "/opt/local/var/macports/software",
-        "/opt/local/include",
-        "/usr/include",
-        "/usr/include/local",
-        "/usr/include",
-    ]
-
-    # Common suffixes
-    suffixes = ["", "eigen3", "Eigen/include/eigen3", "Eigen3/include/eigen3"]
-
-    # Debugging comments
-    if verbose:
-        print("Looking for Eigen in:")
-        for d in search_dirs:
-            print(" - {0}".format(os.path.abspath(d)))
-        print("+ suffixes: {0}".format(suffixes))
-
-    # Loop over search paths and check for the existence of the Eigen/Dense
-    # header.
-    for base in search_dirs:
-        for suff in suffixes:
-            d = os.path.abspath(os.path.join(base, suff))
-            path = os.path.join(d, "Eigen", "Dense")
-            if not os.path.exists(path):
-                continue
-
-            # Determine the version.
-            vf = os.path.join(d, "Eigen", "src", "Core", "util", "Macros.h")
-            if not os.path.exists(vf):
-                continue
-            src = open(vf, "r").read()
-            v1 = re.findall("#define EIGEN_WORLD_VERSION (.+)", src)
-            v2 = re.findall("#define EIGEN_MAJOR_VERSION (.+)", src)
-            v3 = re.findall("#define EIGEN_MINOR_VERSION (.+)", src)
-            if not len(v1) or not len(v2) or not len(v3):
-                continue
-            v = "{0}.{1}.{2}".format(v1[0], v2[0], v3[0])
-            print("Found Eigen version {0} in: {1}".format(v, d))
-            return d
-    return None
-
 def has_flag(compiler, flagname):
     """Return a boolean indicating whether a flag name is supported on
     the specified compiler.
     """
-    with tempfile.NamedTemporaryFile('w', suffix='.cpp') as f:
-        f.write('int main (int argc, char **argv) { return 0; }')
+    with tempfile.NamedTemporaryFile("w", suffix=".cpp") as f:
+        f.write("int main (int argc, char **argv) { return 0; }")
         try:
             compiler.compile([f.name], extra_postargs=[flagname])
         except setuptools.distutils.errors.CompileError:
@@ -105,10 +29,10 @@ def cpp_flag(compiler):
 
     The c++14 is prefered over c++11 (when it is available).
     """
-    if has_flag(compiler, '-std=c++14'):
-        return '-std=c++14'
-    elif has_flag(compiler, '-std=c++11'):
-        return '-std=c++11'
+    if has_flag(compiler, "-std=c++14"):
+        return "-std=c++14"
+    elif has_flag(compiler, "-std=c++11"):
+        return "-std=c++11"
     else:
         raise RuntimeError('Unsupported compiler -- at least C++11 support '
                            'is needed!')
@@ -121,83 +45,62 @@ class build_ext(_build_ext):
     """
 
     c_opts = {
-        'msvc': ['/EHsc'],
-        'unix': [],
+        "msvc": ["/EHsc", "/DNODEBUG"],
+        "unix": ["-DNODEBUG"],
     }
 
-    if sys.platform == 'darwin':
-        c_opts['unix'] += ['-stdlib=libc++', '-mmacosx-version-min=10.7']
+    if sys.platform == "darwin":
+        c_opts["unix"] += ["-mmacosx-version-min=10.7"]
 
     def build_extensions(self):
-        # Add the required Eigen include directory
-        dirs = self.compiler.include_dirs
-        for ext in self.extensions:
-            dirs += ext.include_dirs
-        include_dirs = []
-        eigen_include = find_eigen(hint=dirs)
-        if eigen_include is None:
-            logging.warn("Required library Eigen 3 not found.")
-        else:
-            include_dirs += [eigen_include]
+        # The include directory for the celerite headers
+        localincl = os.path.join("cpp", "include")
+        if not os.path.exists(os.path.join(localincl, "celerite",
+                                           "version.h")):
+            raise RuntimeError("couldn't find celerite headers")
 
         # Add the pybind11 include directory
         import pybind11
-        include_dirs += [
+        include_dirs = [
+            localincl,
+            os.path.join("cpp", "lib", "eigen_3.3.3"),
+            numpy.get_include(),
             pybind11.get_include(False),
             pybind11.get_include(True),
         ]
-
         for ext in self.extensions:
             ext.include_dirs += include_dirs
 
-        # Set up pybind11
+        # Building on RTDs takes a bit of special care
+        if os.environ.get("READTHEDOCS", None) == "True":
+            for ext in self.extensions:
+                ext.extra_compile_args = ["-std=c++14", "-O0", "-DNO_AUTODIFF"]
+            _build_ext.build_extensions(self)
+            return
+
+        # Compiler flags
         ct = self.compiler.compiler_type
         opts = self.c_opts.get(ct, [])
-        if ct == 'unix':
-            opts.append('-DVERSION_INFO="{0:s}"'
+        if ct == "unix":
+            opts.append("-DVERSION_INFO=\"{0:s}\""
                         .format(self.distribution.get_version()))
             opts.append(cpp_flag(self.compiler))
-            if has_flag(self.compiler, '-fvisibility=hidden'):
-                opts.append('-fvisibility=hidden')
-            for flag in ["-Wno-unused-function", "-Wno-uninitialized", "-O4"]:
+            for flag in ["-stdlib=libc++", "-fvisibility=hidden",
+                         "-Wno-unused-function", "-Wno-uninitialized",
+                         "-Wno-unused-local-typedefs"]:
                 if has_flag(self.compiler, flag):
                     opts.append(flag)
-        elif ct == 'msvc':
-            opts.append('/DVERSION_INFO=\\"{0:s}\\"'
+
+            for lib in ["m", "stdc++"]:
+                for ext in self.extensions:
+                    ext.libraries.append(lib)
+
+        elif ct == "msvc":
+            opts.append("/DVERSION_INFO=\\\"{0:s}\\\""
                         .format(self.distribution.get_version()))
 
         for ext in self.extensions:
             ext.extra_compile_args = opts
-
-        # Building on RTD doesn't require the extra speedups and it seems to
-        # fail for some reason so we'll bail early.
-        if os.environ.get("READTHEDOCS", None) == "True":
-            _build_ext.build_extensions(self)
-            return
-
-        # Enable Eigen/Sparse support
-        with_sparse = os.environ.get("WITH_SPARSE", None)
-        if with_sparse is None or with_sparse.lower() != "false":
-            for ext in self.extensions:
-                ext.define_macros += [("WITH_SPARSE", None)]
-
-        # Link to numpy's LAPACK if available
-        variant = os.environ.get("LAPACK_VARIANT", None)
-        if variant is not None and variant.lower() != "none":
-            info = get_info(variant)
-            if not len(info):
-                logging.warn("LAPACK info for variant '{0}' not found")
-                info = get_info("blas_opt")
-            for ext in self.extensions:
-                for k, v in info.items():
-                    try:
-                        setattr(ext, k, getattr(ext, k) + v)
-                    except TypeError:
-                        continue
-                ext.define_macros += [
-                    ("WITH_LAPACK", None),
-                    ("LAPACK_VARIANT", variant)
-                ]
 
         # Run the standard build procedure.
         _build_ext.build_extensions(self)

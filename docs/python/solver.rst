@@ -8,5 +8,7 @@ Low-level Solver Interface
 .. autofunction:: celerite.solver.get_kernel_value
 .. autofunction:: celerite.solver.get_psd_value
 .. autofunction:: celerite.solver.check_coefficients
-.. autoclass:: celerite.solver.Solver
+.. autoclass:: celerite.solver.CholeskySolver
+   :inherited-members:
+.. autoclass:: celerite.solver.CARMASolver
    :inherited-members:

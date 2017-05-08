@@ -1,7 +1,17 @@
 # -*- coding: utf-8 -*-
 
 from __future__ import division, print_function
-import numpy as np
+
+try:
+    import autograd  # NOQA
+except ImportError:
+    import numpy as np
+    HAS_AUTOGRAD = False
+else:
+    import autograd.numpy as np
+    from autograd import jacobian, elementwise_grad
+    HAS_AUTOGRAD = True
+
 from itertools import chain, product
 
 from .modeling import Model, ModelSet
@@ -9,7 +19,7 @@ from .solver import get_kernel_value, get_psd_value, check_coefficients
 
 __all__ = [
     "Term", "TermProduct", "TermSum",
-    "RealTerm", "ComplexTerm", "SHOTerm", "Matern32Term",
+    "JitterTerm", "RealTerm", "ComplexTerm", "SHOTerm", "Matern32Term",
 ]
 
 
@@ -21,6 +31,9 @@ class Term(Model):
     and :func:`terms.Term.get_complex_coefficients` methods.
 
     """
+
+    _has_jitter = False
+    _has_coeffs = True
 
     @property
     def terms(self):
@@ -97,7 +110,7 @@ class Term(Model):
     def __rmul__(self, b):
         return TermProduct(b, self)
 
-    def get_real_coefficients(self):
+    def get_real_coefficients(self, params):
         """
         Get the arrays ``alpha_real`` and ``beta_real``
 
@@ -112,7 +125,7 @@ class Term(Model):
         """
         return np.empty(0), np.empty(0)
 
-    def get_complex_coefficients(self):
+    def get_complex_coefficients(self, params):
         """
         Get the arrays ``alpha_complex_*`` and ``beta_complex_*``
 
@@ -131,9 +144,11 @@ class Term(Model):
         """
         return np.empty(0), np.empty(0), np.empty(0), np.empty(0)
 
-    def get_all_coefficients(self):
-        r = self.get_real_coefficients()
-        c = self.get_complex_coefficients()
+    def get_all_coefficients(self, params=None):
+        if params is None:
+            params = self.get_parameter_vector(include_frozen=True)
+        r = self.get_real_coefficients(params)
+        c = self.get_complex_coefficients(params)
         if len(c) == 3:
             c = (c[0], np.zeros_like(c[0]), c[1], c[2])
         return list(map(np.atleast_1d, chain(r, c)))
@@ -160,7 +175,8 @@ class Term(Model):
             ValueError: For invalid dimensions for the coefficients.
 
         """
-        pars = self.get_all_coefficients()
+        vector = self.get_parameter_vector(include_frozen=True)
+        pars = self.get_all_coefficients(vector)
         if len(pars) != 6:
             raise ValueError("there must be 6 coefficient blocks")
         if any(len(p.shape) != 1 for p in pars):
@@ -171,10 +187,40 @@ class Term(Model):
             raise ValueError("coefficient blocks must have the same shape")
         return pars
 
+    def get_jitter(self, params):
+        return 0.0
+
+    @property
+    def jitter(self):
+        return self.get_jitter(self.get_parameter_vector(include_frozen=True))
+
+    def get_jitter_jacobian(self, include_frozen=False):
+        if not HAS_AUTOGRAD:
+            raise ImportError("'autograd' must be installed to compute "
+                              "gradients")
+        jac = elementwise_grad(self.get_jitter)
+        jac = jac(self.get_parameter_vector(include_frozen=True))
+        if include_frozen:
+            return jac
+        return jac[self.unfrozen_mask]
+
+    def get_coeffs_jacobian(self, include_frozen=False):
+        if not HAS_AUTOGRAD:
+            raise ImportError("'autograd' must be installed to compute "
+                              "gradients")
+        jac = jacobian(lambda p: np.concatenate(self.get_all_coefficients(p)))
+        jac = jac(self.get_parameter_vector(include_frozen=True)).T
+        if include_frozen:
+            return jac
+        return jac[self.unfrozen_mask]
+
 
 class TermProduct(Term, ModelSet):
 
     def __init__(self, k1, k2):
+        if k1._has_jitter or k2._has_jitter:
+            raise ValueError("Products are not implemented for terms with "
+                             "jitter")
         super(TermProduct, self).__init__([("k1", k1), ("k2", k2)])
 
     def __repr__(self):
@@ -185,52 +231,50 @@ class TermProduct(Term, ModelSet):
     def terms(self):
         return [self]
 
-    def get_all_coefficients(self):
-        c1 = self.models["k1"].get_all_coefficients()
-        nr1, nc1 = len(c1[0]), len(c1[2])
-        c2 = self.models["k2"].get_all_coefficients()
-        nr2, nc2 = len(c2[0]), len(c2[2])
+    def get_all_coefficients(self, params=None):
+        if params is None:
+            params = self.get_parameter_vector(include_frozen=True)
+        n = self.models["k1"].full_size
+        c1 = self.models["k1"].get_all_coefficients(params[:n])
+        c2 = self.models["k2"].get_all_coefficients(params[n:])
 
         # First compute real terms
-        nr = nr1 * nr2
-        ar = np.empty(nr)
-        cr = np.empty(nr)
+        ar = []
+        cr = []
         gen = product(zip(c1[0], c1[1]), zip(c2[0], c2[1]))
         for i, ((aj, cj), (ak, ck)) in enumerate(gen):
-            ar[i] = aj * ak
-            cr[i] = cj + ck
+            ar.append(aj * ak)
+            cr.append(cj + ck)
 
         # Then the complex terms
-        nc = nr1 * nc2 + nc1 * nr2 + 2 * nc1 * nc2
-        ac = np.empty(nc)
-        bc = np.empty(nc)
-        cc = np.empty(nc)
-        dc = np.empty(nc)
+        ac = []
+        bc = []
+        cc = []
+        dc = []
 
         # real * complex
         gen = product(zip(c1[0], c1[1]), zip(*(c2[2:])))
         gen = chain(gen, product(zip(c2[0], c2[1]), zip(*(c1[2:]))))
         for i, ((aj, cj), (ak, bk, ck, dk)) in enumerate(gen):
-            ac[i] = aj * ak
-            bc[i] = aj * bk
-            cc[i] = cj + ck
-            dc[i] = dk
+            ac.append(aj * ak)
+            bc.append(aj * bk)
+            cc.append(cj + ck)
+            dc.append(dk)
 
         # complex * complex
-        i0 = nr1 * nc2 + nc1 * nr2
         gen = product(zip(*(c1[2:])), zip(*(c2[2:])))
         for i, ((aj, bj, cj, dj), (ak, bk, ck, dk)) in enumerate(gen):
-            ac[i0 + 2*i] = 0.5 * (aj * ak + bj * bk)
-            bc[i0 + 2*i] = 0.5 * (bj * ak - aj * bk)
-            cc[i0 + 2*i] = cj + ck
-            dc[i0 + 2*i] = dj - dk
+            ac.append(0.5 * (aj * ak + bj * bk))
+            bc.append(0.5 * (bj * ak - aj * bk))
+            cc.append(cj + ck)
+            dc.append(dj - dk)
 
-            ac[i0 + 2*i + 1] = 0.5 * (aj * ak - bj * bk)
-            bc[i0 + 2*i + 1] = 0.5 * (bj * ak + aj * bk)
-            cc[i0 + 2*i + 1] = cj + ck
-            dc[i0 + 2*i + 1] = dj + dk
+            ac.append(0.5 * (aj * ak - bj * bk))
+            bc.append(0.5 * (bj * ak + aj * bk))
+            cc.append(cj + ck)
+            dc.append(dj + dk)
 
-        return ar, cr, ac, bc, cc, dc
+        return list(map(np.array, (ar, cr, ac, bc, cc, dc)))
 
 
 class TermSum(Term, ModelSet):
@@ -249,10 +293,63 @@ class TermSum(Term, ModelSet):
     def terms(self):
         return list(self.models.values())
 
-    def get_all_coefficients(self):
-        return [np.concatenate(a) for a in zip(*(
-            t.get_all_coefficients() for t in self.models.values()
-        ))]
+    @property
+    def _has_jitter(self):
+        return any(t._has_jitter for t in self.models.values())
+
+    @property
+    def _has_coeffs(self):
+        return any(t._has_coeffs for t in self.models.values())
+
+    def get_all_coefficients(self, params=None):
+        if params is None:
+            params = self.get_parameter_vector(include_frozen=True)
+        coeffs = []
+        n = 0
+        for t in self.models.values():
+            d = t.full_size
+            coeffs.append(t.get_all_coefficients(params[n:n+d]))
+            n += d
+        return [np.concatenate(a) for a in zip(*coeffs)]
+
+    def get_jitter(self, params=None):
+        if params is None:
+            params = self.get_parameter_vector(include_frozen=True)
+        jitter = 0.0
+        n = 0
+        for t in self.models.values():
+            d = t.full_size
+            jitter += t.get_jitter(params[n:n+d])
+            n += d
+        return jitter
+
+
+class JitterTerm(Term):
+    r"""
+    A diagonal jitter term
+
+    This term has the form
+
+    .. math::
+
+        k(\tau_{n,m}) = \sigma^2\,\delta_{n,m}
+
+    with the parameter ``log_sigma``.
+
+    Args:
+        log_sigma (float): The log of the amplitude of the white noise.
+
+    """
+
+    _has_jitter = True
+    _has_coeffs = False
+    parameter_names = ("log_sigma", )
+
+    def __repr__(self):
+        return "JitterTerm({0.log_sigma})".format(self)
+
+    def get_jitter(self, params):
+        return np.exp(2.0 * params[0])
 
 
 class RealTerm(Term):
@@ -284,8 +381,9 @@ class RealTerm(Term):
     def __repr__(self):
         return "RealTerm({0.log_a}, {0.log_c})".format(self)
 
-    def get_real_coefficients(self):
-        return np.exp(self.log_a), np.exp(self.log_c)
+    def get_real_coefficients(self, params):
+        log_a, log_c = params
+        return np.exp(log_a), np.exp(log_c)
 
 
 class ComplexTerm(Term):
@@ -315,12 +413,12 @@ class ComplexTerm(Term):
     """
 
     def __init__(self, *args, **kwargs):
-        if len(args) == 3 and "log_b" not in kwargs:
-            self.fit_b = False
-            self.parameter_names = ("log_a", "log_c", "log_d")
-        else:
+        if len(args) == 4 or "log_b" in kwargs:
             self.fit_b = True
             self.parameter_names = ("log_a", "log_b", "log_c", "log_d")
+        else:
+            self.fit_b = False
+            self.parameter_names = ("log_a", "log_c", "log_d")
         super(ComplexTerm, self).__init__(*args, **kwargs)
 
     def __repr__(self):
@@ -329,14 +427,15 @@ class ComplexTerm(Term):
         return ("ComplexTerm({0.log_a}, {0.log_b}, {0.log_c}, {0.log_d})"
                 .format(self))
 
-    def get_complex_coefficients(self):
+    def get_complex_coefficients(self, params):
         if not self.fit_b:
+            log_a, log_c, log_d = params
             return (
-                np.exp(self.log_a), 0.0, np.exp(self.log_c), np.exp(self.log_d)
+                np.exp(log_a), 0.0, np.exp(log_c), np.exp(log_d)
             )
+        log_a, log_b, log_c, log_d = params
         return (
-            np.exp(self.log_a), np.exp(self.log_b),
-            np.exp(self.log_c), np.exp(self.log_d)
+            np.exp(log_a), np.exp(log_b), np.exp(log_c), np.exp(log_d)
         )
 
     def log_prior(self):
@@ -345,6 +444,16 @@ class ComplexTerm(Term):
         if self.fit_b and self.log_a + self.log_c < self.log_b + self.log_d:
             return -np.inf
         return super(ComplexTerm, self).log_prior()
+
+    # def get_dcoeffs_dparams(self):
+    #     if self.fit_b:
+    #         return np.diag(self.get_complex_coefficients())
+    #     c = self.get_complex_coefficients()
+    #     result = np.zeros((3, 4))
+    #     result[0, 0] = c[0]
+    #     result[1, 2] = c[2]
+    #     result[2, 3] = c[3]
+    #     return result
 
 
 class SHOTerm(Term):
@@ -372,26 +481,28 @@ class SHOTerm(Term):
     def __repr__(self):
         return "SHOTerm({0.log_S0}, {0.log_Q}, {0.log_omega0})".format(self)
 
-    def get_real_coefficients(self):
-        Q = np.exp(self.log_Q)
+    def get_real_coefficients(self, params):
+        log_S0, log_Q, log_omega0 = params
+        Q = np.exp(log_Q)
         if Q >= 0.5:
             return np.empty(0), np.empty(0)
 
-        S0 = np.exp(self.log_S0)
-        w0 = np.exp(self.log_omega0)
+        S0 = np.exp(log_S0)
+        w0 = np.exp(log_omega0)
         f = np.sqrt(1.0 - 4.0 * Q**2)
         return (
             0.5*S0*w0*Q*np.array([1.0+1.0/f, 1.0-1.0/f]),
             0.5*w0/Q*np.array([1.0-f, 1.0+f])
         )
 
-    def get_complex_coefficients(self):
-        Q = np.exp(self.log_Q)
+    def get_complex_coefficients(self, params):
+        log_S0, log_Q, log_omega0 = params
+        Q = np.exp(log_Q)
         if Q < 0.5:
             return np.empty(0), np.empty(0), np.empty(0), np.empty(0)
 
-        S0 = np.exp(self.log_S0)
-        w0 = np.exp(self.log_omega0)
+        S0 = np.exp(log_S0)
+        w0 = np.exp(log_omega0)
         f = np.sqrt(4.0 * Q**2-1)
         return (
             S0 * w0 * Q,
@@ -443,7 +554,8 @@ class Matern32Term(Term):
         return "Matern32Term({0.log_sigma}, {0.log_rho}, eps={0.eps})" \
             .format(self)
 
-    def get_complex_coefficients(self):
-        w0 = np.sqrt(3.0) * np.exp(-self.log_rho)
-        S0 = np.exp(2.0 * self.log_sigma) / w0
+    def get_complex_coefficients(self, params):
+        log_sigma, log_rho = params
+        w0 = np.sqrt(3.0) * np.exp(-log_rho)
+        S0 = np.exp(2.0 * log_sigma) / w0
         return (w0*S0, w0*w0*S0/self.eps, w0, self.eps)

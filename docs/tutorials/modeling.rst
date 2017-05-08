@@ -62,8 +62,18 @@ the resulting dataset is:
     # Define the model
     class MeanModel(Model):
         parameter_names = ("alpha", "ell", "log_sigma2")
+        
         def get_value(self, t):
             return self.alpha * np.exp(-0.5*(t-self.ell)**2 * np.exp(-self.log_sigma2))
+        
+        # This method is optional but it can be used to compute the gradient of the
+        # cost function below.
+        def compute_gradient(self, t):
+            e = 0.5*(t-self.ell)**2 * np.exp(-self.log_sigma2)
+            dalpha = np.exp(-e)
+            dell = self.alpha * dalpha * (t-self.ell) * np.exp(-self.log_sigma2)
+            dlog_s2 = self.alpha * dalpha * e
+            return np.array([dalpha, dell, dlog_s2])
     
     mean_model = MeanModel(alpha=-1.0, ell=0.1, log_sigma2=np.log(0.4))
     true_params = mean_model.get_parameter_vector()
@@ -169,10 +179,15 @@ scipy:
         gp.set_parameter_vector(params)
         return -gp.log_likelihood(y)
     
+    def grad_neg_log_like(params, y, gp):
+        gp.set_parameter_vector(params)
+        return -gp.grad_log_likelihood(y)[1]
+    
     # Fit for the maximum likelihood parameters
     initial_params = gp.get_parameter_vector()
     bounds = gp.get_parameter_bounds()
-    soln = minimize(neg_log_like, initial_params, method="L-BFGS-B", bounds=bounds, args=(y, gp))
+    soln = minimize(neg_log_like, initial_params, jac=grad_neg_log_like,
+                    method="L-BFGS-B", bounds=bounds, args=(y, gp))
     gp.set_parameter_vector(soln.x)
     print("Final log-likelihood: {0}".format(-soln.fun))
     
@@ -195,8 +210,8 @@ scipy:
 
 .. parsed-literal::
 
-    Initial log-likelihood: 49.89917286737914
-    Final log-likelihood: 54.01815810911389
+    Initial log-likelihood: 49.899172867379185
+    Final log-likelihood: 54.018158109128926
 
 
 

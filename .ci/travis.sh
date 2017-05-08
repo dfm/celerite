@@ -3,7 +3,7 @@
 # If building the paper, do that here
 if [[ $TEST_LANG == paper ]]
 then
-  if git diff --name-only $TRAVIS_COMMIT_RANGE | grep 'paper/'
+  if git diff --name-only $TRAVIS_COMMIT_RANGE | grep 'papers/'
   then
     echo "Building the paper..."
     export CELERITE_BUILDING_PAPER=true
@@ -50,15 +50,23 @@ conda update -q conda
 conda info -a
 conda create --yes -n test python=$PYTHON_VERSION
 source activate test
-conda install -c conda-forge numpy=$NUMPY_VERSION setuptools eigen pybind11 pytest mkl
+conda install -c conda-forge numpy=$NUMPY_VERSION setuptools pytest pybind11 $AUTOGRAD
 
-if [[ "$TRAVIS_OS_NAME" == "mkl" ]]; then
-  conda install mkl
+if [[ $AUTODIFF_LIBRARY == stan ]]
+then
+  mkdir -p stan
+  cd stan
+  wget "https://github.com/stan-dev/math/archive/v2.15.0.tar.gz"
+  tar -xf v2.15.0.tar.gz --strip-components 1
+  cd ..
+
+  CXX=g++-4.8 CC=gcc-4.8 python setup.py build_ext "-Istan/stan -Istan/lib/boost_1.62.0 -Istan/lib/cvodes_2.9.0/include -DUSE_STAN_MATH" install
+  return
 fi
 
 # Build the extension
 if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
-  python setup.py install $BUILD_ARGS
+  python setup.py install
 else
-  CXX=g++-4.8 CC=gcc-4.8 python setup.py install $BUILD_ARGS
+  CXX=g++-4.8 CC=gcc-4.8 python setup.py build_ext $BUILD_ARGS install
 fi
