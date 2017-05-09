@@ -745,7 +745,7 @@ Low $Q \approx 1$ can capture granulation noise and high $Q \gg 1$ is a good
 model for asteroseismic oscillations.
 In practice, we take a sum over oscillators with different values of $Q$,
 $S_0$, and $\omega_0$ to give a sufficient accounting of the power spectrum
-stellar time series.
+of stellar time series.
 Since this kernel is exactly described by the exponential kernel, the
 likelihood (\eqalt{gp-likelihood}) can be evaluated for a time series with $N$
 measurements in $\mathcal{O}(N)$ operations using the \celeriteterm\ method
@@ -1220,10 +1220,10 @@ In the case where the kernel function has a single term of the form given in
 \eq{kernel-simple}, it is interesting to compare the performance of \celerite\
 and the Rybicki \& Press method.
 Their method does not require solving the extended matrix because the matrix
-inverse can be calculated analytically but the method is made slightly more
+inverse can be calculated analytically, but the method is made slightly more
 complicated when white noise is included.
 We implement their full method and find empirically that it is more
-computationally efficient by a factor of $\approx 2$ for large $N \gg 1000$
+computationally efficient by a factor of $\approx 2$ for large $N \gg 1000$,
 but we note that the requirement of a single, real, exponential kernel is
 extremely restrictive and this model cannot describe quasi-periodic
 variability.
@@ -1244,11 +1244,11 @@ to large datasets.
 wavelet-based method for computing a GP likelihood with $\mathcal{O}(N)$
 scaling.
 This method has been widely applied in the context of exoplanet transit
-characterization but it requires evenly spaced observations and the power
+characterization, but it requires evenly spaced observations and the power
 spectrum of the process must have the form $S(\omega)\propto \omega^{-1}$ to
 gain the computational advantage.
 This wavelet method has been demonstrated to improve parameter estimation for
-transiting exoplanets \citep{Carter:2009} but these strict requirements make
+transiting exoplanets \citep{Carter:2009}, but these strict requirements make
 this method applicable for only a limited set of use cases.
 
 The continuous autoregressive moving average (CARMA) models introduced into
@@ -1327,7 +1327,7 @@ Many other approximate methods for scaling GP inference exist \citep[see, for
 example,][and references therein]{Wilson:2015a} and we make no attempt to make
 our discussion exhaustive.
 The key takeaway here is that \celerite\ provides an \emph{exact} method for
-GP inference for a specific but flexible class of one-dimensional kernel
+GP inference for a specific, but flexible, class of one-dimensional kernel
 functions.
 Furthermore, since \celeriteterm\ models can be interpreted as a mixture of
 stochastically-driven, damped simple harmonic oscillators, they are a
@@ -1336,7 +1336,7 @@ physically motivated choice of covariance function in many applications.
 \section{Summary}
 
 Gaussian Process models have been fruitfully applied to many problems in
-astronomical data analysis but the fact that the computational cost scales as
+astronomical data analysis, but the fact that the computational cost scales as
 the cube of the number of data points has limited their use to relatively
 small datasets.
 With the linear scaling of \celerite\, we envision the application of Gaussian
@@ -1350,7 +1350,7 @@ parameterization interpretable in terms of resonant frequency, amplitude, and
 quality factor.
 % Siva: Removed major, since $J$ is most often small as stated in the second half of the sentence
 A drawback of this method is its quadratic scaling with the number of
-terms $J$ but, in many cases, small values of $J$ are sufficient.
+terms $J$, but, in many cases, small values of $J$ are sufficient.
 
 Our background is in studying transiting exoplanets, a field which has only
 recently begun to adopt full covariance matrices in analyzing the noise in
@@ -1392,7 +1392,7 @@ non-parametric probabilistic inference of the power spectrum despite
 unevenly-spaced data with heteroscedastic noise \citep[for
 example,][]{Wilson:2013, Kelly:2014}.
 This type of analysis will be limited by the quadratic scaling of \celerite\
-with the number of terms $J$ but this limits existing methods as well
+with the number of terms $J$, but this limits existing methods as well
 \citep[CARMA models,][]{Kelly:2014}.
 In general, we encourage the use of physically motivated models for parameter
 estimation instead of qualitative modeling of the power spectrum itself.
