@@ -22,3 +22,29 @@ Read the documentation at: `celerite.rtfd.io <http://celerite.readthedocs.io>`_.
 The Julia implementation is being developed in a different repository:
 `ericagol/celerite.jl <https://github.com/ericagol/celerite.jl>`_. Issues
 related to that implementation should be opened there.
+
+If you make use of this code, please cite the following papers:
+
+.. code-block:: tex
+
+    @article{genrp,
+         author = {Sivaram Ambikasaran},
+          title = {Generalized Rybicki Press algorithm},
+           year = {2015},
+        journal = {Numer. Linear Algebra Appl.},
+         volume = {22},
+         number = {6},
+          pages = {1102--1114},
+            doi = {10.1002/nla.2003},
+            url = {https://arxiv.org/abs/1409.7852}
+    }
+    
+    @article{celerite,
+        author = {{Foreman-Mackey}, D. and {Agol}, E. and {Angus}, R. and
+                  {Ambikasaran}, S.},
+         title = {Fast and scalable Gaussian process modeling
+                  with applications to astronomical time series},
+          year = {2017},
+       journal = {ArXiv},
+           url = {https://arxiv.org/abs/1703.09710}
+    }
