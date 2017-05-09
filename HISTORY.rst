@@ -1,9 +1,9 @@
 .. :changelog:
 
-0.2.0 (upcoming)
-++++++++++++++++
+0.2.0 (2017-05-09)
+++++++++++++++++++
 
-- Switched to faster Cholesky factorization.
+- Switched to (~20x) faster Cholesky factorization.
 - Added O(N) simulation method using Cholesky factor.
 - Implemented gradients using automatic differentiation.
 - Changed implementation of white noise to ``JitterTerm`` instead of
