@@ -31,6 +31,12 @@ data_matrix = np.empty((data.xi.max() + 1, data.yi.max() + 1))
 data_matrix[:] = np.nan
 data_matrix[data.xi, data.yi] = data.comp_time + data.ll_time
 
+np_time = np.array(data.numpy_comp_time + data.numpy_ll_time)
+np_m = np.isfinite(np_time)
+np_time = np_time[np_m]
+np_n = np.array(data.n)[np_m]
+np_j = np.array(data.j)[np_m]
+
 J = np.sort(np.array(data.j.unique()))
 N = np.sort(np.array(data.n.unique()))
 
@@ -42,6 +48,9 @@ for i, j in enumerate(J):
     m = np.isfinite(y)
     ax1.plot(x[m], y[m], ".-", color=COLOR_CYCLE[i],
              label="{0:.0f}".format(j))
+
+if len(np_time):
+    ax1.plot(np_n, np_time, ":k", label="direct")
 
 if suffix == "_george":
     f = N * np.log(N)**2
