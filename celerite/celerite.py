@@ -2,9 +2,10 @@
 
 from __future__ import division, print_function
 import math
+import warnings
 import numpy as np
 
-from . import solver
+from . import solver, terms
 from .modeling import ModelSet, ConstantModel
 
 __all__ = ["GP"]
@@ -26,11 +27,21 @@ class GP(ModelSet):
 
     def __init__(self,
                  kernel,
-                 mean=0.0, fit_mean=False):
+                 mean=0.0, fit_mean=False,
+                 log_white_noise=None, fit_white_noise=False):
         self._solver = None
         self._computed = False
         self._t = None
         self._y_var = None
+
+        # Backwards compatibility for 'log_white_noise' parameter
+        if log_white_noise is not None:
+            warnings.warn("The 'log_white_noise' parameter is deprecated. "
+                          "Use a 'JitterTerm' instead.")
+            k = terms.JitterTerm(log_sigma=float(log_white_noise))
+            if not fit_white_noise:
+                k.freeze_parameter("log_sigma")
+            kernel += k
 
         # Build up a list of models for the ModelSet
         models = [("kernel", kernel)]

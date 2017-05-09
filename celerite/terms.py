@@ -326,7 +326,7 @@ class TermSum(Term, ModelSet):
 
 class JitterTerm(Term):
     r"""
-    A diagonal jitter term
+    A diagonal jitter or "white noise" term
 
     This term has the form
 
@@ -335,6 +335,9 @@ class JitterTerm(Term):
         k(\tau_{n,m}) = \sigma^2\,\delta_{n,m}
 
     with the parameter ``log_sigma``.
+
+    .. note:: This kernel has the special property that it is never used for
+        :func:`celerite.GP.predict`.
 
     Args:
         log_sigma (float): The log of the amplitude of the white noise.
