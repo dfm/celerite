@@ -108,8 +108,8 @@ Finally, terms are combined by adding or multiplying them:
 These combined terms are also ``Term`` objects and they provide the same
 interface, concatenating the parameters and coefficients in the correct order.
 
-Since ``Term`` objects implement the :ref:`modeling`, for the kernel described
-above, we can do things like the following:
+Since ``Term`` objects implement the :ref:`modeling-protocol`, for the kernel
+described above, we can do things like the following:
 
 .. code-block:: python
 

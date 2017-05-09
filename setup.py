@@ -38,7 +38,7 @@ setup(
     ext_modules=[ext],
     description="Scalable 1D Gaussian Processes",
     long_description=open("README.rst").read(),
-    package_data={"": ["README.rst", "LICENSE"]},
+    package_data={"": ["README.rst", "LICENSE", "CITATION"]},
     include_package_data=True,
     cmdclass=dict(build_ext=build_ext),
     classifiers=[

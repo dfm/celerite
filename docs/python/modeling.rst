@@ -1,6 +1,6 @@
 .. module:: celerite.modeling
 
-.. _modeling:
+.. _modeling-protocol:
 
 Modeling Protocol
 =================

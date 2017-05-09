@@ -7,6 +7,7 @@ import os
 import sys
 import argparse
 import numpy as np
+from scipy.linalg import cho_factor, cho_solve
 
 from celerite import terms
 from celerite.timer import benchmark
@@ -44,7 +45,7 @@ for k in ["grad", "george",
 header += "# platform: {0}\n".format(sys.platform)
 header += "# N: {0}\n".format(list(N))
 header += "# J: {0}\n".format(list(J))
-header += "xi,yi,j,n,comp_time,ll_time\n"
+header += "xi,yi,j,n,comp_time,ll_time,numpy_comp_time,numpy_ll_time\n"
 
 fn = "benchmark_{0}".format(sys.platform)
 if args.grad:
@@ -66,6 +67,14 @@ np.random.seed(42)
 t = np.sort(np.random.rand(np.max(N)))
 yerr = np.random.uniform(0.1, 0.2, len(t))
 y = np.sin(t)
+
+def numpy_compute(kernel, x, yerr):
+    K = kernel.get_value(x[:, None] - x[None, :])
+    K[np.diag_indices_from(K)] += yerr ** 2
+    return cho_factor(K)
+
+def numpy_log_like(factor, y):
+    np.dot(y, cho_solve(factor, y)) + np.sum(np.log(np.diag(factor[0])))
 
 for xi, j in enumerate(J):
     kernel = terms.RealTerm(1.0, 0.1)
@@ -92,6 +101,8 @@ for xi, j in enumerate(J):
         solver = CholeskySolver()
 
     for yi, n in enumerate(N):
+        np_comp_time = np.nan
+        np_ll_time = np.nan
         if args.george:
             params = [t[:n], yerr[:n]]
             comp_time = benchmark("solver.compute(*params)",
@@ -125,8 +136,22 @@ for xi, j in enumerate(J):
             y0 = y[:n]
             ll_time = benchmark("solver.dot_solve(y0)",
                                 "from __main__ import solver, y0")
-        msg = "{0},{1},{2},{3},{4:e},{5:e}\n".format(xi, yi, j, n, comp_time,
-                                                     ll_time)
+
+            if xi == 0 and n <= 8192:
+                # Do numpy calculation
+                params = [kernel, t[:n], yerr[:n]]
+                np_comp_time = benchmark("numpy_compute(*params)",
+                                         "from __main__ import numpy_compute, "
+                                         "params")
+                factor = numpy_compute(*params)
+                params = [factor, y[:n]]
+                np_ll_time = benchmark("numpy_log_like(*params)",
+                                       "from __main__ import "
+                                       "numpy_log_like, params")
+
+        msg = ("{0},{1},{2},{3},{4:e},{5:e},{6:e},{7:e}\n"
+               .format(xi, yi, j, n, comp_time, ll_time, np_comp_time,
+                       np_ll_time))
         with open(fn, "a") as f:
             f.write(msg)
         print(msg, end="")

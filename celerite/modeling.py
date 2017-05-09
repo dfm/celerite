@@ -89,6 +89,11 @@ class Model(object):
                 raise ValueError("unrecognized parameter(s) '{0}'"
                                  .format(list(kwargs.keys())))
 
+        # Check the initial prior value
+        quiet = kwargs.get("quiet", False)
+        if not quiet and not np.isfinite(self.log_prior()):
+            raise ValueError("non-finite log prior value")
+
     def get_value(self, *args, **kwargs):
         """
         Compute the "value" of the model for the current parameters

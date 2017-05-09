@@ -31,25 +31,25 @@ For more details of the kernel structure supported by celerite, check out
         // Choose some demo parameters for the solver
         int j_real = 2, j_complex = 1;
         double jitter = 0.0;
-        VectorXd alpha_real(j_real),
-                 beta_real(j_real),
-                 alpha_complex_real(j_complex),
-                 alpha_complex_imag(j_complex),
-                 beta_complex_real(j_complex),
-                 beta_complex_imag(j_complex);
-        alpha_real << 1.0, 0.3;
-        beta_real << 0.5, 3.5;
-        alpha_complex_real << 1.0;
-        alpha_complex_imag << 0.1;
-        beta_complex_real << 3.0;
-        beta_complex_imag << 1.0;
+        VectorXd a_real(j_real),
+                c_real(j_real),
+                a_comp(j_complex),
+                b_comp(j_complex),
+                c_comp(j_complex),
+                d_comp(j_complex);
+        a_real << 1.0, 0.3;
+        c_real << 0.5, 3.5;
+        a_comp << 1.0;
+        b_comp << 0.1;
+        c_comp << 3.0;
+        d_comp << 1.0;
 
         // Generate some fake data
         int N = 500;
         srand(42);
         VectorXd x = VectorXd::Random(N),
-                 yvar = VectorXd::Random(N),
-                 y;
+                yvar = VectorXd::Random(N),
+                y;
         yvar.array() *= 0.1;
         yvar.array() += 1.0;
         std::sort(x.data(), x.data() + x.size()); // The independent coordinates must be sorted
@@ -59,9 +59,8 @@ For more details of the kernel structure supported by celerite, check out
         celerite::solver::CholeskySolver<double> solver;
         solver.compute(
             jitter,
-            alpha_real, beta_real,
-            alpha_complex_real, alpha_complex_imag,
-            beta_complex_real, beta_complex_imag,
+            a_real, c_real,
+            a_comp, b_comp, c_comp, d_comp,
             x, yvar  // Note: this is the measurement _variance_
         );
 
@@ -71,9 +70,13 @@ For more details of the kernel structure supported by celerite, check out
         return 0;
     }
 
-Compiling and executing this example should output:
+Compiling:
 
 .. code-block:: bash
+
+    g++ -Icpp/include -Icpp/lib/eigen_3.3.3 -o celerite_demo celerite_demo.cc
+
+and executing this example should output::
 
     86.405
     0.82574
