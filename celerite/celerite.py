@@ -284,18 +284,18 @@ class GP(ModelSet):
         Args:
             y (array[n]): The observations at coordinates ``x`` from
                 :func:`GP.compute`.
-        t (Optional[array[ntest]]): The independent coordinates where the
-            prediction should be made. If this is omitted the coordinates will
-            be assumed to be ``x`` from :func:`GP.compute` and an efficient
-            method will be used to compute the prediction.
-        return_cov (Optional[bool]): If ``True``, the full covariance matrix
-            is computed and returned. Otherwise, only the mean prediction is
-            computed. (default: ``True``)
-        return_var (Optional[bool]): If ``True``, only return the diagonal of
-            the predictive covariance; this will be faster to compute than the
-            full covariance matrix. This overrides ``return_cov`` so, if both
-            are set to ``True``, only the diagonal is computed.
-            (default: ``False``)
+            t (Optional[array[ntest]]): The independent coordinates where the
+                prediction should be made. If this is omitted the coordinates
+                will be assumed to be ``x`` from :func:`GP.compute` and an
+                efficient method will be used to compute the prediction.
+            return_cov (Optional[bool]): If ``True``, the full covariance
+                matrix is computed and returned. Otherwise, only the mean
+                prediction is computed. (default: ``True``)
+            return_var (Optional[bool]): If ``True``, only return the diagonal
+                of the predictive covariance; this will be faster to compute
+                than the full covariance matrix. This overrides ``return_cov``
+                so, if both are set to ``True``, only the diagonal is computed.
+                (default: ``False``)
 
         Returns:
             ``mu``, ``(mu, cov)``, or ``(mu, var)`` depending on the values of
@@ -408,3 +408,27 @@ class GP(ModelSet):
         if size is None:
             return self.mean.get_value(self._t) + n[:, 0]
         return self.mean.get_value(self._t)[None, :] + n.T
+
+    def sample_conditional(self, y, t=None, size=None):
+        """
+        Sample from the conditional (predictive) distribution
+
+        Note: this method scales as ``O(M^3)`` for large ``M``, where
+        ``M == len(t)``.
+
+        Args:
+            y (array[n]): The observations at coordinates ``x`` from
+                :func:`GP.compute`.
+            t (Optional[array[ntest]]): The independent coordinates where the
+                prediction should be made. If this is omitted the coordinates
+                will be assumed to be ``x`` from :func:`GP.compute` and an
+                efficient method will be used to compute the prediction.
+            size (Optional[int]): The number of samples to draw.
+
+        Returns:
+            array[n] or array[size, n]: The samples from the conditional
+            distribution over datasets.
+
+        """
+        mu, cov = self.predict(y, t, return_cov=True)
+        return np.random.multivariate_normal(mu, cov, size=size)
