@@ -559,11 +559,48 @@ X_{n,j} &=& \frac{1}{D_{n,n}}\left[ V_{n,j} -
     \eqlabel{algorithm}
 \end{eqnarray}
 where $S_n$ is a symmetric $2\,J \times 2\,J$ matrix and every element
-$S_{0,j,k}=0$.
+$S_{1,j,k}=0$.
 The computational cost of one iteration of the update in \eq{algorithm} is
 $\mathcal{O}(J^2)$ and this must be run $N$ times~--~once for each
 observation~--~so the total cost of this factorization scales as
 $\mathcal{O}(N\,J^2)$.
+
+
+\subsection{Pre-conditioning}
+
+Na\"ive implementation of the algorithm in \eq{algorithm} will have numerical
+overflow and underflow issues in many realistic cases because both $U$ and $V$
+have factors of the form $e^{\pm t}$, where $t$ can be any arbitrarily large
+real number.
+This can be avoided with the appropriate reparameterization.
+We define the following pre-conditioned variables
+\begin{eqnarray}
+\tilde{U}_{n,2\,j-1} &=& a_j\,\cos(d_j\,t_n) + b_j\,\sin(d_j\,t_n) \\
+\tilde{U}_{n,2\,j} &=& a_j\,\sin(d_j\,t_n) - b_j\,\cos(d_j\,t_n) \\
+\tilde{V}_{m,2\,j-1} &=& \cos(d_j\,t_m) \\
+\tilde{V}_{m,2\,j} &=& \sin(d_j\,t_m) \\
+\tilde{X}_{n,2\,j-1} &=& e^{-c_j\,t_n}\,X_{n,2\,j-1} \\
+\tilde{X}_{n,2\,j} &=& e^{-c_j\,t_n}\,X_{n,2\,j}
+\end{eqnarray}
+and the set of variables
+\begin{eqnarray}
+\phi_{n,2\,j-1} = \phi_{n,2\,j} = e^{-c_j\,(t_n - t_{n-1})}
+\end{eqnarray}
+with the constraint
+\begin{eqnarray}
+\phi_{1,2\,j-1} = \phi_{1,2\,j} = 0 \quad.
+\end{eqnarray}
+Using this parameterization, we find the following, numerically stable,
+algorithm
+\begin{eqnarray}
+    S_{n,j,k} &=& \phi_{n,j}\,\phi_{n,k}\,\left[S_{n-1,j,k} +
+    D_{n-1,n-1}\,\tilde{X}_{n-1,j}\,\tilde{X}_{n-1,k}\right] \nonumber\\
+D_{n,n} &=& A_{n,n} -
+    \sum_{j=1}^{2\,J}\sum_{k=1}^{2\,J} \tilde{U}_{n,j}\,S_{n,j,k}\,\tilde{U}_{n,k}
+    \nonumber\\
+\tilde{X}_{n,j} &=& \frac{1}{D_{n,n}}\left[ \tilde{V}_{n,j} -
+    \sum_{k=1}^{2\,J}\tilde{U}_{n,k}\,S_{n,j,k} \right] \quad.
+\end{eqnarray}
 
 \subsection{Solving}
 
@@ -583,21 +620,24 @@ The inverse of $K$ can be applied using the relationship
 First, we solve for $\bvec{z} = L^{-1}\,\bvec{y}$ using the following forward
 substitution algorithm
 \begin{eqnarray}
-    f_{n,j} &=& f_{n-1,j} + X_{n-1,j}\,z_{n-1} \nonumber\\
-    z_n &=& y_n - \sum_{j=1}^{2\,J} U_{n,j}\,f_{n,j}
+    f_{n,j} &=& \phi_{n,j}\,\left[f_{n-1,j} +
+    \tilde{X}_{n-1,j}\,z_{n-1}\right] \nonumber\\
+    z_n &=& y_n - \sum_{j=1}^{2\,J} \tilde{U}_{n,j}\,f_{n,j}
 \end{eqnarray}
 where $f_{0,j} = 0$ for all $j$.
 Using this result and the following backward substitution algorithm, we can
 compute $\bvec{b}$
 \begin{eqnarray}
-    f_{n,j} &=& f_{n+1,j} + U_{n+1,j}\,b_{n+1} \nonumber\\
-    b_n &=& \frac{z_n}{D_{n,n}} - \sum_{j=1}^{2\,J} X_{n,j}\,f_{n,j}
+g_{n,j} &=& \phi_{n+1,j}\,\left[g_{n+1,j} +
+    \tilde{U}_{n+1,j}\,b_{n+1}\right] \nonumber\\
+b_n &=& \frac{z_n}{D_{n,n}} - \sum_{j=1}^{2\,J} \tilde{X}_{n,j}\,g_{n,j}
 \end{eqnarray}
-where $f_{N+1,j} = 0$ for all $j$.
+where $g_{N+1,j} = 0$ for all $j$.
 The total cost of the forward and backward substitution passes scales as
 $\mathcal{O}(N\,J)$.
 
-\subsection{Pre-conditioning}
+\subsection{Simulation}
+
 
 
 \section{celerite as a model of stellar variations}\sectlabel{sho}
