@@ -168,9 +168,13 @@ class GP(ModelSet):
         self._recompute()
         if len(y.shape) > 1:
             raise ValueError("dimension mismatch")
-        return -0.5 * (self.solver.dot_solve(resid) +
-                       self.solver.log_determinant() +
-                       len(y) * _const)
+        logdet = self.solver.log_determinant()
+        if not np.isfinite(logdet):
+            return -np.inf
+        loglike = -0.5*(self.solver.dot_solve(resid)+logdet+len(y)*_const)
+        if not np.isfinite(loglike):
+            return -np.inf
+        return loglike
 
     def grad_log_likelihood(self, y):
         """

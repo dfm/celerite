@@ -83,6 +83,8 @@ need to call these directly. This interface was built using `pybind11
 #endif
   }, "Returns True if celerite was compiled with autodiff support");
 
+  py::register_exception<celerite::linalg_exception>(m, "LinAlgError");
+
   m.def("get_kernel_value",
     [](
       const vector_t& a_real,
