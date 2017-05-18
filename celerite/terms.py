@@ -336,8 +336,10 @@ class JitterTerm(Term):
 
     with the parameter ``log_sigma``.
 
-    .. note:: This kernel has the special property that it is never used for
-        :func:`celerite.GP.predict`.
+    .. note:: Jitter is never used in :func:`celerite.GP.predict` and or
+        :func:`celerite.terms.Term.get_psd`. If you want to compute the jitter
+        power, it is ``term.jitter * N``, where ``N`` is the number of data
+        points.
 
     Args:
         log_sigma (float): The log of the amplitude of the white noise.
