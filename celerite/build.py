@@ -49,9 +49,6 @@ class build_ext(_build_ext):
         "unix": ["-DNODEBUG"],
     }
 
-    if sys.platform == "darwin":
-        c_opts["unix"] += ["-mmacosx-version-min=10.7"]
-
     def build_extensions(self):
         # The include directory for the celerite headers
         localincl = os.path.join("cpp", "include")
@@ -84,16 +81,33 @@ class build_ext(_build_ext):
         if ct == "unix":
             opts.append("-DVERSION_INFO=\"{0:s}\""
                         .format(self.distribution.get_version()))
+
+            print("testing C++14/C++11 support")
             opts.append(cpp_flag(self.compiler))
-            for flag in ["-stdlib=libc++", "-fvisibility=hidden",
-                         "-Wno-unused-function", "-Wno-uninitialized",
-                         "-Wno-unused-local-typedefs"]:
+
+            flags = ["-stdlib=libc++", "-fvisibility=hidden",
+                     "-Wno-unused-function", "-Wno-uninitialized",
+                     "-Wno-unused-local-typedefs", "-funroll-loops"]
+
+            # Mac specific flags and libraries
+            if sys.platform == "darwin":
+                flags += ["-march=native", "-mmacosx-version-min=10.9"]
+                for lib in ["m", "c++"]:
+                    for ext in self.extensions:
+                        ext.libraries.append(lib)
+                for ext in self.extensions:
+                    ext.extra_link_args += ["-mmacosx-version-min=10.9",
+                                            "-march=native"]
+            else:
+                for lib in ["m", "stdc++"]:
+                    for ext in self.extensions:
+                        ext.libraries.append(lib)
+
+            # Check the flags
+            print("testing compiler flags")
+            for flag in flags:
                 if has_flag(self.compiler, flag):
                     opts.append(flag)
-
-            for lib in ["m", "stdc++"]:
-                for ext in self.extensions:
-                    ext.libraries.append(lib)
 
         elif ct == "msvc":
             opts.append("/DVERSION_INFO=\\\"{0:s}\\\""
