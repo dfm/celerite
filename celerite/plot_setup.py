@@ -7,7 +7,7 @@ from matplotlib import rcParams
 try:
     from savefig import monkey_patch
 except ImportError:
-    def monkey_patch():
+    def monkey_patch(include_diff=False):
         pass
 
 __all__ = ["setup", "get_figsize", "COLORS", "COLOR_CYCLE", "SQUARE_FIGSIZE"]
