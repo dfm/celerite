@@ -124,7 +124,7 @@
 \newcommand{\agoltodo}[1]{\todo{Agol}{blue}{#1}}
 \newcommand{\racomment}[1]{{\color{magenta}#1}}
 
-\newcommand{\response}[1]{{\color{green}#1}}
+\newcommand{\response}[1]{{\color{blue}#1}}
 
 
 % \shorttitle{}
@@ -348,7 +348,11 @@ In the following section, we present a method for substantially improving this
 scaling in many circumstances.
 We call our method and its implementations \celerite.\footnote{The name
 \celerite\ comes from the French word \foreign{c\'elerit\'e} meaning the speed
-of light in a vacuum.} The \celerite\ method requires using a specific model
+of light in a vacuum.
+\response{Throughout the paper, when referring to the \celeriteterm\ model, we
+typeset \celeriteterm\ in italics and, in reference to the implementation of
+this model, we typeset \celerite\ in sans-serif.}}
+The \celerite\ method requires using a specific model
 for the covariance $k_\bvec{\alpha}(\bvec{x}_n,\,\bvec{x}_m)$ and, although it
 has some limitations, we demonstrate in subsequent sections that it can
 increase the computational efficiency of many astronomical data analysis
