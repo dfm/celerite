@@ -124,7 +124,7 @@
 \newcommand{\agoltodo}[1]{\todo{Agol}{blue}{#1}}
 \newcommand{\racomment}[1]{{\color{magenta}#1}}
 
-\newcommand{\response}[1]{{\color{green}#1}}
+\newcommand{\response}[1]{{\color{blue}#1}}
 
 
 % \shorttitle{}
@@ -348,7 +348,11 @@ In the following section, we present a method for substantially improving this
 scaling in many circumstances.
 We call our method and its implementations \celerite.\footnote{The name
 \celerite\ comes from the French word \foreign{c\'elerit\'e} meaning the speed
-of light in a vacuum.} The \celerite\ method requires using a specific model
+of light in a vacuum.
+\response{Throughout the paper, when referring to the \celeriteterm\ model, we
+typeset \celeriteterm\ in italics and, in reference to the implementation of
+this model, we typeset \celerite\ in sans-serif.}}
+The \celerite\ method requires using a specific model
 for the covariance $k_\bvec{\alpha}(\bvec{x}_n,\,\bvec{x}_m)$ and, although it
 has some limitations, we demonstrate in subsequent sections that it can
 increase the computational efficiency of many astronomical data analysis
@@ -993,10 +997,10 @@ A detailed comparison of GP rotation period measurements and the traditional
 methods is beyond the scope of this paper, but forthcoming work (R.~Angus,
 \etal, submitted) demonstrates that GP inferences are, at a population level,
 more reliable than other methods.
-\Figure{rotation} shows a subset of the data used in this example and the
-posterior inferences of the PSD and autocorrelation function of the process.
-\Figure{rotation-period} shows the marginalized posterior distribution for the
-rotation period.
+The left panels of \Figure{rotation} show a subset of the data used in this
+example and the residuals away from the maximum likelihood predictive mean.
+The right panel of \Figure{rotation} shows the marginalized posterior
+distribution for the rotation period.
 
 \begin{figure}[p]
 \begin{center}
