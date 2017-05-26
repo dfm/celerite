@@ -5,7 +5,7 @@
 \pdfoutput=1
 
 \include{vc}
-\include{figures/rotation}
+\include{figures/rotation/rotation}
 
 \usepackage{microtype}
 \usepackage{url}
@@ -856,6 +856,8 @@ reproduces the true PSD.
 \includegraphics[width=0.9\textwidth]{figures/simulated/correct.pdf}
 \caption{(top left) A simulated dataset (black error bars), and maximum
     likelihood model (blue contours).
+    (bottom left) The residuals between the mean predictive model and the data
+    shown in the top left figure.
     (right) The inferred PSD~--~the blue contours encompass 68\% of the
     posterior mass~--~compared to the true PSD (dashed black line).
     \figurelabel{simulated-correct}}
@@ -913,7 +915,10 @@ computation time is required for the \celerite\ inference.
 \begin{figure}[!htbp]
 \begin{center}
 \includegraphics[width=0.9\textwidth]{figures/simulated/wrong-qpo.pdf}
-\caption{(left) A simulated dataset.
+\caption{(top left) A simulated dataset (black error bars), and maximum
+    likelihood model (blue contours).
+    (bottom left) The residuals between the mean predictive model and the data
+    shown in the top left figure.
     (right) The inferred period of the process. The true period is indicated
     by the vertical orange line, the posterior inference using the correct
     model is shown as the blue dashed histogram, and the inference made using
@@ -995,29 +1000,16 @@ rotation period.
 
 \begin{figure}[p]
 \begin{center}
-\includegraphics[width=0.8\textwidth]{figures/rotation.pdf}
+\includegraphics[width=0.8\textwidth]{figures/rotation/rotation.pdf}
 \caption{Inferred constraints on a quasiperiodic GP model using the covariance
     function in \eq{rot-kernel} and two quarters of \kepler\ data.
-(left) The \kepler\ data (black points) and the maximum likelihood model
-    prediction (blue curve) for a 50~day subset of the data used.
+(top left) The \kepler\ data (black points) and the maximum likelihood model
+    prediction (blue curve) for a 60~day subset of the data used.
     The solid blue line shows the predictive mean and the blue contours show
     the predictive standard deviation.
-(center) Inferred constraints on the model PSD.
-    The dashed line shows the maximum likelihood PSD, the blue solid line
-    shows the median of posterior PSD, and the blue contours show the 68\%
-    credible region.
-(right) Inferred constraints on the model covariance function.
-    The dashed line shows the maximum likelihood model, the blue solid line
-    shows the median of posterior, and the blue contours show the 68\%
-    credible region.
-    \figurelabel{rotation}}
-\end{center}
-\end{figure}
-
-\begin{figure}[p]
-\begin{center}
-\includegraphics[width=0.5\textwidth]{figures/rotation-period.pdf}
-\caption{The posterior constraint on the rotation period of KIC~1430163 using
+(bottom left) The residuals between the mean predictive model and the data
+    shown in the top left figure.
+(right) The posterior constraint on the rotation period of KIC~1430163 using
     the dataset and model from \Figure{rotation}.
     The period is the parameter $P$ in \eq{rot-kernel} and this figure shows
     the posterior distribution marginalized over all other nuisance parameters
@@ -1026,7 +1018,7 @@ rotation period.
     \kepler\ baseline \citep{Mathur:2014}.
     The error bars from the literature are indicated by the two vertical
     dashed lines.
-    \figurelabel{rotation-period}}
+    \figurelabel{rotation}}
 \end{center}
 \end{figure}
 
@@ -1136,7 +1128,24 @@ but we hope to revisit this opportunity in the future.
 
 \begin{figure}[!htbp]
 \begin{center}
-\includegraphics[width=0.8\textwidth]{figures/astero-11615890-numax_deltanu_corner.pdf}
+\includegraphics[width=0.8\textwidth]{figures/astero/astero.pdf}
+\caption{
+\response{
+(top) The \kepler\ data (black points) and the maximum likelihood model
+    prediction (blue curve) for a 10~day subset of the month-long dataset that
+    was used for the fit.
+    The solid blue line shows the predictive mean and the blue contours show
+    the predictive standard deviation.
+(bottom) The residuals between the mean predictive model and the data
+    shown in the top figure.
+}
+    \figurelabel{astero}}
+\end{center}
+\end{figure}
+
+\begin{figure}[!htbp]
+\begin{center}
+\includegraphics[width=0.8\textwidth]{figures/astero/astero-corner.pdf}
 \caption{The probabilistic constraints on $\nu_\mathrm{max}$ and $\Delta \nu$
     from the inference shown in \Figure{astero} compared to the published
     value (error bar) based on several years of \kepler\ observations
@@ -1145,10 +1154,9 @@ but we hope to revisit this opportunity in the future.
 \end{center}
 \end{figure}
 
-
 \begin{figure}[!htbp]
 \begin{center}
-\includegraphics[width=0.9\textwidth]{figures/astero-11615890-comparisons.pdf}
+\includegraphics[width=0.9\textwidth]{figures/astero/astero-comp.pdf}
 \caption{A comparison between the Lomb-Scargle estimator of the PSD and the
 posterior inference of the PSD as a mixture of stochastically-driven simple
 harmonic oscillators.
@@ -1221,7 +1229,7 @@ variability.
 
 \begin{figure}[!htbp]
 \begin{center}
-\includegraphics[width=\textwidth]{figures/transit-ml.pdf}
+\includegraphics[width=\textwidth]{figures/transit/transit-ml.pdf}
     \caption{\emph{(top)} A month-long segment of \kepler\ light curve for
     KIC~1430163 with a synthetic transit model injected (black points) and the
     maximum likelihood model for the stellar variability
@@ -1238,7 +1246,7 @@ variability.
 
 \begin{figure}[!p]
 \begin{center}
-\includegraphics[width=\textwidth]{figures/transit-corner.pdf}
+\includegraphics[width=\textwidth]{figures/transit/transit-corner.pdf}
 \caption{The marginalized posterior constraints on the physical parameters of
     the planet transit in the light curve shown in the top panel of
     \Figure{transit-ml}.
@@ -1804,7 +1812,7 @@ state-of-the-art libraries.
 \begin{figure}[tp]
 \begin{center}
 \includegraphics[width=\textwidth]{figures/benchmark_darwin.pdf}
-\caption{A benchmark showing the computational scaling of \celerite\ using the
+\caption{\dfmtodo{Cholesky} A benchmark showing the computational scaling of \celerite\ using the
     \texttt{vanilla} band solver as a function of the number of data points
     and the number of terms.
     \emph{(left)} The cost of computing \eq{gp-likelihood} with a covariance
@@ -1820,24 +1828,6 @@ state-of-the-art libraries.
     bottom to top.
     The black line shows quadratic scaling in $J$.
     \figurelabel{benchmark}}
-\end{center}
-\end{figure}
-
-\begin{figure}[p]
-\begin{center}
-\includegraphics[width=\textwidth]{figures/benchmark_darwin_lapack.pdf}
-\caption{The same as \Figure{benchmark} but using the \texttt{lapack} solver
-    with the \project{MKL} \project{BLAS} library.
-    \figurelabel{benchmark-lapack}}
-\end{center}
-\end{figure}
-
-\begin{figure}[p]
-\begin{center}
-\includegraphics[width=\textwidth]{figures/benchmark_darwin_sparse.pdf}
-\caption{The same as \Figure{benchmark} but using the \texttt{sparse} solver
-    from \project{Eigen} \citep{Guennebaud:2010}.
-    \figurelabel{benchmark-sparse}}
 \end{center}
 \end{figure}
 
