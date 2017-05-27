@@ -7,6 +7,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from celerite.plot_setup import setup, get_figsize
 
+np.random.seed(42)
 setup(auto=True)
 
 def sho_psd(Q, x):
@@ -30,14 +31,23 @@ def lorentz_acf(Q, tau):
     t = np.abs(tau)
     return np.exp(-0.5*t/Q) * np.cos(t)
 
-fig, (ax1, ax2) = plt.subplots(1, 2, figsize=get_figsize(1, 2))
+fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=get_figsize(1, 3))
 x = 10**np.linspace(-1.1, 1.1, 5000)
-tau = np.linspace(0, 20, 5000)
+tau = np.linspace(0, 20, 1000)
 
-for Q_name, Q in [("1/2", 0.5), ("1/\\sqrt{2}", 1./np.sqrt(2)),
-                  ("2", 2.0), ("10", 10.0)]:
-    ax1.plot(x, sho_psd(Q, x), label="$Q = {0}$".format(Q_name), lw=1.5)
-    ax2.plot(tau, sho_acf(Q, tau), label="$Q = {0}$".format(Q_name), lw=1.5)
+for i, (Q_name, Q) in enumerate(
+        [("1/2", 0.5), ("1/\\sqrt{2}", 1./np.sqrt(2)), ("2", 2.0),
+         ("10", 10.0)]):
+    l, = ax1.plot(x, sho_psd(Q, x), label="$Q = {0}$".format(Q_name), lw=1.5)
+    c = l.get_color()
+    ax2.plot(tau, sho_acf(Q, tau), label="$Q = {0}$".format(Q_name), lw=1.5,
+             color=c)
+
+    K = sho_acf(Q, tau[:, None] - tau[None, :])
+    y = np.random.multivariate_normal(np.zeros(len(tau)), K, size=3)
+    ax3.axhline(-5*i, color="k", lw=0.75)
+    ax3.plot(tau, -5*i + (y - np.mean(y, axis=1)[:, None]).T, color=c,
+             lw=1)
 
 ax1.plot(x, lorentz_psd(10.0, x), "--k")
 ax2.plot(tau, lorentz_acf(10.0, tau), "--k")
@@ -54,5 +64,9 @@ ax2.set_xlim(tau.min(), tau.max())
 ax2.set_ylim(-1.1, 1.1)
 ax2.set_xlabel("$\omega_0\,\\tau$")
 ax2.set_ylabel("$k(\\tau) / k(0)$")
+
+ax3.set_xlim(0, 20)
+ax3.set_yticklabels([])
+ax3.set_xlabel("$t$")
 
 fig.savefig("sho.pdf", bbox_inches="tight")

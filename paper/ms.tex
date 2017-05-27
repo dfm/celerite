@@ -619,7 +619,7 @@ the inverse of $K$ and compute its log-determinant in $\mathcal{O}(N\,J)$ and
 $\mathcal{O}(N)$ operations respectively.
 The log-determinant of $K$ is given by
 \begin{eqnarray}
-    \log \det K = \sum_{n=1}^N \log D_{n,n}
+    \ln \det K = \sum_{n=1}^N \ln D_{n,n}
 \end{eqnarray}
 where, if $K$ is positive semi-definite, $D_{n,n}>0$ for all $n$.
 
@@ -803,14 +803,15 @@ described in the previous section.
 
 \begin{figure}[!htbp]
 \begin{center}
-\includegraphics[width=0.9\textwidth]{figures/sho.pdf}
+\includegraphics[width=0.95\textwidth]{figures/sho.pdf}
 \caption{(left) The power spectrum of a stochastically-driven simple harmonic
     oscillator (\eqalt{sho-psd}) plotted for several values of the quality
     factor $Q$.
     For comparison, the dashed line shows the Lorentzian function from
     \eq{lorentz-psd} with $c_j = \omega_0/(2\,Q) = 1/20$ and normalized so that
     $S(d_j)/S(0) = 100$.
-    (right) The corresponding autocorrelation functions with the same colors.
+    (middle) The corresponding autocorrelation functions with the same colors.
+    \response{(right) Three realizations from each model in the same colors.}
     \figurelabel{sho}}
 \end{center}
 \end{figure}
@@ -854,6 +855,7 @@ blue contour indicating 68\% of the posterior mass.
 It is clear from this figure that, as expected, the inference correctly
 reproduces the true PSD.
 
+\input{figures/simulated/correct-params}
 
 \begin{figure}[!htbp]
 \begin{center}
@@ -916,6 +918,8 @@ The inference made using this effective \celeriteterm\ model are indistinguishab
 from the inferences made using the correct model and substantially less
 computation time is required for the \celerite\ inference.
 
+\input{figures/simulated/wrong-qpo-params}
+
 \begin{figure}[!htbp]
 \begin{center}
 \includegraphics[width=0.9\textwidth]{figures/simulated/wrong-qpo.pdf}
@@ -974,7 +978,7 @@ it is positive for all values of $\tau$.
 We can construct a simple \celeriteterm\ covariance function with similar properties
 as follows
 \begin{eqnarray}\eqlabel{rot-kernel}
-k(\tau) = \frac{a}{2+b}\,e^{-c\,\tau}\,\left[
+k(\tau) = \frac{a}{2+b}\,e^{-\tau/c}\,\left[
     \cos\left(\frac{2\,\pi\,\tau}{P}\right) + (1 + b)
 \right]
 \end{eqnarray}
@@ -1001,6 +1005,8 @@ The left panels of \Figure{rotation} show a subset of the data used in this
 example and the residuals away from the maximum likelihood predictive mean.
 The right panel of \Figure{rotation} shows the marginalized posterior
 distribution for the rotation period.
+
+\input{figures/rotation/rotation-params}
 
 \begin{figure}[p]
 \begin{center}
@@ -1130,6 +1136,8 @@ An in-depth discussion of the benefits of rigorous probabilistic inference of
 asteroseismic parameters in the time domain is beyond the scope of this paper,
 but we hope to revisit this opportunity in the future.
 
+\input{figures/astero/astero-params}
+
 \begin{figure}[!htbp]
 \begin{center}
 \includegraphics[width=0.8\textwidth]{figures/astero/astero.pdf}
@@ -1231,6 +1239,9 @@ This procedure produces estimates of the planet parameters that are consistent
 with the true values using \celerite\ as an effective model for the stellar
 variability.
 
+\newpage
+\input{figures/transit/transit-params}
+
 \begin{figure}[!htbp]
 \begin{center}
 \includegraphics[width=\textwidth]{figures/transit/transit-ml.pdf}
@@ -1262,6 +1273,10 @@ variability.
     \figurelabel{transit-corner}}
 \end{center}
 \end{figure}
+
+\subsection{Summary}
+
+\input{figures/example-stats}
 
 \section{Comparisons to other methods}
 
@@ -1488,6 +1503,8 @@ Dennis Stello,
 Jake VanderPlas, and
 Andrew Gordon Wilson
 for helpful discussions informing the ideas and code presented here.
+\response{We would also like to thank the anonymous referee for thorough and
+constructive feedback that greatly improved the paper.}
 
 This work was performed in part under contract with the Jet Propulsion
 Laboratory (JPL) funded by NASA through the Sagan Fellowship Program executed
