@@ -5,6 +5,7 @@
 \pdfoutput=1
 
 \include{vc}
+\include{figures/examples-macros}
 \include{figures/rotation/rotation}
 
 \usepackage{microtype}
@@ -292,7 +293,8 @@ GPs are stochastic models consisting of a mean function
 $\mu_\bvec{\theta}(\bvec{x})$ and a covariance, autocorrelation, or ``kernel''
 function $k_\bvec{\alpha}(\bvec{x}_n,\,\bvec{x}_m)$ parameterized by
 $\bvec{\theta}$ and $\bvec{\alpha}$ respectively.
-Under this model, the log-likelihood of observing a dataset
+Under this model, \response{the log-likelihood function $\mathcal{L}
+(\bvec{\theta},\,\bvec{\alpha})$} with a dataset
 \begin{eqnarray}
 \bvec{y} = \left(\begin{array}{ccccc}
     y_1\quad && \cdots\quad && y_N
@@ -306,6 +308,7 @@ X = \left(\begin{array}{ccccc}
 \end{eqnarray}
 is
 \begin{eqnarray}\eqlabel{gp-likelihood}
+\ln \mathcal{L} (\bvec{\theta},\,\bvec{\alpha}) =
 \ln{p(\bvec{y}\,|\,{X,\,\bvec{\theta}},\,\bvec{\alpha})} =
     -\frac{1}{2} {\bvec{r}_\bvec{\theta}}^\T\,{K_\bvec{\alpha}}^{-1}\,
         \bvec{r}_\bvec{\theta}
@@ -659,9 +662,9 @@ physical motivation for the choice of kernel functions.
 Kernels are often chosen simply because they are popular with little
 consideration of the impact of this decision.
 While this isn't necessarily a problem for the inferred results, in this
-section we discuss an exact physical interpretation of the \celeriteterm\ kernel
-that will be applicable to many astrophysical systems but especially the
-time-variability of stars.
+section we discuss an exact physical interpretation of the \celeriteterm\
+kernel that will be applicable to many astrophysical systems but especially
+the time-variability of stars.
 
 Many astronomical objects are variable on timescales determined by their
 physical structure.
@@ -673,7 +676,7 @@ internal stellar structure, which are both excited and damped by convective
 turbulence.
 
 To relate this physical picture to \celeriteterm, we consider the dynamics of a
-stochastically-driven damped simple harmonic oscillator.
+stochastically-driven damped simple harmonic oscillator (SHO).
 The differential equation for this system is
 \begin{equation}
     \left[\frac{\dd^2}{\dd t^2} + \frac{\omega_0}{Q}\,\frac{\dd}{\dd t}
@@ -712,7 +715,8 @@ d_{j\pm} &=& 0 \quad. \nonumber
 
 For these definitions, the kernel is
 \begin{equation}\eqlabel{sho-kernel}
-k(\tau) = S_0\,\omega_0\,Q\,e^{-\frac{\omega_0\,\tau}{2Q}}\,
+k_\mathrm{SHO}(\tau;\,S_0,\,Q,\,\omega_0) =
+S_0\,\omega_0\,Q\,e^{-\frac{\omega_0\,\tau}{2Q}}\,
 \begin{cases}
     \cosh{(\eta\,\omega_0\,\tau)} +
         \frac{1}{2\,\eta\,Q}\,\sinh{(\eta\,\omega_0\,\tau)}, & 0 < Q < 1/2\\
@@ -826,8 +830,7 @@ In the following section, we expand on these examples by applying
 \celerite\ to real datasets.
 In the first example, we demonstrate that \celerite\ can be used to infer
 the power spectrum of a process when the data are generated from a
-\celeriteterm\
-model.
+\celeriteterm\ model.
 In the second example, we demonstrate that \celerite\ can be used as an
 effective model even if the true process cannot be represented in the space of
 allowed models.
@@ -837,23 +840,70 @@ model with a specific kernel.
 Even in these cases, GPs can be useful effective models and \celerite\
 provides computational advantages over other GP methods.
 
+\response{In each example, the joint posterior probability density is given by
+\begin{eqnarray}\eqlabel{joint-post}
+p(\bvec{\theta},\,\bvec{\alpha}\,|\,\bvec{y},\,X) \propto
+p(\bvec{y}\,|\,{X,\,\bvec{\theta}},\,\bvec{\alpha})\,
+p(\bvec{\theta},\,\bvec{\alpha})
+\end{eqnarray}
+where $p(\bvec{y}\,|\,{X,\,\bvec{\theta}},\,\bvec{\alpha})$ is the GP
+likelihood defined in \eq{gp-likelihood} and
+$p(\bvec{\theta},\,\bvec{\alpha})$ is the joint prior probability density for
+the parameters.
+The specific parameters and priors are discussed in detail in each section
+but, in most cases, we assume separable uniform priors with plausibly broad
+support.
+}
+
 \subsection{Recovery of a celerite process}
 
 In this first example, we simulate a dataset using a known \celeriteterm\
 process and fit it with \celerite\ to demonstrate that valid inferences can be
 made in this idealized case.
-The simulated dataset is shown in the left panel of \Figure{simulated-correct}
-and it was generated using a SHO kernel (\eqalt{sho-kernel}) with parameters
-$S_0 = 1$, $\omega_0 = e^2$, and $Q = e^2$.
-The true PSD is shown as a dashed line in the right panel of
+\response{We simulated a small ($N = \exampleindata$) dataset using a GP model
+with a SHO kernel (\eqalt{sho-kernel}) with parameters $S_0 =
+1\,\mathrm{ppm}^2$, $\omega_0 = e^2\,\mathrm{day}^{-1}$, and $Q = e^2$, where
+the units are arbitrarily chosen to simplify the discussion.
+We add further white noise with the amplitude $\sigma_n = 2.5\, \mathrm{ppm}$
+to each data point.
+The simulated data are plotted in the top left panel of
 \Figure{simulated-correct}.
-We applied log-uniform priors to all of the parameters and used \emcee\
-\citep{Foreman-Mackey:2013} to sample the joint posterior density and computed
-the marginalized posterior inference of the PSD.
-This inference is shown in the right panel of \Figure{simulated-correct} as a
-blue contour indicating 68\% of the posterior mass.
+
+In this case, when simulating and fitting, we set the mean function
+$\mu_\bvec{\theta}$ to zero~--~this means that the parameter vector
+$\bvec{\theta}$ is empty~--~and the elements of the covariance matrix are
+given by \eq{sho-kernel} with three parameters $\bvec{\alpha} = (S_0,\,
+\omega_0,\,Q)$.
+We choose a proper separable prior for $\bvec{\alpha}$ with log-uniform
+densities for each parameter as listed in Table~\ref{tab:example-1-params}.
+
+To start, we estimate the maximum \emph{a posteriori} (MAP) parameters using
+the \project{L-BFGS-B} non-linear optimization routine \citep{Byrd:1995,
+Zhu:1997} implemented by the \project{SciPy} project \citep{Jones:2001}.
+The top left panel of \Figure{simulated-correct} shows the conditional mean
+and standard deviation of the MAP model over-plotted on the simulated data and
+the bottom panel shows the residuals away from this model.
+Since we are using the correct model to fit the data, it is reassuring that
+the residuals appear qualitatively uncorrelated in this figure.
+
+We then sample the joint posterior probability (\eqalt{joint-post}) using
+\emcee\ \citep{Goodman:2010, Foreman-Mackey:2013}.
+We initialize \exampleinwalkers~walkers in a Gaussian ball with width
+$10^{-4}$ in each parameter around the MAP parameter vector, run
+\exampleinburn~steps of burn-in, and \exampleinsteps~steps of MCMC.
+To asses convergence, we estimate the mean integrated autocorrelation time of
+the chain across parameters \citep{Sokal:1989, Goodman:2010} and find that the
+chain results in \exampleineff~effective samples.
+
+Each sample in the chain corresponds to a model PSD and we compare this
+posterior constraint on the PSD to the true spectral density in the
+right-hand panel of \Figure{simulated-correct}.
+In this figure, the true PSD is plotted as a dashed black line and the
+numerical estimate of the posterior inference is shown as a blue contour
+indicating 68\% of the MCMC samples.
 It is clear from this figure that, as expected, the inference correctly
 reproduces the true PSD.
+}
 
 \input{figures/simulated/correct-params}
 
@@ -873,15 +923,14 @@ reproduces the true PSD.
 \newpage
 \subsection{Inferences with the ``wrong'' model}
 
-For this example, we simulate a dataset using a known GP model with a kernel
+In this example, we simulate a dataset using a known GP model with a kernel
 outside of the support of a \celeriteterm\ process.
 This means the true autocorrelation of the process can never be correctly
 represented by the model that we are using to fit, but we use this example
 to demonstrate that, at least in this case, valid inferences can still be made
 about the physical parameters of the model.
 
-For this example, the data are simulated from a quasiperiodic GP with the
-kernel
+The data are simulated from a quasiperiodic GP with the kernel
 \begin{eqnarray}\eqlabel{sim-wrong-true}
 k_\mathrm{true} (\tau) = \alpha\,
     \exp\left(-\frac{\tau^2}{2\,\lambda^2}\right)\,
@@ -889,6 +938,7 @@ k_\mathrm{true} (\tau) = \alpha\,
 \end{eqnarray}
 where $P_\mathrm{true}$ is the fundamental period of the process.
 This autocorrelation structure corresponds to the power spectrum
+\citep{Wilson:2013}
 \begin{eqnarray}
 S_\mathrm{true} (\omega) = \frac{\lambda\,\alpha}{2}\,\left[
     \exp\left(-\frac{\lambda^2}{2}\,\left(\omega-
@@ -900,23 +950,74 @@ S_\mathrm{true} (\omega) = \frac{\lambda\,\alpha}{2}\,\left[
 which, for large values of $\omega$, falls off exponentially.
 When compared to \eq{celerite-psd}~--~which, for large $\omega$, goes as
 $\omega^{-4}$ at most~--~it is clear that a \celeriteterm\ model can never
-perfectly reproduce the structure of this process.
-That being said, we demonstrate that rigorous inferences can be made
-about $P_\mathrm{true}$ even with an effective model.
-The left panel of \Figure{simulated-wrong} shows the simulated dataset.
+exactly reproduce the structure of this process.
+That being said, we demonstrate that robust inferences can be made about
+$P_\mathrm{true}$ even with this effective model.
+
+\response{We generate a realization of a GP model with the kernel given in
+\eq{sim-wrong-true} with $N = \exampleiindata$, $\alpha = 1\,\mathrm{ppm}^2$,
+$\lambda = 5\,\mathrm{day}$, and $P_\mathrm{true} = 1\,\mathrm{day}$.
+We also add white noise with amplitude $\sigma = 0.5\,\mathrm{ppm}$ to each
+data point.
+The top left panel of \Figure{simulated-wrong} shows this simulated dataset.
+
 We then fit this simulated data using the product of two SHO terms
 (\eqalt{sho-kernel}) where one of the terms has $S_0 = 1$ and $Q =
-1/\sqrt{2}$ and the other has $\omega_0 = 2\,\pi/P$.
-We note that using \eq{product-rule}, the product of two \celeriteterm\ terms can
-also be expressed using \celerite.
-We apply log-uniform priors on all the parameters and use \emcee\ to sample
-the joint posterior probability for all of the parameters.
-The inferred distribution for the parameter $P$ is shown in the right panel of
-\Figure{simulated-wrong} and compared to the true period $P_\mathrm{true}$ and
-the inferences made using the correct model (\eqalt{sim-wrong-true}).
-The inference made using this effective \celeriteterm\ model are indistinguishable
-from the inferences made using the correct model and substantially less
-computation time is required for the \celerite\ inference.
+1/\sqrt{2}$ fixed.
+The kernel for this model is
+\begin{eqnarray}
+k(\tau) = k_\mathrm{SHO}(\tau;\,S_0,\,Q,\,\omega_1) \,
+    k_\mathrm{SHO}(\tau;\,S_0 = 1,\,Q = 1/\sqrt{2},\,\omega_2)
+\end{eqnarray}
+where $k_\mathrm{SHO}$ is defined in \eq{sho-kernel} and the inferred period
+is related to the parameters by $P=2\,\pi/\omega_1$.
+We note that using \eq{product-rule}, the product of two \celeriteterm\ terms
+can also be expressed using \celerite.
+
+As in the previous example, we set the mean function to zero and can,
+therefore, omit the parameters $\bvec{\theta}$.
+Table~\ref{tab:example-2-params} lists the proper log-uniform priors that we
+choose for each parameter in $\bvec{\alpha} =
+(S_0,\,Q,\,\omega_1,\,\omega_2)$.
+These priors, together with the GP likelihood (\eqalt{gp-likelihood}) fully
+specify the posterior probability density.
+
+As above, we estimate the MAP parameters using \project{L-BFGS-B} and sample
+the posterior probability density using \emcee.
+The top left panel of \Figure{simulated-wrong} shows the conditional mean and
+standard deviation of the MAP model.
+The bottom left panel shows the residuals between the data and this MAP model
+and, even though this GP model is formally ``wrong'', there are no obvious
+correlations in these residuals.
+
+To perform posterior inference, we initialize \exampleiinwalkers~walkers by
+sampling from the 4-dimensional Gaussian centered on the MAP parameters with
+an isotropic standard deviation of $10^{-4}$.
+We then run \exampleiinburn~steps of burn-in and \exampleiinsteps~steps of
+MCMC.
+To estimate the number of effective samples, we estimate the integrated
+autocorrelation time of the chain for the parameter $\omega_1$~--~the
+parameter of primary interest~--~and find \exampleiineff~effective samples.
+
+For comparison, we run the same number of steps of MCMC to sample the
+``correct'' joint posterior density.
+For this reference inference, we use a GP likelihood with the kernel given by
+\eq{sim-wrong-true} and choose log-uniform priors on each of the
+three parameters $\ln \alpha/\mathrm{ppm}^2 \sim \mathcal{U}(-10,\,10)$,
+$\ln \lambda/\mathrm{day} \sim \mathcal{U}(-10,\,10)$, and
+$\ln P_\mathrm{true}/\mathrm{day} \sim \mathcal{U}(-10,\,10)$.
+
+The marginalized posterior inferences of the characteristic period of the
+process are shown in the right panel of \Figure{simulated-wrong}.
+The inference using the correct model is shown as a dashed blue histogram and
+the inference made using the effective model is shown as a solid black
+histogram.
+These inferences are consistent with each other and with the true period used
+for the simulation (shown as a vertical gray line).
+This demonstrates that, in this case, \celerite\ can be used as a
+computationally efficient effective model and hints that this may be true in
+other problems as well.
+}
 
 \input{figures/simulated/wrong-qpo-params}
 
