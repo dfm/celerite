@@ -539,8 +539,8 @@ A_{n,n} &=& \sigma_n^2 + \sum_{j=1}^J a_j \quad.
 To help clarify these equations, we write out here an example of a semi-separable matrix with a 
 single \celeriteterm\ term with $N=3$ and $c=d=1$:
 \begin{eqnarray}\eqlabel{semi-separable-structure}
-K &=& \\
-&&\begin{pmatrix}
+K &=&
+\begin{pmatrix}
 %    {\scriptscriptstyle a+{\sigma_1}^2 }& {\scriptscriptstyle e^{-c\,\tau_{2,1}}\left(a\,\cos{(d \tau_{2,1})}+b\,\sin{(d \tau_{2,1})}\right)} & {\scriptscriptstyle e^{-c\,\tau_{3,1}}\left(a\,\cos{(d \tau_{3,1})}+b\,\sin{(d \tau_{3,1})}\right)}\\ 
 %    {\scriptscriptstyle e^{-c\,\tau_{2,1}}\left(a\,\cos{(d \tau_{2,1})}+b\,\sin{(d \tau_{2,1})}\right)}&{\scriptscriptstyle a+{\sigma_2}^2 }& {\scriptscriptstyle e^{-c\,\tau_{3,2}}\left(a\,\cos{(d \tau_{3,2})}+b\,\sin{(d \tau_{3,2})}\right)}\\
 %    {\scriptscriptstyle e^{-c\,\tau_{3,2}}\left(a\,\cos{(d \tau_{3,2})}+b\,\sin{(d \tau_{3,2})}\right)}&{\scriptscriptstyle  e^{-c\,\tau_{3,2}}\left(a\,\cos{(d \tau_{3,2})}+b\,\sin{(d \tau_{3,2})}\right)} & \scriptscriptstyle{a + {\sigma_3}^2}
@@ -743,7 +743,41 @@ $\mathcal{O}(N\,J)$.
 
 \subsection{Simulation}
 
+Simulation of a Gaussian process for large $N$ requires multiplying an
+$N$-dimensional vector of Gaussian normal deviates, $\bf{g}$, by the square root
+of the covariance matrix:
+\begin{equation}
+{\bf y} = K_\bvec{\alpha}^{1/2} {\bf g},
+\end{equation}
+where $g_i \sim N(0,1)$.  Note that $K_\bvec{\alpha} = K_\bvec{\alpha}^{1/2} \left(K_\bvec{\alpha}^{1/2}\right)^T$, which
+comparing with the Cholesky factorization gives $K_\bvec{\alpha}^{1/2} = L D^{1/2}$,
+where $(D^{1/2})_{ii} = \sqrt{D_{ii}}$.  Also note that the exponent of
+the likelihood with $\mu_\theta =0$ is given by
+\begin{eqnarray}
+Q &=&-\frac{1}{2}{\bf y}^T K_\bvec{\alpha}^{-1} {\bf y}\\
+&=& -\frac{1}{2}{\bf y}^T \left(K_\bvec{\alpha}^{-1/2}\right)^T K_\bvec{\alpha}^{-1/2} {\bf y}\\
+&=& -\frac{1}{2}{\bf g}^T K_\bvec{\alpha}^{1/2} \left(K_\bvec{\alpha}^{-1/2}\right)^T K_\bvec{\alpha}^{-1/2} K_\bvec{\alpha}^{1/2} {\bf g}\\
+&=& -\frac{1}{2}{\bf g}^T {\bf g}.
+\end{eqnarray}
+The last quantity is simply the dot product of an $N$-dimensional vector of independent standard normal random variables with itself,
+which is distributed according to the chi-squared distribution with $N$ degrees of freedom, i.e.\ $Q \sim \chi_N^2$.
 
+To generate a draw from a Gaussian process with a specified \celerite\ model requires carrying out the
+low-rank Cholesky decomposition first, generating the vector ${\bf g}$ of random normal deviates, and then multiplying
+\begin{equation}
+{\bf y} = L D^{1/2} {\bf g}.
+\end{equation}
+This may be carried out in $O(JN)$ operations with
+\begin{eqnarray}
+f_{n,j} &=& \phi_{n-1,j} \left(f_{n-1,j} + \tilde{X}_{n-1,j} g_{n-1}\right)\\
+y_n &=& D_{n,n}^{1/2} g_n + \sum_{k=1}^{2J} \tilde{U}_{n,k} f_{n,k}
+\end{eqnarray}
+for $n = 1$ to $N$ and $j=1$ to $2J$, with $f_{0,j} = 0$ for all $j$ and $g_0 = 0$.
+We expect that this simulation algorithm will be useful for testing Gaussian
+process inference algorithms with large datasets, which becomes prohibitive
+for large $N$ if standard Cholesky decomposition and multiplication are used.
+
+\subsection{Prediction}
 
 \section{celerite as a model of stellar variations}\sectlabel{sho}
 
