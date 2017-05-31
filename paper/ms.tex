@@ -155,6 +155,9 @@ to astronomical time series
 \edef \simons {\arabic{affilcounter}}\stepcounter{affilcounter}
 \altaffiltext{\simons}{Simons Fellow}
 
+\edef \simons {\arabic{affilcounter}}\stepcounter{affilcounter}
+\altaffiltext{\guggenheim}{Guggenheim Fellow}
+
 \edef \columbia {\arabic{affilcounter}}\stepcounter{affilcounter}
 \altaffiltext{\columbia}{Department of Astronomy, Columbia University,
                          New York, NY}
@@ -166,7 +169,7 @@ to astronomical time series
 
 \author{%
     Daniel~Foreman-Mackey\altaffilmark{\sagan,\uw},
-    Eric~Agol\altaffilmark{\uw},
+    Eric~Agol\altaffilmark{\uw,\guggenheim},
     Ruth~Angus\altaffilmark{\simons,\columbia}, and
     Sivaram~Ambikasaran\altaffilmark{\iis}
 }
@@ -195,7 +198,7 @@ spaced observations or uniform noise.
 This form of covariance arises naturally when the process is a mixture of
 stochastically-driven damped harmonic oscillators~--~providing a physical
 motivation for and interpretation of this choice~--~but we also demonstrate
-that it is effective in many other cases.
+that it is effective in other cases.
 We present a mathematical description of the method, the details of the
 implementation, and a comparison to existing scalable Gaussian Process methods.
 The method is flexible, fast, and most importantly, interpretable, with a wide
@@ -325,7 +328,8 @@ given by $[K_\bvec{\alpha}]_{nm} = k_\bvec{\alpha}(\bvec{x}_n,\,\bvec{x}_m)$.
 be derived as the generalization of what we astronomers call ``$\chi^2$''
 to include the effects of correlated noise.
 The maximum likelihood values for the parameters $\bvec{\theta}$ and
-$\bvec{\alpha}$ for a given dataset $(\bvec{y},\,X)$ can be found by
+$\bvec{\alpha}$ for a given dataset $(\bvec{y},\,X)$ \response{(Why
+isn't X boldface?)} can be found by
 maximizing \eq{gp-likelihood} with respect to $\bvec{\theta}$ and
 $\bvec{\alpha}$ using a non-linear optimization routine \citep{Nocedal:2006}.
 Similarly, probabilistic constraints on $\bvec{\theta}$ and $\bvec{\alpha}$
