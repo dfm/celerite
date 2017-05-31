@@ -562,7 +562,8 @@ A + \mathrm{tril}(U\,V^\T) + \mathrm{triu}(V\,U^\T)
     + D\,\mathrm{triu}(X\,U^\T) \nonumber\\
 && +\, \mathrm{tril}(U\,X^\T)\,D\,\mathrm{triu}(X\,U^\T) \nonumber
 \end{eqnarray}
-that we can solve for $X$.
+that we can solve for $X$. \response{X was used to represent independent
+parameter matrix in definition of likelihood.}
 Setting each element on the left side of \eq{cholesky} equal to the
 corresponding element on the right side, we derive the following recursion
 relations
@@ -582,6 +583,11 @@ $\mathcal{O}(J^2)$ and this must be run $N$ times~--~once for each
 observation~--~so the total cost of this factorization scales as
 $\mathcal{O}(N\,J^2)$.
 
+Note that if some \celeriteterm\ terms are real, with $b_j=d_j=0$,
+then these terms only add one to the rank of $U$ and $V$.  We use this fact
+to simplify the algebra when real components are included:  if $J_{real}$
+and $J_{complex}$ terms are included, with $J_{real}+J_{complex}=J$, then 
+the $U$, $V$, and $X$ matrices have size $N \times (J_{real}+2J_{complex})$.
 
 \subsection{Pre-conditioning}
 
@@ -951,7 +957,8 @@ S_\mathrm{true} (\omega) = \frac{\lambda\,\alpha}{2}\,\left[
         \frac{2\,\pi}{P_\mathrm{true}}\right)^2\right)
 \right]
 \end{eqnarray}
-which, for large values of $\omega$, falls off exponentially.
+which, for large values of $\omega$, falls off exponentially. \response{$\alpha$
+means the parameter vector in definition of likelihood.}
 When compared to \eq{celerite-psd}~--~which, for large $\omega$, goes as
 $\omega^{-4}$ at most~--~it is clear that a \celeriteterm\ model can never
 exactly reproduce the structure of this process.
@@ -1087,7 +1094,8 @@ k(\tau) = \frac{a}{2+b}\,e^{-\tau/c}\,\left[
     \cos\left(\frac{2\,\pi\,\tau}{P}\right) + (1 + b)
 \right]
 \end{eqnarray}
-for $a>0$, $b>0$, and $c>0$.
+for $a>0$, $b>0$, and $c>0$. \response{a,b,c already have different meaning
+in celerite kernel.}
 The covariance function in \eq{rot-kernel} cannot exactly reproduce \eq{sine2}
 but, since \eq{sine2} is only an effective model, \eq{rot-kernel} can be used
 as a drop-in replacement for a substantial gain in computational efficiency.
@@ -1190,7 +1198,8 @@ S_{0,\,j} =
     \frac{A}{Q^2}\,\exp\left(-\frac{[j\,\Delta\nu + \epsilon]^2}{2\,W^2}\right)
 \end{eqnarray}
 where $j$ is an integer running from $-3$ to 3 and $\epsilon$, $A$, and $W$
-are shared nuisance parameters.
+are shared nuisance parameters. \response{A was used for diagonal of
+covariance matrix.}
 This model could be extended to include more angular modes and
 $\nu_\mathrm{max}$ and $\Delta \nu$ could be replaced by the fundamental
 physical parameters of the star.
@@ -1345,6 +1354,10 @@ with the true values using \celerite\ as an effective model for the stellar
 variability.
 
 \newpage
+
+\response{Table 5 has two parameter with name "b":  the celerite coefficient,
+and the impact parameter.}
+
 \input{figures/transit/transit-params}
 
 \begin{figure}[!htbp]
@@ -1380,6 +1393,8 @@ variability.
 \end{figure}
 
 \subsection{Summary}
+
+\response{The D in Table 6 may be confused with the D used in the Cholesky solver.}
 
 \input{figures/example-stats}
 
