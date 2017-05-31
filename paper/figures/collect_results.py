@@ -5,6 +5,10 @@ from __future__ import division, print_function
 
 import json
 
+macros_fn = "examples-macros.tex"
+open(macros_fn, "w").close()
+roman = ["i", "ii", "iii", "iv", "v", "vi", "vii", "viii", "ix", "x"]
+
 stats_rows = []
 for i, example in enumerate(["simulated/correct", "simulated/wrong-qpo",
                              "rotation/rotation", "astero/astero",
@@ -20,6 +24,18 @@ for i, example in enumerate(["simulated/correct", "simulated/wrong-qpo",
          r"& {neff:.0f} \\")
         .format(i+1, **data)
     )
+
+    with open(macros_fn, "a") as f:
+        f.write("\\newcommand{{\\example{0}ndata}}{{{1}}}\n"
+                .format(roman[i], data["N"]))
+        f.write("\\newcommand{{\\example{0}nwalkers}}{{{1}}}\n"
+                .format(roman[i], data["nwalkers"]))
+        f.write("\\newcommand{{\\example{0}nburn}}{{{1}}}\n"
+                .format(roman[i], data["nburn"]))
+        f.write("\\newcommand{{\\example{0}nsteps}}{{{1}}}\n"
+                .format(roman[i], data["nsteps"]))
+        f.write("\\newcommand{{\\example{0}neff}}{{{1:.0f}}}\n"
+                .format(roman[i], data["neff"]))
 
     with open(example + "-params.json") as f:
         params = json.load(f)
@@ -56,7 +72,7 @@ with open("example-stats.tex", "w") as f:
     f.write("\\tablehead{\colhead{example} & \colhead{$N$} & \colhead{$J$} & "
             "\colhead{direct cost} & \colhead{\celerite\ cost} & "
             "\colhead{$D$} & "
-            "\colhead{steps} & \colhead{effective samples}\\\\\n")
+            "\colhead{model evaluations} & \colhead{effective samples}\\\\\n")
     f.write("&&& \colhead{ms} & \colhead{ms} &&&}\n")
     f.write("\\startdata\n")
     f.write("\n".join(stats_rows))
