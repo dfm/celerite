@@ -521,7 +521,8 @@ K = A + \mathrm{tril}(U\,V^\T) + \mathrm{triu}(V\,U^\T)
 \end{eqnarray}
 where the $\mathrm{tril}$ function extracts the strict lower triangular
 component of its argument and $\mathrm{triu}$ is the equivalent strict upper
-triangular operation.
+triangular operation.  Note that the last two terms in this equation are
+transposes of one another.
 For the \celeriteterm\ model described in the previous section, the rank of
 the semi-separable matrix is $R = 2\,J$ and the components of the relevant
 matrices are
@@ -534,6 +535,88 @@ V_{m,2\,j-1} &=& e^{c_j\,t_m}\,\cos(d_j\,t_m) \\
 V_{m,2\,j} &=& e^{c_j\,t_m}\,\sin(d_j\,t_m) \\
 A_{n,n} &=& \sigma_n^2 + \sum_{j=1}^J a_j \quad.
 \end{eqnarray}
+
+To help clarify these equations, we write out here an example of a semi-separable matrix with a 
+single \celeriteterm\ term with $N=3$ and $c=d=1$:
+\begin{eqnarray}\eqlabel{semi-separable-structure}
+K &=& \\
+&&\begin{pmatrix}
+%    {\scriptscriptstyle a+{\sigma_1}^2 }& {\scriptscriptstyle e^{-c\,\tau_{2,1}}\left(a\,\cos{(d \tau_{2,1})}+b\,\sin{(d \tau_{2,1})}\right)} & {\scriptscriptstyle e^{-c\,\tau_{3,1}}\left(a\,\cos{(d \tau_{3,1})}+b\,\sin{(d \tau_{3,1})}\right)}\\ 
+%    {\scriptscriptstyle e^{-c\,\tau_{2,1}}\left(a\,\cos{(d \tau_{2,1})}+b\,\sin{(d \tau_{2,1})}\right)}&{\scriptscriptstyle a+{\sigma_2}^2 }& {\scriptscriptstyle e^{-c\,\tau_{3,2}}\left(a\,\cos{(d \tau_{3,2})}+b\,\sin{(d \tau_{3,2})}\right)}\\
+%    {\scriptscriptstyle e^{-c\,\tau_{3,2}}\left(a\,\cos{(d \tau_{3,2})}+b\,\sin{(d \tau_{3,2})}\right)}&{\scriptscriptstyle  e^{-c\,\tau_{3,2}}\left(a\,\cos{(d \tau_{3,2})}+b\,\sin{(d \tau_{3,2})}\right)} & \scriptscriptstyle{a + {\sigma_3}^2}
+    {\scriptscriptstyle a+{\sigma_1}^2 }& {\scriptscriptstyle e^{-\tau_{2,1}}\left(a\,\cos{\tau_{2,1}}+b\,\sin{\tau_{2,1}}\right)} & {\scriptscriptstyle e^{-\tau_{3,1}}\left(a\,\cos{\tau_{3,1}}+b\,\sin{\tau_{3,1}}\right)}\\ 
+    {\scriptscriptstyle e^{-\tau_{2,1}}\left(a\,\cos{\tau_{2,1}}+b\,\sin{\tau_{2,1}}\right)}&{\scriptscriptstyle a+{\sigma_2}^2 }& {\scriptscriptstyle e^{-\tau_{3,2}}\left(a\,\cos{\tau_{3,2}}+b\,\sin{\tau_{3,2}}\right)}\\
+    {\scriptscriptstyle e^{-\tau_{3,2}}\left(a\,\cos{\tau_{3,2}}+b\,\sin{\tau_{3,2}}\right)}&{\scriptscriptstyle  e^{-\tau_{3,2}}\left(a\,\cos{\tau_{3,2}}+b\,\sin{\tau_{3,2}}\right)} & \scriptscriptstyle{a + {\sigma_3}^2}
+\end{pmatrix}\\
+&=&
+\begin{pmatrix}
+    {\scriptscriptstyle a+{\sigma_1}^2} & {\scriptscriptstyle 0} & {\scriptscriptstyle 0} \\
+    {\scriptscriptstyle 0} & {\scriptscriptstyle a+{\sigma_2}^2 }& {\scriptscriptstyle 0} \\
+    {\scriptscriptstyle 0} & {\scriptscriptstyle 0} & {\scriptscriptstyle a + {\sigma_3}^2}
+\end{pmatrix}\\
+&+&\mathrm{tril}\left[\begin{pmatrix}
+%    {\scriptscriptstyle e^{-c\,t_1}\left(a\,\cos{(d t_1)}+b\,\sin{(d t_1)}\right)}&
+%    {\scriptscriptstyle e^{-c\,t_1}\left(a\,\sin{(d t_1)}-b\,\cos{(d t_1)}\right)}\\
+%    {\scriptscriptstyle e^{-c\,t_2}\left(a\,\cos{(d t_2)}+b\,\sin{(d t_2)}\right)}&
+%    {\scriptscriptstyle e^{-c\,t_2}\left(a\,\sin{(d t_2)}-b\,\cos{(d t_2)}\right)}\\
+%    {\scriptscriptstyle e^{-c\,t_3}\left(a\,\cos{(d t_3)}+b\,\sin{(d t_3)}\right)}&
+%    {\scriptscriptstyle e^{-c\,t_3}\left(a\,\sin{(d t_3)}-b\,\cos{(d t_3)}\right)}
+    {\scriptscriptstyle e^{-t_1}\left(a\,\cos{t_1}+b\,\sin{t_1}\right)}&
+    {\scriptscriptstyle e^{-t_1}\left(a\,\sin{t_1}-b\,\cos{t_1}\right)}\\
+    {\scriptscriptstyle e^{-t_2}\left(a\,\cos{t_2}+b\,\sin{t_2}\right)}&
+    {\scriptscriptstyle e^{-t_2}\left(a\,\sin{t_2}-b\,\cos{t_2}\right)}\\
+    {\scriptscriptstyle e^{-t_3}\left(a\,\cos{t_3}+b\,\sin{t_3}\right)}&
+    {\scriptscriptstyle e^{-t_3}\left(a\,\sin{t_3}-b\,\cos{t_3}\right)}
+\end{pmatrix} %\right.\\
+%&\times &
+\times
+%\left.
+\begin{pmatrix}
+% {\scriptscriptstyle e^{c\,t_1} \cos{(d t_1)}} &{\scriptscriptstyle e^{c\,t_2} \cos{(d t_2)}} & {\scriptscriptstyle e^{c\,t_3} \cos{(d t_3)}}\\
+% {\scriptscriptstyle e^{c\,t_1} \sin{(d t_1)}} & {\scriptscriptstyle e^{c\,t_2} \sin{(d t_2)}} & {\scriptscriptstyle e^{c\,t_3} \sin{(d t_3)}}
+% {\scriptscriptstyle e^{t_1} \cos{t_1}} & {\scriptscriptstyle e^{t_2} \cos{t_2}} & {\scriptscriptstyle e^{t_3} \cos{t_3}}\\
+% {\scriptscriptstyle e^{t_1} \sin{t_1}} & {\scriptscriptstyle e^{t_2} \sin{t_2}} & {\scriptscriptstyle e^{t_3} \sin{t_3}}
+ {\scriptscriptstyle e^{t_1} \cos{t_1}} & {\scriptscriptstyle e^{t_1} \sin{t_1}} \\
+ {\scriptscriptstyle e^{t_2} \cos{t_2}} & {\scriptscriptstyle e^{t_2} \sin{t_2}}\\
+ {\scriptscriptstyle e^{t_3} \cos{t_3}} & {\scriptscriptstyle e^{t_3} \sin{t_3}}
+\end{pmatrix}^T\right]\\
+&+&
+\mathrm{triu}\left[\begin{pmatrix}
+% {\scriptscriptstyle e^{c\,t_1} \cos{(d t_1)}} & {\scriptscriptstyle e^{c\,t_1} \sin{(d t_1)}} \\
+% {\scriptscriptstyle e^{c\,t_2} \cos{(d t_2)}} & {\scriptscriptstyle e^{c\,t_2} \sin{(d t_2)}}\\
+% {\scriptscriptstyle e^{c\,t_3} \cos{(d t_3)}} & {\scriptscriptstyle e^{c\,t_3} \sin{(d t_3)}}
+ {\scriptscriptstyle e^{t_1} \cos{t_1}} & {\scriptscriptstyle e^{t_1} \sin{t_1}} \\
+ {\scriptscriptstyle e^{t_2} \cos{t_2}} & {\scriptscriptstyle e^{t_2} \sin{t_2}}\\
+ {\scriptscriptstyle e^{t_3} \cos{t_3}} & {\scriptscriptstyle e^{t_3} \sin{t_3}}
+\end{pmatrix} % \right.\\
+\times
+%\left.
+\begin{pmatrix}
+%    {\scriptscriptstyle e^{-c\,t_1}\left(a\,\cos{(d t_1)}+b\,\sin{(d t_1)}\right)}&
+%    {\scriptscriptstyle e^{-c\,t_2}\left(a\,\cos{(d t_2)}+b\,\sin{(d t_2)}\right)}&
+%    {\scriptscriptstyle e^{-c\,t_3}\left(a\,\cos{(d t_3)}+b\,\sin{(d t_3)}\right)}\\
+%    {\scriptscriptstyle e^{-c\,t_1}\left(a\,\sin{(d t_1)}-b\,\cos{(d t_1)}\right)}&
+%    {\scriptscriptstyle e^{-c\,t_2}\left(a\,\sin{(d t_2)}-b\,\cos{(d t_2)}\right)}&
+%    {\scriptscriptstyle e^{-c\,t_3}\left(a\,\sin{(d t_3)}-b\,\cos{(d t_3)}\right)}
+%    {\scriptscriptstyle e^{-t_1}\left(a\,\cos{t_1}+b\,\sin{t_1}\right)}&
+%    {\scriptscriptstyle e^{-t_2}\left(a\,\cos{t_2}+b\,\sin{t_2}\right)}&
+%    {\scriptscriptstyle e^{-t_3}\left(a\,\cos{t_3}+b\,\sin{t_3}\right)}\\
+%    {\scriptscriptstyle e^{-t_1}\left(a\,\sin{t_1}-b\,\cos{t_1}\right)}&
+%    {\scriptscriptstyle e^{-t_2}\left(a\,\sin{t_2}-b\,\cos{t_2}\right)}&
+%    {\scriptscriptstyle e^{-t_3}\left(a\,\sin{t_3}-b\,\cos{t_3}\right)}
+    {\scriptscriptstyle e^{-t_1}\left(a\,\cos{t_1}+b\,\sin{t_1}\right)}&
+    {\scriptscriptstyle e^{-t_1}\left(a\,\sin{t_1}-b\,\cos{t_1}\right)}\\
+    {\scriptscriptstyle e^{-t_2}\left(a\,\cos{t_2}+b\,\sin{t_2}\right)}&
+    {\scriptscriptstyle e^{-t_2}\left(a\,\sin{t_2}-b\,\cos{t_2}\right)}\\
+    {\scriptscriptstyle e^{-t_3}\left(a\,\cos{t_3}+b\,\sin{t_3}\right)}&
+    {\scriptscriptstyle e^{-t_3}\left(a\,\sin{t_3}-b\,\cos{t_3}\right)}
+\end{pmatrix}^T\right]\\
+&=& A + \mathrm{tril}(U V^T) + \mathrm{triu}(V U^T).
+\end{eqnarray}
+Note that rather than storing the full $N \times N$ covariance matrix, it
+is only necessary to store the $2J \times N$ matrices $U$ and $V$, as well
+as the diagonal terms, for a total storage volume of $(4J+1) \times N$ floating
+point numbers.
 
 To compute the marginalized likelihood defined in \eq{gp-likelihood}, we must
 compute the log-determinant of $K$ and solve linear systems of the form
