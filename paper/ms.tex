@@ -773,11 +773,18 @@ f_{n,j} &=& \phi_{n-1,j} \left(f_{n-1,j} + \tilde{X}_{n-1,j} g_{n-1}\right)\\
 y_n &=& D_{n,n}^{1/2} g_n + \sum_{k=1}^{2J} \tilde{U}_{n,k} f_{n,k}
 \end{eqnarray}
 for $n = 1$ to $N$ and $j=1$ to $2J$, with $f_{0,j} = 0$ for all $j$ and $g_0 = 0$.
+\agoltodo{Check that these equations are in fact correct.}
 We expect that this simulation algorithm will be useful for testing Gaussian
 process inference algorithms with large datasets, which becomes prohibitive
 for large $N$ if standard Cholesky decomposition and multiplication are used.
 
+Multiplication of the full covariance matrix times a vector can be accomplished
+by yet another multiplication by the transpose of the Cholesky decomposition.
+\dfmtodo{Should we spell this out as well?}
+
 \subsection{Prediction}
+
+\agoltodo{Write up the prediction algorithm.}
 
 \section{celerite as a model of stellar variations}\sectlabel{sho}
 
