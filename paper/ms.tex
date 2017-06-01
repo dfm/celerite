@@ -500,7 +500,6 @@ function is a sum or product of \celeriteterm\ terms.
 
 \section{Semi-separable matrix factorization}
 
-\subsection{Cholesky factorization}
 
 The relationship between the \celeriteterm\ model and semi-separable linear
 algebra was first recognized by Ambikasaran \citep{Ambikasaran:2015}.
@@ -537,22 +536,32 @@ A_{n,n} &=& \sigma_n^2 + \sum_{j=1}^J a_j \quad.
 \end{eqnarray}
 
 To help clarify these equations, we write out here an example of a semi-separable matrix with a 
-single \celeriteterm\ term with $N=3$ and $c=d=1$:
+single \celeriteterm\ term with $c=d=1$: %and $N=3$ 
 \begin{eqnarray}\eqlabel{semi-separable-structure}
-K &=&
+K&=&%
 \begin{pmatrix}
 %    {\scriptscriptstyle a+{\sigma_1}^2 }& {\scriptscriptstyle e^{-c\,\tau_{2,1}}\left(a\,\cos{(d \tau_{2,1})}+b\,\sin{(d \tau_{2,1})}\right)} & {\scriptscriptstyle e^{-c\,\tau_{3,1}}\left(a\,\cos{(d \tau_{3,1})}+b\,\sin{(d \tau_{3,1})}\right)}\\ 
 %    {\scriptscriptstyle e^{-c\,\tau_{2,1}}\left(a\,\cos{(d \tau_{2,1})}+b\,\sin{(d \tau_{2,1})}\right)}&{\scriptscriptstyle a+{\sigma_2}^2 }& {\scriptscriptstyle e^{-c\,\tau_{3,2}}\left(a\,\cos{(d \tau_{3,2})}+b\,\sin{(d \tau_{3,2})}\right)}\\
 %    {\scriptscriptstyle e^{-c\,\tau_{3,2}}\left(a\,\cos{(d \tau_{3,2})}+b\,\sin{(d \tau_{3,2})}\right)}&{\scriptscriptstyle  e^{-c\,\tau_{3,2}}\left(a\,\cos{(d \tau_{3,2})}+b\,\sin{(d \tau_{3,2})}\right)} & \scriptscriptstyle{a + {\sigma_3}^2}
-    {\scriptscriptstyle a+{\sigma_1}^2 }& {\scriptscriptstyle e^{-\tau_{2,1}}\left(a\,\cos{\tau_{2,1}}+b\,\sin{\tau_{2,1}}\right)} & {\scriptscriptstyle e^{-\tau_{3,1}}\left(a\,\cos{\tau_{3,1}}+b\,\sin{\tau_{3,1}}\right)}\\ 
-    {\scriptscriptstyle e^{-\tau_{2,1}}\left(a\,\cos{\tau_{2,1}}+b\,\sin{\tau_{2,1}}\right)}&{\scriptscriptstyle a+{\sigma_2}^2 }& {\scriptscriptstyle e^{-\tau_{3,2}}\left(a\,\cos{\tau_{3,2}}+b\,\sin{\tau_{3,2}}\right)}\\
-    {\scriptscriptstyle e^{-\tau_{3,2}}\left(a\,\cos{\tau_{3,2}}+b\,\sin{\tau_{3,2}}\right)}&{\scriptscriptstyle  e^{-\tau_{3,2}}\left(a\,\cos{\tau_{3,2}}+b\,\sin{\tau_{3,2}}\right)} & \scriptscriptstyle{a + {\sigma_3}^2}
+%    {\scriptscriptstyle a+{\sigma_1}^2 }& {\scriptscriptstyle e^{-\tau_{2,1}}\left(a\,\cos{\tau_{2,1}}+b\,\sin{\tau_{2,1}}\right)} & {\scriptscriptstyle e^{-\tau_{3,1}}\left(a\,\cos{\tau_{3,1}}+b\,\sin{\tau_{3,1}}\right)}\\ 
+%    {\scriptscriptstyle e^{-\tau_{2,1}}\left(a\,\cos{\tau_{2,1}}+b\,\sin{\tau_{2,1}}\right)}&{\scriptscriptstyle a+{\sigma_2}^2 }& {\scriptscriptstyle e^{-\tau_{3,2}}\left(a\,\cos{\tau_{3,2}}+b\,\sin{\tau_{3,2}}\right)}\\
+%    {\scriptscriptstyle e^{-\tau_{3,2}}\left(a\,\cos{\tau_{3,2}}+b\,\sin{\tau_{3,2}}\right)}&{\scriptscriptstyle  e^{-\tau_{3,2}}\left(a\,\cos{\tau_{3,2}}+b\,\sin{\tau_{3,2}}\right)} & \scriptscriptstyle{a + {\sigma_3}^2}
+    {\scriptscriptstyle a+{\sigma_1}^2 }& {\scriptscriptstyle e^{-\tau_{21}}\left(a\,\cos{\tau_{21}}+b\,\sin{\tau_{21}}\right)} & {\scriptscriptstyle e^{-\tau_{31}}\left(a\,\cos{\tau_{31}}+b\,\sin{\tau_{31}}\right)} & \ldots\\ 
+    {\scriptscriptstyle e^{-\tau_{21}}\left(a\,\cos{\tau_{21}}+b\,\sin{\tau_{21}}\right)}&{\scriptscriptstyle a+{\sigma_2}^2 }& {\scriptscriptstyle e^{-\tau_{32}}\left(a\,\cos{\tau_{32}}+b\,\sin{\tau_{32}}\right)} & \ldots\\
+    {\scriptscriptstyle e^{-\tau_{32}}\left(a\,\cos{\tau_{32}}+b\,\sin{\tau_{32}}\right)}&{\scriptscriptstyle  e^{-\tau_{32}}\left(a\,\cos{\tau_{32}}+b\,\sin{\tau_{32}}\right)} & \scriptscriptstyle{a + {\sigma_3}^2} & \ldots \\
+    \ldots & \ldots & \ldots & \ldots
 \end{pmatrix}\\
 &=&
 \begin{pmatrix}
-    {\scriptscriptstyle a+{\sigma_1}^2} & {\scriptscriptstyle 0} & {\scriptscriptstyle 0} \\
-    {\scriptscriptstyle 0} & {\scriptscriptstyle a+{\sigma_2}^2 }& {\scriptscriptstyle 0} \\
-    {\scriptscriptstyle 0} & {\scriptscriptstyle 0} & {\scriptscriptstyle a + {\sigma_3}^2}
+%    {\scriptscriptstyle a+{\sigma_1}^2} & {\scriptscriptstyle 0} & {\scriptscriptstyle 0} \\
+%    {\scriptscriptstyle 0} & {\scriptscriptstyle a+{\sigma_2}^2 }& {\scriptscriptstyle 0} \\
+%    {\scriptscriptstyle 0} & {\scriptscriptstyle 0} & {\scriptscriptstyle a + {\sigma_3}^2}
+    {\scriptscriptstyle a+{\sigma_1}^2} & {\scriptscriptstyle 0} & {\scriptscriptstyle 0} & \ldots\\
+    {\scriptscriptstyle 0} & {\scriptscriptstyle a+{\sigma_2}^2 }& {\scriptscriptstyle 0} & \ldots\\
+    {\scriptscriptstyle 0} & {\scriptscriptstyle 0} & {\scriptscriptstyle a + {\sigma_3}^2} & \ldots\\
+%    {\scriptscriptstyle a+{\sigma_1}^2} & {\scriptscriptstyle 0} & \ldots \\
+%    {\scriptscriptstyle 0} & {\scriptscriptstyle a+{\sigma_2}^2 }& \ldots \\
+    \ldots & \ldots & \ldots & \ldots
 \end{pmatrix}\\
 &+&\mathrm{tril}\left[\begin{pmatrix}
 %    {\scriptscriptstyle e^{-c\,t_1}\left(a\,\cos{(d t_1)}+b\,\sin{(d t_1)}\right)}&
@@ -566,7 +575,8 @@ K &=&
     {\scriptscriptstyle e^{-t_2}\left(a\,\cos{t_2}+b\,\sin{t_2}\right)}&
     {\scriptscriptstyle e^{-t_2}\left(a\,\sin{t_2}-b\,\cos{t_2}\right)}\\
     {\scriptscriptstyle e^{-t_3}\left(a\,\cos{t_3}+b\,\sin{t_3}\right)}&
-    {\scriptscriptstyle e^{-t_3}\left(a\,\sin{t_3}-b\,\cos{t_3}\right)}
+    {\scriptscriptstyle e^{-t_3}\left(a\,\sin{t_3}-b\,\cos{t_3}\right)}\\
+   \ldots & \ldots
 \end{pmatrix} %\right.\\
 %&\times &
 \times
@@ -578,7 +588,8 @@ K &=&
 % {\scriptscriptstyle e^{t_1} \sin{t_1}} & {\scriptscriptstyle e^{t_2} \sin{t_2}} & {\scriptscriptstyle e^{t_3} \sin{t_3}}
  {\scriptscriptstyle e^{t_1} \cos{t_1}} & {\scriptscriptstyle e^{t_1} \sin{t_1}} \\
  {\scriptscriptstyle e^{t_2} \cos{t_2}} & {\scriptscriptstyle e^{t_2} \sin{t_2}}\\
- {\scriptscriptstyle e^{t_3} \cos{t_3}} & {\scriptscriptstyle e^{t_3} \sin{t_3}}
+ {\scriptscriptstyle e^{t_3} \cos{t_3}} & {\scriptscriptstyle e^{t_3} \sin{t_3}}\\
+ \ldots & \ldots
 \end{pmatrix}^T\right]\\
 &+&
 \mathrm{triu}\left[\begin{pmatrix}
@@ -587,7 +598,8 @@ K &=&
 % {\scriptscriptstyle e^{c\,t_3} \cos{(d t_3)}} & {\scriptscriptstyle e^{c\,t_3} \sin{(d t_3)}}
  {\scriptscriptstyle e^{t_1} \cos{t_1}} & {\scriptscriptstyle e^{t_1} \sin{t_1}} \\
  {\scriptscriptstyle e^{t_2} \cos{t_2}} & {\scriptscriptstyle e^{t_2} \sin{t_2}}\\
- {\scriptscriptstyle e^{t_3} \cos{t_3}} & {\scriptscriptstyle e^{t_3} \sin{t_3}}
+ {\scriptscriptstyle e^{t_3} \cos{t_3}} & {\scriptscriptstyle e^{t_3} \sin{t_3}}\\
+ \ldots & \ldots
 \end{pmatrix} % \right.\\
 \times
 %\left.
@@ -609,7 +621,8 @@ K &=&
     {\scriptscriptstyle e^{-t_2}\left(a\,\cos{t_2}+b\,\sin{t_2}\right)}&
     {\scriptscriptstyle e^{-t_2}\left(a\,\sin{t_2}-b\,\cos{t_2}\right)}\\
     {\scriptscriptstyle e^{-t_3}\left(a\,\cos{t_3}+b\,\sin{t_3}\right)}&
-    {\scriptscriptstyle e^{-t_3}\left(a\,\sin{t_3}-b\,\cos{t_3}\right)}
+    {\scriptscriptstyle e^{-t_3}\left(a\,\sin{t_3}-b\,\cos{t_3}\right)}\\
+   \ldots & \ldots
 \end{pmatrix}^T\right]\\
 &=& A + \mathrm{tril}(U V^T) + \mathrm{triu}(V U^T).
 \end{eqnarray}
@@ -617,6 +630,8 @@ Note that rather than storing the full $N \times N$ covariance matrix, it
 is only necessary to store the $2J \times N$ matrices $U$ and $V$, as well
 as the diagonal terms, for a total storage volume of $(4J+1) \times N$ floating
 point numbers.
+
+\subsection{Cholesky factorization}
 
 To compute the marginalized likelihood defined in \eq{gp-likelihood}, we must
 compute the log-determinant of $K$ and solve linear systems of the form
@@ -675,7 +690,7 @@ the $U$, $V$, and $X$ matrices have size $N \times (J_{real}+2J_{complex})$.
 
 Na\"ive implementation of the algorithm in \eq{algorithm} will have numerical
 overflow and underflow issues in many realistic cases because both $U$ and $V$
-have factors of the form $e^{\pm t}$, where $t$ can be any arbitrarily large
+have factors of the form $e^{\pm c_j t}$, where $t$ can be any arbitrarily large
 real number.
 This can be avoided with the appropriate reparameterization.
 We define the following pre-conditioned variables
@@ -744,39 +759,40 @@ $\mathcal{O}(N\,J)$.
 \subsection{Simulation}
 
 Simulation of a Gaussian process for large $N$ requires multiplying an
-$N$-dimensional vector of Gaussian normal deviates, $\bf{g}$, by the square root
+$N$-dimensional vector of Gaussian normal deviates, $\bf{q}$, by the square root
 of the covariance matrix:
 \begin{equation}
-{\bf y} = K_\bvec{\alpha}^{1/2} {\bf g},
+{\bf y} = K_\bvec{\alpha}^{1/2} {\bf q},
 \end{equation}
-where $g_i \sim N(0,1)$.  Note that $K_\bvec{\alpha} = K_\bvec{\alpha}^{1/2} \left(K_\bvec{\alpha}^{1/2}\right)^T$, which
+where $q_i \sim N(0,1)$.  Note that $K_\bvec{\alpha} = K_\bvec{\alpha}^{1/2} \left(K_\bvec{\alpha}^{1/2}\right)^T$, which
 comparing with the Cholesky factorization gives $K_\bvec{\alpha}^{1/2} = L D^{1/2}$,
 where $(D^{1/2})_{ii} = \sqrt{D_{ii}}$.  Also note that the exponent of
-the likelihood with $\mu_\theta =0$ is given by
+the likelihood with $\mu_\bvec{\theta} =0$ is given by
 \begin{eqnarray}
 Q &=&-\frac{1}{2}{\bf y}^T K_\bvec{\alpha}^{-1} {\bf y}\\
 &=& -\frac{1}{2}{\bf y}^T \left(K_\bvec{\alpha}^{-1/2}\right)^T K_\bvec{\alpha}^{-1/2} {\bf y}\\
-&=& -\frac{1}{2}{\bf g}^T K_\bvec{\alpha}^{1/2} \left(K_\bvec{\alpha}^{-1/2}\right)^T K_\bvec{\alpha}^{-1/2} K_\bvec{\alpha}^{1/2} {\bf g}\\
-&=& -\frac{1}{2}{\bf g}^T {\bf g}.
+&=& -\frac{1}{2}{\bf q}^T K_\bvec{\alpha}^{1/2} \left(K_\bvec{\alpha}^{-1/2}\right)^T K_\bvec{\alpha}^{-1/2} K_\bvec{\alpha}^{1/2} {\bf q}\\
+&=& -\frac{1}{2}{\bf q}^T {\bf q}.
 \end{eqnarray}
 The last quantity is simply the dot product of an $N$-dimensional vector of independent standard normal random variables with itself,
 which is distributed according to the chi-squared distribution with $N$ degrees of freedom, i.e.\ $Q \sim \chi_N^2$.
 
 To generate a draw from a Gaussian process with a specified \celerite\ model requires carrying out the
-low-rank Cholesky decomposition first, generating the vector ${\bf g}$ of random normal deviates, and then multiplying
+low-rank Cholesky decomposition first, generating the vector ${\bf q}$ of random normal deviates, and then multiplying
 \begin{equation}
-{\bf y} = L D^{1/2} {\bf g}.
+{\bf y} = L D^{1/2} {\bf q}.
 \end{equation}
 This may be carried out in $O(JN)$ operations with
 \begin{eqnarray}
-f_{n,j} &=& \phi_{n-1,j} \left(f_{n-1,j} + \tilde{X}_{n-1,j} g_{n-1}\right)\\
-y_n &=& D_{n,n}^{1/2} g_n + \sum_{k=1}^{2J} \tilde{U}_{n,k} f_{n,k}
+f_{n,j} &=& \phi_{n-1,j} \left(f_{n-1,j} + \tilde{X}_{n-1,j} q_{n-1}\right)\\
+y_n &=& D_{n,n}^{1/2} q_n + \sum_{k=1}^{2J} \tilde{U}_{n,k} f_{n,k}
 \end{eqnarray}
-for $n = 1$ to $N$ and $j=1$ to $2J$, with $f_{0,j} = 0$ for all $j$ and $g_0 = 0$.
+for $n = 1$ to $N$ and $j=1$ to $2J$, with $f_{0,j} = 0$ for all $j$ and $q_0 = 0$.
 \agoltodo{Check that these equations are in fact correct.}
-We expect that this simulation algorithm will be useful for testing Gaussian
-process inference algorithms with large datasets, which becomes prohibitive
-for large $N$ if standard Cholesky decomposition and multiplication are used.
+We expect that this simulation algorithm will be useful for test-driving Gaussian
+process inference algorithms applied to large datasets; even simulation of
+Gaussian processes becomes prohibitive for large $N$ if standard Cholesky decomposition 
+and multiplication are used.
 
 Multiplication of the full covariance matrix times a vector can be accomplished
 by yet another multiplication by the transpose of the Cholesky decomposition.
