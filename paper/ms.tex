@@ -796,11 +796,73 @@ and multiplication are used.
 
 Multiplication of the full covariance matrix times a vector can be accomplished
 by yet another multiplication by the transpose of the Cholesky decomposition.
-\dfmtodo{Should we spell this out as well?}
+\dfmtodo{Should we spell this out as well?  This is useful, for example, for
+filter out a particular component of variability.}
 
-\subsection{Prediction}
+\subsection{Prediction and interpolation}
 
-\agoltodo{Write up the prediction algorithm.}
+%Gaussian process regression may also be used for prediction and interpolation at future or missing data, based upon current measurements.  With \celerite\ it proves possible to predict the mean value at times ${t_m; m=1,...,M}$ based upon measured times ${t_n; n=1,...,N}$ in $O(N+M)$ operations.
+
+For predicting or interpolating missing or future data points (and their variance) at times ${\bf t_*} = \left\{t_{*,1},t_{*,2},...,t_{*,M}\right\}$, we need to apply the covariance between the measured and predicted times.  The mean of the predicted values is (equation 2.19 from Rasmussen \& Williams):
+\begin{eqnarray}
+\bar f_* &=& K({\bf t_*},{\bf t}) \left[K({\bf t},{\bf t})+\sigma^2{\bf I}\right]^{-1} {\bf y},\\
+&=& K({\bf t_*},{\bf t}) {\bf b}
+\end{eqnarray}
+where ${\bf y}$ is the vector of measurements and $\sigma$ is the measurement uncertainty, and
+${\bf b} = \left[K({\bf t},{\bf t})+\sigma^2{\bf I}\right]^{-1} {\bf y}$ can be computed from
+the Cholesky decomposition of the full covariance matrix in ${\cal O}(J^2N)$.
+
+Since the covariance matrix may be written as the sum of exponentials, we can write:
+\begin{eqnarray}
+\bar f_{*,i} &=& K(t_{*,i},{\bf t}) {\bf b} \\
+&=& \sum_n \sum_p \alpha_p e^{-\beta_p \vert t_{*,i}-t_n\vert} b_j.
+\end{eqnarray}
+\agoltodo{Convert this to real, \celerite\ notation .}
+Dividing the sum over $n$ into $\{t_1,...,t_{n_0}\} < t_{*,i}$ and
+$\{t_{n0+1},...,t_N\} \ge t_{*,i}$, gives
+\begin{equation}
+\bar f_{*,i} = \sum_{n=1}^{n_0} \sum_p \alpha_p e^{-\beta_p( t_{*,i}-t_n)} b_n + \sum_{n=n_0+1}^N \sum_p \alpha_p e^{-\beta_p(t_n-t_{*,i})} b_n.
+\end{equation}
+Each of these double-sums may have the sums interchanged, giving:
+\begin{eqnarray}
+\bar f_{*,i} &=& \sum_p e^{-\beta_p ( t_{*,i}-t_{*,i-1})} \sum_{n=1}^{n_0} \alpha_p e^{-\beta_p ( t_{*,i-1}-t_n) } b_n \\
+&+&
+\sum_p e^{-\beta_p ( t_{*,i+1}-t_{*,i})} \sum_{n=n+0+1}^{N} \alpha_p e^{-\beta_p ( t_n-t_{*,i+1}) } b_n
+\end{eqnarray}
+We can compute this recursively.  Defining $Q^-_{i,n_0,p} = \sum_{j=1}^{n_0} \alpha_p e^{-\beta_p (t_{*,i}-t_j)} b_j$ and defining $Q^+_{i,n_0,p} = \sum_{j=n_0}^N \alpha_p e^{-\beta_p (t_{*,i}-t_j)} b_j$ gives:
+\begin{equation}
+\bar f_{*,i} = \sum_p e^{-\beta_p (t_{*,i}-t_{*,i-1})} Q^-_{i-1,n_0,p} + \sum_p e^{-\beta_p (t_{*,i+1}-t_{*,i})} Q^+_{i+1,n_0,p}.
+\end{equation}
+Once $Q^-_{1,p}$ and $Q^+_{N,p}$ are obtained in $O(JN)$ operations, then the subsequent $Q^-_{i,p}$ and $Q^+_{i,p}$ values can be obtained in $\approx O(JM)$ operations
+\begin{eqnarray}
+Q^-_{i,p} &=& e^{-\beta_p (t_{*,i}-t_{*,i-1})} Q^-_{i,p},\\
+Q^+_{i,p} &=& e^{-\beta_p (t_{*,i+1}-t_{*,i})} Q^+_{i,p},
+\end{eqnarray} 
+for a total scaling of $\approx O(J^2N+J(N+M))$.
+
+The variance evaluated at future predicted times ${\bf t_*} > {\bf t}$ may be obtained in a similar manner (equation 2.19 from Rasmussen \& Williams):
+\begin{eqnarray}
+\mathrm{var}(f_{*,i+1}) &=& K(t_{*,i+1},t_{*,i+1}) - K(t_{*,i+1},{\bf t}^T)K({\bf t},{\bf t})^{-1} K({\bf t},t_{*,i+1})\\
+&=& K(t_{*,i+1},t_{*,i+1}) - \sum_p\sum_q \alpha_p \alpha_q e^{-(\beta_p+\beta_q)(t_{*,i+1}-t_{*,i})} \\
+&\times& e^{-\beta_p(t_{*,i}-{\bf t}^T)}K({\bf t},{\bf t})^{-1} e^{-\beta_q(t_{*,i}-{\bf t})}\\
+&=& K(t_{*,i+1},t_{*,i+1}) - \sum_{p,q} \alpha_p \alpha_q e^{-(\beta_p+\beta_q)(t_{*,i+1}-t_{*,i})} P_{i,p,q}\\
+\end{eqnarray}
+for $1 \le p,q \le J$,
+where
+\begin{equation}
+P_{i,p,q} = e^{-\beta_p(t_{*,i}-{\bf t}^T)}
+K({\bf t},{\bf t})^{-1} e^{-\beta_q(t_{*,i}-{\bf t})}.
+\end{equation}
+For $i=1$, $P_{1,p,q}$ can be obtained in $O(J^2N)$ operations
+with the Cholesky decomposition.
+Subsequent $P_{i+1,p,q}$ may be obtained recursively as
+\begin{equation}
+P_{i+1,p,q} = e^{-(\beta_p+\beta_q)(t_{*,i+1}- t_{*,i})} P_{i,p,q},
+\end{equation}
+in $O(J^2M)$ operations, for a total of $\approx O(J^2(N+M))$ operations.
+Note that this variance formula {\it only} works for prediction; we have
+yet to derive a formula for which ${\bf t_*}$ and ${\bf t}$ are
+interspersed.
 
 \section{celerite as a model of stellar variations}\sectlabel{sho}
 
