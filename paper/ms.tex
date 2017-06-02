@@ -766,16 +766,16 @@ of the covariance matrix:
 \end{equation}
 where $q_i \sim N(0,1)$.  Note that $K_\bvec{\alpha} = K_\bvec{\alpha}^{1/2} \left(K_\bvec{\alpha}^{1/2}\right)^T$, which
 comparing with the Cholesky factorization gives $K_\bvec{\alpha}^{1/2} = L D^{1/2}$,
-where $(D^{1/2})_{ii} = \sqrt{D_{ii}}$.  Also note that the exponent of
-the likelihood with $\mu_\bvec{\theta} =0$ is given by
+where $(D^{1/2})_{ii} = \sqrt{D_{ii}}$.  Also note that the first term in $-2\ln{\mathcal{L}}$
+with $\mu_\bvec{\theta} =0$ is given by
 \begin{eqnarray}
-Q &=&-\frac{1}{2}{\bf y}^T K_\bvec{\alpha}^{-1} {\bf y}\\
-&=& -\frac{1}{2}{\bf y}^T \left(K_\bvec{\alpha}^{-1/2}\right)^T K_\bvec{\alpha}^{-1/2} {\bf y}\\
-&=& -\frac{1}{2}{\bf q}^T K_\bvec{\alpha}^{1/2} \left(K_\bvec{\alpha}^{-1/2}\right)^T K_\bvec{\alpha}^{-1/2} K_\bvec{\alpha}^{1/2} {\bf q}\\
-&=& -\frac{1}{2}{\bf q}^T {\bf q}.
+\mathcal{Q} &=&{\bf y}^T K_\bvec{\alpha}^{-1} {\bf y}\\
+&=& {\bf y}^T \left(K_\bvec{\alpha}^{-1/2}\right)^T K_\bvec{\alpha}^{-1/2} {\bf y}\\
+&=& {\bf q}^T K_\bvec{\alpha}^{1/2} \left(K_\bvec{\alpha}^{-1/2}\right)^T K_\bvec{\alpha}^{-1/2} K_\bvec{\alpha}^{1/2} {\bf q}\\
+&=& {\bf q}^T {\bf q}.
 \end{eqnarray}
-The last quantity is simply the dot product of an $N$-dimensional vector of independent standard normal random variables with itself,
-which is distributed according to the chi-squared distribution with $N$ degrees of freedom, i.e.\ $Q \sim \chi_N^2$.
+This last quantity is simply the dot product of an $N$-dimensional vector of independent standard normal random variables with itself,
+which is distributed according to the chi-squared distribution with $N$ degrees of freedom, i.e.\ $\mathcal{Q} \sim \chi_N^2$.
 
 To generate a draw from a Gaussian process with a specified \celerite\ model requires carrying out the
 low-rank Cholesky decomposition first, generating the vector ${\bf q}$ of random normal deviates, and then multiplying
