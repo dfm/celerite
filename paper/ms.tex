@@ -152,11 +152,11 @@ to astronomical time series
 \altaffiltext{\uw}{Astronomy Department, University of Washington,
                    Seattle, WA}
 
-\edef \simons {\arabic{affilcounter}}\stepcounter{affilcounter}
-\altaffiltext{\simons}{Simons Fellow}
-
 \edef \guggenheim {\arabic{affilcounter}}\stepcounter{affilcounter}
 \altaffiltext{\guggenheim}{Guggenheim Fellow}
+
+\edef \simons {\arabic{affilcounter}}\stepcounter{affilcounter}
+\altaffiltext{\simons}{Simons Fellow}
 
 \edef \columbia {\arabic{affilcounter}}\stepcounter{affilcounter}
 \altaffiltext{\columbia}{Department of Astronomy, Columbia University,
@@ -794,7 +794,7 @@ process inference algorithms applied to large datasets; even simulation of
 Gaussian processes becomes prohibitive for large $N$ if standard Cholesky decomposition
 and multiplication are used.
 
-\subsection{Multiplication and filtering} 
+\subsection{Multiplication and filtering}
 
 Multiplication of the full covariance matrix times a vector can be accomplished in $\mathcal{O}(JN)$
 operations with a stable recursive algorithm using the semi-separable form:
@@ -808,7 +808,7 @@ f^-_{n,j} &=& \phi_{n,j} \left(f^-_{n-1,j} + \sum_{j=1}^J \tilde V_{n-1,j} z_{n-
 y_n &=& A_{n,n} z_n + \sum_{j=1}^J \left[ \tilde V_{n,j} f^+_{n,j} + \tilde U_{n,j} f^-_{n,j}\right],
 \end{eqnarray}
 where $f^+_{N,j} = 0$ and $f^-_{1,j} = 0$ for all $j=1,...,J$.  The recursion requires
-two sweeps, a sweep downward from $n=N-1$ to $n=1$ to compute $f^+_{n,j}$ and a sweep upwards 
+two sweeps, a sweep downward from $n=N-1$ to $n=1$ to compute $f^+_{n,j}$ and a sweep upwards
 from $n=2$ to $n=N$ to compute $f^-_{n,j}$.  \dfmtodo{I'm getting confused by zero-based
 indexing in your C code...  this may be worth scrutinizing to see if I screwed up.}
 
@@ -863,7 +863,7 @@ Once $Q^-_{1,p}$ and $Q^+_{N,p}$ are obtained in $\mathcal{O}(JN)$ operations, t
 \begin{eqnarray}
 Q^-_{i,p} &=& e^{-\beta_p (t_{*,i}-t_{*,i-1})} Q^-_{i,p},\\
 Q^+_{i,p} &=& e^{-\beta_p (t_{*,i+1}-t_{*,i})} Q^+_{i,p},
-\end{eqnarray} 
+\end{eqnarray}
 for a total scaling of $\approx \mathcal{O}(J^2N+J(N+M))$.
 
 The variance evaluated at future predicted times ${\bf t_*} > {\bf t}$ may be obtained in a similar manner (equation 2.19 from Rasmussen \& Williams):
@@ -1359,21 +1359,23 @@ As with the earlier examples, we start by estimating the MAP parameters using
 \project{L-BFGS-B} and initialize \exampleiiinwalkers~walkers by sampling from
 an isotropic Gaussian with a standard deviation of $10^{-5}$ centered on the
 MAP parameters.
-}
+The left panels of \Figure{rotation} show a subset of the data used in this
+example and the residuals away from the MAP predictive mean.
 
-We used \emcee\ to sample the joint posterior probability density for the four
-parameters in \eq{rot-kernel}, conditioned on two quarters of \kepler\ data,
-and find a constraint on the rotation period of $P = \rotationperiod$.
-This is in good agreement with the literature value with smaller
+We run \exampleiiinburn~steps of burn-in, followed by \exampleiiinsteps~steps
+of MCMC using \emcee.
+We estimate the integrated autocorrelation time of the chain for $\ln P$ and
+estimate that we have \exampleiiineff\ independent samples.
+These samples give a posterior constraint on the period of $P =
+\rotationperiod$ and the marginalized posterior distribution for $P$ is shown
+in the right panel of \Figure{rotation}.
+This result is in good agreement with the literature value with smaller
 uncertainties.
 A detailed comparison of GP rotation period measurements and the traditional
 methods is beyond the scope of this paper, but forthcoming work (R.~Angus,
 \etal, submitted) demonstrates that GP inferences are, at a population level,
 more reliable than other methods.
-The left panels of \Figure{rotation} show a subset of the data used in this
-example and the residuals away from the maximum likelihood predictive mean.
-The right panel of \Figure{rotation} shows the marginalized posterior
-distribution for the rotation period.
+}
 
 \input{figures/rotation/rotation-params}
 
@@ -1399,45 +1401,43 @@ distribution for the rotation period.
 \end{center}
 \end{figure}
 
-\subsection{Asteroseismic oscillations}
+\subsection{Example 4: Asteroseismic oscillations}
 
 The asteroseismic oscillations of thousands of stars were measured using light
-curves from the \kepler\ mission \citep{Gilliland:2010, Huber:2011,
+curves from the \kepler\ Mission \citep{Gilliland:2010, Huber:2011,
 Chaplin:2011, Chaplin:2013, Stello:2013} and asteroseismology is a key science
 driver for many of the upcoming large scale photometric surveys
 \citep{Campante:2016, Rauer:2014, Gould:2015}.
-Most asteroseismic analyses have been limited to relatively high
-signal-to-noise oscillations.
-The standard methods use statistics of the empirical periodogram and cannot
-formally propagate the measurement uncertainties to the constraints on
-physical parameters, instead relying on bootstrapped uncertainty estimators
-\citep{Huber:2009}.
+Most asteroseismic analyses have been limited to high signal-to-noise
+oscillations because the standard methods use statistics of the empirical
+periodogram and cannot formally propagate the measurement uncertainties to the
+constraints on physical parameters, instead relying on bootstrapped
+uncertainty estimators \citep{Huber:2009}.
 More sophisticated methods that compute the likelihood function in the time
-domain scale poorly to state-of-the-art datasets \citep{Brewer:2009,
+domain scale poorly to large survey datasets \citep{Brewer:2009,
 Corsaro:2014}.
 
 \celerite\ alleviates these problems by providing a physically motivated
 probabilistic model that can be evaluated efficiently even for large datasets.
-In practice, one would model the star as a mixture of stochastically-driven
-simple harmonic oscillators where the amplitudes and frequencies of the
-oscillations are computed using a physical model, and evaluate the probability
-of the observed time series using a GP where the PSD is a sum of terms given
-by \eq{sho-psd}.
-This gives us a method of computing the likelihood function for the parameters
-of the physical model (for example, $\nu_\mathrm{max}$ and $\Delta \nu$, or
-other more fundamental parameters) \emph{conditioned on the observed time
-series} in $\mathcal{O}(N)$ operations.
+In practice, we model the star as a mixture of stochastically-driven simple
+harmonic oscillators where the amplitudes and frequencies of the oscillations
+are computed using a physical model, and evaluate the probability of the
+observed time series using a GP where the PSD is a sum of terms given by
+\eq{sho-psd}.
+This gives us a method for computing the likelihood function for the
+parameters of the physical model (for example, $\nu_\mathrm{max}$ and $\Delta
+\nu$, or other more fundamental parameters) \emph{conditioned on the observed
+time series} in $\mathcal{O}(N)$ operations.
 In other words, \celerite\ provides a computationally efficient framework that
 can be combined with physically-motivated models of stars and numerical
 inference methods to make rigorous probabilistic measurements of asteroseismic
 parameters in the time domain.
-We expect that this has the potential to push asteroseismic analysis to lower
-signal-to-noise datasets and we hope to revisit this idea in a subsequent
-paper.
+This has the potential to push asteroseismic analysis to lower signal-to-noise
+datasets and we hope to revisit this idea in a future paper.
 
 To demonstrate the method, we use a simple heuristic model where the PSD is
 given by a mixture of 8 components with amplitudes and frequencies specified
-by $\nu_\mathrm{max}$, $\Delta \nu$, and several nuisance parameters.
+by $\nu_\mathrm{max}$, $\Delta \nu$, and some nuisance parameters.
 The first term is used to capture the granulation ``background''
 \citep{Kallinger:2014} using \eq{granulation-psd} with two free parameters
 $S_g$ and $\omega_g$.
@@ -1452,11 +1452,19 @@ S_{0,\,j} =
     \frac{A}{Q^2}\,\exp\left(-\frac{[j\,\Delta\nu + \epsilon]^2}{2\,W^2}\right)
 \end{eqnarray}
 where $j$ is an integer running from $-3$ to 3 and $\epsilon$, $A$, and $W$
-are shared nuisance parameters. \dfmtodo{A was used for diagonal of
-covariance matrix.}
-This model could be extended to include more angular modes and
-$\nu_\mathrm{max}$ and $\Delta \nu$ could be replaced by the fundamental
-physical parameters of the star.
+are shared nuisance parameters.
+\response{Finally, we also fit for the amplitude of the white noise by adding
+a parameter $\sigma$ in quadrature with the uncertainties given for the
+\kepler\ observations.
+All of these parameters and their chosen priors are listed in
+Table~\ref{tab:example-4-params}.
+As before, these priors are all log-uniform except for $\epsilon$ where we use
+a zero-mean normal prior with a broad variance of $1~\mathrm{day}^2$ to break
+the degeneracy between $\nu_\mathrm{max}$ and $\epsilon$.
+}
+To build a more realistic model, this prescription could be extended to
+include more angular modes, or $\nu_\mathrm{max}$ and $\Delta \nu$ could be
+replaced by the fundamental physical parameters of the star.
 
 To demonstrate the applicability of this model, we apply it to infer the
 asteroseismic parameters of the giant star KIC~11615890, observed by the
@@ -1468,7 +1476,14 @@ inferred with a much larger dataset.
 Looking forward to \tess\ \citep{Ricker:2014,Campante:2016}, we measure
 $\nu_\mathrm{max}$ and $\Delta\nu$ using only one month of \kepler\ data and
 compare our results to the results inferred from the full 4 year baseline of
-the \kepler\ mission.
+the \kepler\ Mission.
+For KIC~11615890, the published asteroseismic parameters measured using several
+years of \kepler\ observations are \citep{Pinsonneault:2014}
+\begin{eqnarray}
+    \nu_\mathrm{max} = 171.94 \pm 3.62 \,\mu\mathrm{Hz} \quad\mathrm{and}\quad
+    \Delta\nu = 13.28 \pm 0.29 \,\mu\mathrm{Hz} \quad.
+\end{eqnarray}
+
 Unlike typical giants, KIC~11615890 is a member of a class of stars where the
 dipole ($\ell = 1$) oscillation modes are suppressed by strong magnetic fields
 in the core \citep{Stello:2016}.
@@ -1476,33 +1491,59 @@ This makes this target simpler for the purposes of this demonstration because
 we can neglect the $\ell = 1$ modes and the model proposed above will be an
 effective model for the combined signal from the $\ell = 0$ and 2 modes.
 
-For KIC~11615890, the published asteroseismic parameters measured using several
-years of \kepler\ observations are \citep{Pinsonneault:2014}
-\begin{eqnarray}
-    \nu_\mathrm{max} = 171.94 \pm 3.62 \,\mu\mathrm{Hz} \quad\mathrm{and}\quad
-    \Delta\nu = 13.28 \pm 0.29 \,\mu\mathrm{Hz} \quad.
-\end{eqnarray}
-We randomly select a month-long segment of PDC \citep{Stumpe:2012, Smith:2012}
-\kepler\ data, initialize our \celeriteterm\ model using a grid search in the
-parameter space, and then use \emcee\ \citep{Foreman-Mackey:2013} to sample
-the joint posterior density for the full set of parameters.
+\response{
+For this demonstration, we randomly select a month-long segment of PDC
+\citep{Stumpe:2012, Smith:2012} \kepler\ data.
+Unlike the previous examples, the posterior distribution is sharply
+multimodal and na\"ively maximizing the posterior using \project{L-BFGS-B} is
+not practical.
+Instead, we start by estimating the initial values for $\nu_\mathrm{max}$ and
+$\Delta\nu$ using only the month-long subset of data and following the
+standard procedure described by \citet{Huber:2009}.
+We then run set of \project{L-BFGS-B} optimizations with values of
+$\nu_\mathrm{max}$ selected in logarithmic grid centered on our initial
+estimate of $\nu_\mathrm{max}$ and initial values of $\Delta\nu$ computed
+using the empirical relationship between these two quantities
+\citep{Stello:2009}.
+This initialization procedure is sufficient for this example, but the general
+application of this method will require a more sophisticated prescription.
+
+\Figure{astero} shows a 10~day subset of the dataset used for this example.
+The MAP model is overplotted on these data and the residuals away from the
+mean prediction of this model are shown in the bottom panel of
+\Figure{astero}.
+There is no obvious structure in these residuals, lending some credibility to
+the model specification.
+
+We initialize \exampleivnwalkers~walkers by sampling from an isotropic
+Gaussian centered on the MAP parameters (the full set of parameters and their
+priors are listed in Table~\ref{tab:example-4-params}), run
+\exampleivnburn~steps of burn-in, and run \exampleivnsteps~steps of MCMC using
+\emcee.
+We estimate the mean autocorrelation time for the chains of
+$\ln\nu_\mathrm{max}$ and $\ln\Delta\nu$ and find \exampleivneff\ effective
+samples from the marginalized posterior density.
 \Figure{astero-corner} shows the marginalized density for $\nu_\mathrm{max}$
 and $\Delta\nu$ compared to the results from the literature.
 This result is consistent within the published error bars and the posterior
 constraints are tighter than the published results.
 All asteroseismic analyses are known to have substantial systematic and
 method-dependent uncertainties \citep{Verner:2011} so further experiments
-would be needed to assess the reliability of this method.
+would be needed to fully assess the reliability of this method.
 
-This model requires about a minute of computation time to find the maximum
-likelihood parameters and then it takes about an hour to run the MCMC sampling
-to convergence on a dual-CPU laptop.
+This model requires about 10~CPU minutes to run the MCMC to convergence.
 This is more computationally intensive than traditional methods of measuring
-asteroseismic oscillations, but is is also orders of magnitude cheaper than the
-same analysis using another GP solver.
+asteroseismic oscillations, but it is much cheaper than the same analysis
+using a general direct GP solver.
+For comparison, we estimate that repeating this analysis using a general
+Cholesky factorization implemented as part of a tuned linear algebra
+library\footnote{We use the Intel Math Kernel Library
+\url{https://software.intel.com/en-us/intel-mkl}} would require about 15~CPU
+hours.
 An in-depth discussion of the benefits of rigorous probabilistic inference of
 asteroseismic parameters in the time domain is beyond the scope of this paper,
 but we hope to revisit this opportunity in the future.
+}
 
 \input{figures/astero/astero-params}
 
@@ -1554,7 +1595,7 @@ harmonic oscillators.
 \end{figure}
 
 
-\subsection{Exoplanet transit fitting}
+\subsection{Example 5: Exoplanet transit fitting}
 
 In this example, we inject the signal of a simulated exoplanet transit into a
 real \kepler\ light curve and then demonstrate that we can recover the true
@@ -1893,8 +1934,8 @@ NASA Exoplanet Archive.
 The Exoplanet Archive is operated by the California Institute of Technology,
 under contract with NASA under the Exoplanet Exploration Program.
 
-This paper includes data collected by the \kepler\ mission. Funding for the
-\kepler\ mission is provided by the NASA Science Mission directorate.
+This paper includes data collected by the \kepler\ Mission. Funding for the
+\kepler\ Mission is provided by the NASA Science Mission directorate.
 We are grateful to the entire \kepler\ team, past and present.
 These data were obtained from the Mikulski Archive for Space Telescopes
 (MAST).
