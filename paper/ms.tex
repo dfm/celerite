@@ -646,30 +646,29 @@ where $L$ is a lower triangular matrix with unit diagonal and $D$ is a
 diagonal matrix.
 We use the ansatz that $L$ has the form
 \begin{eqnarray}
-    L = I + \mathrm{tril} (U\,X^T)
+    L = I + \mathrm{tril} (U\,W^T)
 \end{eqnarray}
-where $I$ is the identity, $U$ is the matrix from above, and $X$ is an unknown
+where $I$ is the identity, $U$ is the matrix from above, and $W$ is an unknown
 $N \times 2\,J$ matrix.
 Combining this with \eq{semi-sep}, we find the equation
 \begin{eqnarray}\eqlabel{cholesky}
 A + \mathrm{tril}(U\,V^\T) + \mathrm{triu}(V\,U^\T)
-&=& \left[I + \mathrm{tril} (U\,X^T)\right]\,D\,
-    {\left[I + \mathrm{tril} (U\,X^T)\right]}^\T \\
-&=& D + \mathrm{tril}(U\,X^\T)\,D
-    + D\,\mathrm{triu}(X\,U^\T) \nonumber\\
-&& +\, \mathrm{tril}(U\,X^\T)\,D\,\mathrm{triu}(X\,U^\T) \nonumber
+&=& \left[I + \mathrm{tril} (U\,W^T)\right]\,D\,
+    {\left[I + \mathrm{tril} (U\,W^T)\right]}^\T \\
+&=& D + \mathrm{tril}(U\,W^\T)\,D
+    + D\,\mathrm{triu}(W\,U^\T) \nonumber\\
+&& +\, \mathrm{tril}(U\,W^\T)\,D\,\mathrm{triu}(W\,U^\T) \nonumber
 \end{eqnarray}
-that we can solve for $X$. \dfmtodo{X was used to represent independent
-parameter matrix in definition of likelihood. Perhaps we should use W?}
+that we can solve for $W$.
 Setting each element on the left side of \eq{cholesky} equal to the
 corresponding element on the right side, we derive the following recursion
 relations
 \begin{eqnarray}
-S_{n,j,k} &=& S_{n-1,j,k} + D_{n-1,n-1}\,X_{n-1,j}\,X_{n-1,k} \nonumber\\
+S_{n,j,k} &=& S_{n-1,j,k} + D_{n-1,n-1}\,W_{n-1,j}\,W_{n-1,k} \nonumber\\
 D_{n,n} &=& A_{n,n} -
     \sum_{j=1}^{2\,J}\sum_{k=1}^{2\,J} U_{n,j}\,S_{n,j,k}\,U_{n,k}
     \nonumber\\
-X_{n,j} &=& \frac{1}{D_{n,n}}\left[ V_{n,j} -
+W_{n,j} &=& \frac{1}{D_{n,n}}\left[ V_{n,j} -
     \sum_{k=1}^{2\,J}U_{n,k}\,S_{n,j,k} \right]
     \eqlabel{algorithm}
 \end{eqnarray}
@@ -684,7 +683,7 @@ Note that if some \celeriteterm\ terms are real, with $b_j=d_j=0$,
 then these terms only add one to the rank of $U$ and $V$.  We use this fact
 to simplify the algebra when real components are included:  if $J_{real}$
 and $J_{complex}$ terms are included, with $J_{real}+J_{complex}=J$, then
-the $U$, $V$, and $X$ matrices have size $N \times (J_{real}+2J_{complex})$.
+the $U$, $V$, and $W$ matrices have size $N \times (J_{real}+2J_{complex})$.
 
 \subsection{Pre-conditioning}
 
@@ -699,8 +698,8 @@ We define the following pre-conditioned variables
 \tilde{U}_{n,2\,j} &=& a_j\,\sin(d_j\,t_n) - b_j\,\cos(d_j\,t_n) \\
 \tilde{V}_{m,2\,j-1} &=& \cos(d_j\,t_m) \\
 \tilde{V}_{m,2\,j} &=& \sin(d_j\,t_m) \\
-\tilde{X}_{n,2\,j-1} &=& e^{-c_j\,t_n}\,X_{n,2\,j-1} \\
-\tilde{X}_{n,2\,j} &=& e^{-c_j\,t_n}\,X_{n,2\,j}
+\tilde{W}_{n,2\,j-1} &=& e^{-c_j\,t_n}\,W_{n,2\,j-1} \\
+\tilde{W}_{n,2\,j} &=& e^{-c_j\,t_n}\,W_{n,2\,j}
 \end{eqnarray}
 and the set of variables
 \begin{eqnarray}
@@ -714,11 +713,11 @@ Using this parameterization, we find the following, numerically stable,
 algorithm
 \begin{eqnarray}
     S_{n,j,k} &=& \phi_{n,j}\,\phi_{n,k}\,\left[S_{n-1,j,k} +
-    D_{n-1,n-1}\,\tilde{X}_{n-1,j}\,\tilde{X}_{n-1,k}\right] \nonumber\\
+    D_{n-1,n-1}\,\tilde{W}_{n-1,j}\,\tilde{W}_{n-1,k}\right] \nonumber\\
 D_{n,n} &=& A_{n,n} -
     \sum_{j=1}^{2\,J}\sum_{k=1}^{2\,J} \tilde{U}_{n,j}\,S_{n,j,k}\,\tilde{U}_{n,k}
     \nonumber\\
-\tilde{X}_{n,j} &=& \frac{1}{D_{n,n}}\left[ \tilde{V}_{n,j} -
+\tilde{W}_{n,j} &=& \frac{1}{D_{n,n}}\left[ \tilde{V}_{n,j} -
     \sum_{k=1}^{2\,J}\tilde{U}_{n,k}\,S_{n,j,k} \right] \quad.
 \end{eqnarray}
 
@@ -741,7 +740,7 @@ First, we solve for $\bvec{z} = L^{-1}\,\bvec{y}$ using the following forward
 substitution algorithm
 \begin{eqnarray}
     f_{n,j} &=& \phi_{n,j}\,\left[f_{n-1,j} +
-    \tilde{X}_{n-1,j}\,z_{n-1}\right] \nonumber\\
+    \tilde{W}_{n-1,j}\,z_{n-1}\right] \nonumber\\
     z_n &=& y_n - \sum_{j=1}^{2\,J} \tilde{U}_{n,j}\,f_{n,j}
 \end{eqnarray}
 where $f_{0,j} = 0$ for all $j$.
@@ -750,7 +749,7 @@ compute $\bvec{b}$
 \begin{eqnarray}
 g_{n,j} &=& \phi_{n+1,j}\,\left[g_{n+1,j} +
     \tilde{U}_{n+1,j}\,b_{n+1}\right] \nonumber\\
-b_n &=& \frac{z_n}{D_{n,n}} - \sum_{j=1}^{2\,J} \tilde{X}_{n,j}\,g_{n,j}
+b_n &=& \frac{z_n}{D_{n,n}} - \sum_{j=1}^{2\,J} \tilde{W}_{n,j}\,g_{n,j}
 \end{eqnarray}
 where $g_{N+1,j} = 0$ for all $j$.
 The total cost of the forward and backward substitution passes scales as
@@ -782,9 +781,9 @@ low-rank Cholesky decomposition first, generating the vector ${\bf q}$ of random
 \begin{equation}
 {\bf y} = L D^{1/2} {\bf q}.
 \end{equation}
-This may be carried out in $O(JN)$ operations with
+This may be carried out in $\mathcal{O}(JN)$ operations with
 \begin{eqnarray}
-f_{n,j} &=& \phi_{n-1,j} \left(f_{n-1,j} + \tilde{X}_{n-1,j} q_{n-1}\right)\\
+f_{n,j} &=& \phi_{n-1,j} \left(f_{n-1,j} + \tilde{W}_{n-1,j} D_{n-1,n-1}^{1/2} q_{n-1}\right)\\
 y_n &=& D_{n,n}^{1/2} q_n + \sum_{k=1}^{2J} \tilde{U}_{n,k} f_{n,k}
 \end{eqnarray}
 for $n = 1$ to $N$ and $j=1$ to $2J$, with $f_{0,j} = 0$ for all $j$ and $q_0 = 0$.
@@ -794,14 +793,40 @@ process inference algorithms applied to large datasets; even simulation of
 Gaussian processes becomes prohibitive for large $N$ if standard Cholesky decomposition 
 and multiplication are used.
 
-Multiplication of the full covariance matrix times a vector can be accomplished
-by yet another multiplication by the transpose of the Cholesky decomposition.
-\dfmtodo{Should we spell this out as well?  This is useful, for example, for
-filter out a particular component of variability.}
+\subsection{Multiplication and filtering} 
+
+Multiplication of the full covariance matrix times a vector can be accomplished in $\mathcal{O}(JN)$
+operations with a stable recursive algorithm using the semi-separable form:
+\begin{equation}
+{\bf y} =  \left(A + \mathrm{tril}(U V^T) + \mathrm{triu}(V U^T)\right) {\bf z}.
+\end{equation}
+The algorithm for multiplication is given by
+\begin{eqnarray}
+f^+_{n,j} &=& \phi_{n+1,j} \left(f^+_{n+1,j} + \sum_{j=1}^J \tilde U_{n+1,j} z_{n+1}\right)\\
+f^-_{n,j} &=& \phi_{n,j} \left(f^-_{n-1,j} + \sum_{j=1}^J \tilde V_{n-1,j} z_{n-1}\right)\\
+y_n &=& A_{n,n} z_n + \sum_{j=1}^J \left[ \tilde V_{n,j} f^+_{n,j} + \tilde U_{n,j} f^-_{n,j}\right],
+\end{eqnarray}
+where $f^+_{N,j} = 0$ and $f^-_{1,j} = 0$ for all $j=1,...,J$.  The recursion requires
+two sweeps, a sweep downward from $n=N-1$ to $n=1$ to compute $f^+_{n,j}$ and a sweep upwards 
+from $n=2$ to $n=N$ to compute $f^-_{n,j}$.  \dfmtodo{I'm getting confused by zero-based
+indexing in your C code...  this may be worth scrutinizing to see if I screwed up.}
+
+Multiplication of the full covariance matrix is useful, for example, for isolating
+a particular component of a kernel, which amounts to a customized filter of a dataset.
+For example, a white-noise filter is given by:
+\begin{eqnarray}
+\bar f &=& K({\bf t},{\bf t}) \left[K({\bf t},{\bf t})+\sigma^2{\bf I}\right]^{-1} {\bf y},\\
+&=& K({\bf t},{\bf t}) {\bf b}
+\end{eqnarray}
+where ${\bf y}$ is the vector of measurements and ${\bf b}$ may be computed from the Cholesky
+decomposition as described above.  The second step multiplication of the white-noise-free
+kernel times ${\bf b}$ may be accomplished in $\mathcal{O}(JN)$ steps with this multiplication algorithm.
+Note that for this particular example it is more efficient to compute $\bar f = {\bf y} -\sigma^2 {\bf I} {\bf b}$,
+but in general the filtering kernel will not differ from the full kernel by a diagonal matrix.
 
 \subsection{Prediction and interpolation}
 
-%Gaussian process regression may also be used for prediction and interpolation at future or missing data, based upon current measurements.  With \celerite\ it proves possible to predict the mean value at times ${t_m; m=1,...,M}$ based upon measured times ${t_n; n=1,...,N}$ in $O(N+M)$ operations.
+%Gaussian process regression may also be used for prediction and interpolation at future or missing data, based upon current measurements.  With \celerite\ it proves possible to predict the mean value at times ${t_m; m=1,...,M}$ based upon measured times ${t_n; n=1,...,N}$ in $\mathcal{O}(N+M)$ operations.
 
 For predicting or interpolating missing or future data points (and their variance) at times ${\bf t_*} = \left\{t_{*,1},t_{*,2},...,t_{*,M}\right\}$, we need to apply the covariance between the measured and predicted times.  The mean of the predicted values is (equation 2.19 from Rasmussen \& Williams):
 \begin{eqnarray}
@@ -833,12 +858,12 @@ We can compute this recursively.  Defining $Q^-_{i,n_0,p} = \sum_{j=1}^{n_0} \al
 \begin{equation}
 \bar f_{*,i} = \sum_p e^{-\beta_p (t_{*,i}-t_{*,i-1})} Q^-_{i-1,n_0,p} + \sum_p e^{-\beta_p (t_{*,i+1}-t_{*,i})} Q^+_{i+1,n_0,p}.
 \end{equation}
-Once $Q^-_{1,p}$ and $Q^+_{N,p}$ are obtained in $O(JN)$ operations, then the subsequent $Q^-_{i,p}$ and $Q^+_{i,p}$ values can be obtained in $\approx O(JM)$ operations
+Once $Q^-_{1,p}$ and $Q^+_{N,p}$ are obtained in $\mathcal{O}(JN)$ operations, then the subsequent $Q^-_{i,p}$ and $Q^+_{i,p}$ values can be obtained in $\approx \mathcal{O}(JM)$ operations
 \begin{eqnarray}
 Q^-_{i,p} &=& e^{-\beta_p (t_{*,i}-t_{*,i-1})} Q^-_{i,p},\\
 Q^+_{i,p} &=& e^{-\beta_p (t_{*,i+1}-t_{*,i})} Q^+_{i,p},
 \end{eqnarray} 
-for a total scaling of $\approx O(J^2N+J(N+M))$.
+for a total scaling of $\approx \mathcal{O}(J^2N+J(N+M))$.
 
 The variance evaluated at future predicted times ${\bf t_*} > {\bf t}$ may be obtained in a similar manner (equation 2.19 from Rasmussen \& Williams):
 \begin{eqnarray}
@@ -853,13 +878,13 @@ where
 P_{i,p,q} = e^{-\beta_p(t_{*,i}-{\bf t}^T)}
 K({\bf t},{\bf t})^{-1} e^{-\beta_q(t_{*,i}-{\bf t})}.
 \end{equation}
-For $i=1$, $P_{1,p,q}$ can be obtained in $O(J^2N)$ operations
+For $i=1$, $P_{1,p,q}$ can be obtained in $\mathcal{O}(J^2N)$ operations
 with the Cholesky decomposition.
 Subsequent $P_{i+1,p,q}$ may be obtained recursively as
 \begin{equation}
 P_{i+1,p,q} = e^{-(\beta_p+\beta_q)(t_{*,i+1}- t_{*,i})} P_{i,p,q},
 \end{equation}
-in $O(J^2M)$ operations, for a total of $\approx O(J^2(N+M))$ operations.
+in $\mathcal{O}(J^2M)$ operations, for a total of $\approx \mathcal{O}(J^2(N+M))$ operations.
 Note that this variance formula {\it only} works for prediction; we have
 yet to derive a formula for which ${\bf t_*}$ and ${\bf t}$ are
 interspersed.
