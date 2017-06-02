@@ -54,8 +54,9 @@ for i, example in enumerate(["simulated/correct", "simulated/wrong-qpo",
     with open(example + "-params.tex", "w") as f:
         f.write("\\begin{floattable}\n")
         f.write("\\begin{deluxetable}{cc}\n")
-        f.write("\\tablecaption{{The parameters for Example {0}. "
-                "\label{{tab:example-{0}-params}}}}\n".format(i+1))
+        f.write("\\tablecaption{{The parameters and priors for "
+                "Example {0}. \label{{tab:example-{0}-params}}}}\n"
+                .format(i+1))
         f.write("\\tablehead{\colhead{parameter} & \colhead{prior}}\n")
         f.write("\\startdata\n")
         f.write("\n".join(rows))
