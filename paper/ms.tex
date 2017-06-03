@@ -636,7 +636,7 @@ point numbers.
 
 To compute the marginalized likelihood defined in \eq{gp-likelihood}, we must
 compute the log-determinant of $K$ and solve linear systems of the form
-$K\,\bvec{b}=\bvec{y}$ for $\bvec{b}$, where $K$ is a rank-$2\,J$
+$K\,\bvec{z}=\bvec{y}$ for $\bvec{z}$, where $K$ is a rank-$2\,J$
 semi-separable matrix.
 If $K$ is positive semi-definite, these can be computed using the Cholesky
 factorization of $K$:
@@ -735,22 +735,22 @@ where, if $K$ is positive semi-definite, $D_{n,n}>0$ for all $n$.
 
 The inverse of $K$ can be applied using the relationship
 \begin{eqnarray}
-\bvec{b} = K^{-1}\,\bvec{y} = {(L^\T)}^{-1}\,D^{-1}\,L^{-1}\,\bvec{y} \quad.
+\bvec{z} = K^{-1}\,\bvec{y} = {(L^\T)}^{-1}\,D^{-1}\,L^{-1}\,\bvec{y} \quad.
 \end{eqnarray}
-First, we solve for $\bvec{z} = L^{-1}\,\bvec{y}$ using the following forward
+First, we solve for $\bvec{z}^\prime = L^{-1}\,\bvec{y}$ using the following forward
 substitution algorithm
 \begin{eqnarray}
     f_{n,j} &=& \phi_{n,j}\,\left[f_{n-1,j} +
-    \tilde{W}_{n-1,j}\,z_{n-1}\right] \nonumber\\
-    z_n &=& y_n - \sum_{j=1}^{2\,J} \tilde{U}_{n,j}\,f_{n,j}
+    \tilde{W}_{n-1,j}\,z_{n-1}^\prime\right] \nonumber\\
+    z_n^\prime &=& y_n - \sum_{j=1}^{2\,J} \tilde{U}_{n,j}\,f_{n,j}
 \end{eqnarray}
 where $f_{0,j} = 0$ for all $j$.
 Using this result and the following backward substitution algorithm, we can
-compute $\bvec{b}$
+compute $\bvec{z}$
 \begin{eqnarray}
 g_{n,j} &=& \phi_{n+1,j}\,\left[g_{n+1,j} +
-    \tilde{U}_{n+1,j}\,b_{n+1}\right] \nonumber\\
-b_n &=& \frac{z_n}{D_{n,n}} - \sum_{j=1}^{2\,J} \tilde{W}_{n,j}\,g_{n,j}
+    \tilde{U}_{n+1,j}\,z_{n+1}\right] \nonumber\\
+z_n &=& \frac{z_n^\prime}{D_{n,n}} - \sum_{j=1}^{2\,J} \tilde{W}_{n,j}\,g_{n,j}
 \end{eqnarray}
 where $g_{N+1,j} = 0$ for all $j$.
 The total cost of the forward and backward substitution passes scales as
@@ -759,28 +759,28 @@ $\mathcal{O}(N\,J)$.
 \subsection{Simulation}
 
 Simulation of a Gaussian process for large $N$ requires multiplying an
-$N$-dimensional vector of Gaussian normal deviates, $\bf{q}$, by the square root
+$N$-dimensional vector of Gaussian normal deviates, $\bvec{q}$, by the square root
 of the covariance matrix:
 \begin{equation}
-{\bf y} = K_\bvec{\alpha}^{1/2} {\bf q},
+\bvec{y} = K_\bvec{\alpha}^{1/2} \bvec{q},
 \end{equation}
 where $q_i \sim N(0,1)$.  Note that $K_\bvec{\alpha} = K_\bvec{\alpha}^{1/2} \left(K_\bvec{\alpha}^{1/2}\right)^T$, which
 comparing with the Cholesky factorization gives $K_\bvec{\alpha}^{1/2} = L D^{1/2}$,
 where $(D^{1/2})_{ii} = \sqrt{D_{ii}}$.  Also note that the exponent of
 the likelihood with $\mu_\bvec{\theta} =0$ is given by
 \begin{eqnarray}
-Q &=&-\frac{1}{2}{\bf y}^T K_\bvec{\alpha}^{-1} {\bf y}\\
-&=& -\frac{1}{2}{\bf y}^T \left(K_\bvec{\alpha}^{-1/2}\right)^T K_\bvec{\alpha}^{-1/2} {\bf y}\\
-&=& -\frac{1}{2}{\bf q}^T K_\bvec{\alpha}^{1/2} \left(K_\bvec{\alpha}^{-1/2}\right)^T K_\bvec{\alpha}^{-1/2} K_\bvec{\alpha}^{1/2} {\bf q}\\
-&=& -\frac{1}{2}{\bf q}^T {\bf q}.
+\mathcal{Q} &=&\bvec{y}^T K_\bvec{\alpha}^{-1} \bvec{y}\\
+&=& \bvec{y}^T \left(K_\bvec{\alpha}^{-1/2}\right)^T K_\bvec{\alpha}^{-1/2} \bvec{y}\\
+&=& \bvec{q}^T K_\bvec{\alpha}^{1/2} \left(K_\bvec{\alpha}^{-1/2}\right)^T K_\bvec{\alpha}^{-1/2} K_\bvec{\alpha}^{1/2} \bvec{q}\\
+&=& \bvec{q}^T \bvec{q}.
 \end{eqnarray}
 The last quantity is simply the dot product of an $N$-dimensional vector of independent standard normal random variables with itself,
 which is distributed according to the chi-squared distribution with $N$ degrees of freedom, i.e.\ $Q \sim \chi_N^2$.
 
 To generate a draw from a Gaussian process with a specified \celerite\ model requires carrying out the
-low-rank Cholesky decomposition first, generating the vector ${\bf q}$ of random normal deviates, and then multiplying
+low-rank Cholesky decomposition first, generating the vector $\bvec{q}$ of random normal deviates, and then multiplying
 \begin{equation}
-{\bf y} = L D^{1/2} {\bf q}.
+\bvec{y} = L D^{1/2} \bvec{q}.
 \end{equation}
 This may be carried out in $\mathcal{O}(JN)$ operations with
 \begin{eqnarray}
@@ -799,7 +799,7 @@ and multiplication are used.
 Multiplication of the full covariance matrix times a vector can be accomplished in $\mathcal{O}(JN)$
 operations with a stable recursive algorithm using the semi-separable form:
 \begin{equation}
-{\bf y} =  \left(A + \mathrm{tril}(U V^T) + \mathrm{triu}(V U^T)\right) {\bf z}.
+\bvec{y} =  \left(A + \mathrm{tril}(U V^T) + \mathrm{triu}(V U^T)\right) \bvec{z}.
 \end{equation}
 The algorithm for multiplication is given by
 \begin{eqnarray}
@@ -816,46 +816,53 @@ Multiplication of the full covariance matrix is useful, for example, for isolati
 a particular component of a kernel, which amounts to a customized filter of a dataset.
 For example, a white-noise filter is given by:
 \begin{eqnarray}
-\bar f &=& K({\bf t},{\bf t}) \left[K({\bf t},{\bf t})+\sigma^2{\bf I}\right]^{-1} {\bf y},\\
-&=& K({\bf t},{\bf t}) {\bf b}
+\bar f &=& K(\bvec{t},\bvec{t}) \left[K(\bvec{t},\bvec{t})+\sigma^2I\right]^{-1} \bvec{y},\\
+&=& K(\bvec{t},\bvec{t}) \bvec{z}
 \end{eqnarray}
-where ${\bf y}$ is the vector of measurements and ${\bf b}$ may be computed from the Cholesky
+where $\bvec{y}$ is the vector of measurements and $\bvec{z}$ may be computed from the Cholesky
 decomposition as described above.  The second step multiplication of the white-noise-free
-kernel times ${\bf b}$ may be accomplished in $\mathcal{O}(JN)$ steps with this multiplication algorithm.
-Note that for this particular example it is more efficient to compute $\bar f = {\bf y} -\sigma^2 {\bf I} {\bf b}$,
+kernel times $\bvec{z}$ may be accomplished in $\mathcal{O}(JN)$ steps with this multiplication algorithm.
+Note that for this particular example it is more efficient to compute $\bar f = \bvec{y} -\sigma^2 I \bvec{z}$,
 but in general the filtering kernel will not differ from the full kernel by a diagonal matrix.
 
 \subsection{Prediction and interpolation}
 
 %Gaussian process regression may also be used for prediction and interpolation at future or missing data, based upon current measurements.  With \celerite\ it proves possible to predict the mean value at times ${t_m; m=1,...,M}$ based upon measured times ${t_n; n=1,...,N}$ in $\mathcal{O}(N+M)$ operations.
 
-For predicting or interpolating missing or future data points (and their variance) at times ${\bf t_*} = \left\{t_{*,1},t_{*,2},...,t_{*,M}\right\}$, we need to apply the covariance between the measured and predicted times.  The mean of the predicted values is (equation 2.19 from Rasmussen \& Williams):
+For predicting or interpolating missing or future data points (and their variance) at times $\bvec{t_*} = \left\{t_{*,1},t_{*,2},...,t_{*,M}\right\}$, we need to apply the covariance between the measured and predicted times.  The mean of the predicted values is (equation 2.19 from Rasmussen \& Williams):
 \begin{eqnarray}
-\bar f_* &=& K({\bf t_*},{\bf t}) \left[K({\bf t},{\bf t})+\sigma^2{\bf I}\right]^{-1} {\bf y},\\
-&=& K({\bf t_*},{\bf t}) {\bf b}
+\bar f_* &=& K(\bvec{t_*},\bvec{t}) \left[K(\bvec{t},\bvec{t})+\sigma^2 I\right]^{-1} \bvec{y},\\
+&=& K(\bvec{t_*},\bvec{t}) \bvec{z}
 \end{eqnarray}
-where ${\bf y}$ is the vector of measurements and $\sigma$ is the measurement uncertainty, and
-${\bf b} = \left[K({\bf t},{\bf t})+\sigma^2{\bf I}\right]^{-1} {\bf y}$ can be computed from
+where $\bvec{y}$ is the vector of measurements and $\sigma$ is the measurement uncertainty, and
+$\bvec{z} = \left[K(\bvec{t},\bvec{t})+\sigma^2 I\right]^{-1} \bvec{y}$ can be computed from
 the Cholesky decomposition of the full covariance matrix in ${\cal O}(J^2N)$.
 
 Since the covariance matrix may be written as the sum of exponentials, we can write:
 \begin{eqnarray}
-\bar f_{*,i} &=& K(t_{*,i},{\bf t}) {\bf b} \\
-&=& \sum_n \sum_p \alpha_p e^{-\beta_p \vert t_{*,i}-t_n\vert} b_j.
+\bar f_{*,i} &=& K(t_{*,i},\bvec{t}) \bvec{z} \\
+&=& \sum_n \sum_{j=1}^J e^{-c_j \vert t_{*,i}-t_n\vert}\left(a_j \cos{(d_j \vert t_{*,i}-t_n\vert)} +b_j \sin{(d_j \vert t_{*,i}-t_n\vert)}\right) z_j.
 \end{eqnarray}
-\agoltodo{Convert this to real, \celerite\ notation .}
 Dividing the sum over $n$ into $\{t_1,...,t_{n_0}\} < t_{*,i}$ and
 $\{t_{n0+1},...,t_N\} \ge t_{*,i}$, gives
-\begin{equation}
-\bar f_{*,i} = \sum_{n=1}^{n_0} \sum_p \alpha_p e^{-\beta_p( t_{*,i}-t_n)} b_n + \sum_{n=n_0+1}^N \sum_p \alpha_p e^{-\beta_p(t_n-t_{*,i})} b_n.
-\end{equation}
-Each of these double-sums may have the sums interchanged, giving:
 \begin{eqnarray}
-\bar f_{*,i} &=& \sum_p e^{-\beta_p ( t_{*,i}-t_{*,i-1})} \sum_{n=1}^{n_0} \alpha_p e^{-\beta_p ( t_{*,i-1}-t_n) } b_n \\
-&+&
-\sum_p e^{-\beta_p ( t_{*,i+1}-t_{*,i})} \sum_{n=n+0+1}^{N} \alpha_p e^{-\beta_p ( t_n-t_{*,i+1}) } b_n
+\bar f_{*,i} &=& \sum_{j=1}^J\sum_{n=1}^{n_0} e^{-c_j(t_{*,i}-t_n)} \left[a_j \cos{(d_j(t_{*,i}-t_n))}+b_j\sin{(d_j(t_{*,i}-t_n))}\right] z_n \\
+&+& \sum_{j=1}^J\sum_{n=n_0+1}^N  e^{-c_j(t_n-t_{*,i})} \left[a_j \cos{(d_j(t_n-t_{*,i}))}+b_j\sin{(d_j(t_n-t_{*,i}))}\right] z_n.
 \end{eqnarray}
-We can compute this recursively.  Defining $Q^-_{i,n_0,p} = \sum_{j=1}^{n_0} \alpha_p e^{-\beta_p (t_{*,i}-t_j)} b_j$ and defining $Q^+_{i,n_0,p} = \sum_{j=n_0}^N \alpha_p e^{-\beta_p (t_{*,i}-t_j)} b_j$ gives:
+%Each of these double-sums may have the sums interchanged, giving:
+%\begin{eqnarray}
+%\bar f_{*,i} &=& Re\left[\sum_j e^{-(c_j+id_j)( t_{*,i}-t_{*,i-1})} \sum_{n=1}^{n_0} (a_j+ib_j) e^{-(c_j+id_j)( t_{*,i-1}-t_n) } z_n\right. \\
+%&+&\left.
+%\sum_j e^{-(c_j+id_j)( t_{*,i+1}-t_{*,i})} \sum_{n=n_0+1}^{N} (a_j+ib_j) e^{-(c_j+id_j)( t_n-t_{*,i+1}) } z_n\right]
+%\end{eqnarray}
+We can compute this recursively.  Defining
+\begin{eqnarray}
+Q^-_{i,n_0,2j-1} &=& \sum_{n=1}^{n_0} a_j e^{-c_j(t_{*,i}-t_n)} \cos{(d_j(t_{*,i}-t_n))} z_n,\\
+Q^-_{i,n_0,2j} &=& \sum_{n=1}^{n_0} b_j e^{-c_j(t_{*,i}-t_n)} \sin{(d_j(t_{*,i}-t_n))} z_n,\\
+Q^+_{i,n_0,2j-1} &=& \sum_{n=n_0+1}^N a_j e^{-c_j(t_n-t_{*,i})}\cos{(d_j(t_n-t_{*,i}))} z_n,\\
+Q^+_{i,n_0,2j} &=& \sum_{n=n_0+1}^N b_j e^{-c_j(t_n-t_{*,i})} \sin{(d_j(t_n-t_{*,i}))} z_n,
+\end{eqnarray} gives:
+\agoltodo{Convert the following to real, \celerite\ notation .}
 \begin{equation}
 \bar f_{*,i} = \sum_p e^{-\beta_p (t_{*,i}-t_{*,i-1})} Q^-_{i-1,n_0,p} + \sum_p e^{-\beta_p (t_{*,i+1}-t_{*,i})} Q^+_{i+1,n_0,p}.
 \end{equation}
@@ -866,18 +873,18 @@ Q^+_{i,p} &=& e^{-\beta_p (t_{*,i+1}-t_{*,i})} Q^+_{i,p},
 \end{eqnarray}
 for a total scaling of $\approx \mathcal{O}(J^2N+J(N+M))$.
 
-The variance evaluated at future predicted times ${\bf t_*} > {\bf t}$ may be obtained in a similar manner (equation 2.19 from Rasmussen \& Williams):
+The variance evaluated at future predicted times $\bvec{t_*} > \bvec{t}$ may be obtained in a similar manner (equation 2.19 from Rasmussen \& Williams):
 \begin{eqnarray}
-\mathrm{var}(f_{*,i+1}) &=& K(t_{*,i+1},t_{*,i+1}) - K(t_{*,i+1},{\bf t}^T)K({\bf t},{\bf t})^{-1} K({\bf t},t_{*,i+1})\\
+\mathrm{var}(f_{*,i+1}) &=& K(t_{*,i+1},t_{*,i+1}) - K(t_{*,i+1},\bvec{t}^T)K(\bvec{t},\bvec{t})^{-1} K(\bvec{t},t_{*,i+1})\\
 &=& K(t_{*,i+1},t_{*,i+1}) - \sum_p\sum_q \alpha_p \alpha_q e^{-(\beta_p+\beta_q)(t_{*,i+1}-t_{*,i})} \\
-&\times& e^{-\beta_p(t_{*,i}-{\bf t}^T)}K({\bf t},{\bf t})^{-1} e^{-\beta_q(t_{*,i}-{\bf t})}\\
+&\times& e^{-\beta_p(t_{*,i}-\bvec{t}^T)}K(\bvec{t},\bvec{t})^{-1} e^{-\beta_q(t_{*,i}-\bvec{t})}\\
 &=& K(t_{*,i+1},t_{*,i+1}) - \sum_{p,q} \alpha_p \alpha_q e^{-(\beta_p+\beta_q)(t_{*,i+1}-t_{*,i})} P_{i,p,q}\\
 \end{eqnarray}
 for $1 \le p,q \le J$,
 where
 \begin{equation}
-P_{i,p,q} = e^{-\beta_p(t_{*,i}-{\bf t}^T)}
-K({\bf t},{\bf t})^{-1} e^{-\beta_q(t_{*,i}-{\bf t})}.
+P_{i,p,q} = e^{-\beta_p(t_{*,i}-\bvec{t}^T)}
+K(\bvec{t},\bvec{t})^{-1} e^{-\beta_q(t_{*,i}-\bvec{t})}.
 \end{equation}
 For $i=1$, $P_{1,p,q}$ can be obtained in $\mathcal{O}(J^2N)$ operations
 with the Cholesky decomposition.
@@ -887,7 +894,7 @@ P_{i+1,p,q} = e^{-(\beta_p+\beta_q)(t_{*,i+1}- t_{*,i})} P_{i,p,q},
 \end{equation}
 in $\mathcal{O}(J^2M)$ operations, for a total of $\approx \mathcal{O}(J^2(N+M))$ operations.
 Note that this variance formula {\it only} works for prediction; we have
-yet to derive a formula for which ${\bf t_*}$ and ${\bf t}$ are
+yet to derive a formula for which $\bvec{t_*}$ and $\bvec{t}$ are
 interspersed.
 
 \section{celerite as a model of stellar variations}\sectlabel{sho}
