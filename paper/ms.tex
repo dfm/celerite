@@ -1597,41 +1597,38 @@ harmonic oscillators.
 
 \subsection{Example 5: Exoplanet transit fitting}
 
-In this example, we inject the signal of a simulated exoplanet transit into a
-real \kepler\ light curve and then demonstrate that we can recover the true
-physical parameters of the exoplanet while modeling the stellar variability
-using \celerite.
+\response{
 This example is different from all the previous examples~--~both simulated and
-real~--~because, in this case, we are uninterested in the parameters of the
-covariance model.
-Instead, we're interested in inferring constraints on the parameters of the
-mean model ($\mu_\bvec{\theta}(\bvec{x})$ from \sect{gps}), the model of the
-signal caused by the transit of the planet.
-We say ``mean model'' here to unambiguously distinguish it from the
-``covariance model'', but this is what would generally be called the ``model''
-in other analyses.
-In this case, we have a light curve of a rotating star with a planet
-transiting and we would like to fit for the physical parameters of the planet
-while taking our uncertainty about the star's variability into account.
-GP modeling has been used for this purpose throughout the exoplanet literature
-\citep[for example][]{Dawson:2014, Barclay:2015, Evans:2015,
-Foreman-Mackey:2016b, Grunblatt:2016}.
+real~--~because, in this case, do not set the deterministic
+mean function $\mu_\bvec{\theta}$ to zero.
+Instead, we make inferences about $\mu_\bvec{\theta}$ because it is a
+physically significant function and the parameters are fundamental properties
+of the system.
+This is an example using real data~--~because we use the light curve from
+\sect{rotation}~--~but we multiply these data by a simulated transiting
+exoplanet model with known parameters.
+This allows us to show that we can recover the true parameters of the planet
+even when the transit signal is superimposed on the real variability of a
+star.
+}
+GP modeling has been used extensively for this purpose throughout the
+exoplanet literature \citep[for example][]{Dawson:2014, Barclay:2015,
+Evans:2015, Foreman-Mackey:2016b, Grunblatt:2016}.
 
-In \eq{gp-likelihood} the physical parameters of the planet are called
+In \eq{gp-likelihood} the physical parameters of the exoplanet are called
 $\bvec{\theta}$ and, in this example, the mean function $\mu_\bvec{\theta}(t)$
 is a limb-darkened transit light curve \citep{Mandel:2002} and the parameters
-$\bvec{\theta}$ are a period $P$, a transit duration $T$, a phase or epoch
-$t_0$, an impact parameter $B$, the radius of the planet in units of the
-stellar radius $R_P/R_\star$, and several parameters describing the
-limb-darkening profile of the star \citep{Claret:2011}.
-As in the previous example, we model the stellar variability using a GP model
+$\bvec{\theta}$ are the orbital period $P$, the transit duration $T$, the
+phase or epoch $t_0$, the impact parameter $B$, the radius of the planet in
+units of the stellar radius $R_P/R_\star$, and two parameters describing
+the limb-darkening profile of the star \citep{Claret:2011,Kipping:2013}.
+As in \sect{rotation}, we model the stellar variability using a GP model
 with a kernel given by \eq{rot-kernel} and fit for the parameters of the
-planet $\bvec{\theta}$ and the stellar variability $\bvec{\alpha}$
+exoplanet $\bvec{\theta}$ and the stellar variability $\bvec{\alpha}$
 simultaneously.
 
-We take a month-long segment of the \kepler\ light curve for
-KIC~1430163~--~the target from \sect{rotation}~--~and multiply it by a
-simulated transit model with known parameters.
+We take a month-long segment of the \kepler\ light curve for KIC~1430163 and
+multiply it by a simulated transit model with known parameters.
 The fact that we are using a simulated transit enables us to confirm that we
 correctly measure the planet parameters but we do not use this knowledge to
 inform our fit.
@@ -1650,10 +1647,7 @@ variability.
 
 \newpage
 
-\dfmtodo{Table 5 has two parameter with name "b":  the celerite coefficient,
-and the impact parameter.}
-
-\input{figures/transit/transit-params}
+\input{figures/transit/transit-params-edited}
 
 \begin{figure}[!htbp]
 \begin{center}
