@@ -68,15 +68,28 @@ for i, example in enumerate(["simulated/correct", "simulated/wrong-qpo",
 with open("example-stats.tex", "w") as f:
     f.write("\\begin{floattable}\n")
     f.write("\\begin{deluxetable}{cccccccc}\n")
-    f.write("\caption{The scaling and convergence stats for each example. "
-            "\label{tab:example-stats}}\n")
-    f.write("\\tablehead{\colhead{example} & \colhead{$N$} & \colhead{$J$} & "
-            "\colhead{direct cost} & \colhead{\celerite\ cost} & "
-            "\colhead{$D$} & "
-            "\colhead{model evaluations} & \colhead{effective samples}\\\\\n")
+    f.write("\caption{The computational cost and convergence stats for each "
+            "example. \label{tab:example-stats}}\n")
+    f.write("\\tablehead{& \colhead{$N$} & \colhead{$J$} & "
+            "\colhead{direct\\tablenotemark{a}} & "
+            "\colhead{\celerite\\tablenotemark{b}} & "
+            "\colhead{dimension\\tablenotemark{c}} & "
+            "\colhead{evaluations\\tablenotemark{d}} "
+            "& \colhead{$N_\mathrm{eff}$\\tablenotemark{e}}\\\\\n")
     f.write("&&& \colhead{ms} & \colhead{ms} &&&}\n")
     f.write("\\startdata\n")
     f.write("\n".join(stats_rows))
     f.write("\n\\enddata\n")
+    f.write(r"""
+\tablenotetext{a}{The computational cost of computing the GP model using the
+general Cholesky factorization routine implemented in the Intel MKL.}
+\tablenotetext{b}{The computational cost of computing the GP model using
+\celerite.}
+\tablenotetext{c}{The total number of parameters in the model.}
+\tablenotetext{d}{The total number of evaluations of the model to run MCMC to
+convergence.}
+\tablenotetext{e}{The effective number of independent samples estimated by
+computing the integrated autocorrelation time of the chain.}
+""")
     f.write("\end{deluxetable}\n")
     f.write("\end{floattable}\n")

@@ -1,14 +1,24 @@
 \begin{floattable}
 \begin{deluxetable}{cccccccc}
-\caption{The scaling and convergence stats for each example. \label{tab:example-stats}}
-\tablehead{\colhead{example} & \colhead{$N$} & \colhead{$J$} & \colhead{direct cost} & \colhead{\celerite\ cost} & \colhead{$D$} & \colhead{model evaluations} & \colhead{effective samples}\\
+\caption{The computational cost and convergence stats for each example. \label{tab:example-stats}}
+\tablehead{& \colhead{$N$} & \colhead{$J$} & \colhead{direct\tablenotemark{a}} & \colhead{\celerite\tablenotemark{b}} & \colhead{dimension\tablenotemark{c}} & \colhead{evaluations\tablenotemark{d}} & \colhead{$N_\mathrm{eff}$\tablenotemark{e}}\\
 &&& \colhead{ms} & \colhead{ms} &&&}
 \startdata
 1 & 200 & 1 & 2.85 & 0.26 & 3 & 80000 & 1737 \\
 2 & 100 & 2 & 0.67 & 0.36 & 4 & 80000 & 1134 \\
 3 & 6950 & 2 & 8119.11 & 1.47 & 4 & 176000 & 2900 \\
 4 & 1440 & 8 & 828.93 & 2.74 & 9 & 640000 & 1443 \\
-5 & 1000 & 2 & 82.73 & 0.94 & 13 & 640000 & 1141 \\
+5 & 1000 & 2 & 88.30 & 0.96 & 13 & 1280000 & 1490 \\
 \enddata
+
+\tablenotetext{a}{The computational cost of computing the GP model using the
+general Cholesky factorization routine implemented in the Intel MKL.}
+\tablenotetext{b}{The computational cost of computing the GP model using
+\celerite.}
+\tablenotetext{c}{The total number of parameters in the model.}
+\tablenotetext{d}{The total number of evaluations of the model to run MCMC to
+convergence.}
+\tablenotetext{e}{The effective number of independent samples estimated by
+computing the integrated autocorrelation time of the chain.}
 \end{deluxetable}
 \end{floattable}

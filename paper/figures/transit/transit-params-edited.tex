@@ -1,22 +1,25 @@
 \begin{floattable}
-\begin{deluxetable}{ccc}
+\begin{deluxetable}{lccc}
 \tablecaption{The parameters, priors, and (if known) the true values used for
 the simulation in Example 5. \label{tab:example-5-params}}
-\tablehead{\colhead{parameter} & \colhead{prior} & \colhead{true value}}
+\tablehead{& \colhead{parameter} & \colhead{prior} & \colhead{true value}}
 \startdata
-$\ln(a/\mathrm{ppt}^2)$ & $\mathcal{U}(-10.0,\,0.0)$ & --- \\
-$\ln(c/\mathrm{day})$ & $\mathcal{U}(1.5,\,5.0)$ & --- \\
-$\ln(P_\mathrm{rot}/\mathrm{day})$ & $\mathcal{U}(-3.0,\,5.0)$ & --- \\
-$\ln(b)$ & $\mathcal{U}(-5.0,\,5.0)$ & --- \\
-$\ln(\sigma/\mathrm{ppt})$ & $\mathcal{U}(-5.0,\,0.0)$ & --- \\
-$f_0/\mathrm{ppt}$ & $\mathcal{U}(-0.5,\,0.5)$ & 1 \\
-$\ln(P_\mathrm{orb}/\mathrm{day})$ & $\mathcal{U}(\ln(7.9),\,\ln(8.1))$ & $\ln(8)$  \\
-$\ln(R_p/R_\star)$ & $\mathcal{U}(\ln(0.005),\,\ln(0.1))$ & $\ln(0.015)$ \\
-$\ln(T/\mathrm{day})$ & $\mathcal{U}(\ln(0.4),\,\ln(0.6))$ & $\ln(0.5)$ \\
-$t_0/\mathrm{day}$ & $\mathcal{U}(-0.1,\,0.1)$ & $0$ \\
-$B$ & $\mathcal{U}(0,\,1.0)$ & $0.5$ \\
-$q_1$ & $\mathcal{U}(0,\,1)$ & $0.5$ \\
-$q_2$ & $\mathcal{U}(0,\,1)$ & $0.5$ \\
+\multirow{5}{*}{kernel: $\bvec{\alpha} \quad$}
+& $\ln(a/\mathrm{ppt}^2)$ & $\mathcal{U}(-10.0,\,0.0)$ & --- \\
+& $\ln(c/\mathrm{day})$ & $\mathcal{U}(1.5,\,5.0)$ & --- \\
+& $\ln(P_\mathrm{rot}/\mathrm{day})$ & $\mathcal{U}(-3.0,\,5.0)$ & --- \\
+& $\ln(b)$ & $\mathcal{U}(-5.0,\,5.0)$ & --- \\
+& $\ln(\sigma/\mathrm{ppt})$ & $\mathcal{U}(-5.0,\,0.0)$ & --- \\
+\hline
+\multirow{8}{*}{mean: $\bvec{\theta} \quad$}
+& $f_0/\mathrm{ppt}$ & $\mathcal{U}(-0.5,\,0.5)$ & 1 \\
+& $\ln(P_\mathrm{orb}/\mathrm{day})$ & $\mathcal{U}(\ln(7.9),\,\ln(8.1))$ & $\ln(8)$  \\
+& $\ln(R_p/R_\star)$ & $\mathcal{U}(\ln(0.005),\,\ln(0.1))$ & $\ln(0.015)$ \\
+& $\ln(T/\mathrm{day})$ & $\mathcal{U}(\ln(0.4),\,\ln(0.6))$ & $\ln(0.5)$ \\
+& $t_0/\mathrm{day}$ & $\mathcal{U}(-0.1,\,0.1)$ & $0$ \\
+& $B$ & $\mathcal{U}(0,\,1.0)$ & $0.5$ \\
+& $q_1$ & $\mathcal{U}(0,\,1)$ & $0.5$ \\
+& $q_2$ & $\mathcal{U}(0,\,1)$ & $0.5$ \\
 \enddata
 \end{deluxetable}
 \end{floattable}
