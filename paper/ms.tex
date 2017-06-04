@@ -1709,51 +1709,17 @@ computation using a general direct solver.
 
 \section{Comparisons to other methods}
 
-There are many other methods of scaling GP models to large datasets and in
-this section we draw comparisons between \celerite\ and other popular methods.
+There are other methods of scaling GP models to large datasets and in this
+section we draw comparisons between \celerite\ and other popular methods.
 Scalable GP methods tend to fall into two categories: approximate and
 restrictive.
 \celerite\ falls into the latter category because, while the method is exact,
 it requires a specific choice of stationary kernel function and it can only be
 used in one-dimension.
 
-As discussed previously, the \celerite\ method is based upon a method
-developed by Rybicki \& Press twenty years ago \citep{Rybicki:1995}.
-In the case where the kernel function has a single term of the form given in
-\eq{kernel-simple}, it is interesting to compare the performance of \celerite\
-and the Rybicki \& Press method.
-Their method does not require solving the extended matrix because the matrix
-inverse can be calculated analytically, but the method is made slightly more
-complicated when white noise is included.
-We implement their full method and find empirically that it is more
-computationally efficient by a factor of $\approx 2$ for large $N \gg 1000$,
-but we note that the requirement of a single, real, exponential kernel is
-extremely restrictive and this model cannot describe quasi-periodic
-variability.
+\subsection{Kalman filtering \& CARMA models} \sectlabel{kalman}
 
-Another popular method uses the fact that, in the limit of evenly-spaced data
-and homoscedastic uncertainties, the covariance matrix is ``Toeplitz''
-\citep[for example][]{Dillon:2013}.
-There are exact methods for solving Toeplitz matrix equations that scale as
-$\mathcal{O}(N\,\log N)$ and methods for computing determinants exactly in
-$\mathcal{O}(N^2)$ or approximately in $\mathcal{O}(N\,\log N)$
-\citep{Wilson:2014}.
-The Toeplitz method is, in some ways, more flexible than \celerite\ because it
-can be used with any stationary kernel, but it requires uniformly spaced data
-and the scaling is worse than \celerite\ so it is less efficient when applied
-to large datasets.
-
-\citet{Carter:2009} improved the scaling of Toeplitz methods by introducing a
-wavelet-based method for computing a GP likelihood with $\mathcal{O}(N)$
-scaling.
-This method has been widely applied in the context of exoplanet transit
-characterization, but it requires evenly spaced observations and the power
-spectrum of the process must have the form $S(\omega)\propto \omega^{-1}$ to
-gain the computational advantage.
-This wavelet method has been demonstrated to improve parameter estimation for
-transiting exoplanets \citep{Carter:2009}, but these strict requirements make
-this method applicable for only a limited set of use cases.
-
+\response{
 The continuous autoregressive moving average (CARMA) models introduced into
 the astrophysics literature by \citet{Kelly:2014} share many features with
 \celerite.
@@ -1795,6 +1761,48 @@ filtering-based CARMA solvers, it directly solves matrix equations of the form
 ${K_\bvec{\alpha}}^{-1}\,b$ in $\mathcal{O}(N)$.
 This is a crucial feature when GP modeling is combined with linear models
 \citep[for example][]{Luger:2017}.
+}
+
+
+\subsection{Other scalable methods}
+
+%As discussed previously, the \celerite\ method is based upon a method
+%developed by Rybicki \& Press twenty years ago \citep{Rybicki:1995}.
+%In the case where the kernel function has a single term of the form given in
+%\eq{kernel-simple}, it is interesting to compare the performance of \celerite\
+%and the Rybicki \& Press method.
+%Their method does not require solving the extended matrix because the matrix
+%inverse can be calculated analytically, but the method is made slightly more
+%complicated when white noise is included.
+%We implement their full method and find empirically that it is more
+%computationally efficient by a factor of $\approx 2$ for large $N \gg 1000$,
+%but we note that the requirement of a single, real, exponential kernel is
+%extremely restrictive and this model cannot describe quasi-periodic
+%variability.
+
+Another popular method uses the fact that, in the limit of evenly-spaced data
+and homoscedastic uncertainties, the covariance matrix is ``Toeplitz''
+\citep[for example][]{Dillon:2013}.
+There are exact methods for solving Toeplitz matrix equations that scale as
+$\mathcal{O}(N\,\log N)$ and methods for computing determinants exactly in
+$\mathcal{O}(N^2)$ or approximately in $\mathcal{O}(N\,\log N)$
+\citep{Wilson:2014}.
+The Toeplitz method is, in some ways, more flexible than \celerite\ because it
+can be used with any stationary kernel, but it requires uniformly spaced data
+and the scaling is worse than \celerite\ so it is less efficient when applied
+to large datasets.
+
+\citet{Carter:2009} improved the scaling of Toeplitz methods by introducing a
+wavelet-based method for computing a GP likelihood with $\mathcal{O}(N)$
+scaling.
+This method has been widely applied in the context of exoplanet transit
+characterization, but it requires evenly spaced observations and the power
+spectrum of the process must have the form $S(\omega)\propto \omega^{-1}$ to
+gain the computational advantage.
+This wavelet method has been demonstrated to improve parameter estimation for
+transiting exoplanets \citep{Carter:2009}, but these strict requirements make
+this method applicable for only a limited set of use cases.
+
 
 Another GP method that has been used extensively in astronomy is the
 hierarchical off-diagonal low rank \citep[HODLR,][]{Ambikasaran:2016} solver.
