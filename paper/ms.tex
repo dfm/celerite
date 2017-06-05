@@ -852,19 +852,19 @@ $\{t_{n0+1},...,t_N\} \ge t^*_m$, gives
 \end{eqnarray}
 We can compute this recursively.  Defining
 \begin{eqnarray}
-Q^-_{n_0,i} &=& \left(Q^-_{n_0-1,i}+z_n\tilde V_{n_0,i}\right)e^{-c_j(t_{n+1}-t_n)},\\
-X^-_{m,n_0,i} &=& e^{-c_j(t_m^*-t_{n+1})}\tilde U_{m,i},\\
-Q^+_{n_0,i} &=& \left(Q^+_{n_0+1,i}+z_n\tilde U_{n,i}\right)e^{-c_j(t_n-t_{n-1})},\\
+Q^-_{n,i} &=& \left(Q^-_{n-1,i}+z_n\tilde V_{n,i}\right)e^{-c_j(t_{n+1}-t_{n})},\\
+X^-_{m,n,i} &=& e^{-c_j(t_m^*-t_{n+1})}\tilde U_{m,i},\\
+Q^+_{n,i} &=& \left(Q^+_{n+1,i}+z_n\tilde U_{n,i}\right)e^{-c_j(t_{n}-t_{n-1})},\\
 X^+_{m,n,i} &=& e^{-c_j(t_{n-1}-t_m^*)} \tilde V_{m,i},
 \end{eqnarray}
-where $Q^-_{0,i} = 0$ and $Q^+_{N+1,i}=0$ for $i=1$ to $2J$, and in $X^\pm_{m,n,i}$ the expressions
+where $t_0=t_1$, $t_{N+1}=t_N$, $Q^-_{0,i} = 0$ and $Q^+_{N+1,i}=0$ for $i=1$ to $2J$, and in $X^\pm_{m,n,i}$ the expressions
 for $\tilde U_{m,i}$ and $\tilde V_{m,i}$ are evaluted at $t_m^*$.
 Two sweeps must be carried out, upward in $n$ and $m$ to compute $Q^-$ recursively, and downward in
 $m$ and $n$ to compute $Q^+$ recursively, for a total scaling of $\approx \mathcal{O}(J^2N+J(N+M))$.
 For each value of $m$, $Q^\pm$ are recursively updated over $n$ until $n_0$ is reached, at which
 point the predicted mean can be computed from
 \begin{equation}
-\bar f^*_i = \sum_{i=1}^{2J} \left[Q^-_{n_0,i}X^-_{m,n_0,i}+Q^+_{n_0,i}X^+_{m,n_0,i}\right],
+\bar f^*_i = \sum_{i=1}^{2J} \left[Q^-_{n_0,i}X^-_{m,n_0,i}+Q^+_{n_0+1,i}X^+_{m,n_0+1,i}\right],
 \end{equation}
 
 %The variance evaluated at future predicted times $\bvec{t^*} > \bvec{t}$ may be obtained in a similar manner (equation 2.19 from Rasmussen \& Williams):
