@@ -1305,9 +1305,9 @@ measurements even with sparsely sampled data (R.~Angus, \etal\ submitted).
 The covariance function used for this type of analysis has the form
 \begin{eqnarray}\eqlabel{sine2}
 k(\tau) = A\,\exp\left(-\frac{\tau^2}{2\,\ell^2} -
-    \Gamma\,\sin^2\left(\frac{\pi\,\tau}{P} \right) \right)
+    \Gamma\,\sin^2\left(\frac{\pi\,\tau}{P_\mathrm{rot}} \right) \right)
 \end{eqnarray}
-where $P$ is the rotation period of the star.
+where $P_\mathrm{rot}$ is the rotation period of the star.
 GP modeling with the same kernel function has been proposed as a method of
 measuring the mean periodicity in quasiperiodic photometric time series in
 general \citep{Wang:2012}.
@@ -1317,7 +1317,7 @@ We construct a simple \celeriteterm\ covariance function with similar
 properties as follows
 \begin{eqnarray}\eqlabel{rot-kernel}
 k(\tau) = \frac{B}{2+C}\,e^{-\tau/L}\,\left[
-    \cos\left(\frac{2\,\pi\,\tau}{P}\right) + (1 + C)
+    \cos\left(\frac{2\,\pi\,\tau}{P_\mathrm{rot}}\right) + (1 + C)
 \right]
 \end{eqnarray}
 for $B>0$, $C>0$, and $L>0$.
@@ -1365,9 +1365,10 @@ example and the residuals away from the MAP predictive mean.
 
 We run \exampleiiinburn~steps of burn-in, followed by \exampleiiinsteps~steps
 of MCMC using \emcee.
-We estimate the integrated autocorrelation time of the chain for $\ln P$ and
-estimate that we have \exampleiiineff\ independent samples.
-These samples give a posterior constraint on the period of $P =
+We estimate the integrated autocorrelation time of the chain for $\ln
+P_\mathrm{rot}$ and estimate that we have \exampleiiineff\ independent
+samples.
+These samples give a posterior constraint on the period of $P_\mathrm{rot} =
 \rotationperiod$ and the marginalized posterior distribution for $P$ is shown
 in the right panel of \Figure{rotation}.
 This result is in good agreement with the literature value with smaller
@@ -1393,10 +1394,10 @@ more reliable than other methods.
     shown in the top left figure.
 (right) The posterior constraint on the rotation period of KIC~1430163 using
     the dataset and model from \Figure{rotation}.
-    The period is the parameter $P$ in \eq{rot-kernel} and this figure shows
-    the posterior distribution marginalized over all other nuisance parameters
-    in \eq{rot-kernel}.
-    This is consistent with the published rotation period made using the full
+    The period is the parameter $P_\mathrm{rot}$ in \eq{rot-kernel} and this
+    figure shows the posterior distribution marginalized over all other
+    nuisance parameters in \eq{rot-kernel}.  This is consistent with the
+    published rotation period made using the full
     \kepler\ baseline shown as a vertical gray line \citep{Mathur:2014}.
     \figurelabel{rotation}}
 \end{center}
@@ -1621,12 +1622,13 @@ Evans:2015, Foreman-Mackey:2016b, Grunblatt:2016}.
 
 In \eq{gp-likelihood} the physical parameters of the exoplanet are called
 $\bvec{\theta}$ and, in this example, the mean function $\mu_\bvec{\theta}(t)$
-is a limb-darkened transit light curve \citep{Mandel:2002} and the parameters
-$\bvec{\theta}$ are the orbital period $P_\mathrm{orb}$, the transit duration
-$T$, the phase or epoch $t_0$, the impact parameter $B$, the radius of the
-planet in units of the stellar radius $R_P/R_\star$, and two parameters
-describing the limb-darkening profile of the star
-\citep{Claret:2011,Kipping:2013}.
+is a limb-darkened transit light curve \citep{Mandel:2002,
+Foreman-Mackey:2016a} and the parameters $\bvec{\theta}$ are the orbital
+period $P_\mathrm{orb}$, the transit duration $T$, the phase or epoch $t_0$,
+the impact parameter $b$, the radius of the planet in units of the stellar
+radius $R_P/R_\star$, the baseline relative flux of the light curve $f_0$, and
+two parameters describing the limb-darkening profile of the star
+\citep{Claret:2011, Kipping:2013}.
 As in \sect{rotation}, we model the stellar variability using a GP model
 with a kernel given by \eq{rot-kernel} and fit for the parameters of the
 exoplanet $\bvec{\theta}$ and the stellar variability $\bvec{\alpha}$
@@ -1704,7 +1706,24 @@ computation using a general direct solver.
 
 \subsection{Summary}
 
-\dfmtodo{Do this.}
+\response{
+In this section, we demonstrated five potential use cases for \celerite.
+These examples span a range of data sizes and model complexities, and the
+last three are all based on active areas of research with immediate real-world
+applicability.
+The sizes of these datasets are modest on the scale of some existing and
+forthcoming survey datasets because we designed the experiments to be easily
+reproducible but, even in these cases, the inferences made here would be
+intractable without substantial computational investment.
+
+Table~\ref{tab:example-stats} lists the specifications of each example.
+
+In Example~3, for example, we inferred the rotation period of a star observed
+by \kepler\ with a cost of about 4~CPU-minutes.
+By contrast, the same inference using a general but optimized Cholesky
+factorization routine would require nearly 400~CPU-hours.
+The upcoming \tess\ Mission will observe \dfmtodo{XXX} stars.
+}
 
 \input{figures/example-stats}
 
