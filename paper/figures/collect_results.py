@@ -24,6 +24,8 @@ for i, example in enumerate(["simulated/correct", "simulated/wrong-qpo",
          r"& {neff:.0f} \\")
         .format(i+1, **data)
     )
+    print(data["direct_time"] * data["ntot"] / 1000.0 / 60.0 / 60.0,
+          data["time"] * data["ntot"] / 1000.0 / 60.0)
 
     with open(macros_fn, "a") as f:
         f.write("\\newcommand{{\\example{0}ndata}}{{{1}}}\n"
