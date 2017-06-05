@@ -829,10 +829,10 @@ but in general the filtering kernel will not differ from the full kernel by a di
 
 %Gaussian process regression may also be used for prediction and interpolation at future or missing data, based upon current measurements.  With \celerite\ it proves possible to predict the mean value at times ${t_m; m=1,...,M}$ based upon measured times ${t_n; n=1,...,N}$ in $\mathcal{O}(N+M)$ operations.
 
-For predicting or interpolating missing or future data points (and their variance) at times $\bvec{t_*} = \left\{t_{*,1},t_{*,2},...,t_{*,M}\right\}$, we need to apply the covariance between the measured and predicted times.  The mean of the predicted values is (equation 2.19 from Rasmussen \& Williams):
+For predicting or interpolating missing or future data points (and their variance) at times $\bvec{t^*} = \left\{t_{1}^*,t_{2}^*,...,t_{M}^*\right\}$, we need to apply the covariance between the measured and predicted times.  The mean of the predicted values is (equation 2.19 from Rasmussen \& Williams):
 \begin{eqnarray}
-\bar f_* &=& K(\bvec{t_*},\bvec{t}) \left[K(\bvec{t},\bvec{t})+\sigma^2 I\right]^{-1} \bvec{y},\\
-&=& K(\bvec{t_*},\bvec{t}) \bvec{z}
+\bar f_* &=& K(\bvec{t^*},\bvec{t}) \left[K(\bvec{t},\bvec{t})+\sigma^2 I\right]^{-1} \bvec{y},\\
+&=& K(\bvec{t^*},\bvec{t}) \bvec{z}
 \end{eqnarray}
 where $\bvec{y}$ is the vector of measurements and $\sigma$ is the measurement uncertainty, and
 $\bvec{z} = \left[K(\bvec{t},\bvec{t})+\sigma^2 I\right]^{-1} \bvec{y}$ can be computed from
@@ -840,55 +840,55 @@ the Cholesky decomposition of the full covariance matrix in ${\cal O}(J^2N)$.
 
 Since the covariance matrix may be written as the sum of exponentials, the predicted mean is given by
 \begin{eqnarray}
-\bar f_{*,m} &=& K(t_{*,m},\bvec{t}) \bvec{z} \\
-&=& \sum_n \sum_{j=1}^J e^{-c_j \vert t_{*,m}-t_n\vert}\left(a_j \cos{(d_j \vert t_{*,m}-t_n\vert)} +b_j \sin{(d_j \vert t_{*,m}-t_n\vert)}\right) z_j,
+\bar f^*_m &=& K(t^*_m,\bvec{t}) \bvec{z} \\
+&=& \sum_n \sum_{j=1}^J e^{-c_j \vert t^*_m-t_n\vert}\left(a_j \cos{(d_j \vert t^*_m-t_n\vert)} +b_j \sin{(d_j \vert t^*_m-t_n\vert)}\right) z_j,
 \end{eqnarray}
 for $m =1$ to $M$.
-Dividing the sum over $n$ into $\{t_1,...,t_{n_0}\} < t_{*,m}$ and
-$\{t_{n0+1},...,t_N\} \ge t_{*,m}$, gives
+Dividing the sum over $n$ into $\{t_1,...,t_{n_0}\} < t^*_m$ and
+$\{t_{n0+1},...,t_N\} \ge t^*_m$, gives
 \begin{eqnarray}
-\bar f_{*,m} &=& \sum_{j=1}^J\sum_{n=1}^{n_0} e^{-c_j(t_{*,m}-t_n)} \left[a_j \cos{(d_j(t_{*,m}-t_n))}+b_j\sin{(d_j(t_{*,m}-t_n))}\right] z_n \\
-&+& \sum_{j=1}^J\sum_{n=n_0+1}^N  e^{-c_j(t_n-t_{*,m})} \left[a_j \cos{(d_j(t_n-t_{*,m}))}+b_j\sin{(d_j(t_n-t_{*,m}))}\right] z_n.
+\bar f^*_m &=& \sum_{j=1}^J\sum_{n=1}^{n_0} e^{-c_j(t^*_m-t_n)} \left[a_j \cos{(d_j(t^*_m-t_n))}+b_j\sin{(d_j(t^*_m-t_n))}\right] z_n \\
+&+& \sum_{j=1}^J\sum_{n=n_0+1}^N  e^{-c_j(t_n-t^*_m)} \left[a_j \cos{(d_j(t_n-t^*_m))}+b_j\sin{(d_j(t_n-t^*_m))}\right] z_n.
 \end{eqnarray}
 We can compute this recursively.  Defining
 \begin{eqnarray}
-Q^-_{n_0,i} &=& \left(Q^-_{n_0-1,i}+z_n\tilde V_{n_0,i}\right)e^{-c_j(t_{n+1}-t_n)},\\
-X^-_{m,n_0,i} &=& e^{-c_j(t_m^*-t_{n+1})}\tilde U_{m,i},\\
-Q^+_{n_0,i} &=& \left(Q^+_{n_0+1,i}+z_n\tilde U_{n,i}\right)e^{-c_j(t_n-t_{n-1})},\\
+Q^-_{n,i} &=& \left(Q^-_{n-1,i}+z_n\tilde V_{n,i}\right)e^{-c_j(t_{n+1}-t_{n})},\\
+X^-_{m,n,i} &=& e^{-c_j(t_m^*-t_{n+1})}\tilde U_{m,i},\\
+Q^+_{n,i} &=& \left(Q^+_{n+1,i}+z_n\tilde U_{n,i}\right)e^{-c_j(t_{n}-t_{n-1})},\\
 X^+_{m,n,i} &=& e^{-c_j(t_{n-1}-t_m^*)} \tilde V_{m,i},
 \end{eqnarray}
-where $Q^-_{0,i} = 0$ and $Q^+_{N+1,i}=0$ for $i=1$ to $2J$, and in $X^\pm_{m,n,i}$ the expressions
-for $\tilde U_{m,i}$ and $\tilde V_{m,i}$ are evaluted at $t_{m}^*$.
+where $t_0=t_1$, $t_{N+1}=t_N$, $Q^-_{0,i} = 0$ and $Q^+_{N+1,i}=0$ for $i=1$ to $2J$, and in $X^\pm_{m,n,i}$ the expressions
+for $\tilde U_{m,i}$ and $\tilde V_{m,i}$ are evaluted at $t_m^*$.
 Two sweeps must be carried out, upward in $n$ and $m$ to compute $Q^-$ recursively, and downward in
 $m$ and $n$ to compute $Q^+$ recursively, for a total scaling of $\approx \mathcal{O}(J^2N+J(N+M))$.
 For each value of $m$, $Q^\pm$ are recursively updated over $n$ until $n_0$ is reached, at which
 point the predicted mean can be computed from
 \begin{equation}
-\bar f_{*,i} = \sum_{i=1}^{2J} \left[Q^-_{n_0,i}X^-_{m,n_0,i}+Q^+_{n_0,i}X^+_{m,n_0,i}\right],
+\bar f^*_i = \sum_{i=1}^{2J} \left[Q^-_{n_0,i}X^-_{m,n_0,i}+Q^+_{n_0+1,i}X^+_{m,n_0+1,i}\right],
 \end{equation}
 
-%The variance evaluated at future predicted times $\bvec{t_*} > \bvec{t}$ may be obtained in a similar manner (equation 2.19 from Rasmussen \& Williams):
+%The variance evaluated at future predicted times $\bvec{t^*} > \bvec{t}$ may be obtained in a similar manner (equation 2.19 from Rasmussen \& Williams):
 %\begin{eqnarray}
-%\mathrm{var}(f_{*,i+1}) &=& K(t_{*,i+1},t_{*,i+1}) - K(t_{*,i+1},\bvec{t}^T)K(\bvec{t},\bvec{t})^{-1} K(\bvec{t},t_{*,i+1})\\
-%&=& K(t_{*,i+1},t_{*,i+1}) - \sum_p\sum_q \alpha_p \alpha_q e^{-(\beta_p+\beta_q)(t_{*,i+1}-t_{*,i})} \\
-%&\times& e^{-\beta_p(t_{*,i}-\bvec{t}^T)}K(\bvec{t},\bvec{t})^{-1} e^{-\beta_q(t_{*,i}-\bvec{t})}\\
-%&=& K(t_{*,i+1},t_{*,i+1}) - \sum_{p,q} \alpha_p \alpha_q e^{-(\beta_p+\beta_q)(t_{*,i+1}-t_{*,i})} P_{i,p,q}\\
+%\mathrm{var}(f^*_{i+1}) &=& K(t^*_{i+1},t^*_{i+1}) - K(t^*_{i+1},\bvec{t}^T)K(\bvec{t},\bvec{t})^{-1} K(\bvec{t},t^*_{i+1})\\
+%&=& K(t^*_{i+1},t^*_{i+1}) - \sum_p\sum_q \alpha_p \alpha_q e^{-(\beta_p+\beta_q)(t^*_{i+1}-t^*_{i})} \\
+%&\times& e^{-\beta_p(t^*_{i}-\bvec{t}^T)}K(\bvec{t},\bvec{t})^{-1} e^{-\beta_q(t^*_{i}-\bvec{t})}\\
+%&=& K(t^*_{i+1},t^*_{i+1}) - \sum_{p,q} \alpha_p \alpha_q e^{-(\beta_p+\beta_q)(t^*_{i+1}-t^*_{i})} P_{i,p,q}\\
 %\end{eqnarray}
 %for $1 \le p,q \le J$,
 %where
 %\begin{equation}
-%P_{i,p,q} = e^{-\beta_p(t_{*,i}-\bvec{t}^T)}
-%K(\bvec{t},\bvec{t})^{-1} e^{-\beta_q(t_{*,i}-\bvec{t})}.
+%P_{i,p,q} = e^{-\beta_p(t^*_{i}-\bvec{t}^T)}
+%K(\bvec{t},\bvec{t})^{-1} e^{-\beta_q(t^*_{i}-\bvec{t})}.
 %\end{equation}
 %For $i=1$, $P_{1,p,q}$ can be obtained in $\mathcal{O}(J^2N)$ operations
 %with the Cholesky decomposition.
 %Subsequent $P_{i+1,p,q}$ may be obtained recursively as
 %\begin{equation}
-%P_{i+1,p,q} = e^{-(\beta_p+\beta_q)(t_{*,i+1}- t_{*,i})} P_{i,p,q},
+%P_{i+1,p,q} = e^{-(\beta_p+\beta_q)(t^*_{i+1}- t^*_{i})} P_{i,p,q},
 %\end{equation}
 %in $\mathcal{O}(J^2M)$ operations, for a total of $\approx \mathcal{O}(J^2(N+M))$ operations.
 %Note that this variance formula {\it only} works for prediction; we have
-%yet to derive a formula for which $\bvec{t_*}$ and $\bvec{t}$ are
+%yet to derive a formula for which $\bvec{t^*}$ and $\bvec{t}$ are
 %interspersed.
 
 \section{celerite as a model of stellar variations}\sectlabel{sho}
