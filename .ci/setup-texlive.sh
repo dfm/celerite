@@ -8,6 +8,7 @@ tar -xf install-tl.tar.gz -C install-tl --strip-components 1
 
 # Install only the necessary packages
 mkdir -p texlive
-TEXLIVE_INSTALL_PREFIX=`pwd`/texlive install-tl/install-tl -profile .ci/texlive.profile
+TEXLIVE_INSTALL_PREFIX=`pwd`/texlive install-tl/install-tl -profile .ci/texlive.profile -repository ftp://tug.org/historic/systems/texlive/2016/tlnet-final
 export PATH=`pwd`/texlive/bin/x86_64-linux:$PATH
+tlmgr option repository ftp://tug.org/historic/systems/texlive/2016/tlnet-final
 tlmgr install lineno revtex textcase epsf xcolor ulem microtype multirow helvetic
