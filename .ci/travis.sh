@@ -7,7 +7,7 @@ then
   then
     echo "Building the paper..."
     export CELERITE_BUILDING_PAPER=true
-    source "$( dirname "${BASH_SOURCE[0]}" )"/setup-texlive.sh
+    source "$( dirname "${BASH_SOURCE[0]}" )"/setup-tectonic.sh
     return
   fi
   export CELERITE_BUILDING_PAPER=false
