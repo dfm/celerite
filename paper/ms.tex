@@ -690,9 +690,9 @@ the $U$, $V$, and $W$ matrices have size $N \times (J_{real}+2J_{complex})$.
 
 Na\"ive implementation of the algorithm in \eq{algorithm} will have numerical
 overflow and underflow issues in many realistic cases because both $U$ and $V$
-have factors of the form $e^{\pm c_j t}$, where $t$ can be any arbitrarily large
-real number.
-This can be avoided with the appropriate reparameterization.
+have factors of the form $e^{\pm c_j t}$, where $t$ can be any arbitrarily large(small)
+real number;  these factors can cancel in the end, but will not if over(under)flow
+is an issue.  This can be avoided with the appropriate reparameterization.
 We define the following pre-conditioned variables
 \begin{eqnarray}
 \tilde{U}_{n,2\,j-1} &=& a_j\,\cos(d_j\,t_n) + b_j\,\sin(d_j\,t_n) \\
@@ -766,7 +766,7 @@ of the covariance matrix:
 \end{equation}
 where $q_i \sim N(0,1)$.  Note that $K_\bvec{\alpha} = K_\bvec{\alpha}^{1/2} \left(K_\bvec{\alpha}^{1/2}\right)^T$, which
 comparing with the Cholesky factorization gives $K_\bvec{\alpha}^{1/2} = L D^{1/2}$,
-where $(D^{1/2})_{ii} = \sqrt{D_{ii}}$.  Also note that $\mathcal{Q} = -2 \mathcal{L}$
+where $(D^{1/2})_{ii} = \sqrt{D_{ii}}$.  Also note that the first term of $-2 \mathcal{L}$
 with $\mu_\bvec{\theta} =0$ is given by
 \begin{eqnarray}
 \mathcal{Q} &=&\bvec{y}^T K_\bvec{\alpha}^{-1} \bvec{y}\\
