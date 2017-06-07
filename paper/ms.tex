@@ -565,97 +565,6 @@ V_{m,2\,j} &=& e^{c_j\,t_m}\,\sin(d_j\,t_m) \\
 A_{n,n} &=& \sigma_n^2 + \sum_{j=1}^J a_j \quad.
 \end{eqnarray}
 
-To help clarify these equations, we write out here an example of a semi-separable matrix with a
-single \celeriteterm\ term with $c=d=1$: %and $N=3$
-\begin{eqnarray}\eqlabel{semi-separable-structure}
-K&=&%
-\begin{pmatrix}
-%    {\scriptscriptstyle a+{\sigma_1}^2 }& {\scriptscriptstyle e^{-c\,\tau_{2,1}}\left(a\,\cos{(d \tau_{2,1})}+b\,\sin{(d \tau_{2,1})}\right)} & {\scriptscriptstyle e^{-c\,\tau_{3,1}}\left(a\,\cos{(d \tau_{3,1})}+b\,\sin{(d \tau_{3,1})}\right)}\\
-%    {\scriptscriptstyle e^{-c\,\tau_{2,1}}\left(a\,\cos{(d \tau_{2,1})}+b\,\sin{(d \tau_{2,1})}\right)}&{\scriptscriptstyle a+{\sigma_2}^2 }& {\scriptscriptstyle e^{-c\,\tau_{3,2}}\left(a\,\cos{(d \tau_{3,2})}+b\,\sin{(d \tau_{3,2})}\right)}\\
-%    {\scriptscriptstyle e^{-c\,\tau_{3,2}}\left(a\,\cos{(d \tau_{3,2})}+b\,\sin{(d \tau_{3,2})}\right)}&{\scriptscriptstyle  e^{-c\,\tau_{3,2}}\left(a\,\cos{(d \tau_{3,2})}+b\,\sin{(d \tau_{3,2})}\right)} & \scriptscriptstyle{a + {\sigma_3}^2}
-%    {\scriptscriptstyle a+{\sigma_1}^2 }& {\scriptscriptstyle e^{-\tau_{2,1}}\left(a\,\cos{\tau_{2,1}}+b\,\sin{\tau_{2,1}}\right)} & {\scriptscriptstyle e^{-\tau_{3,1}}\left(a\,\cos{\tau_{3,1}}+b\,\sin{\tau_{3,1}}\right)}\\
-%    {\scriptscriptstyle e^{-\tau_{2,1}}\left(a\,\cos{\tau_{2,1}}+b\,\sin{\tau_{2,1}}\right)}&{\scriptscriptstyle a+{\sigma_2}^2 }& {\scriptscriptstyle e^{-\tau_{3,2}}\left(a\,\cos{\tau_{3,2}}+b\,\sin{\tau_{3,2}}\right)}\\
-%    {\scriptscriptstyle e^{-\tau_{3,2}}\left(a\,\cos{\tau_{3,2}}+b\,\sin{\tau_{3,2}}\right)}&{\scriptscriptstyle  e^{-\tau_{3,2}}\left(a\,\cos{\tau_{3,2}}+b\,\sin{\tau_{3,2}}\right)} & \scriptscriptstyle{a + {\sigma_3}^2}
-    {\scriptscriptstyle a+{\sigma_1}^2 }& {\scriptscriptstyle e^{-\tau_{21}}\left(a\,\cos{\tau_{21}}+b\,\sin{\tau_{21}}\right)} & {\scriptscriptstyle e^{-\tau_{31}}\left(a\,\cos{\tau_{31}}+b\,\sin{\tau_{31}}\right)} & \ldots\\
-    {\scriptscriptstyle e^{-\tau_{21}}\left(a\,\cos{\tau_{21}}+b\,\sin{\tau_{21}}\right)}&{\scriptscriptstyle a+{\sigma_2}^2 }& {\scriptscriptstyle e^{-\tau_{32}}\left(a\,\cos{\tau_{32}}+b\,\sin{\tau_{32}}\right)} & \ldots\\
-    {\scriptscriptstyle e^{-\tau_{32}}\left(a\,\cos{\tau_{32}}+b\,\sin{\tau_{32}}\right)}&{\scriptscriptstyle  e^{-\tau_{32}}\left(a\,\cos{\tau_{32}}+b\,\sin{\tau_{32}}\right)} & \scriptscriptstyle{a + {\sigma_3}^2} & \ldots \\
-    \ldots & \ldots & \ldots & \ldots
-\end{pmatrix}\\
-&=&
-\begin{pmatrix}
-%    {\scriptscriptstyle a+{\sigma_1}^2} & {\scriptscriptstyle 0} & {\scriptscriptstyle 0} \\
-%    {\scriptscriptstyle 0} & {\scriptscriptstyle a+{\sigma_2}^2 }& {\scriptscriptstyle 0} \\
-%    {\scriptscriptstyle 0} & {\scriptscriptstyle 0} & {\scriptscriptstyle a + {\sigma_3}^2}
-    {\scriptscriptstyle a+{\sigma_1}^2} & {\scriptscriptstyle 0} & {\scriptscriptstyle 0} & \ldots\\
-    {\scriptscriptstyle 0} & {\scriptscriptstyle a+{\sigma_2}^2 }& {\scriptscriptstyle 0} & \ldots\\
-    {\scriptscriptstyle 0} & {\scriptscriptstyle 0} & {\scriptscriptstyle a + {\sigma_3}^2} & \ldots\\
-%    {\scriptscriptstyle a+{\sigma_1}^2} & {\scriptscriptstyle 0} & \ldots \\
-%    {\scriptscriptstyle 0} & {\scriptscriptstyle a+{\sigma_2}^2 }& \ldots \\
-    \ldots & \ldots & \ldots & \ldots
-\end{pmatrix}\\
-&+&\mathrm{tril}\left[\begin{pmatrix}
-%    {\scriptscriptstyle e^{-c\,t_1}\left(a\,\cos{(d t_1)}+b\,\sin{(d t_1)}\right)}&
-%    {\scriptscriptstyle e^{-c\,t_1}\left(a\,\sin{(d t_1)}-b\,\cos{(d t_1)}\right)}\\
-%    {\scriptscriptstyle e^{-c\,t_2}\left(a\,\cos{(d t_2)}+b\,\sin{(d t_2)}\right)}&
-%    {\scriptscriptstyle e^{-c\,t_2}\left(a\,\sin{(d t_2)}-b\,\cos{(d t_2)}\right)}\\
-%    {\scriptscriptstyle e^{-c\,t_3}\left(a\,\cos{(d t_3)}+b\,\sin{(d t_3)}\right)}&
-%    {\scriptscriptstyle e^{-c\,t_3}\left(a\,\sin{(d t_3)}-b\,\cos{(d t_3)}\right)}
-    {\scriptscriptstyle e^{-t_1}\left(a\,\cos{t_1}+b\,\sin{t_1}\right)}&
-    {\scriptscriptstyle e^{-t_1}\left(a\,\sin{t_1}-b\,\cos{t_1}\right)}\\
-    {\scriptscriptstyle e^{-t_2}\left(a\,\cos{t_2}+b\,\sin{t_2}\right)}&
-    {\scriptscriptstyle e^{-t_2}\left(a\,\sin{t_2}-b\,\cos{t_2}\right)}\\
-    {\scriptscriptstyle e^{-t_3}\left(a\,\cos{t_3}+b\,\sin{t_3}\right)}&
-    {\scriptscriptstyle e^{-t_3}\left(a\,\sin{t_3}-b\,\cos{t_3}\right)}\\
-   \ldots & \ldots
-\end{pmatrix} %\right.\\
-%&\times &
-\times
-%\left.
-\begin{pmatrix}
-% {\scriptscriptstyle e^{c\,t_1} \cos{(d t_1)}} &{\scriptscriptstyle e^{c\,t_2} \cos{(d t_2)}} & {\scriptscriptstyle e^{c\,t_3} \cos{(d t_3)}}\\
-% {\scriptscriptstyle e^{c\,t_1} \sin{(d t_1)}} & {\scriptscriptstyle e^{c\,t_2} \sin{(d t_2)}} & {\scriptscriptstyle e^{c\,t_3} \sin{(d t_3)}}
-% {\scriptscriptstyle e^{t_1} \cos{t_1}} & {\scriptscriptstyle e^{t_2} \cos{t_2}} & {\scriptscriptstyle e^{t_3} \cos{t_3}}\\
-% {\scriptscriptstyle e^{t_1} \sin{t_1}} & {\scriptscriptstyle e^{t_2} \sin{t_2}} & {\scriptscriptstyle e^{t_3} \sin{t_3}}
- {\scriptscriptstyle e^{t_1} \cos{t_1}} & {\scriptscriptstyle e^{t_1} \sin{t_1}} \\
- {\scriptscriptstyle e^{t_2} \cos{t_2}} & {\scriptscriptstyle e^{t_2} \sin{t_2}}\\
- {\scriptscriptstyle e^{t_3} \cos{t_3}} & {\scriptscriptstyle e^{t_3} \sin{t_3}}\\
- \ldots & \ldots
-\end{pmatrix}^T\right]\\
-&+&
-\mathrm{triu}\left[\begin{pmatrix}
-% {\scriptscriptstyle e^{c\,t_1} \cos{(d t_1)}} & {\scriptscriptstyle e^{c\,t_1} \sin{(d t_1)}} \\
-% {\scriptscriptstyle e^{c\,t_2} \cos{(d t_2)}} & {\scriptscriptstyle e^{c\,t_2} \sin{(d t_2)}}\\
-% {\scriptscriptstyle e^{c\,t_3} \cos{(d t_3)}} & {\scriptscriptstyle e^{c\,t_3} \sin{(d t_3)}}
- {\scriptscriptstyle e^{t_1} \cos{t_1}} & {\scriptscriptstyle e^{t_1} \sin{t_1}} \\
- {\scriptscriptstyle e^{t_2} \cos{t_2}} & {\scriptscriptstyle e^{t_2} \sin{t_2}}\\
- {\scriptscriptstyle e^{t_3} \cos{t_3}} & {\scriptscriptstyle e^{t_3} \sin{t_3}}\\
- \ldots & \ldots
-\end{pmatrix} % \right.\\
-\times
-%\left.
-\begin{pmatrix}
-%    {\scriptscriptstyle e^{-c\,t_1}\left(a\,\cos{(d t_1)}+b\,\sin{(d t_1)}\right)}&
-%    {\scriptscriptstyle e^{-c\,t_2}\left(a\,\cos{(d t_2)}+b\,\sin{(d t_2)}\right)}&
-%    {\scriptscriptstyle e^{-c\,t_3}\left(a\,\cos{(d t_3)}+b\,\sin{(d t_3)}\right)}\\
-%    {\scriptscriptstyle e^{-c\,t_1}\left(a\,\sin{(d t_1)}-b\,\cos{(d t_1)}\right)}&
-%    {\scriptscriptstyle e^{-c\,t_2}\left(a\,\sin{(d t_2)}-b\,\cos{(d t_2)}\right)}&
-%    {\scriptscriptstyle e^{-c\,t_3}\left(a\,\sin{(d t_3)}-b\,\cos{(d t_3)}\right)}
-%    {\scriptscriptstyle e^{-t_1}\left(a\,\cos{t_1}+b\,\sin{t_1}\right)}&
-%    {\scriptscriptstyle e^{-t_2}\left(a\,\cos{t_2}+b\,\sin{t_2}\right)}&
-%    {\scriptscriptstyle e^{-t_3}\left(a\,\cos{t_3}+b\,\sin{t_3}\right)}\\
-%    {\scriptscriptstyle e^{-t_1}\left(a\,\sin{t_1}-b\,\cos{t_1}\right)}&
-%    {\scriptscriptstyle e^{-t_2}\left(a\,\sin{t_2}-b\,\cos{t_2}\right)}&
-%    {\scriptscriptstyle e^{-t_3}\left(a\,\sin{t_3}-b\,\cos{t_3}\right)}
-    {\scriptscriptstyle e^{-t_1}\left(a\,\cos{t_1}+b\,\sin{t_1}\right)}&
-    {\scriptscriptstyle e^{-t_1}\left(a\,\sin{t_1}-b\,\cos{t_1}\right)}\\
-    {\scriptscriptstyle e^{-t_2}\left(a\,\cos{t_2}+b\,\sin{t_2}\right)}&
-    {\scriptscriptstyle e^{-t_2}\left(a\,\sin{t_2}-b\,\cos{t_2}\right)}\\
-    {\scriptscriptstyle e^{-t_3}\left(a\,\cos{t_3}+b\,\sin{t_3}\right)}&
-    {\scriptscriptstyle e^{-t_3}\left(a\,\sin{t_3}-b\,\cos{t_3}\right)}\\
-   \ldots & \ldots
-\end{pmatrix}^T\right]\\
-&=& A + \mathrm{tril}(U V^T) + \mathrm{triu}(V U^T).
-\end{eqnarray}
 Note that rather than storing the full $N \times N$ covariance matrix, it
 is only necessary to store the $2J \times N$ matrices $U$ and $V$, as well
 as the diagonal terms, for a total storage volume of $(4J+1) \times N$ floating
@@ -785,140 +694,6 @@ where $g_{N+1,j} = 0$ for all $j$.
 The total cost of the forward and backward substitution passes scales as
 $\mathcal{O}(N\,J)$.
 
-\subsection{Simulation}
-
-Simulation of a Gaussian process for large $N$ requires multiplying an
-$N$-dimensional vector of Gaussian normal deviates, $\bvec{q}$, by the square root
-of the covariance matrix:
-\begin{equation}
-\bvec{y} = K_\bvec{\alpha}^{1/2} \bvec{q},
-\end{equation}
-where $q_i \sim N(0,1)$.  Note that $K_\bvec{\alpha} = K_\bvec{\alpha}^{1/2} \left(K_\bvec{\alpha}^{1/2}\right)^T$, which
-comparing with the Cholesky factorization gives $K_\bvec{\alpha}^{1/2} = L D^{1/2}$,
-where $(D^{1/2})_{ii} = \sqrt{D_{ii}}$.  Also note that $\mathcal{Q} = -2 \mathcal{L}$
-with $\mu_\bvec{\theta} =0$ is given by
-\begin{eqnarray}
-\mathcal{Q} &=&\bvec{y}^T K_\bvec{\alpha}^{-1} \bvec{y}\\
-&=& \bvec{y}^T \left(K_\bvec{\alpha}^{-1/2}\right)^T K_\bvec{\alpha}^{-1/2} \bvec{y}\\
-&=& \bvec{q}^T K_\bvec{\alpha}^{1/2} \left(K_\bvec{\alpha}^{-1/2}\right)^T K_\bvec{\alpha}^{-1/2} K_\bvec{\alpha}^{1/2} \bvec{q}\\
-&=& \bvec{q}^T \bvec{q}.
-\end{eqnarray}
-The last quantity is simply the dot product of an $N$-dimensional vector of independent standard normal random variables with itself,
-which is distributed according to the chi-squared distribution with $N$ degrees of freedom, i.e.\ $\mathcal{Q} \sim \chi_N^2$.
-
-To generate a draw from a Gaussian process with a specified \celerite\ model requires carrying out the
-low-rank Cholesky decomposition first, generating the vector $\bvec{q}$ of random normal deviates, and then multiplying
-\begin{equation}
-\bvec{y} = L D^{1/2} \bvec{q}.
-\end{equation}
-This may be carried out in $\mathcal{O}(JN)$ operations with
-\begin{eqnarray}
-f_{n,j} &=& \phi_{n-1,j} \left(f_{n-1,j} + \tilde{W}_{n-1,j} D_{n-1,n-1}^{1/2} q_{n-1}\right)\\
-y_n &=& D_{n,n}^{1/2} q_n + \sum_{k=1}^{2J} \tilde{U}_{n,k} f_{n,k}
-\end{eqnarray}
-for $n = 1$ to $N$ and $j=1$ to $2J$, with $f_{0,j} = 0$ for all $j$ and $q_0 = 0$.
-\agoltodo{Check that these equations are in fact correct.}
-We expect that this simulation algorithm will be useful for test-driving Gaussian
-process inference algorithms applied to large datasets; even simulation of
-Gaussian processes becomes prohibitive for large $N$ if standard Cholesky decomposition
-and multiplication are used.
-
-\subsection{Multiplication and filtering}
-
-Multiplication of the full covariance matrix times a vector can be accomplished in $\mathcal{O}(JN)$
-operations with a stable recursive algorithm using the semi-separable form:
-\begin{equation}
-\bvec{y} =  \left(A + \mathrm{tril}(U V^T) + \mathrm{triu}(V U^T)\right) \bvec{z}.
-\end{equation}
-The algorithm for multiplication is given by
-\begin{eqnarray}
-f^+_{n,j} &=& \phi_{n+1,j} \left(f^+_{n+1,j} + \sum_{j=1}^J \tilde U_{n+1,j} z_{n+1}\right)\\
-f^-_{n,j} &=& \phi_{n,j} \left(f^-_{n-1,j} + \sum_{j=1}^J \tilde V_{n-1,j} z_{n-1}\right)\\
-y_n &=& A_{n,n} z_n + \sum_{j=1}^J \left[ \tilde V_{n,j} f^+_{n,j} + \tilde U_{n,j} f^-_{n,j}\right],
-\end{eqnarray}
-where $f^+_{N,j} = 0$ and $f^-_{1,j} = 0$ for all $j=1,...,J$.  The recursion requires
-two sweeps, a sweep downward from $n=N-1$ to $n=1$ to compute $f^+_{n,j}$ and a sweep upwards
-from $n=2$ to $n=N$ to compute $f^-_{n,j}$.  \dfmtodo{I'm getting confused by zero-based
-indexing in your C code...  this may be worth scrutinizing to see if I screwed up.}
-
-Multiplication of the full covariance matrix is useful, for example, for isolating
-a particular component of a kernel, which amounts to a customized filter of a dataset.
-For example, a white-noise filter is given by:
-\begin{eqnarray}
-\bar f &=& K(\bvec{t},\bvec{t}) \left[K(\bvec{t},\bvec{t})+\sigma^2I\right]^{-1} \bvec{y},\\
-&=& K(\bvec{t},\bvec{t}) \bvec{z}
-\end{eqnarray}
-where $\bvec{y}$ is the vector of measurements and $\bvec{z}$ may be computed from the Cholesky
-decomposition as described above.  The second step multiplication of the white-noise-free
-kernel times $\bvec{z}$ may be accomplished in $\mathcal{O}(JN)$ steps with this multiplication algorithm.
-Note that for this particular example it is more efficient to compute $\bar f = \bvec{y} -\sigma^2 I \bvec{z}$,
-but in general the filtering kernel will not differ from the full kernel by a diagonal matrix.
-
-\subsection{Prediction and interpolation}
-
-%Gaussian process regression may also be used for prediction and interpolation at future or missing data, based upon current measurements.  With \celerite\ it proves possible to predict the mean value at times ${t_m; m=1,...,M}$ based upon measured times ${t_n; n=1,...,N}$ in $\mathcal{O}(N+M)$ operations.
-
-For predicting or interpolating missing or future data points (and their variance) at times $\bvec{t^*} = \left\{t_{1}^*,t_{2}^*,...,t_{M}^*\right\}$, we need to apply the covariance between the measured and predicted times.  The mean of the predicted values is (equation 2.19 from Rasmussen \& Williams):
-\begin{eqnarray}
-\bar f_* &=& K(\bvec{t^*},\bvec{t}) \left[K(\bvec{t},\bvec{t})+\sigma^2 I\right]^{-1} \bvec{y},\\
-&=& K(\bvec{t^*},\bvec{t}) \bvec{z}
-\end{eqnarray}
-where $\bvec{y}$ is the vector of measurements and $\sigma$ is the measurement uncertainty, and
-$\bvec{z} = \left[K(\bvec{t},\bvec{t})+\sigma^2 I\right]^{-1} \bvec{y}$ can be computed from
-the Cholesky decomposition of the full covariance matrix in ${\cal O}(J^2N)$.
-
-Since the covariance matrix may be written as the sum of exponentials, the predicted mean is given by
-\begin{eqnarray}
-\bar f^*_m &=& K(t^*_m,\bvec{t}) \bvec{z} \\
-&=& \sum_n \sum_{j=1}^J e^{-c_j \vert t^*_m-t_n\vert}\left(a_j \cos{(d_j \vert t^*_m-t_n\vert)} +b_j \sin{(d_j \vert t^*_m-t_n\vert)}\right) z_j,
-\end{eqnarray}
-for $m =1$ to $M$.
-Dividing the sum over $n$ into $\{t_1,...,t_{n_0}\} < t^*_m$ and
-$\{t_{n0+1},...,t_N\} \ge t^*_m$, gives
-\begin{eqnarray}
-\bar f^*_m &=& \sum_{j=1}^J\sum_{n=1}^{n_0} e^{-c_j(t^*_m-t_n)} \left[a_j \cos{(d_j(t^*_m-t_n))}+b_j\sin{(d_j(t^*_m-t_n))}\right] z_n \\
-&+& \sum_{j=1}^J\sum_{n=n_0+1}^N  e^{-c_j(t_n-t^*_m)} \left[a_j \cos{(d_j(t_n-t^*_m))}+b_j\sin{(d_j(t_n-t^*_m))}\right] z_n.
-\end{eqnarray}
-We can compute this recursively.  Defining
-\begin{eqnarray}
-Q^-_{n,i} &=& \left(Q^-_{n-1,i}+z_n\tilde V_{n,i}\right)e^{-c_j(t_{n+1}-t_{n})},\\
-X^-_{m,n,i} &=& e^{-c_j(t_m^*-t_{n+1})}\tilde U_{m,i},\\
-Q^+_{n,i} &=& \left(Q^+_{n+1,i}+z_n\tilde U_{n,i}\right)e^{-c_j(t_{n}-t_{n-1})},\\
-X^+_{m,n,i} &=& e^{-c_j(t_{n-1}-t_m^*)} \tilde V_{m,i},
-\end{eqnarray}
-where $t_0=t_1$, $t_{N+1}=t_N$, $Q^-_{0,i} = 0$ and $Q^+_{N+1,i}=0$ for $i=1$ to $2J$, and in $X^\pm_{m,n,i}$ the expressions
-for $\tilde U_{m,i}$ and $\tilde V_{m,i}$ are evaluted at $t_m^*$.
-Two sweeps must be carried out, upward in $n$ and $m$ to compute $Q^-$ recursively, and downward in
-$m$ and $n$ to compute $Q^+$ recursively, for a total scaling of $\approx \mathcal{O}(J^2N+J(N+M))$.
-For each value of $m$, $Q^\pm$ are recursively updated over $n$ until $n_0$ is reached, at which
-point the predicted mean can be computed from
-\begin{equation}
-\bar f^*_i = \sum_{i=1}^{2J} \left[Q^-_{n_0,i}X^-_{m,n_0,i}+Q^+_{n_0+1,i}X^+_{m,n_0+1,i}\right],
-\end{equation}
-
-%The variance evaluated at future predicted times $\bvec{t^*} > \bvec{t}$ may be obtained in a similar manner (equation 2.19 from Rasmussen \& Williams):
-%\begin{eqnarray}
-%\mathrm{var}(f^*_{i+1}) &=& K(t^*_{i+1},t^*_{i+1}) - K(t^*_{i+1},\bvec{t}^T)K(\bvec{t},\bvec{t})^{-1} K(\bvec{t},t^*_{i+1})\\
-%&=& K(t^*_{i+1},t^*_{i+1}) - \sum_p\sum_q \alpha_p \alpha_q e^{-(\beta_p+\beta_q)(t^*_{i+1}-t^*_{i})} \\
-%&\times& e^{-\beta_p(t^*_{i}-\bvec{t}^T)}K(\bvec{t},\bvec{t})^{-1} e^{-\beta_q(t^*_{i}-\bvec{t})}\\
-%&=& K(t^*_{i+1},t^*_{i+1}) - \sum_{p,q} \alpha_p \alpha_q e^{-(\beta_p+\beta_q)(t^*_{i+1}-t^*_{i})} P_{i,p,q}\\
-%\end{eqnarray}
-%for $1 \le p,q \le J$,
-%where
-%\begin{equation}
-%P_{i,p,q} = e^{-\beta_p(t^*_{i}-\bvec{t}^T)}
-%K(\bvec{t},\bvec{t})^{-1} e^{-\beta_q(t^*_{i}-\bvec{t})}.
-%\end{equation}
-%For $i=1$, $P_{1,p,q}$ can be obtained in $\mathcal{O}(J^2N)$ operations
-%with the Cholesky decomposition.
-%Subsequent $P_{i+1,p,q}$ may be obtained recursively as
-%\begin{equation}
-%P_{i+1,p,q} = e^{-(\beta_p+\beta_q)(t^*_{i+1}- t^*_{i})} P_{i,p,q},
-%\end{equation}
-%in $\mathcal{O}(J^2M)$ operations, for a total of $\approx \mathcal{O}(J^2(N+M))$ operations.
-%Note that this variance formula {\it only} works for prediction; we have
-%yet to derive a formula for which $\bvec{t^*}$ and $\bvec{t}$ are
-%interspersed.
 
 \section{celerite as a model of stellar variations}\sectlabel{sho}
 
@@ -2337,6 +2112,235 @@ state-of-the-art libraries.
     \figurelabel{benchmark}}
 \end{center}
 \end{figure}
+
+\section{Semi-separable operations}
+
+To help clarify these equations, we write out here an example of a semi-separable matrix with a
+single \celeriteterm\ term with $c=d=1$: %and $N=3$
+\begin{eqnarray}\eqlabel{semi-separable-structure}
+K&=&%
+\begin{pmatrix}
+%    {\scriptscriptstyle a+{\sigma_1}^2 }& {\scriptscriptstyle e^{-c\,\tau_{2,1}}\left(a\,\cos{(d \tau_{2,1})}+b\,\sin{(d \tau_{2,1})}\right)} & {\scriptscriptstyle e^{-c\,\tau_{3,1}}\left(a\,\cos{(d \tau_{3,1})}+b\,\sin{(d \tau_{3,1})}\right)}\\
+%    {\scriptscriptstyle e^{-c\,\tau_{2,1}}\left(a\,\cos{(d \tau_{2,1})}+b\,\sin{(d \tau_{2,1})}\right)}&{\scriptscriptstyle a+{\sigma_2}^2 }& {\scriptscriptstyle e^{-c\,\tau_{3,2}}\left(a\,\cos{(d \tau_{3,2})}+b\,\sin{(d \tau_{3,2})}\right)}\\
+%    {\scriptscriptstyle e^{-c\,\tau_{3,2}}\left(a\,\cos{(d \tau_{3,2})}+b\,\sin{(d \tau_{3,2})}\right)}&{\scriptscriptstyle  e^{-c\,\tau_{3,2}}\left(a\,\cos{(d \tau_{3,2})}+b\,\sin{(d \tau_{3,2})}\right)} & \scriptscriptstyle{a + {\sigma_3}^2}
+%    {\scriptscriptstyle a+{\sigma_1}^2 }& {\scriptscriptstyle e^{-\tau_{2,1}}\left(a\,\cos{\tau_{2,1}}+b\,\sin{\tau_{2,1}}\right)} & {\scriptscriptstyle e^{-\tau_{3,1}}\left(a\,\cos{\tau_{3,1}}+b\,\sin{\tau_{3,1}}\right)}\\
+%    {\scriptscriptstyle e^{-\tau_{2,1}}\left(a\,\cos{\tau_{2,1}}+b\,\sin{\tau_{2,1}}\right)}&{\scriptscriptstyle a+{\sigma_2}^2 }& {\scriptscriptstyle e^{-\tau_{3,2}}\left(a\,\cos{\tau_{3,2}}+b\,\sin{\tau_{3,2}}\right)}\\
+%    {\scriptscriptstyle e^{-\tau_{3,2}}\left(a\,\cos{\tau_{3,2}}+b\,\sin{\tau_{3,2}}\right)}&{\scriptscriptstyle  e^{-\tau_{3,2}}\left(a\,\cos{\tau_{3,2}}+b\,\sin{\tau_{3,2}}\right)} & \scriptscriptstyle{a + {\sigma_3}^2}
+    {\scriptscriptstyle a+{\sigma_1}^2 }& {\scriptscriptstyle e^{-\tau_{21}}\left(a\,\cos{\tau_{21}}+b\,\sin{\tau_{21}}\right)} & {\scriptscriptstyle e^{-\tau_{31}}\left(a\,\cos{\tau_{31}}+b\,\sin{\tau_{31}}\right)} & \ldots\\
+    {\scriptscriptstyle e^{-\tau_{21}}\left(a\,\cos{\tau_{21}}+b\,\sin{\tau_{21}}\right)}&{\scriptscriptstyle a+{\sigma_2}^2 }& {\scriptscriptstyle e^{-\tau_{32}}\left(a\,\cos{\tau_{32}}+b\,\sin{\tau_{32}}\right)} & \ldots\\
+    {\scriptscriptstyle e^{-\tau_{32}}\left(a\,\cos{\tau_{32}}+b\,\sin{\tau_{32}}\right)}&{\scriptscriptstyle  e^{-\tau_{32}}\left(a\,\cos{\tau_{32}}+b\,\sin{\tau_{32}}\right)} & \scriptscriptstyle{a + {\sigma_3}^2} & \ldots \\
+    \ldots & \ldots & \ldots & \ldots
+\end{pmatrix}\\
+&=&
+\begin{pmatrix}
+%    {\scriptscriptstyle a+{\sigma_1}^2} & {\scriptscriptstyle 0} & {\scriptscriptstyle 0} \\
+%    {\scriptscriptstyle 0} & {\scriptscriptstyle a+{\sigma_2}^2 }& {\scriptscriptstyle 0} \\
+%    {\scriptscriptstyle 0} & {\scriptscriptstyle 0} & {\scriptscriptstyle a + {\sigma_3}^2}
+    {\scriptscriptstyle a+{\sigma_1}^2} & {\scriptscriptstyle 0} & {\scriptscriptstyle 0} & \ldots\\
+    {\scriptscriptstyle 0} & {\scriptscriptstyle a+{\sigma_2}^2 }& {\scriptscriptstyle 0} & \ldots\\
+    {\scriptscriptstyle 0} & {\scriptscriptstyle 0} & {\scriptscriptstyle a + {\sigma_3}^2} & \ldots\\
+%    {\scriptscriptstyle a+{\sigma_1}^2} & {\scriptscriptstyle 0} & \ldots \\
+%    {\scriptscriptstyle 0} & {\scriptscriptstyle a+{\sigma_2}^2 }& \ldots \\
+    \ldots & \ldots & \ldots & \ldots
+\end{pmatrix}\\
+&+&\mathrm{tril}\left[\begin{pmatrix}
+%    {\scriptscriptstyle e^{-c\,t_1}\left(a\,\cos{(d t_1)}+b\,\sin{(d t_1)}\right)}&
+%    {\scriptscriptstyle e^{-c\,t_1}\left(a\,\sin{(d t_1)}-b\,\cos{(d t_1)}\right)}\\
+%    {\scriptscriptstyle e^{-c\,t_2}\left(a\,\cos{(d t_2)}+b\,\sin{(d t_2)}\right)}&
+%    {\scriptscriptstyle e^{-c\,t_2}\left(a\,\sin{(d t_2)}-b\,\cos{(d t_2)}\right)}\\
+%    {\scriptscriptstyle e^{-c\,t_3}\left(a\,\cos{(d t_3)}+b\,\sin{(d t_3)}\right)}&
+%    {\scriptscriptstyle e^{-c\,t_3}\left(a\,\sin{(d t_3)}-b\,\cos{(d t_3)}\right)}
+    {\scriptscriptstyle e^{-t_1}\left(a\,\cos{t_1}+b\,\sin{t_1}\right)}&
+    {\scriptscriptstyle e^{-t_1}\left(a\,\sin{t_1}-b\,\cos{t_1}\right)}\\
+    {\scriptscriptstyle e^{-t_2}\left(a\,\cos{t_2}+b\,\sin{t_2}\right)}&
+    {\scriptscriptstyle e^{-t_2}\left(a\,\sin{t_2}-b\,\cos{t_2}\right)}\\
+    {\scriptscriptstyle e^{-t_3}\left(a\,\cos{t_3}+b\,\sin{t_3}\right)}&
+    {\scriptscriptstyle e^{-t_3}\left(a\,\sin{t_3}-b\,\cos{t_3}\right)}\\
+   \ldots & \ldots
+\end{pmatrix} %\right.\\
+%&\times &
+\times
+%\left.
+\begin{pmatrix}
+% {\scriptscriptstyle e^{c\,t_1} \cos{(d t_1)}} &{\scriptscriptstyle e^{c\,t_2} \cos{(d t_2)}} & {\scriptscriptstyle e^{c\,t_3} \cos{(d t_3)}}\\
+% {\scriptscriptstyle e^{c\,t_1} \sin{(d t_1)}} & {\scriptscriptstyle e^{c\,t_2} \sin{(d t_2)}} & {\scriptscriptstyle e^{c\,t_3} \sin{(d t_3)}}
+% {\scriptscriptstyle e^{t_1} \cos{t_1}} & {\scriptscriptstyle e^{t_2} \cos{t_2}} & {\scriptscriptstyle e^{t_3} \cos{t_3}}\\
+% {\scriptscriptstyle e^{t_1} \sin{t_1}} & {\scriptscriptstyle e^{t_2} \sin{t_2}} & {\scriptscriptstyle e^{t_3} \sin{t_3}}
+ {\scriptscriptstyle e^{t_1} \cos{t_1}} & {\scriptscriptstyle e^{t_1} \sin{t_1}} \\
+ {\scriptscriptstyle e^{t_2} \cos{t_2}} & {\scriptscriptstyle e^{t_2} \sin{t_2}}\\
+ {\scriptscriptstyle e^{t_3} \cos{t_3}} & {\scriptscriptstyle e^{t_3} \sin{t_3}}\\
+ \ldots & \ldots
+\end{pmatrix}^T\right]\\
+&+&
+\mathrm{triu}\left[\begin{pmatrix}
+% {\scriptscriptstyle e^{c\,t_1} \cos{(d t_1)}} & {\scriptscriptstyle e^{c\,t_1} \sin{(d t_1)}} \\
+% {\scriptscriptstyle e^{c\,t_2} \cos{(d t_2)}} & {\scriptscriptstyle e^{c\,t_2} \sin{(d t_2)}}\\
+% {\scriptscriptstyle e^{c\,t_3} \cos{(d t_3)}} & {\scriptscriptstyle e^{c\,t_3} \sin{(d t_3)}}
+ {\scriptscriptstyle e^{t_1} \cos{t_1}} & {\scriptscriptstyle e^{t_1} \sin{t_1}} \\
+ {\scriptscriptstyle e^{t_2} \cos{t_2}} & {\scriptscriptstyle e^{t_2} \sin{t_2}}\\
+ {\scriptscriptstyle e^{t_3} \cos{t_3}} & {\scriptscriptstyle e^{t_3} \sin{t_3}}\\
+ \ldots & \ldots
+\end{pmatrix} % \right.\\
+\times
+%\left.
+\begin{pmatrix}
+%    {\scriptscriptstyle e^{-c\,t_1}\left(a\,\cos{(d t_1)}+b\,\sin{(d t_1)}\right)}&
+%    {\scriptscriptstyle e^{-c\,t_2}\left(a\,\cos{(d t_2)}+b\,\sin{(d t_2)}\right)}&
+%    {\scriptscriptstyle e^{-c\,t_3}\left(a\,\cos{(d t_3)}+b\,\sin{(d t_3)}\right)}\\
+%    {\scriptscriptstyle e^{-c\,t_1}\left(a\,\sin{(d t_1)}-b\,\cos{(d t_1)}\right)}&
+%    {\scriptscriptstyle e^{-c\,t_2}\left(a\,\sin{(d t_2)}-b\,\cos{(d t_2)}\right)}&
+%    {\scriptscriptstyle e^{-c\,t_3}\left(a\,\sin{(d t_3)}-b\,\cos{(d t_3)}\right)}
+%    {\scriptscriptstyle e^{-t_1}\left(a\,\cos{t_1}+b\,\sin{t_1}\right)}&
+%    {\scriptscriptstyle e^{-t_2}\left(a\,\cos{t_2}+b\,\sin{t_2}\right)}&
+%    {\scriptscriptstyle e^{-t_3}\left(a\,\cos{t_3}+b\,\sin{t_3}\right)}\\
+%    {\scriptscriptstyle e^{-t_1}\left(a\,\sin{t_1}-b\,\cos{t_1}\right)}&
+%    {\scriptscriptstyle e^{-t_2}\left(a\,\sin{t_2}-b\,\cos{t_2}\right)}&
+%    {\scriptscriptstyle e^{-t_3}\left(a\,\sin{t_3}-b\,\cos{t_3}\right)}
+    {\scriptscriptstyle e^{-t_1}\left(a\,\cos{t_1}+b\,\sin{t_1}\right)}&
+    {\scriptscriptstyle e^{-t_1}\left(a\,\sin{t_1}-b\,\cos{t_1}\right)}\\
+    {\scriptscriptstyle e^{-t_2}\left(a\,\cos{t_2}+b\,\sin{t_2}\right)}&
+    {\scriptscriptstyle e^{-t_2}\left(a\,\sin{t_2}-b\,\cos{t_2}\right)}\\
+    {\scriptscriptstyle e^{-t_3}\left(a\,\cos{t_3}+b\,\sin{t_3}\right)}&
+    {\scriptscriptstyle e^{-t_3}\left(a\,\sin{t_3}-b\,\cos{t_3}\right)}\\
+   \ldots & \ldots
+\end{pmatrix}^T\right]\\
+&=& A + \mathrm{tril}(U V^T) + \mathrm{triu}(V U^T).
+\end{eqnarray}
+
+\subsection{Simulation}
+
+Simulation of a Gaussian process for large $N$ requires multiplying an
+$N$-dimensional vector of Gaussian normal deviates, $\bvec{q}$, by the square root
+of the covariance matrix:
+\begin{equation}
+\bvec{y} = K_\bvec{\alpha}^{1/2} \bvec{q},
+\end{equation}
+where $q_i \sim N(0,1)$.  Note that $K_\bvec{\alpha} = K_\bvec{\alpha}^{1/2} \left(K_\bvec{\alpha}^{1/2}\right)^T$, which
+comparing with the Cholesky factorization gives $K_\bvec{\alpha}^{1/2} = L D^{1/2}$,
+where $(D^{1/2})_{ii} = \sqrt{D_{ii}}$.  Also note that $\mathcal{Q} = -2 \mathcal{L}$
+with $\mu_\bvec{\theta} =0$ is given by
+\begin{eqnarray}
+\mathcal{Q} &=&\bvec{y}^T K_\bvec{\alpha}^{-1} \bvec{y}\\
+&=& \bvec{y}^T \left(K_\bvec{\alpha}^{-1/2}\right)^T K_\bvec{\alpha}^{-1/2} \bvec{y}\\
+&=& \bvec{q}^T K_\bvec{\alpha}^{1/2} \left(K_\bvec{\alpha}^{-1/2}\right)^T K_\bvec{\alpha}^{-1/2} K_\bvec{\alpha}^{1/2} \bvec{q}\\
+&=& \bvec{q}^T \bvec{q}.
+\end{eqnarray}
+The last quantity is simply the dot product of an $N$-dimensional vector of independent standard normal random variables with itself,
+which is distributed according to the chi-squared distribution with $N$ degrees of freedom, i.e.\ $\mathcal{Q} \sim \chi_N^2$.
+
+To generate a draw from a Gaussian process with a specified \celerite\ model requires carrying out the
+low-rank Cholesky decomposition first, generating the vector $\bvec{q}$ of random normal deviates, and then multiplying
+\begin{equation}
+\bvec{y} = L D^{1/2} \bvec{q}.
+\end{equation}
+This may be carried out in $\mathcal{O}(JN)$ operations with
+\begin{eqnarray}
+f_{n,j} &=& \phi_{n-1,j} \left(f_{n-1,j} + \tilde{W}_{n-1,j} D_{n-1,n-1}^{1/2} q_{n-1}\right)\\
+y_n &=& D_{n,n}^{1/2} q_n + \sum_{k=1}^{2J} \tilde{U}_{n,k} f_{n,k}
+\end{eqnarray}
+for $n = 1$ to $N$ and $j=1$ to $2J$, with $f_{0,j} = 0$ for all $j$ and $q_0 = 0$.
+\agoltodo{Check that these equations are in fact correct.}
+We expect that this simulation algorithm will be useful for test-driving Gaussian
+process inference algorithms applied to large datasets; even simulation of
+Gaussian processes becomes prohibitive for large $N$ if standard Cholesky decomposition
+and multiplication are used.
+
+\subsection{Multiplication and filtering}
+
+Multiplication of the full covariance matrix times a vector can be accomplished in $\mathcal{O}(JN)$
+operations with a stable recursive algorithm using the semi-separable form:
+\begin{equation}
+\bvec{y} =  \left(A + \mathrm{tril}(U V^T) + \mathrm{triu}(V U^T)\right) \bvec{z}.
+\end{equation}
+The algorithm for multiplication is given by
+\begin{eqnarray}
+f^+_{n,j} &=& \phi_{n+1,j} \left(f^+_{n+1,j} + \sum_{j=1}^J \tilde U_{n+1,j} z_{n+1}\right)\\
+f^-_{n,j} &=& \phi_{n,j} \left(f^-_{n-1,j} + \sum_{j=1}^J \tilde V_{n-1,j} z_{n-1}\right)\\
+y_n &=& A_{n,n} z_n + \sum_{j=1}^J \left[ \tilde V_{n,j} f^+_{n,j} + \tilde U_{n,j} f^-_{n,j}\right],
+\end{eqnarray}
+where $f^+_{N,j} = 0$ and $f^-_{1,j} = 0$ for all $j=1,...,J$.  The recursion requires
+two sweeps, a sweep downward from $n=N-1$ to $n=1$ to compute $f^+_{n,j}$ and a sweep upwards
+from $n=2$ to $n=N$ to compute $f^-_{n,j}$.  \dfmtodo{I'm getting confused by zero-based
+indexing in your C code...  this may be worth scrutinizing to see if I screwed up.}
+
+Multiplication of the full covariance matrix is useful, for example, for isolating
+a particular component of a kernel, which amounts to a customized filter of a dataset.
+For example, a white-noise filter is given by:
+\begin{eqnarray}
+\bar f &=& K(\bvec{t},\bvec{t}) \left[K(\bvec{t},\bvec{t})+\sigma^2I\right]^{-1} \bvec{y},\\
+&=& K(\bvec{t},\bvec{t}) \bvec{z}
+\end{eqnarray}
+where $\bvec{y}$ is the vector of measurements and $\bvec{z}$ may be computed from the Cholesky
+decomposition as described above.  The second step multiplication of the white-noise-free
+kernel times $\bvec{z}$ may be accomplished in $\mathcal{O}(JN)$ steps with this multiplication algorithm.
+Note that for this particular example it is more efficient to compute $\bar f = \bvec{y} -\sigma^2 I \bvec{z}$,
+but in general the filtering kernel will not differ from the full kernel by a diagonal matrix.
+
+\subsection{Prediction and interpolation}
+
+%Gaussian process regression may also be used for prediction and interpolation at future or missing data, based upon current measurements.  With \celerite\ it proves possible to predict the mean value at times ${t_m; m=1,...,M}$ based upon measured times ${t_n; n=1,...,N}$ in $\mathcal{O}(N+M)$ operations.
+
+For predicting or interpolating missing or future data points (and their variance) at times $\bvec{t^*} = \left\{t_{1}^*,t_{2}^*,...,t_{M}^*\right\}$, we need to apply the covariance between the measured and predicted times.  The mean of the predicted values is (equation 2.19 from Rasmussen \& Williams):
+\begin{eqnarray}
+\bar f_* &=& K(\bvec{t^*},\bvec{t}) \left[K(\bvec{t},\bvec{t})+\sigma^2 I\right]^{-1} \bvec{y},\\
+&=& K(\bvec{t^*},\bvec{t}) \bvec{z}
+\end{eqnarray}
+where $\bvec{y}$ is the vector of measurements and $\sigma$ is the measurement uncertainty, and
+$\bvec{z} = \left[K(\bvec{t},\bvec{t})+\sigma^2 I\right]^{-1} \bvec{y}$ can be computed from
+the Cholesky decomposition of the full covariance matrix in ${\cal O}(J^2N)$.
+
+Since the covariance matrix may be written as the sum of exponentials, the predicted mean is given by
+\begin{eqnarray}
+\bar f^*_m &=& K(t^*_m,\bvec{t}) \bvec{z} \\
+&=& \sum_n \sum_{j=1}^J e^{-c_j \vert t^*_m-t_n\vert}\left(a_j \cos{(d_j \vert t^*_m-t_n\vert)} +b_j \sin{(d_j \vert t^*_m-t_n\vert)}\right) z_j,
+\end{eqnarray}
+for $m =1$ to $M$.
+Dividing the sum over $n$ into $\{t_1,...,t_{n_0}\} < t^*_m$ and
+$\{t_{n0+1},...,t_N\} \ge t^*_m$, gives
+\begin{eqnarray}
+\bar f^*_m &=& \sum_{j=1}^J\sum_{n=1}^{n_0} e^{-c_j(t^*_m-t_n)} \left[a_j \cos{(d_j(t^*_m-t_n))}+b_j\sin{(d_j(t^*_m-t_n))}\right] z_n \\
+&+& \sum_{j=1}^J\sum_{n=n_0+1}^N  e^{-c_j(t_n-t^*_m)} \left[a_j \cos{(d_j(t_n-t^*_m))}+b_j\sin{(d_j(t_n-t^*_m))}\right] z_n.
+\end{eqnarray}
+We can compute this recursively.  Defining
+\begin{eqnarray}
+Q^-_{n,i} &=& \left(Q^-_{n-1,i}+z_n\tilde V_{n,i}\right)e^{-c_j(t_{n+1}-t_{n})},\\
+X^-_{m,n,i} &=& e^{-c_j(t_m^*-t_{n+1})}\tilde U_{m,i},\\
+Q^+_{n,i} &=& \left(Q^+_{n+1,i}+z_n\tilde U_{n,i}\right)e^{-c_j(t_{n}-t_{n-1})},\\
+X^+_{m,n,i} &=& e^{-c_j(t_{n-1}-t_m^*)} \tilde V_{m,i},
+\end{eqnarray}
+where $t_0=t_1$, $t_{N+1}=t_N$, $Q^-_{0,i} = 0$ and $Q^+_{N+1,i}=0$ for $i=1$ to $2J$, and in $X^\pm_{m,n,i}$ the expressions
+for $\tilde U_{m,i}$ and $\tilde V_{m,i}$ are evaluted at $t_m^*$.
+Two sweeps must be carried out, upward in $n$ and $m$ to compute $Q^-$ recursively, and downward in
+$m$ and $n$ to compute $Q^+$ recursively, for a total scaling of $\approx \mathcal{O}(J^2N+J(N+M))$.
+For each value of $m$, $Q^\pm$ are recursively updated over $n$ until $n_0$ is reached, at which
+point the predicted mean can be computed from
+\begin{equation}
+\bar f^*_i = \sum_{i=1}^{2J} \left[Q^-_{n_0,i}X^-_{m,n_0,i}+Q^+_{n_0+1,i}X^+_{m,n_0+1,i}\right],
+\end{equation}
+
+%The variance evaluated at future predicted times $\bvec{t^*} > \bvec{t}$ may be obtained in a similar manner (equation 2.19 from Rasmussen \& Williams):
+%\begin{eqnarray}
+%\mathrm{var}(f^*_{i+1}) &=& K(t^*_{i+1},t^*_{i+1}) - K(t^*_{i+1},\bvec{t}^T)K(\bvec{t},\bvec{t})^{-1} K(\bvec{t},t^*_{i+1})\\
+%&=& K(t^*_{i+1},t^*_{i+1}) - \sum_p\sum_q \alpha_p \alpha_q e^{-(\beta_p+\beta_q)(t^*_{i+1}-t^*_{i})} \\
+%&\times& e^{-\beta_p(t^*_{i}-\bvec{t}^T)}K(\bvec{t},\bvec{t})^{-1} e^{-\beta_q(t^*_{i}-\bvec{t})}\\
+%&=& K(t^*_{i+1},t^*_{i+1}) - \sum_{p,q} \alpha_p \alpha_q e^{-(\beta_p+\beta_q)(t^*_{i+1}-t^*_{i})} P_{i,p,q}\\
+%\end{eqnarray}
+%for $1 \le p,q \le J$,
+%where
+%\begin{equation}
+%P_{i,p,q} = e^{-\beta_p(t^*_{i}-\bvec{t}^T)}
+%K(\bvec{t},\bvec{t})^{-1} e^{-\beta_q(t^*_{i}-\bvec{t})}.
+%\end{equation}
+%For $i=1$, $P_{1,p,q}$ can be obtained in $\mathcal{O}(J^2N)$ operations
+%with the Cholesky decomposition.
+%Subsequent $P_{i+1,p,q}$ may be obtained recursively as
+%\begin{equation}
+%P_{i+1,p,q} = e^{-(\beta_p+\beta_q)(t^*_{i+1}- t^*_{i})} P_{i,p,q},
+%\end{equation}
+%in $\mathcal{O}(J^2M)$ operations, for a total of $\approx \mathcal{O}(J^2(N+M))$ operations.
+%Note that this variance formula {\it only} works for prediction; we have
+%yet to derive a formula for which $\bvec{t^*}$ and $\bvec{t}$ are
+%interspersed.
 
 
 \section{Ensuring positive definiteness}
