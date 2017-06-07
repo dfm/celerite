@@ -528,173 +528,6 @@ Therefore, the method described in the following section can be used to
 perform scalable inference on large datasets for any model, where the kernel
 function is a sum or product of \celeriteterm\ terms.
 
-\section{Semi-separable matrix factorization}
-
-
-The relationship between the \celeriteterm\ model and semi-separable linear
-algebra was first recognized by Ambikasaran \citep{Ambikasaran:2015}.
-A rank-$R$ semi-separable matrix is a matrix $K$ where the elements can be
-written as
-\begin{eqnarray}
-K_{n,m} = \left\{\begin{array}{ll}
-    \sum_{r=1}^R U_{n,r}\,V_{m,r} & \mathrm{if}\,m<n \\
-    A_{n,n} & \mathrm{if}\,m=n \\
-    \sum_{r=1}^R U_{m,r}\,V_{n,r} & \mathrm{otherwise}
-\end{array}\right.
-\end{eqnarray}
-for some $N \times R$-dimensional matrices $U$ and $V$, and an $N \times
-N$-dimensional diagonal matrix $A$.
-This definition can be equivalently written as
-\begin{eqnarray}\eqlabel{semi-sep}
-K = A + \mathrm{tril}(U\,V^\T) + \mathrm{triu}(V\,U^\T)
-\end{eqnarray}
-where the $\mathrm{tril}$ function extracts the strict lower triangular
-component of its argument and $\mathrm{triu}$ is the equivalent strict upper
-triangular operation.  Note that the last two terms in this equation are
-transposes of one another.
-For the \celeriteterm\ model described in the previous section, the rank of
-the semi-separable matrix is $R = 2\,J$ and the components of the relevant
-matrices are
-\begin{eqnarray}
-U_{n,2\,j-1} &=& a_j\,e^{-c_j\,t_n}\,\cos(d_j\,t_n) +
-    b_j\,e^{-c_j\,t_n}\,\sin(d_j\,t_n) \\
-U_{n,2\,j} &=& a_j\,e^{-c_j\,t_n}\,\sin(d_j\,t_n) -
-    b_j\,e^{-c_j\,t_n}\,\cos(d_j\,t_n) \\
-V_{m,2\,j-1} &=& e^{c_j\,t_m}\,\cos(d_j\,t_m) \\
-V_{m,2\,j} &=& e^{c_j\,t_m}\,\sin(d_j\,t_m) \\
-A_{n,n} &=& \sigma_n^2 + \sum_{j=1}^J a_j \quad.
-\end{eqnarray}
-
-Note that rather than storing the full $N \times N$ covariance matrix, it
-is only necessary to store the $2J \times N$ matrices $U$ and $V$, as well
-as the diagonal terms, for a total storage volume of $(4J+1) \times N$ floating
-point numbers.
-
-\subsection{Cholesky factorization}
-
-To compute the marginalized likelihood defined in \eq{gp-likelihood}, we must
-compute the log-determinant of $K$ and solve linear systems of the form
-$K\,\bvec{z}=\bvec{y}$ for $\bvec{z}$, where $K$ is a rank-$2\,J$
-semi-separable matrix.
-If $K$ is positive semi-definite, these can be computed using the Cholesky
-factorization of $K$:
-\begin{eqnarray}
-K = L\,D\,L^\T
-\end{eqnarray}
-where $L$ is a lower triangular matrix with unit diagonal and $D$ is a
-diagonal matrix.
-We use the ansatz that $L$ has the form
-\begin{eqnarray}
-    L = I + \mathrm{tril} (U\,W^T)
-\end{eqnarray}
-where $I$ is the identity, $U$ is the matrix from above, and $W$ is an unknown
-$N \times 2\,J$ matrix.
-Combining this with \eq{semi-sep}, we find the equation
-\begin{eqnarray}\eqlabel{cholesky}
-A + \mathrm{tril}(U\,V^\T) + \mathrm{triu}(V\,U^\T)
-&=& \left[I + \mathrm{tril} (U\,W^T)\right]\,D\,
-    {\left[I + \mathrm{tril} (U\,W^T)\right]}^\T \\
-&=& D + \mathrm{tril}(U\,W^\T)\,D
-    + D\,\mathrm{triu}(W\,U^\T) \nonumber\\
-&& +\, \mathrm{tril}(U\,W^\T)\,D\,\mathrm{triu}(W\,U^\T) \nonumber
-\end{eqnarray}
-that we can solve for $W$.
-Setting each element on the left side of \eq{cholesky} equal to the
-corresponding element on the right side, we derive the following recursion
-relations
-\begin{eqnarray}
-S_{n,j,k} &=& S_{n-1,j,k} + D_{n-1,n-1}\,W_{n-1,j}\,W_{n-1,k} \nonumber\\
-D_{n,n} &=& A_{n,n} -
-    \sum_{j=1}^{2\,J}\sum_{k=1}^{2\,J} U_{n,j}\,S_{n,j,k}\,U_{n,k}
-    \nonumber\\
-W_{n,j} &=& \frac{1}{D_{n,n}}\left[ V_{n,j} -
-    \sum_{k=1}^{2\,J}U_{n,k}\,S_{n,j,k} \right]
-    \eqlabel{algorithm}
-\end{eqnarray}
-where $S_n$ is a symmetric $2\,J \times 2\,J$ matrix and every element
-$S_{1,j,k}=0$.
-The computational cost of one iteration of the update in \eq{algorithm} is
-$\mathcal{O}(J^2)$ and this must be run $N$ times~--~once for each
-observation~--~so the total cost of this factorization scales as
-$\mathcal{O}(N\,J^2)$.
-
-Note that if some \celeriteterm\ terms are real, with $b_j=d_j=0$,
-then these terms only add one to the rank of $U$ and $V$.  We use this fact
-to simplify the algebra when real components are included:  if $J_{real}$
-and $J_{complex}$ terms are included, with $J_{real}+J_{complex}=J$, then
-the $U$, $V$, and $W$ matrices have size $N \times (J_{real}+2J_{complex})$.
-
-\subsection{Pre-conditioning}
-
-Na\"ive implementation of the algorithm in \eq{algorithm} will have numerical
-overflow and underflow issues in many realistic cases because both $U$ and $V$
-have factors of the form $e^{\pm c_j t}$, where $t$ can be any arbitrarily large
-real number.
-This can be avoided with the appropriate reparameterization.
-We define the following pre-conditioned variables
-\begin{eqnarray}
-\tilde{U}_{n,2\,j-1} &=& a_j\,\cos(d_j\,t_n) + b_j\,\sin(d_j\,t_n) \\
-\tilde{U}_{n,2\,j} &=& a_j\,\sin(d_j\,t_n) - b_j\,\cos(d_j\,t_n) \\
-\tilde{V}_{m,2\,j-1} &=& \cos(d_j\,t_m) \\
-\tilde{V}_{m,2\,j} &=& \sin(d_j\,t_m) \\
-\tilde{W}_{n,2\,j-1} &=& e^{-c_j\,t_n}\,W_{n,2\,j-1} \\
-\tilde{W}_{n,2\,j} &=& e^{-c_j\,t_n}\,W_{n,2\,j}
-\end{eqnarray}
-and the set of variables
-\begin{eqnarray}
-\phi_{n,2\,j-1} = \phi_{n,2\,j} = e^{-c_j\,(t_n - t_{n-1})}
-\end{eqnarray}
-with the constraint
-\begin{eqnarray}
-\phi_{1,2\,j-1} = \phi_{1,2\,j} = 0 \quad.
-\end{eqnarray}
-Using this parameterization, we find the following, numerically stable,
-algorithm
-\begin{eqnarray}
-    S_{n,j,k} &=& \phi_{n,j}\,\phi_{n,k}\,\left[S_{n-1,j,k} +
-    D_{n-1,n-1}\,\tilde{W}_{n-1,j}\,\tilde{W}_{n-1,k}\right] \nonumber\\
-D_{n,n} &=& A_{n,n} -
-    \sum_{j=1}^{2\,J}\sum_{k=1}^{2\,J} \tilde{U}_{n,j}\,S_{n,j,k}\,\tilde{U}_{n,k}
-    \nonumber\\
-\tilde{W}_{n,j} &=& \frac{1}{D_{n,n}}\left[ \tilde{V}_{n,j} -
-    \sum_{k=1}^{2\,J}\tilde{U}_{n,k}\,S_{n,j,k} \right] \quad.
-\end{eqnarray}
-
-\subsection{Solving}
-
-After computing the Cholesky factorization of the matrix $K$, we can apply
-the inverse of $K$ and compute its log-determinant in $\mathcal{O}(N\,J)$ and
-$\mathcal{O}(N)$ operations respectively.
-The log-determinant of $K$ is given by
-\begin{eqnarray}
-    \ln \det K = \sum_{n=1}^N \ln D_{n,n}
-\end{eqnarray}
-where, if $K$ is positive semi-definite, $D_{n,n}>0$ for all $n$.
-
-The inverse of $K$ can be applied using the relationship
-\begin{eqnarray}
-\bvec{z} = K^{-1}\,\bvec{y} = {(L^\T)}^{-1}\,D^{-1}\,L^{-1}\,\bvec{y} \quad.
-\end{eqnarray}
-First, we solve for $\bvec{z}^\prime = L^{-1}\,\bvec{y}$ using the following forward
-substitution algorithm
-\begin{eqnarray}
-    f_{n,j} &=& \phi_{n,j}\,\left[f_{n-1,j} +
-    \tilde{W}_{n-1,j}\,z_{n-1}^\prime\right] \nonumber\\
-    z_n^\prime &=& y_n - \sum_{j=1}^{2\,J} \tilde{U}_{n,j}\,f_{n,j}
-\end{eqnarray}
-where $f_{0,j} = 0$ for all $j$.
-Using this result and the following backward substitution algorithm, we can
-compute $\bvec{z}$
-\begin{eqnarray}
-g_{n,j} &=& \phi_{n+1,j}\,\left[g_{n+1,j} +
-    \tilde{U}_{n+1,j}\,z_{n+1}\right] \nonumber\\
-z_n &=& \frac{z_n^\prime}{D_{n,n}} - \sum_{j=1}^{2\,J} \tilde{W}_{n,j}\,g_{n,j}
-\end{eqnarray}
-where $g_{N+1,j} = 0$ for all $j$.
-The total cost of the forward and backward substitution passes scales as
-$\mathcal{O}(N\,J)$.
-
-
 \section{celerite as a model of stellar variations}\sectlabel{sho}
 
 We now turn to a discussion of \celeriteterm\ as a model of astrophysical
@@ -861,6 +694,174 @@ described in the previous section.
     \figurelabel{sho}}
 \end{center}
 \end{figure}
+
+
+
+\section{Semi-separable matrix factorization}
+
+
+The relationship between the \celeriteterm\ model and semi-separable linear
+algebra was first recognized by Ambikasaran \citep{Ambikasaran:2015}.
+A rank-$R$ semi-separable matrix is a matrix $K$ where the elements can be
+written as
+\begin{eqnarray}
+K_{n,m} = \left\{\begin{array}{ll}
+    \sum_{r=1}^R U_{n,r}\,V_{m,r} & \mathrm{if}\,m<n \\
+    A_{n,n} & \mathrm{if}\,m=n \\
+    \sum_{r=1}^R U_{m,r}\,V_{n,r} & \mathrm{otherwise}
+\end{array}\right.
+\end{eqnarray}
+for some $N \times R$-dimensional matrices $U$ and $V$, and an $N \times
+N$-dimensional diagonal matrix $A$.
+This definition can be equivalently written as
+\begin{eqnarray}\eqlabel{semi-sep}
+K = A + \mathrm{tril}(U\,V^\T) + \mathrm{triu}(V\,U^\T)
+\end{eqnarray}
+where the $\mathrm{tril}$ function extracts the strict lower triangular
+component of its argument and $\mathrm{triu}$ is the equivalent strict upper
+triangular operation.  Note that the last two terms in this equation are
+transposes of one another.
+For the \celeriteterm\ model described in the previous section, the rank of
+the semi-separable matrix is $R = 2\,J$ and the components of the relevant
+matrices are
+\begin{eqnarray}
+U_{n,2\,j-1} &=& a_j\,e^{-c_j\,t_n}\,\cos(d_j\,t_n) +
+    b_j\,e^{-c_j\,t_n}\,\sin(d_j\,t_n) \\
+U_{n,2\,j} &=& a_j\,e^{-c_j\,t_n}\,\sin(d_j\,t_n) -
+    b_j\,e^{-c_j\,t_n}\,\cos(d_j\,t_n) \\
+V_{m,2\,j-1} &=& e^{c_j\,t_m}\,\cos(d_j\,t_m) \\
+V_{m,2\,j} &=& e^{c_j\,t_m}\,\sin(d_j\,t_m) \\
+A_{n,n} &=& \sigma_n^2 + \sum_{j=1}^J a_j \quad.
+\end{eqnarray}
+
+Note that rather than storing the full $N \times N$ covariance matrix, it
+is only necessary to store the $2J \times N$ matrices $U$ and $V$, as well
+as the diagonal terms, for a total storage volume of $(4J+1) \times N$ floating
+point numbers.
+
+\subsection{Cholesky factorization}
+
+To compute the marginalized likelihood defined in \eq{gp-likelihood}, we must
+compute the log-determinant of $K$ and solve linear systems of the form
+$K\,\bvec{z}=\bvec{y}$ for $\bvec{z}$, where $K$ is a rank-$2\,J$
+semi-separable matrix.
+If $K$ is positive semi-definite, these can be computed using the Cholesky
+factorization of $K$:
+\begin{eqnarray}
+K = L\,D\,L^\T
+\end{eqnarray}
+where $L$ is a lower triangular matrix with unit diagonal and $D$ is a
+diagonal matrix.
+We use the ansatz that $L$ has the form
+\begin{eqnarray}
+    L = I + \mathrm{tril} (U\,W^T)
+\end{eqnarray}
+where $I$ is the identity, $U$ is the matrix from above, and $W$ is an unknown
+$N \times 2\,J$ matrix.
+Combining this with \eq{semi-sep}, we find the equation
+\begin{eqnarray}\eqlabel{cholesky}
+A + \mathrm{tril}(U\,V^\T) + \mathrm{triu}(V\,U^\T)
+&=& \left[I + \mathrm{tril} (U\,W^T)\right]\,D\,
+    {\left[I + \mathrm{tril} (U\,W^T)\right]}^\T \\
+&=& D + \mathrm{tril}(U\,W^\T)\,D
+    + D\,\mathrm{triu}(W\,U^\T) \nonumber\\
+&& +\, \mathrm{tril}(U\,W^\T)\,D\,\mathrm{triu}(W\,U^\T) \nonumber
+\end{eqnarray}
+that we can solve for $W$.
+Setting each element on the left side of \eq{cholesky} equal to the
+corresponding element on the right side, we derive the following recursion
+relations
+\begin{eqnarray}
+S_{n,j,k} &=& S_{n-1,j,k} + D_{n-1,n-1}\,W_{n-1,j}\,W_{n-1,k} \nonumber\\
+D_{n,n} &=& A_{n,n} -
+    \sum_{j=1}^{2\,J}\sum_{k=1}^{2\,J} U_{n,j}\,S_{n,j,k}\,U_{n,k}
+    \nonumber\\
+W_{n,j} &=& \frac{1}{D_{n,n}}\left[ V_{n,j} -
+    \sum_{k=1}^{2\,J}U_{n,k}\,S_{n,j,k} \right]
+    \eqlabel{algorithm}
+\end{eqnarray}
+where $S_n$ is a symmetric $2\,J \times 2\,J$ matrix and every element
+$S_{1,j,k}=0$.
+The computational cost of one iteration of the update in \eq{algorithm} is
+$\mathcal{O}(J^2)$ and this must be run $N$ times~--~once for each
+observation~--~so the total cost of this factorization scales as
+$\mathcal{O}(N\,J^2)$.
+
+Note that if some \celeriteterm\ terms are real, with $b_j=d_j=0$,
+then these terms only add one to the rank of $U$ and $V$.  We use this fact
+to simplify the algebra when real components are included:  if $J_{real}$
+and $J_{complex}$ terms are included, with $J_{real}+J_{complex}=J$, then
+the $U$, $V$, and $W$ matrices have size $N \times (J_{real}+2J_{complex})$.
+
+\subsection{Pre-conditioning}
+
+Na\"ive implementation of the algorithm in \eq{algorithm} will have numerical
+overflow and underflow issues in many realistic cases because both $U$ and $V$
+have factors of the form $e^{\pm c_j t}$, where $t$ can be any arbitrarily large
+real number.
+This can be avoided with the appropriate reparameterization.
+We define the following pre-conditioned variables
+\begin{eqnarray}
+\tilde{U}_{n,2\,j-1} &=& a_j\,\cos(d_j\,t_n) + b_j\,\sin(d_j\,t_n) \\
+\tilde{U}_{n,2\,j} &=& a_j\,\sin(d_j\,t_n) - b_j\,\cos(d_j\,t_n) \\
+\tilde{V}_{m,2\,j-1} &=& \cos(d_j\,t_m) \\
+\tilde{V}_{m,2\,j} &=& \sin(d_j\,t_m) \\
+\tilde{W}_{n,2\,j-1} &=& e^{-c_j\,t_n}\,W_{n,2\,j-1} \\
+\tilde{W}_{n,2\,j} &=& e^{-c_j\,t_n}\,W_{n,2\,j}
+\end{eqnarray}
+and the set of variables
+\begin{eqnarray}
+\phi_{n,2\,j-1} = \phi_{n,2\,j} = e^{-c_j\,(t_n - t_{n-1})}
+\end{eqnarray}
+with the constraint
+\begin{eqnarray}
+\phi_{1,2\,j-1} = \phi_{1,2\,j} = 0 \quad.
+\end{eqnarray}
+Using this parameterization, we find the following, numerically stable,
+algorithm
+\begin{eqnarray}
+    S_{n,j,k} &=& \phi_{n,j}\,\phi_{n,k}\,\left[S_{n-1,j,k} +
+    D_{n-1,n-1}\,\tilde{W}_{n-1,j}\,\tilde{W}_{n-1,k}\right] \nonumber\\
+D_{n,n} &=& A_{n,n} -
+    \sum_{j=1}^{2\,J}\sum_{k=1}^{2\,J} \tilde{U}_{n,j}\,S_{n,j,k}\,\tilde{U}_{n,k}
+    \nonumber\\
+\tilde{W}_{n,j} &=& \frac{1}{D_{n,n}}\left[ \tilde{V}_{n,j} -
+    \sum_{k=1}^{2\,J}\tilde{U}_{n,k}\,S_{n,j,k} \right] \quad.
+\end{eqnarray}
+
+\subsection{Solving}
+
+After computing the Cholesky factorization of the matrix $K$, we can apply
+the inverse of $K$ and compute its log-determinant in $\mathcal{O}(N\,J)$ and
+$\mathcal{O}(N)$ operations respectively.
+The log-determinant of $K$ is given by
+\begin{eqnarray}
+    \ln \det K = \sum_{n=1}^N \ln D_{n,n}
+\end{eqnarray}
+where, if $K$ is positive semi-definite, $D_{n,n}>0$ for all $n$.
+
+The inverse of $K$ can be applied using the relationship
+\begin{eqnarray}
+\bvec{z} = K^{-1}\,\bvec{y} = {(L^\T)}^{-1}\,D^{-1}\,L^{-1}\,\bvec{y} \quad.
+\end{eqnarray}
+First, we solve for $\bvec{z}^\prime = L^{-1}\,\bvec{y}$ using the following forward
+substitution algorithm
+\begin{eqnarray}
+    f_{n,j} &=& \phi_{n,j}\,\left[f_{n-1,j} +
+    \tilde{W}_{n-1,j}\,z_{n-1}^\prime\right] \nonumber\\
+    z_n^\prime &=& y_n - \sum_{j=1}^{2\,J} \tilde{U}_{n,j}\,f_{n,j}
+\end{eqnarray}
+where $f_{0,j} = 0$ for all $j$.
+Using this result and the following backward substitution algorithm, we can
+compute $\bvec{z}$
+\begin{eqnarray}
+g_{n,j} &=& \phi_{n+1,j}\,\left[g_{n+1,j} +
+    \tilde{U}_{n+1,j}\,z_{n+1}\right] \nonumber\\
+z_n &=& \frac{z_n^\prime}{D_{n,n}} - \sum_{j=1}^{2\,J} \tilde{W}_{n,j}\,g_{n,j}
+\end{eqnarray}
+where $g_{N+1,j} = 0$ for all $j$.
+The total cost of the forward and backward substitution passes scales as
+$\mathcal{O}(N\,J)$.
 
 
 \section{Examples}\sectlabel{examples}
