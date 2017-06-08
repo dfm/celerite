@@ -887,7 +887,6 @@ where $g_{N+1,j} = 0$ for all $j$.
 The total cost of the forward and backward substitution passes scales as
 $\mathcal{O}(N\,J)$.
 
-
 \section{Examples}\sectlabel{examples}
 
 \response{
@@ -2261,11 +2260,10 @@ low-rank Cholesky decomposition first, generating the vector $\bvec{q}$ of rando
 \end{equation}
 This may be carried out in $\mathcal{O}(JN)$ operations with
 \begin{eqnarray}
-f_{n,j} &=& \phi_{n-1,j} \left(f_{n-1,j} + \tilde{W}_{n-1,j} D_{n-1,n-1}^{1/2} q_{n-1}\right)\\
+f_{n,j} &=& \phi_{n,j} \left(f_{n-1,j} + \tilde{W}_{n-1,j} D_{n-1,n-1}^{1/2} q_{n-1}\right)\\
 y_n &=& D_{n,n}^{1/2} q_n + \sum_{k=1}^{2J} \tilde{U}_{n,k} f_{n,k}
 \end{eqnarray}
 for $n = 1$ to $N$ and $j=1$ to $2J$, with $f_{0,j} = 0$ for all $j$ and $q_0 = 0$.
-\agoltodo{Check that these equations are in fact correct.}
 We expect that this simulation algorithm will be useful for test-driving Gaussian
 process inference algorithms applied to large datasets; even simulation of
 Gaussian processes becomes prohibitive for large $N$ if standard Cholesky decomposition
@@ -2330,12 +2328,12 @@ $\{t_{n0+1},...,t_N\} \ge t^*_m$, gives
 We can compute this recursively.  Defining
 \begin{eqnarray}
 Q^-_{n,i} &=& \left(Q^-_{n-1,i}+z_n\tilde V_{n,i}\right)e^{-c_j(t_{n+1}-t_{n})},\\
-X^-_{m,n,i} &=& e^{-c_j(t_m^*-t_{n+1})}\tilde U_{m,i},\\
+X^-_{m,n,i} &=& e^{-c_j(t_m^*-t_{n+1})}\tilde U_{m,i}^*,\\
 Q^+_{n,i} &=& \left(Q^+_{n+1,i}+z_n\tilde U_{n,i}\right)e^{-c_j(t_{n}-t_{n-1})},\\
-X^+_{m,n,i} &=& e^{-c_j(t_{n-1}-t_m^*)} \tilde V_{m,i},
+X^+_{m,n,i} &=& e^{-c_j(t_{n-1}-t_m^*)} \tilde V_{m,i}^*,
 \end{eqnarray}
 where $t_0=t_1$, $t_{N+1}=t_N$, $Q^-_{0,i} = 0$ and $Q^+_{N+1,i}=0$ for $i=1$ to $2J$, and in $X^\pm_{m,n,i}$ the expressions
-for $\tilde U_{m,i}$ and $\tilde V_{m,i}$ are evaluted at $t_m^*$.
+for $\tilde U_{m,i}^*$ and $\tilde V_{m,i}^*$ are evaluted at $t_m^*$.
 Two sweeps must be carried out, upward in $n$ and $m$ to compute $Q^-$ recursively, and downward in
 $m$ and $n$ to compute $Q^+$ recursively, for a total scaling of $\approx \mathcal{O}(J^2N+J(N+M))$.
 For each value of $m$, $Q^\pm$ are recursively updated over $n$ until $n_0$ is reached, at which
