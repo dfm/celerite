@@ -748,7 +748,7 @@ operations and the interested reader is directed to \citet{Vandebril:2007} for
 more details about semiseparable matrices in general.
 
 
-\subsection{Cholesky factorization}
+\subsection{Cholesky factorization of PSD semiseparable matrices}
 
 For our purposes, we want to compute the log-determinant of $K$ and solve
 linear systems of the form $K\,\bvec{z}=\bvec{y}$ for $\bvec{z}$, where $K$ is
@@ -793,41 +793,80 @@ The computational cost of one iteration of the update in \eq{algorithm} is
 $\mathcal{O}(R^2)$ and this must be run $N$ times~--~once for each row~--~so
 the total cost of this factorization scales as $\mathcal{O}(N\,R^2)$.
 
-\subsection{Scalable factorization of the celerite model}
+After computing the Cholesky factorization of this matrix $K$, we can also
+apply its inverse and compute its log-determinant in $\mathcal{O}(N\,R)$ and
+$\mathcal{O}(N)$ operations respectively.
+The log-determinant of $K$ is given by
+\begin{eqnarray}
+    \ln \det K = \sum_{n=1}^N \ln D_{n,n}
+\end{eqnarray}
+where, since $K$ is PSD, $D_{n,n}>0$ for all $n$.
+
+The inverse of $K$ can be applied using the relationship
+\begin{eqnarray}
+\bvec{z} = K^{-1}\,\bvec{y} = {(L^\T)}^{-1}\,D^{-1}\,L^{-1}\,\bvec{y} \quad.
+\end{eqnarray}
+First, we solve for $\bvec{z}^\prime = L^{-1}\,\bvec{y}$ using forward
+substitution
+\begin{eqnarray}\eqlabel{fwd}
+    f_{n,j} &=& f_{n-1,j} + W_{n-1,j}\,z_{n-1}^\prime \nonumber\\
+    z_n^\prime &=& y_n - \sum_{j=1}^{R} U_{n,j}\,f_{n,j}
+\end{eqnarray}
+where $f_{0,j} = 0$ for all $j$.
+Then, using this result and backward substitution, we compute $\bvec{z}$
+\begin{eqnarray}\eqlabel{bwd}
+g_{n,j} &=& g_{n+1,j} + U_{n+1,j}\,z_{n+1} \nonumber\\
+z_n &=& \frac{z_n^\prime}{D_{n,n}} - \sum_{j=1}^{R} W_{n,j}\,g_{n,j}
+\end{eqnarray}
+where $g_{N+1,j} = 0$ for all $j$.
+The total cost of the forward and backward substitution passes scales as
+$\mathcal{O}(N\,R)$.
+
+The algorithm derived here is a general method for factorizing, solving, and
+computing the determinant of PSD rank-$R$ semiseparable matrices.
+As we will show below, with some care, this method can be used to compute
+\eq{gp-likelihood} for \celeriteterm\ models.
+In practice, when $K$ is PSD and this method is applicable, we find that this
+method is about a factor of 20 faster than an optimized implementation of the
+earlier, more general method from \citet{Ambikasaran:2015}.
+
+\subsection{Scalable computation of celerite models}
 
 The \celeriteterm\ model described in \sect{celerite} can be exactly
 represented as a rank $R = 2\,J$ semiseparable matrix\footnote{We note that if
 some \celeriteterm\ terms are real ($b_j=0$ and $d_j=0$) then these terms only
 add one to the rank.
-If a \celeriteterm\ model has $J_\mathrm{real}$ real and $J_\mathrm{complex}$
-general terms, the semiseparable rank is only $J_\mathrm{real} +
-2\,J_\mathrm{complex}$.}
+Therefore, if a \celeriteterm\ model has $J_\mathrm{real}$ real and
+$J_\mathrm{complex}$ general terms, the semiseparable rank is only
+$J_\mathrm{real} + 2\,J_\mathrm{complex}$.}
 where the components of the relevant matrices are
-\begin{eqnarray}
+\begin{eqnarray}\eqlabel{system}
 U_{n,2\,j-1} &=& a_j\,e^{-c_j\,t_n}\,\cos(d_j\,t_n) +
-    b_j\,e^{-c_j\,t_n}\,\sin(d_j\,t_n) \\
+    b_j\,e^{-c_j\,t_n}\,\sin(d_j\,t_n) \nonumber\\
 U_{n,2\,j} &=& a_j\,e^{-c_j\,t_n}\,\sin(d_j\,t_n) -
-    b_j\,e^{-c_j\,t_n}\,\cos(d_j\,t_n) \\
-V_{m,2\,j-1} &=& e^{c_j\,t_m}\,\cos(d_j\,t_m) \\
-V_{m,2\,j} &=& e^{c_j\,t_m}\,\sin(d_j\,t_m) \\
+    b_j\,e^{-c_j\,t_n}\,\cos(d_j\,t_n) \nonumber\\
+V_{m,2\,j-1} &=& e^{c_j\,t_m}\,\cos(d_j\,t_m) \nonumber\\
+V_{m,2\,j} &=& e^{c_j\,t_m}\,\sin(d_j\,t_m) \nonumber\\
 A_{n,n} &=& \sigma_n^2 + \sum_{j=1}^J a_j \quad.
 \end{eqnarray}
-Na\"ive implementation of the algorithm in \eq{algorithm} to this system will
-result in numerical overflow and underflow issues in many realistic cases
+A na\"ive implementation of the algorithm in \eq{algorithm} for this system
+will result in numerical overflow and underflow issues in many realistic cases
 because both $U$ and $V$ have factors of the form $e^{\pm c_j t}$, where $t$
 can be any arbitrarily large real number.
-This issue was also noted by \citet{Ambikasaran:2015} and it can be avoided
-with a reparameterization similar to the one they use.
+This issue can be avoided by reparameterizing the semiseparable representation
+from \eq{system}.
+%A similar issue was also noted by \citet{Ambikasaran:2015} and it can be
+%avoided using a reparameterization.
 We define the following pre-conditioned variables
-\begin{eqnarray}
-\tilde{U}_{n,2\,j-1} &=& a_j\,\cos(d_j\,t_n) + b_j\,\sin(d_j\,t_n) \\
-\tilde{U}_{n,2\,j} &=& a_j\,\sin(d_j\,t_n) - b_j\,\cos(d_j\,t_n) \\
-\tilde{V}_{m,2\,j-1} &=& \cos(d_j\,t_m) \\
-\tilde{V}_{m,2\,j} &=& \sin(d_j\,t_m) \\
-\tilde{W}_{n,2\,j-1} &=& e^{-c_j\,t_n}\,W_{n,2\,j-1} \\
+\begin{eqnarray}\eqlabel{reparam}
+\tilde{U}_{n,2\,j-1} &=& a_j\,\cos(d_j\,t_n) + b_j\,\sin(d_j\,t_n) \nonumber\\
+\tilde{U}_{n,2\,j} &=& a_j\,\sin(d_j\,t_n) - b_j\,\cos(d_j\,t_n) \nonumber\\
+\tilde{V}_{m,2\,j-1} &=& \cos(d_j\,t_m) \nonumber\\
+\tilde{V}_{m,2\,j} &=& \sin(d_j\,t_m) \nonumber\\
+\tilde{W}_{n,2\,j-1} &=& e^{-c_j\,t_n}\,W_{n,2\,j-1} \nonumber\\
 \tilde{W}_{n,2\,j} &=& e^{-c_j\,t_n}\,W_{n,2\,j}
 \end{eqnarray}
-and the set of variables
+and the new set of variables
 \begin{eqnarray}
 \phi_{n,2\,j-1} = \phi_{n,2\,j} = e^{-c_j\,(t_n - t_{n-1})}
 \end{eqnarray}
@@ -853,39 +892,28 @@ Furthermore, $\tilde{V}_{n,j}$ and $A_{n,n}$ can be updated in place and used
 to represent $\tilde{W}_{n,j}$ and $D_{n,n}$, giving a total memory footprint
 of $(6\,J + 1)\,N + J\,(J-1)/2$ floating point numbers.
 
-\subsection{Solving}
-
-After computing the Cholesky factorization of the matrix $K$, we can apply
-the inverse of $K$ and compute its log-determinant in $\mathcal{O}(N\,J)$ and
-$\mathcal{O}(N)$ operations respectively.
-The log-determinant of $K$ is given by
-\begin{eqnarray}
-    \ln \det K = \sum_{n=1}^N \ln D_{n,n}
-\end{eqnarray}
-where, if $K$ is positive semi-definite, $D_{n,n}>0$ for all $n$.
-
-The inverse of $K$ can be applied using the relationship
-\begin{eqnarray}
-\bvec{z} = K^{-1}\,\bvec{y} = {(L^\T)}^{-1}\,D^{-1}\,L^{-1}\,\bvec{y} \quad.
-\end{eqnarray}
-First, we solve for $\bvec{z}^\prime = L^{-1}\,\bvec{y}$ using the following forward
-substitution algorithm
+The log-determinant of $K$ can still be computed as in the previous section,
+but we must update the forward and backward substitution algorithms to account
+for the reparameterization in \eq{reparam}.
+The forward substitution with the reparameterized variables is
 \begin{eqnarray}
     f_{n,j} &=& \phi_{n,j}\,\left[f_{n-1,j} +
     \tilde{W}_{n-1,j}\,z_{n-1}^\prime\right] \nonumber\\
     z_n^\prime &=& y_n - \sum_{j=1}^{2\,J} \tilde{U}_{n,j}\,f_{n,j}
 \end{eqnarray}
-where $f_{0,j} = 0$ for all $j$.
-Using this result and the following backward substitution algorithm, we can
-compute $\bvec{z}$
+where $f_{0,j} = 0$ for all $j$, and the backward substitution algorithm
+becomes
 \begin{eqnarray}
 g_{n,j} &=& \phi_{n+1,j}\,\left[g_{n+1,j} +
     \tilde{U}_{n+1,j}\,z_{n+1}\right] \nonumber\\
 z_n &=& \frac{z_n^\prime}{D_{n,n}} - \sum_{j=1}^{2\,J} \tilde{W}_{n,j}\,g_{n,j}
 \end{eqnarray}
 where $g_{N+1,j} = 0$ for all $j$.
-The total cost of the forward and backward substitution passes scales as
-$\mathcal{O}(N\,J)$.
+The only differences, when compared to Equations~(\eqref{fwd})
+and~(\eqref{bwd}) is the multiplication by $\phi_{n,j}$ in the recursion
+relations for $f_{n,j}$ and $g_{n,j}$.
+As before, the computational cost of this solve scales as $\mathcal{O}(N\,J)$.
+
 
 \section{Examples}\sectlabel{examples}
 
