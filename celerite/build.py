@@ -24,6 +24,25 @@ def has_flag(compiler, flagname):
             return False
     return True
 
+def has_library(compiler, libname):
+    """Return a boolean indicating whether a library is found."""
+    with tempfile.NamedTemporaryFile("w", suffix=".cpp") as srcfile:
+        srcfile.write("int main (int argc, char **argv) { return 0; }")
+        srcfile.flush()
+        outfn = srcfile.name + ".so"
+        try:
+            compiler.link_executable(
+                [srcfile.name],
+                outfn,
+                libraries=[libname],
+            )
+        except setuptools.distutils.errors.LinkError:
+            return False
+        if not os.path.exists(outfn):
+            return False
+        os.remove(outfn)
+    return True
+
 def cpp_flag(compiler):
     """Return the -std=c++[11/14] compiler flag.
 
@@ -99,7 +118,10 @@ class build_ext(_build_ext):
                     ext.extra_link_args += ["-mmacosx-version-min=10.9",
                                             "-march=native"]
             else:
-                for lib in ["m", "stdc++"]:
+                libraries = ["m", "stdc++", "c++"]
+                for lib in libraries:
+                    if not has_library(self.compiler, lib):
+                        continue
                     for ext in self.extensions:
                         ext.libraries.append(lib)
 
