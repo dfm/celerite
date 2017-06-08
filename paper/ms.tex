@@ -914,6 +914,38 @@ and~(\eqref{bwd}) is the multiplication by $\phi_{n,j}$ in the recursion
 relations for $f_{n,j}$ and $g_{n,j}$.
 As before, the computational cost of this solve scales as $\mathcal{O}(N\,J)$.
 
+\subsection{Performance}
+
+We have derived a novel method for computing the Cholesky factorization of the
+covariance matrices produced by \celeriteterm\ models.
+In this section, we demonstrate the scalability and numerical performance of
+this algorithm.
+
+\begin{figure}[tp]
+\begin{center}
+\includegraphics[width=\textwidth]{figures/benchmark_darwin.pdf}
+\caption{A benchmark showing the computational scaling of \celerite\ using the
+    Cholesky factorization routine for rank-$2\,J$ semiseparable matrices as
+    described in the text.
+    \emph{(left)} The cost of computing \eq{gp-likelihood} with a covariance
+    matrix given by \eq{celerite-kernel} as a function of the number of data
+    points $N$.
+    The different lines show the cost for different numbers of terms $J$
+    increasing from bottom to top.
+    To guide the eye, the straight black line without points
+    shows linear scaling in $N$.
+    For comparison, the computational cost for the same model using a general
+    Cholesky factorization routine implemented in the Intel MKL linear algebra
+    package.
+    \emph{(right)} The same information plotted as a function of $J$ for
+    different values of $N$.
+    Each line shows the scaling for a specific value of $N$ increasing from
+    bottom to top.
+    The black line shows quadratic scaling in $J$.
+    \figurelabel{benchmark}}
+\end{center}
+\end{figure}
+
 
 \section{Examples}\sectlabel{examples}
 
@@ -2143,28 +2175,6 @@ The real world performance of \celerite\ depends on the specific platform,
 hardware, and \project{LAPACK}/\project{BLAS} implementation, but we have
 found qualitatively similar results across popular platforms and
 state-of-the-art libraries.
-
-\begin{figure}[tp]
-\begin{center}
-\includegraphics[width=\textwidth]{figures/benchmark_darwin.pdf}
-\caption{\dfmtodo{Cholesky} A benchmark showing the computational scaling of \celerite\ using the
-    \texttt{vanilla} band solver as a function of the number of data points
-    and the number of terms.
-    \emph{(left)} The cost of computing \eq{gp-likelihood} with a covariance
-    matrix given by \eq{celerite-kernel} as a function of the number of data
-    points $N$.
-    The different lines show the cost for different numbers of terms $J$
-    increasing from bottom to top.
-    To guide the eye, the straight black line without points
-    shows linear scaling in $N$.
-    \emph{(right)} The same information plotted as a function of $J$ for
-    different values of $N$.
-    Each line shows the scaling for a specific value of $N$ increasing from
-    bottom to top.
-    The black line shows quadratic scaling in $J$.
-    \figurelabel{benchmark}}
-\end{center}
-\end{figure}
 
 \section{Semiseparable operations}
 
