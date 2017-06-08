@@ -713,10 +713,10 @@ on earlier work by Rybicki \& Press \citep{Rybicki:1995}.
 \citet{Ambikasaran:2015} derived a scalable direct solver for any general
 semiseparable matrix and applied this method to \celeriteterm\ models with
 $b_j = 0$ and $d_j = 0$.
-In \app{extended}, we generalize this earlier method to include non-zero $b_j$
-and $d_j$.
-It turns out, however, that we can derive a higher performance algorithm by
-only considering positive semi-definite (PSD) matrices.
+During the preparation of this paper, we generalized this earlier method to
+include non-zero $b_j$ and $d_j$, but it turns out that we can derive a higher
+performance algorithm by restricting our method to positive semi-definite
+(PSD) matrices.
 In \app{psd}, we discuss methods for ensuring that a \celeriteterm\ model is
 PSD.
 
@@ -1958,287 +1958,104 @@ for Astronomy \citep{Astropy-Collaboration:2013}.
 \newpage
 \appendix
 
-\section{An alternative solver using the extended matrix
-formalism}\sectlabel{extended}
+\section{Ensuring positive definiteness for celerite models}\sectlabel{psd}
 
-\citet{Rybicki:1995} demonstrated that the inverse of a matrix $K$, with
-elements given by \eq{kernel-simple}, could be computed
-efficiently by taking advantage of the structure of this covariance function.
-\citet{Ambikasaran:2015} generalized this computation to apply to the full
-mixture of $J$ terms in \eq{celerite-kernel-complex} and derived an equally
-efficient method for computing the determinant of $K$.
+For a GP kernel to be valid, it must produce a positive definite covariance
+matrix for all input coordinates.
+For stationary kernels, this is equivalent~--~by Bochner's theorem \citep[see
+Section 4.2.1 in][]{Rasmussen:2006}~--~to requiring that the kernel be the
+Fourier transform of a positive finite measure.
+This means that the power spectrum of a positive definite kernel must be
+positive for all frequencies.
+This result is intuitive because, since the power spectrum of a process is
+defined as the expected squared amplitude of the Fourier transform of the time
+series, it must be non-negative.
 
-\subsection{An example}
-
-To provide some insight for this method, we follow
-\citet{Ambikasaran:2015} and start by working through a simple example.
-In this case, we assume that we have three data points
-$\{y_1,\,y_2,\,y_3\}$ observed at times $\{t_1,\,t_2,\,t_3\}$ with measurement
-variances $\{{\sigma_1}^2,\,{\sigma_2}^2,\,{\sigma_3}^2\}$ and we would
-like to compute the likelihood of these data under a GP model with the
-covariance function
+Using \eq{celerite-psd}, we find that for a single \celeriteterm\ term, this
+requirement is met when
+\begin{eqnarray}\eqlabel{psd-req}
+\frac{(a_j\,c_j+b_j\,d_j)\,({c_j}^2+{d_j}^2)+(a_j\,c_j-b_j\,d_j)\,\omega^2}
+{\omega^4+2\,({c_j}^2-{d_j}^2)\,\omega^2+{({c_j}^2+{d_j}^2)}^2} > 0 \quad.
+\end{eqnarray}
+The denominator is positive for all $c_j \ne 0$ and it can be shown that, when
+$c_j=0$, \eq{psd-req} is satisfied for all $\omega \ne d_j$ where the power is
+identically zero.
+Therefore, when $c_j \ne 0$, we require that the numerator is positive for all
+$\omega$.
+This requirement can also be written as
 \begin{eqnarray}
-k(\tau_{nm}) = \sigma_n^2\,\delta_{nm} + a\,\exp(-c\,\tau_{nm})\quad.
+a_j\,c_j > -b_j\,d_j \\
+a_j\,c_j > b_j\,d_j \quad.
 \end{eqnarray}
-This is the result of setting $J=1$, $b=0$, and $d=0$ in
-\eq{celerite-kernel-complex} and it is the model studied by
-\citet{Rybicki:1995}.
-To demonstrate that the likelihood of this model can be computed in
-$\mathcal{O}(N)$, we write out the full system of
-equations that must be solved to apply the inverse of $K$ and compute
-the first term of \eq{gp-likelihood}.
-In matrix notation, this is
-\begin{eqnarray}\eqlabel{impl-matrix}
-K\,\bvec{z} &=& \bvec{y}, \\
-\begin{pmatrix}
-    a+{\sigma_1}^2 & a\,e^{-c\,\tau_{2,1}} & a\,e^{-c\,\tau_{3,1}}\\
-    a\,e^{-c\,\tau_{2,1}} & a+{\sigma_2}^2 & a\,e^{-c\,\tau_{3,2}}\\
-    a\,e^{-c\,\tau_{3,1}} & a\,e^{-c\,\tau_{3,2}} & a+{\sigma_3}^2
-\end{pmatrix}\,
-\begin{pmatrix}
-    z_1 \\ z_2 \\ z_3
-\end{pmatrix} &=&
-\begin{pmatrix}
-    y_1 \\ y_2 \\ y_3
-\end{pmatrix}
-\end{eqnarray}
-where our goal is to solve for the unknown vector \bvec{z} for a given matrix
-$K$ and vector \bvec{y}.
-In \eq{impl-matrix}, we have assumed that the mean function is zero but a
-non-zero mean could be included by replacing \bvec{y} by
-$\bvec{r}_\bvec{\theta}$ as defined in \sect{gps}.
-Now, if we introduce the variables
+Furthermore, we can see that $a_j$ must be positive since $k(0) = a_j$ should
+should be positive and, similarly, by requiring the covariance to be finite at
+infinite lag, we obtain the constraint $c_j \ge 0$.
+Combining these results, we find the constraint
 \begin{eqnarray}
-    g_n = e^{-c\,\tau_{n+1,n}}\,g_{n-1} + e^{-c\,\tau_{n+1,n}}\,z_{n}
+    |b_j\,d_j| < a_j\,c_j \quad.
 \end{eqnarray}
-where $g_{0} = 0$, and
-\begin{eqnarray}\eqlabel{algo-first}
-    u_n = e^{-c\,\tau_{n+2,n+1}}\,u_{n+1} + a\,z_{n+1}
-\end{eqnarray}
-where $u_{N} = 0$,
-the system of equations can be rewritten as
+
+\response{The constraint for $J > 1$ is more complicated so, in most cases, we
+require that each term is positive definite using this relationship and use
+the fact that a product of sum of positive definite kernels will also be
+positive definite \citep{Rasmussen:2006} to show that the full model is
+positive.}
+However, in the case of $J$ general \celeriteterm\ terms, we can check for
+negative values of the PSD by solving for the roots of the power spectrum;
+if there are any real, positive roots, then the power-spectrum goes negative
+(or zero), and thus does not represent a valid kernel.
+We rewrite the power spectrum, \eqalt{celerite-psd}), abbreviating with
+$z = \omega^2$:
+\begin{equation}
+S(\omega)=  \sum_{j=1}^J \frac{q_j\,z + r_j}{z^2+s_j\,z + t_j} = 0
+\end{equation}
+where
 \begin{eqnarray}
-(a+{\sigma_1}^2)\,z_1 + e^{-c\,\tau_{2,1}}\,u_1 &=& y_1 \\
-a\,g_1 + (a+{\sigma_2}^2)\,z_2 + e^{-c\,\tau_{3,2}}\,u_2 &=& y_2 \\
-a\,g_2 + (a+{\sigma_3}^2)\,z_3 &=& y_3 \quad. \eqlabel{algo-last}
+q_j &=& a_j\,c_j-b_j\,d_j\\
+r_j &=& (d_j^2+c_j^2)(b_j\,d_j+a_j\,c_j)\\
+s_j &=& 2(c_j^2-d_j^2)\\
+t_j &=& (c_j^2+d_j^2)^2.
 \end{eqnarray}
-Rewriting the system defined by \eq{algo-first} through \eq{algo-last}
-as a matrix equation shows the benefit that this seemingly trivial
-reformulation provides:
+The denominators of each term are positive, so we can multiply through by
+$\prod_j \left(z^2+s_jz + t_j\right)$ to find
+\begin{equation}
+Q_0(z) = \sum_{j=1}^J (q_j z + r_j)\prod_{k \ne j}\left(z^2+s_kz +
+    t_k\right) = 0\quad,
+\end{equation}
+which is a polynomial with order $2\,(J-1)+1$.
+With $J=2$, this yields a cubic equation whose roots can be obtained exactly.
+
+For arbitrary $J$, a procedure based upon Sturm's theorem \citep{Dorrie:1965}
+allows one to determine whether there are any real roots within the range
+$(0,\,\infty]$.
+We first construct $Q_0(z)$ and its derivative $Q_1(z) = {Q_0}^\prime(z)$,
+and then loop from $k=2$ to $k=2\,(J-1)+1$, computing
 \begin{eqnarray}
-\begin{pmatrix}
-    a+{\sigma_1}^2 & e^{-c\,\tau_{2,1}} & 0 & 0 & 0 & 0 & 0 \\
-    e^{-c\,\tau_{2,1}} & 0 & -1 & 0 & 0 & 0 & 0 \\
-    0 & -1 & 0 & a & e^{-c\,\tau_{3,2}} & 0 & 0 \\
-    0 & 0 & a & a+{\sigma_2}^2 & e^{-c\,\tau_{3,2}} & 0 & 0 \\
-    0 & 0 & e^{-c\,\tau_{3,2}} & e^{-c\,\tau_{3,2}} & 0 & -1 & 0 \\
-    0 & 0 & 0 & 0 & -1 & 0 & a \\
-    0 & 0 & 0 & 0 & 0 & a & a+{\sigma_3}^2 \\
-\end{pmatrix}\,
-\begin{pmatrix}
-    z_1 \\ u_1 \\ g_1 \\ z_2 \\ u_2 \\ g_2 \\ z_3
-\end{pmatrix} &=&
-\begin{pmatrix}
-    y_1 \\ 0 \\ 0 \\ y_2 \\ 0 \\ 0 \\ y_3
-\end{pmatrix}\nonumber
+Q_k(z) = -{\rm rem}(Q_{k-2},\,Q_{k-1})
 \end{eqnarray}
-Following \citet{Ambikasaran:2015} we call this the ``extended'' system and
-rewrite \eq{impl-matrix} as
-\begin{eqnarray}
-    K_\mathrm{ext}\,\bvec{z}_\mathrm{ext} &=& \bvec{y}_\mathrm{ext} \quad.
-\end{eqnarray}
-Even though $K_\mathrm{ext}$ is a larger matrix than the $K$ we started
-with, it is now sparse with banded structure that can be exploited to solve
-the system efficiently.
-In particular, sparse solvers are available that can perform a
-LU-decomposition of matrices like this in $\mathcal{O}(N)$
-operations~--~instead of the $\mathcal{O}(N^3)$ that would be required in
-general~--~and we can use these algorithms to solve our system
-exactly because the target vector $\bvec{z}$ is a subset of the elements of
-$\bvec{z}_\mathrm{ext}$.
+where the function ${\rm rem}(p,\,q)$ is the remainder polynomial after
+dividing $p(z)$ by $q(z)$.
 
-In the following section we discuss this method more generally, but it's
-worth noting a few important facts that can already be seen in this example.
-First, the fundamental reason why this matrix $K$ can be solved efficiently is
-the following property of exponentials
-\begin{eqnarray}
-    e^{-c\,(t_3 - t_2)} \, e^{-c\,(t_2 - t_1)} =
-    e^{-c\,(t_3 - t_2 + t_2 - t_1)} =
-    e^{-c\,(t_3 - t_1)}
-\end{eqnarray}
-and it is important to note that this property does not extend to other common
-covariance functions like the ``exponential-squared'' function
-\begin{eqnarray}
-    k(\tau) \propto e^{-c\,\tau^2} \quad.
-\end{eqnarray}
-Second, our derivation of the extended matrix requires that the data
-points be monotonically sorted.
-This is the motivation for our previous statement that this method can only be
-applied in one dimension since neither of these properties will be satisfied
-by multidimensional inputs.
+We evaluate the coefficients of each of the polynomial in the series by
+evaluating $f_0 = \{Q_0(0),\,\ldots,\,Q_{2\,(J-1)+1}(0)\}$ to give us the signs
+of these polynomials evaluated at $z=0$.
+Likewise, we evaluate the coefficients of the largest order term in each
+polynomial that gives the sign of the polynomial as $z \rightarrow \infty$,
+$f_\infty$.
+With the sequence of coefficients $f_0$ and $f_\infty$, we then determine how
+many times the sign changes in each of these, where $\sigma(0)$ is the number
+of sign changes at $z=0$, and $\sigma(\infty)$ is the number of sign changes
+at $z \rightarrow \infty$.
+The total number of real roots in the range
+$(0,\,\infty]$ is given by $N_{+}=\sigma(0)-\sigma(\infty)$.
 
-\citet{Ambikasaran:2015} demonstrated two key facts that allow us to use this
-extended matrix formalism in practice.
-First, even if the covariance function is a mixture of exponentials, the
-extended matrix will still be banded with a bandwidth that scales linearly
-with the number of components, $J$.
-Second, \citet{Ambikasaran:2015} proved that the absolute value of the
-determinant of $K_\mathrm{ext}$ is equal to the absolute value of the
-determinant of $K$.
-This means we can use this extended matrix formalism to compute the
-marginalized likelihood in $\mathcal{O}(N)$ operations.
-
-\subsection{The algorithm}
-
-In this section, we generalize the method from the previous section to the
-covariance function given by \eq{celerite-kernel}.
-This derivation follows \citet{Ambikasaran:2015} but it includes explicit
-treatment of complex parameters, and their complex conjugates.
-
-In the case of the full \celeriteterm\ covariance function
-(\eqalt{celerite-kernel}), we introduce the following auxiliary variables in
-analogy to the $u_n$ and $g_n$ that we introduced in the previous section
-\begin{eqnarray}\eqlabel{full-system-first}
-\phi_{n,j} &=& e^{-c_j\,\tau_{n+1,n}}\,\cos\left(d_j\,\tau_{n+1,n}\right)\\
-\psi_{n,j} &=& -e^{-c_j\,\tau_{n+1,n}}\,\sin\left(d_j\,\tau_{n+1,n}\right)\\
-g_{n,j} &=& \phi_{n,j}\,g_{n-1,j} + \phi_{n,j}\,z_n + \psi_{n,j}\,h_{n-1,j}\\
-h_{n,j} &=& \phi_{n,j}\,h_{n-1,j} - \psi_{n,j}\,z_n - \psi_{n,j}\,g_{n-1,j}\\
-u_{n,j} &=& \phi_{n+1,j}\,u_{n+1,j} + a_j\,z_{n+1} + \psi_{n+1,j}\,v_{n+1,j}\\
-v_{n,j} &=& \phi_{n+1,j}\,v_{n+1,j} - b_j\,z_{n+1} - \psi_{n+1,j}\,u_{n+1,j}
-\end{eqnarray}
-with the boundary conditions
-\begin{eqnarray}
-    g_{0,j} = 0 \quad, \quad
-    h_{0,j} = 0 \quad, \quad
-    u_{N,j} = 0 \quad, \quad\mathrm{and}\quad
-    v_{N,j} = 0
-\end{eqnarray}
-for all $j$.
-Using these variables and some algebra, we find that the following expression
-\begin{eqnarray}\eqlabel{full-system-last}
-\sum_{j=1}^J \left[a_j\,g_{n,j}+b_j\,h_{n,j}\right]
-+ \left[{\sigma_n}^2+\sum_{j=1}^J a_j\right]
-+ \sum_{j=1}^J \left[\phi_{n,j}\,u_{n,j}+\psi_{n,j}\,v_{n,j}\right]
-    &=& r_{\bvec{\theta},n}
-\end{eqnarray}
-is equivalent to the target matrix equation
-\begin{eqnarray}
-K\,\bvec{z} &=& \bvec{r}_\bvec{\theta}
-\end{eqnarray}
-if $r_{\bvec{\theta},n}$ is the $n$-th element of the residual vector
-$\bvec{r}_\bvec{\theta}$ defined in \sect{gps}.
-\eq{full-system-first} through \eq{full-system-last} define a banded matrix
-equation in the ``extended'' space
-\begin{eqnarray}\eqlabel{kext-full}
-    K_\mathrm{ext}\,\bvec{z}_\mathrm{ext} &=&
-    \bvec{r}_{\bvec{\theta},\,\mathrm{ext}} \quad,
-\end{eqnarray}
-and, as before, this can be used to solve
-for $K^{-1}\,\bvec{r}_\bvec{\theta}$ and $\det K$ in $\mathcal{O}(N)$
-operations.
-\Figure{matrix} shows a pictorial representation of the sparsity pattern of
-the extended matrix $K_\mathrm{ext}$.
-The extended matrix has the dimension $N_\mathrm{ext} = (4\,J+1)\,N-4\,J$,
-with a bandwidth $W = 2\,J+2$ and $N_\mathrm{nz} = (20\,J+1)\,N-28\,J$
-non-zero entries.
-Given this definition of $K_\mathrm{ext}$, the corresponding extended vectors
-$\bvec{z}_\mathrm{ext}$ and $\bvec{r}_\mathrm{ext}$ are defined schematically
-as
-\begin{eqnarray}
-{\bvec{z}_\mathrm{ext}} ^\T =
-\left(\begin{array}{cccccccccc}
-    z_1 & u_{1,j} & v_{1,j} & g_{1,j} & h_{1,j} & z_2 & u_{2,j} & \cdots &
-    h_{N-1,j} & z_N
-\end{array}\right)
-\end{eqnarray}
-and
-\begin{eqnarray}
-{\bvec{r}_\mathrm{ext}} ^\T =
-\left(\begin{array}{cccccccccc}
-    r_{\bvec{\theta},1} & 0 & 0 & 0 & 0 & r_{\bvec{\theta},2} &
-    0 & \cdots & 0 & r_{\bvec{\theta},N}
-\end{array}\right) \quad.
-\end{eqnarray}
-After constructing the extended matrix (using a compact storage format), the
-extended matrix can be factorized using a LU-decomposition\footnote{Even
-though $K_\mathrm{ext}$ is symmetric, it is not positive definite so a
-Cholesky solver cannot be used for increased efficiency.} routine optimized
-for band or sparse matrices.
-This decomposition can then be used to compute the determinant of $K$, solve
-$K^{-1}\,\bvec{r}_\bvec{\theta}$, and subsequently calculate the marginalized
-likelihood in \eq{gp-likelihood}.
-
-In practice, it is worth treating terms with $b_j=0$ and $d_j=0$ as a special
-case because, for this term $j$, $\psi_{n,\,j}$, $h_{n,\,j}$, and $v_{n,\,j}$
-will also be identically zero for all $n$.
-Removing these trivial rows from the extended matrix results in factor of two
-increase in the computational efficiency for these terms.
-In our implementation, we refer to ``real'' terms as those where $b_j=0$ and
-$d_j=0$, and the general terms are called ``complex''.
-
-\begin{figure}[tp]
-\begin{center}
-\includegraphics[width=0.7\textwidth]{figures/matrix.pdf}
-\caption{A pictorial representation of the sparse extended matrix
-$K_\mathrm{ext}$ (\eqalt{kext-full}) with $N=5$ and $J=2$.
-Each colored block corresponds to a non-zero entry in the matrix as described
-in the legend.
-    \figurelabel{matrix}}
-\end{center}
-\end{figure}
-
-\subsection{Implementation considerations \& scaling}
-
-The extended system defined in the previous section is sparse, with typically
-fewer than a few percent non-zero entries and band structure.
-In this section, we empirically investigate the performance and scaling
-of three different algorithms for solving this extended system:
-
-\begin{enumerate}
-
-\item \texttt{vanilla}: A simple algorithm for computing the LU decomposition
-    for banded matrices using Gaussian elimination \citep[we implemented this
-    method following][]{Press:1992, Press:2007},
-
-\item \texttt{lapack}: The general banded LU decomposition implementation from
-    \project{LAPACK}\footnote{We use the \texttt{dgbtrf} and \texttt{dgbtrs}
-    methods from \project{LAPACK}.} \citep{Anderson:1999} using optimized
-    \project{BLAS} routines,\footnote{The experiments in this paper use the
-    Intel Math Kernel Library (\project{MKL}):
-    \url{https://software.intel.com/en-us/intel-mkl}.} and
-
-\item \texttt{sparse}: A general sparse LU solver~--~the \texttt{SparseLU}
-    solver from \project{Eigen} \citep{Guennebaud:2010}~--~that exploits the
-    sparsity but not the band structure.
-
-\end{enumerate}
-
-The theoretical scaling for a band LU decomposition is $\mathcal{O}(N\,J^3)$
-because the dimension of the extended matrix scales as $N\,J$ and the
-bandwidth scales with $J$ \citep{Press:1992, Press:2007}.
-\citet{Ambikasaran:2015} found an empirical scaling of $\mathcal{O}(N\,J^2)$ that used the sparse LU decomposition implemented in the
-\project{SuperLU} package \citep{Demmel:1999}.
-We find that, while the \texttt{vanilla} solver scales as expected, the
-\texttt{lapack} implementation scales empirically as $\mathcal{O}(N\,J^2)$ and
-offers the fastest solves for $J \gtrsim 8$ on all platforms that we tested.
-
-The benchmark experiments shown here were performed on a MacBook Pro with two
-2.6~GHz CPUs but we find similar results on a Dell workstation with 16 2.7~GHz
-CPUs and running Ubuntu.
-\Figure{benchmark} shows how the cost of computing \eq{gp-likelihood} scales
-with $N$ and $J$ using the \texttt{vanilla} solver.
-As expected theoretically, the scaling is linear in $N$ for all $N$ and cubic
-in $J$ for large $J$.
-\Figure{benchmark-lapack} and \Figure{benchmark-sparse} are the same plots for
-the \texttt{lapack} and \texttt{sparse} solvers respectively.
-For each of these optimized solvers, the empirical scaling is
-$\mathcal{O}(N\,J^2)$ at the cost of some extra overhead.
-Therefore, for $J \lesssim 5$ or $10$ the \texttt{vanilla} solver is more
-efficient than the other algorithms.
-The real world performance of \celerite\ depends on the specific platform,
-hardware, and \project{LAPACK}/\project{BLAS} implementation, but we have
-found qualitatively similar results across popular platforms and
-state-of-the-art libraries.
+We have checked that this procedure works for a wide range of parameters, and
+we find that it robustly matches the number of positive real roots which we
+evaluated numerically.
+The advantage of this procedure is that it does not require computing the
+roots, but only carrying out algebraic manipulation of polynomials to
+determine the number of positive real roots.
+If a non-zero real root is found, the likelihood may be set to zero.
 
 \section{Semiseparable operations}
 
@@ -2467,100 +2284,6 @@ point the predicted mean can be computed from
 %Note that this variance formula {\it only} works for prediction; we have
 %yet to derive a formula for which $\bvec{t^*}$ and $\bvec{t}$ are
 %interspersed.
-
-
-\section{Ensuring positive definiteness}\sectlabel{psd}
-
-For a GP kernel to be valid, it must produce a positive definite covariance
-matrix for all input coordinates.
-For stationary kernels, this is equivalent~--~by Bochner's theorem \citep[see
-Section 4.2.1 in][]{Rasmussen:2006}~--~to requiring that the kernel be the
-Fourier transform of a positive finite measure.
-This means that the power spectrum of a positive definite kernel must be
-positive for all frequencies.
-This result is intuitive because, since the power spectrum of a process is
-defined as the expected squared amplitude of the Fourier transform of the time
-series, it must be non-negative.
-
-Using \eq{celerite-psd}, we find that for a single \celeriteterm\ term, this
-requirement is met when
-\begin{eqnarray}\eqlabel{psd-req}
-\frac{(a_j\,c_j+b_j\,d_j)\,({c_j}^2+{d_j}^2)+(a_j\,c_j-b_j\,d_j)\,\omega^2}
-{\omega^4+2\,({c_j}^2-{d_j}^2)\,\omega^2+{({c_j}^2+{d_j}^2)}^2} > 0 \quad.
-\end{eqnarray}
-The denominator is positive for all $c_j \ne 0$ and it can be shown that, when
-$c_j=0$, \eq{psd-req} is satisfied for all $\omega \ne d_j$ where the power is
-identically zero.
-Therefore, when $c_j \ne 0$, we require that the numerator is positive for all
-$\omega$.
-This requirement can also be written as
-\begin{eqnarray}
-a_j\,c_j > -b_j\,d_j \\
-a_j\,c_j > b_j\,d_j \quad.
-\end{eqnarray}
-Furthermore, we can see that $a_j$ must be positive since $k(0) = a_j$ should
-should be positive and, similarly, by requiring the covariance to be finite at
-infinite lag, we obtain the constraint $c_j \ge 0$.
-Combining these results, we find the constraint
-\begin{eqnarray}
-    |b_j\,d_j| < a_j\,c_j \quad.
-\end{eqnarray}
-
-In the case of $J$ \celeriteterm\ terms, we can check for negative values of the
-PSD by solving for the roots of the power spectrum; if there are any real,
-positive roots, then the power-spectrum goes negative (or zero), and thus does not
-represent a valid kernel. We rewrite the power spectrum, \eqalt{celerite-psd}),
-abbreviating with $z = \omega^2$:
-\begin{equation}
-S(\omega)=  \sum_{j=1}^J \frac{q_j\,z + r_j}{z^2+s_j\,z + t_j} = 0
-\end{equation}
-where
-\begin{eqnarray}
-q_j &=& a_j\,c_j-b_j\,d_j\\
-r_j &=& (d_j^2+c_j^2)(b_j\,d_j+a_j\,c_j)\\
-s_j &=& 2(c_j^2-d_j^2)\\
-t_j &=& (c_j^2+d_j^2)^2.
-\end{eqnarray}
-The denominators of each term are positive, so we can multiply through by
-$\prod_j \left(z^2+s_jz + t_j\right)$ to find
-\begin{equation}
-Q_0(z) = \sum_{j=1}^J (q_j z + r_j)\prod_{k \ne j}\left(z^2+s_kz +
-    t_k\right) = 0\quad,
-\end{equation}
-which is a polynomial with order $2\,(J-1)+1$.
-With $J=2$, this yields a cubic equation whose roots can be obtained exactly.
-
-For arbitrary $J$, a procedure based upon Sturm's theorem \citep{Dorrie:1965}
-allows one to determine whether there are any real roots within the range
-$(0,\,\infty]$.
-We first construct $Q_0(z)$ and its derivative $Q_1(z) = {Q_0}^\prime(z)$,
-and then loop from $k=2$ to $k=2\,(J-1)+1$, computing
-\begin{eqnarray}
-Q_k(z) = -{\rm rem}(Q_{k-2},\,Q_{k-1})
-\end{eqnarray}
-where the function ${\rm rem}(p,\,q)$ is the remainder polynomial after
-dividing $p(z)$ by $q(z)$.
-
-We evaluate the coefficients of each of the polynomial in the series by
-evaluating $f_0 = \{Q_0(0),\,\ldots,\,Q_{2\,(J-1)+1}(0)\}$ to give us the signs
-of these polynomials evaluated at $z=0$.
-Likewise, we evaluate the coefficients of the largest order term in each
-polynomial that gives the sign of the polynomial as $z \rightarrow \infty$,
-$f_\infty$.
-With the sequence of coefficients $f_0$ and $f_\infty$, we then determine how
-many times the sign changes in each of these, where $\sigma(0)$ is the number
-of sign changes at $z=0$, and $\sigma(\infty)$ is the number of sign changes
-at $z \rightarrow \infty$.
-The total number of real roots in the range
-$(0,\,\infty]$ is given by $N_{+}=\sigma(0)-\sigma(\infty)$.
-
-We have checked that this procedure works for a wide range of parameters, and
-we find that it robustly matches the number of positive real roots which we
-evaluated numerically.
-The advantage of this procedure is that it does not require computing the
-roots, but only carrying out algebraic manipulation of polynomials to
-determine the number of positive real roots.
-If a non-zero real root is found, the likelihood may be set to zero.
 
 \newpage
 \bibliography{celerite}
