@@ -923,6 +923,26 @@ this algorithm.
 
 \begin{figure}[tp]
 \begin{center}
+\includegraphics[width=\textwidth]{figures/error/error.pdf}
+\caption{\emph{(left)} The maximum numerical error introduced by the algorithm
+    described in the text as a function of the number of \celeriteterm\ terms
+    $J$ and data points $N$.
+    Each line corresponds to a different $J$ and the error increases with $J$
+    as shown in the legend.
+    Each point in this figure is the average result across 10 systems with
+    randomly sampled parameters.
+\emph{(right)} The distribution of fractional error on the log determinant of
+    $K$ computed using the algorithm described in the text compared to the
+    algorithm implemented in \project{NumPy} \citep{Van-Der-Walt:2011} for the
+    same systems shown in the left-hand figure.
+    This histogram only includes comparisons for $N \le 2048$ because standard
+    methods become computationally expensive for larger systems.
+    \figurelabel{error}}
+\end{center}
+\end{figure}
+
+\begin{figure}[tp]
+\begin{center}
 \includegraphics[width=\textwidth]{figures/benchmark_darwin.pdf}
 \caption{A benchmark showing the computational scaling of \celerite\ using the
     Cholesky factorization routine for rank-$2\,J$ semiseparable matrices as
