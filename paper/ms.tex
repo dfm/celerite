@@ -916,10 +916,53 @@ As before, the computational cost of this solve scales as $\mathcal{O}(N\,J)$.
 
 \subsection{Performance}
 
-We have derived a novel method for computing the Cholesky factorization of the
-covariance matrices produced by \celeriteterm\ models.
-In this section, we demonstrate the scalability and numerical performance of
+We have derived a novel and scalable method for computing the Cholesky
+factorization of the covariance matrices produced by \celeriteterm\ models.
+In this section, we demonstrate the numerical and computational performance of
 this algorithm.
+
+First, we empirically confirm that the method solves systems of the form
+$K\,\bvec{z} = \bvec{y}$ to high numerical accuracy.
+The left panel of \Figure{error} shows the L-infinity norm for the residual
+$\bvec{z} - K^{-1}\,\bvec{y}$ for a range of dataset sizes $N$ and numbers of
+terms $J$.
+For each pair of $N$ and $J$ we repeated the experiment 10 times with
+different randomly generated datasets and \celeriteterm\ parameters and
+averaged across experiments to remove some sampling noise from this figure.
+The numerical error introduced by our method increases weakly for larger
+datasets $\sim N^{0.15}$ and roughly linearly with $J$.
+
+For the experiments with small $N \le 2048$, we also compared the log
+determinant calculation to the result calculated using the general log
+determinant function provided by the \project{NumPy} project
+\citep{Van-Der-Walt:2011}, itself built on the \project{LAPACK}
+\citep{Anderson:1999} implementation in the Intel Math Kernel
+Library\footnote{\url{https://software.intel.com/en-us/intel-mkl}}.
+The right-hand panel of \Figure{error} shows a histogram of the fractional
+error in the log determinant calculation for each of the 480~experiments with
+$N \le 2048$.
+Across the board, these results agree within machine precision and the error
+only weakly increases with $N$ and $J$.
+
+We continue by measuring the real-world computational efficiency of this
+method as a function of $N$ and $J$.
+This experiment was run on a 2013 MacBook Pro with a dual 2.6 GHz Intel Core
+i5 processor, but find similar performance on other platforms.
+The \celerite\ implementation used for this test is the Python interface with
+a C++ back end, but there is little overhead introduced by Python so we find
+similar performance using implementations in C++ and Julia
+\citep{Bezanzon:2012}.
+\Figure{benchmark} shows the computational cost of evaluating
+\eq{gp-likelihood} using \celerite\ as a function of $N$ and $J$.
+The empirical scaling as a function of data size matches the theoretical
+scaling of $\mathcal{O}(N)$ for all values of $N$ and the scaling with the
+number of terms is the theoretical $\mathcal{O}(J^2)$ for $J \gtrsim 10$, with
+some overhead for smaller models.
+For comparison, the computational cost of the same computation using the Intel
+Math Kernel Library, a highly optimized general dense linear algebra package,
+is shown as a dashed line.
+\celerite\ is faster than the reference implementation for all but the
+smallest datasets with many terms.
 
 \begin{figure}[tp]
 \begin{center}
@@ -1289,7 +1332,7 @@ more reliable than other methods.
 
 \input{figures/rotation/rotation-params}
 
-\begin{figure}[p]
+\begin{figure}[htbp]
 \begin{center}
 \includegraphics[width=0.8\textwidth]{figures/rotation/rotation.pdf}
 \caption{Inferred constraints on a quasiperiodic GP model using the covariance
@@ -1904,6 +1947,7 @@ for Astronomy \citep{Astropy-Collaboration:2013}.
      \project{Eigen} \citep{Guennebaud:2010},
      \project{emcee} \citep{Foreman-Mackey:2013},
      \project{george} \citep{Ambikasaran:2016},
+     \project{Julia} \citep{Bezanzon:2012},
      \project{LAPACK} \citep{Anderson:1999},
      \project{matplotlib} \citep{Hunter:2007},
      \project{numpy} \citep{Van-Der-Walt:2011},
