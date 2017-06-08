@@ -5,7 +5,6 @@ from __future__ import division, print_function
 
 import h5py
 import numpy as np
-import matplotlib.pyplot as plt
 
 import celerite
 from celerite import terms, plot_setup
@@ -66,11 +65,3 @@ with h5py.File("error.h5", "w") as f:
     f.create_dataset("N", data=N)
     f.create_dataset("alpha", data=alpha_error)
     f.create_dataset("logdet", data=logdet_error)
-
-# fig, ax = plt.subplots(1, 1, figsize=plot_setup.get_figsize(1, 1))
-
-# ax.plot(N, np.mean(alpha_error, axis=0).T, ".-")
-
-# ax.set_xscale("log")
-
-# fig.savefig("error.pdf", bbox_inches="tight")
