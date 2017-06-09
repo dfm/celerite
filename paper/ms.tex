@@ -184,7 +184,7 @@ large datasets.
 Gaussian Processes are a popular class of models used for this purpose but,
 since the computational cost scales as the cube of the number of data points,
 their application has been limited to relatively small datasets.
-In this paper, we present a method for Gaussian Process modeling in
+In this paper, we present a novel method for Gaussian Process modeling in
 one-dimension where the computational requirements scale linearly with the
 size of the dataset.
 We demonstrate the method by applying it to simulated and real astronomical
@@ -199,13 +199,12 @@ This form of covariance arises naturally when the process is a mixture of
 stochastically-driven damped harmonic oscillators~--~providing a physical
 motivation for and interpretation of this choice~--~but we also demonstrate
 that it is effective in other cases.
-We present a mathematical description of the method, the details of the
-implementation, and a comparison to existing scalable Gaussian Process methods.
+We present a mathematical description of the method and compare it to existing
+scalable Gaussian Process methods.
 The method is flexible, fast, and most importantly, interpretable, with a wide
 range of potential applications within astronomical data analysis and beyond.
 We provide well-tested and documented open-source implementations of this
 method in \project{C++}, \project{Python}, and \project{Julia}.
-A change.
 
 \end{abstract}
 
@@ -536,10 +535,9 @@ A common concern in the context of GP modeling in astrophysics is the lack of
 physical motivation for the choice of kernel functions.
 Kernels are often chosen simply because they are popular, with little
 consideration of the impact of this decision.
-While this doesn't necessarily impact the inferred results, in this section we
-discuss an exact physical interpretation of the \celeriteterm\ kernel that
-will be applicable to many astrophysical systems but especially the
-time-variability of stars.
+In this section, we discuss an exact physical interpretation of the
+\celeriteterm\ kernel that is applicable to many astrophysical systems, but
+especially the time-variability of stars.
 
 Many astronomical objects are variable on timescales determined by their
 physical structure.
@@ -601,9 +599,9 @@ S_0\,\omega_0\,Q\,e^{-\frac{\omega_0\,\tau}{2Q}}\,
 \end{cases}
 \end{equation}
 where $\eta = \vert 1-(4\,Q^2)^{-1}\vert^{1/2}$.
-We note that, because of the damping, the characteristic oscillation frequency
-in this model, $d_j$, for any finite quality factor $Q > 1/2$, is not equal to
-the frequency of the undamped oscillator, $\omega_0$.
+Because of the damping, the characteristic oscillation frequency in this
+model, $d_j$, for any finite quality factor $Q > 1/2$, is not equal to the
+frequency of the undamped oscillator, $\omega_0$.
 
 The power spectrum in \eq{sho-psd} has several limits of physical interest:
 \begin{itemize}
@@ -613,8 +611,8 @@ The power spectrum in \eq{sho-psd} has several limits of physical interest:
 S(\omega) = \sqrt{\frac{2}{\pi}}\,\frac{S_0}{(\omega/\omega_0)^4+1} \quad.
 \end{eqnarray}
 This functional form is commonly used to model for the background granulation
-noise in asteoreseismic and helioseismic \citep{Harvey:1985, Michel:2009,
-Kallinger:2014}  analyses.
+noise in asteoreseismic and helioseismic analyses \citep{Harvey:1985, Michel:2009,
+Kallinger:2014}.
 The kernel for this value of $Q$ is
 \begin{equation}
 k(\tau) = S_0\,\omega_0\,e^{-\frac{1}{\sqrt{2}}\,\omega_0\,\tau}\,
@@ -636,7 +634,7 @@ k(\tau) &=& \lim_{f \to 0}\,
     \right] \\
 &=& S_0\,\omega_0\,e^{-\omega_0\,\tau}\,[1+\omega_0\,\tau]
 \end{eqnarray}
-or equivalently (using \eqalt{celerite-kernel} and \eqalt{sho-complex})
+or, equivalently (using \eqalt{celerite-kernel} and \eqalt{sho-complex})
 \begin{eqnarray}\eqlabel{approx-matern2}
 k(\tau) &=& \lim_{f \to 0}\,
     S_0\,\omega_0\,e^{-\omega_0\,\tau}\,
@@ -710,15 +708,14 @@ their Cholesky factorization in $\mathcal{O}(N\,J^2)$ operations.
 The relationship between the \celeriteterm\ model and semiseparable linear
 algebra was first recognized by Ambikasaran \citep{Ambikasaran:2015} building
 on earlier work by Rybicki \& Press \citep{Rybicki:1995}.
-\citet{Ambikasaran:2015} derived a scalable direct solver for any general
-semiseparable matrix and applied this method to \celeriteterm\ models with
-$b_j = 0$ and $d_j = 0$.
+Ambikasaran derived a scalable direct solver for any general semiseparable
+matrix and applied this method to \celeriteterm\ models with $b_j = 0$ and
+$d_j = 0$.
 During the preparation of this paper, we generalized this earlier method to
 include non-zero $b_j$ and $d_j$, but it turns out that we can derive a higher
-performance algorithm by restricting our method to positive semi-definite
-(PSD) matrices.
+performance algorithm by restricting our method to positive definite matrices.
 In \app{psd}, we discuss methods for ensuring that a \celeriteterm\ model is
-PSD.
+positive.
 
 To start, we define a rank-$R$ semiseparable matrix as a matrix $K$ where the
 elements can be written as
@@ -748,11 +745,11 @@ operations and the interested reader is directed to \citet{Vandebril:2007} for
 more details about semiseparable matrices in general.
 
 
-\subsection{Cholesky factorization of PSD semiseparable matrices}
+\subsection{Cholesky factorization of positive definite semiseparable matrices}
 
 For our purposes, we want to compute the log-determinant of $K$ and solve
 linear systems of the form $K\,\bvec{z}=\bvec{y}$ for $\bvec{z}$, where $K$ is
-a rank-$R$ semiseparable PSD matrix.
+a rank-$R$ semiseparable positive definite matrix.
 These can both be computed using the Cholesky factorization of $K$:
 \begin{eqnarray}
 K = L\,D\,L^\T
@@ -800,7 +797,7 @@ The log-determinant of $K$ is given by
 \begin{eqnarray}
     \ln \det K = \sum_{n=1}^N \ln D_{n,n}
 \end{eqnarray}
-where, since $K$ is PSD, $D_{n,n}>0$ for all $n$.
+where, since $K$ is positive definite, $D_{n,n}>0$ for all $n$.
 
 The inverse of $K$ can be applied using the relationship
 \begin{eqnarray}
@@ -823,12 +820,14 @@ The total cost of the forward and backward substitution passes scales as
 $\mathcal{O}(N\,R)$.
 
 The algorithm derived here is a general method for factorizing, solving, and
-computing the determinant of PSD rank-$R$ semiseparable matrices.
-As we will show below, with some care, this method can be used to compute
+computing the determinant of positive definite rank-$R$ semiseparable
+matrices.
+As we will show below, this method can be used to compute
 \eq{gp-likelihood} for \celeriteterm\ models.
-In practice, when $K$ is PSD and this method is applicable, we find that this
-method is about a factor of 20 faster than an optimized implementation of the
-earlier, more general method from \citet{Ambikasaran:2015}.
+In practice, when $K$ is positive definite and this method is applicable, we
+find that this method is about a factor of 20 faster than an optimized
+implementation of the earlier, more general method from
+\citet{Ambikasaran:2015}.
 
 \subsection{Scalable computation of celerite models}
 
@@ -927,7 +926,7 @@ The left panel of \Figure{error} shows the L-infinity norm for the residual
 $\bvec{z} - K^{-1}\,\bvec{y}$ for a range of dataset sizes $N$ and numbers of
 terms $J$.
 For each pair of $N$ and $J$ we repeated the experiment 10 times with
-different randomly generated datasets and \celeriteterm\ parameters and
+different randomly generated datasets and \celeriteterm\ parameters, and
 averaged across experiments to remove some sampling noise from this figure.
 The numerical error introduced by our method increases weakly for larger
 datasets $\sim N^{0.15}$ and roughly linearly with $J$.
@@ -947,11 +946,11 @@ only weakly increases with $N$ and $J$.
 We continue by measuring the real-world computational efficiency of this
 method as a function of $N$ and $J$.
 This experiment was run on a 2013 MacBook Pro with a dual 2.6 GHz Intel Core
-i5 processor, but find similar performance on other platforms.
-The \celerite\ implementation used for this test is the Python interface with
-a C++ back end, but there is little overhead introduced by Python so we find
-similar performance using implementations in C++ and Julia
-\citep{Bezanzon:2012}.
+i5 processor, but we find similar performance on other platforms.
+The \celerite\ implementation used for this test is the \project{Python}
+interface with a \project{C++} back end, but there is little overhead
+introduced by \project{Python} so we find similar performance using
+implementations in \project{C++} and \project{Julia} \citep{Bezanzon:2012}.
 \Figure{benchmark} shows the computational cost of evaluating
 \eq{gp-likelihood} using \celerite\ as a function of $N$ and $J$.
 The empirical scaling as a function of data size matches the theoretical
@@ -1013,11 +1012,11 @@ smallest datasets with many terms.
 \section{Examples}\sectlabel{examples}
 
 \response{
-To show the application of \celerite, we use it to perform posterior
+To demonstrate the application of \celerite, we use it to perform posterior
 inference in two examples with realistic simulated data and three examples of
 real-world research problems.
-These examples have been chosen to justify the application of \celerite\ for a
-range of use cases, but they are by no means exhaustive.
+These examples have been chosen to justify the use of \celerite\ for a range
+of research problems, but they are by no means exhaustive.
 These examples are framed in the time domain with a clear bias in favor of
 large homogeneous photometric surveys, but \celerite\ can also be used for
 other one-dimensional problems like, for example, spectroscopy, where
@@ -1092,9 +1091,10 @@ the residuals appear qualitatively uncorrelated in this figure.
 
 We then sample the joint posterior probability (\eqalt{joint-post}) using
 \emcee\ \citep{Goodman:2010, Foreman-Mackey:2013}.
-We initialize \exampleinwalkers~walkers in a Gaussian ball with width
-$10^{-4}$ in each parameter around the MAP parameter vector, run
-\exampleinburn~steps of burn-in, and \exampleinsteps~steps of MCMC.
+We initialize \exampleinwalkers~walkers by sampling from three-dimensional
+isotropic Gaussian centered the MAP parameter vector and with a standard
+deviation of $10^{-4}$ in each dimension.
+We then run \exampleinburn~steps of burn-in and \exampleinsteps~steps of MCMC.
 To assess convergence, we estimate the mean integrated autocorrelation time of
 the chain across parameters \citep{Sokal:1989, Goodman:2010} and find that the
 chain results in \exampleineff~effective samples.
@@ -1103,8 +1103,8 @@ Each sample in the chain corresponds to a model PSD and we compare this
 posterior constraint on the PSD to the true spectral density in the
 right-hand panel of \Figure{simulated-correct}.
 In this figure, the true PSD is plotted as a dashed black line and the
-numerical estimate of the posterior inference is shown as a blue contour
-indicating 68\% of the MCMC samples.
+numerical estimate of the posterior constraint on the PSD is shown as a blue
+contour indicating 68\% of the MCMC samples.
 It is clear from this figure that, as expected, the inference correctly
 reproduces the true PSD.
 }
