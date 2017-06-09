@@ -1114,8 +1114,8 @@ reproduces the true PSD.
 \begin{figure}[!htbp]
 \begin{center}
 \includegraphics[width=0.9\textwidth]{figures/simulated/correct.pdf}
-\caption{(top left) A simulated dataset (black error bars), and maximum
-    likelihood model (blue contours).
+\caption{(top left) A simulated dataset (black error bars), and MAP
+    model (blue contours).
     (bottom left) The residuals between the mean predictive model and the data
     shown in the top left figure.
     (right) The inferred PSD~--~the blue contours encompass 68\% of the
@@ -1198,7 +1198,7 @@ sampling from the 4-dimensional Gaussian centered on the MAP parameters with
 an isotropic standard deviation of $10^{-4}$.
 We then run \exampleiinburn~steps of burn-in and \exampleiinsteps~steps of
 MCMC.
-To estimate the number of effective samples, we estimate the integrated
+To estimate the number of independent samples, we estimate the integrated
 autocorrelation time of the chain for the parameter $\omega_1$~--~the
 parameter of primary interest~--~and find \exampleiineff~effective samples.
 
@@ -1227,8 +1227,8 @@ other problems as well.
 \begin{figure}[!htbp]
 \begin{center}
 \includegraphics[width=0.9\textwidth]{figures/simulated/wrong-qpo.pdf}
-\caption{(top left) A simulated dataset (black error bars), and maximum
-    likelihood model (blue contours).
+\caption{(top left) A simulated dataset (black error bars), and MAP
+    model (blue contours).
     (bottom left) The residuals between the mean predictive model and the data
     shown in the top left figure.
     (right) The inferred period of the process. The true period is indicated
@@ -1337,7 +1337,7 @@ more reliable than other methods.
 \includegraphics[width=0.9\textwidth]{figures/rotation/rotation.pdf}
 \caption{Inferred constraints on a quasiperiodic GP model using the covariance
     function in \eq{rot-kernel} and two quarters of \kepler\ data.
-(top left) The \kepler\ data (black points) and the maximum likelihood model
+(top left) The \kepler\ data (black points) and the MAP model
     prediction (blue curve) for a 60~day subset of the data used.
     The solid blue line shows the predictive mean and the blue contours show
     the predictive standard deviation.
@@ -1363,9 +1363,10 @@ driver for many of the upcoming large scale photometric surveys
 \citep{Campante:2016, Rauer:2014, Gould:2015}.
 Most asteroseismic analyses have been limited to high signal-to-noise
 oscillations because the standard methods use statistics of the empirical
-periodogram and cannot formally propagate the measurement uncertainties to the
-constraints on physical parameters, instead relying on bootstrapped
-uncertainty estimators \citep{Huber:2009}.
+periodogram.
+These methods cannot formally propagate the measurement uncertainties to the
+constraints on physical parameters and they instead rely on population-level
+bootstrap uncertainty estimates \citep{Huber:2009}.
 More sophisticated methods that compute the likelihood function in the time
 domain scale poorly to large survey datasets \citep{Brewer:2009,
 Corsaro:2014}.
@@ -1452,7 +1453,7 @@ not practical.
 Instead, we start by estimating the initial values for $\nu_\mathrm{max}$ and
 $\Delta\nu$ using only the month-long subset of data and following the
 standard procedure described by \citet{Huber:2009}.
-We then run set of \project{L-BFGS-B} optimizations with values of
+We then run a set of \project{L-BFGS-B} optimizations with values of
 $\nu_\mathrm{max}$ selected in logarithmic grid centered on our initial
 estimate of $\nu_\mathrm{max}$ and initial values of $\Delta\nu$ computed
 using the empirical relationship between these two quantities
@@ -1481,7 +1482,7 @@ This result is consistent within the published error bars and the posterior
 constraints are tighter than the published results.
 All asteroseismic analyses are known to have substantial systematic and
 method-dependent uncertainties \citep{Verner:2011} so further experiments
-would be needed to fully assess the reliability of this method.
+would be needed to fully assess the reliability of this specific model.
 
 This model requires about 10~CPU minutes to run the MCMC to convergence.
 This is more computationally intensive than traditional methods of measuring
@@ -1504,7 +1505,7 @@ but we hope to revisit this opportunity in the future.
 \includegraphics[width=0.5\textwidth]{figures/astero/astero.pdf}
 \caption{
 \response{
-(top) The \kepler\ data (black points) and the maximum likelihood model
+(top) The \kepler\ data (black points) and the MAP model
     prediction (blue curve) for a 10~day subset of the month-long dataset that
     was used for the fit.
     The solid blue line shows the predictive mean and the blue contours show
@@ -1627,14 +1628,14 @@ computation using a general direct solver.
 \includegraphics[width=\textwidth]{figures/transit/transit-ml.pdf}
     \caption{\emph{(top)} A month-long segment of \kepler\ light curve for
     KIC~1430163 with a synthetic transit model injected (black points) and the
-    maximum likelihood model for the stellar variability
+    MAP model for the stellar variability
     (blue line).
-    \emph{(bottom)} The maximum likelihood ``de-trending'' of the data in
+    \emph{(bottom)} The MAP ``de-trending'' of the data in
     the top panel.
-    In this panel, the maximum likelihood model for the stellar variability
+    In this panel, the MAP model for the stellar variability
     has been subtracted to leave only the transits.
-    The de-trended light curve is shown by black error bars and the maximum
-    likelihood transit model is shown as a blue line.
+    The de-trended light curve is shown by black error bars and the MAP
+    transit model is shown as a blue line.
     \figurelabel{transit-ml}}
 \end{center}
 \end{figure}
