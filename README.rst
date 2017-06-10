@@ -1,4 +1,4 @@
-**celerite** — Scalable 1D Gaussian Processes in C++, Python, and Julia
+**celerite**: Scalable 1D Gaussian Processes in C++, Python, and Julia
 
 Read the documentation at: `celerite.rtfd.io <http://celerite.readthedocs.io>`_.
 
