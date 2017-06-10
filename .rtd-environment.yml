@@ -9,4 +9,4 @@ dependencies:
   - eigen
   - pybind11
   - pip:
-      - https://github.com/michaeljones/breathe/zipball/d3eae7fac4d2ead062070fd149ec8bf839f74ed5
+      - https://github.com/arximboldi/breathe/zipball/2af44a0d9f40e672dd1989b67d0e90a61deba77e
