@@ -1320,14 +1320,23 @@ We estimate the integrated autocorrelation time of the chain for $\ln
 P_\mathrm{rot}$ and estimate that we have \exampleiiineff\ independent
 samples.
 These samples give a posterior constraint on the period of $P_\mathrm{rot} =
-\rotationperiod$ days and the marginalized posterior distribution for $P$ is shown
-in the right panel of \Figure{rotation}.
+\rotationperiod$ days and the marginalized posterior distribution for $P$ is
+shown in the right panel of \Figure{rotation}.
 This result is in good agreement with the literature value with smaller
 uncertainties.
 A detailed comparison of GP rotation period measurements and the traditional
 methods is beyond the scope of this paper, but forthcoming work (R.~Angus,
 \etal, submitted) demonstrates that GP inferences are, at a population level,
 more reliable than other methods.
+
+The total computational cost for this inference using \celerite\ is about
+4~CPU-minutes.
+By contrast, the same inference using a general but optimized Cholesky
+factorization routine would require nearly 400~CPU-hours.
+This speed-up enables probabilistic measurement of rotation periods using
+existing data from \project{K2} and forthcoming surveys like \tess\ and \lsst\
+where this inference will need to be run for at least hundreds of thousands of
+stars.
 }
 
 \input{figures/rotation/rotation-params}
@@ -1657,10 +1666,10 @@ computation using a general direct solver.
 
 \subsection{Summary}
 
-\response{
-In this section, we demonstrated five potential use cases for \celerite.
-These examples span a range of data sizes and model complexities, and the
-last three are all based on active areas of research with immediate real-world
+\response{In the previous subsections, we demonstrate five potential use
+cases for \celerite.
+These examples span a range of data sizes and model complexities, and the last
+three are based on active areas of research with immediate real-world
 applicability.
 The sizes of these datasets are modest on the scale of some existing and
 forthcoming survey datasets because we designed the experiments to be easily
@@ -1668,12 +1677,18 @@ reproducible but, even in these cases, the inferences made here would be
 intractable without substantial computational investment.
 
 Table~\ref{tab:example-stats} lists the specifications of each example.
-
-In Example~3, for example, we inferred the rotation period of a star observed
-by \kepler\ with a cost of about 4~CPU-minutes.
-By contrast, the same inference using a general but optimized Cholesky
-factorization routine would require nearly 400~CPU-hours.
-The upcoming \tess\ Mission will observe \dfmtodo{XXX} stars.
+In this table, we list the computational cost required for a single likelihood
+evaluation using a general Cholesky factorization\footnote{We use the Intel
+Math Kernel Library \url{https://software.intel.com/en-us/intel-mkl}}
+and the cost of computing the same likelihood using \celerite.
+Combining this with the total number of model evaluations required to run the
+MCMC algorithm to convergence (this number is also listed in
+Table~\ref{tab:example-stats}), we can estimate the total CPU time required in
+each case.
+While the exact computational requirements for any problem also depend on the
+choice of inference algorithm and the specific precision requirements, this
+table provides a rough estimate of what to expect for projects at these
+scales.
 }
 
 \input{figures/example-stats}
@@ -1688,16 +1703,13 @@ restrictive.
 it requires a specific choice of stationary kernel function and it can only be
 used in one-dimension.
 
-\subsection{Kalman filtering \& CARMA models} \sectlabel{kalman}
-
-\response{
 The continuous autoregressive moving average (CARMA) models introduced into
 the astrophysics literature by \citet{Kelly:2014} share many features with
 \celerite.
-CARMA models are derived by solving a stochastic differential equation and,
-like \celerite, the likelihood function for a CARMA model conditioned on a
-one-dimensional dataset can be solved in $\mathcal{O}(N)$.
-The kernel function for a CARMA$(J,\,K)$ model is \citep{Kelly:2014}
+CARMA models are restricted to one-dimensional problems and the likelihood
+function for a CARMA model can be solved in $\mathcal{O}(N\,J^2)$ using a
+Kalman filter \citep{Kelly:2014}.
+The kernel function for a CARMA$(J,\,K)$ model is
 \begin{eqnarray}\eqlabel{carma-kernel}
 k_\mathrm{CARMA}(\tau) = \sum_{j=1}^J A_j\,\exp\,(r_j\,\tau)
 \end{eqnarray}
@@ -1732,7 +1744,30 @@ filtering-based CARMA solvers, it directly solves matrix equations of the form
 ${K_\bvec{\alpha}}^{-1}\,b$ in $\mathcal{O}(N)$.
 This is a crucial feature when GP modeling is combined with linear models
 \citep[for example][]{Luger:2017}.
-}
+
+\begin{figure}[tp]
+\begin{center}
+\includegraphics[width=\textwidth]{figures/benchmark_darwin_carma.pdf}
+\caption{The same as \Figure{benchmark}, but using an optimized
+    \project{C++} implementation of the Kalman filter method developed by
+    \citet{Kelly:2014}.
+    Comparing this figure to \Figure{benchmark}, we see that \celerite\ is
+    about an order of magnitude faster in all cases.
+    \emph{(left)} The cost of computing \eq{gp-likelihood} with a covariance
+    matrix given by \eq{celerite-kernel} as a function of the number of data
+    points $N$.
+    The different lines show the cost for different numbers of terms $J$
+    increasing from bottom to top.
+    To guide the eye, the straight black line without points
+    shows linear scaling in $N$.
+    \emph{(right)} The same information plotted as a function of $J$ for
+    different values of $N$.
+    Each line shows the scaling for a specific value of $N$ increasing from
+    bottom to top.
+    The black line shows quadratic scaling in $J$.
+    \figurelabel{benchmark-carma}}
+\end{center}
+\end{figure}
 
 
 \subsection{Other scalable methods}
