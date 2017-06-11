@@ -393,12 +393,13 @@ matrix_t dot (
   return y;
 };
 
-/// Compute the dot product of the square root of a celerite matrix
+/// Compute the conditional mean for a GP in O(N)
 ///
-/// This method computes ``L.z`` where ``A = L.L^T`` is the matrix defined in
-/// ``compute``.
+/// This method computes ``K_*.(K+sigma)^{-1}.y`` where ``K`` is the matrix
+/// defined in ``compute``.
 ///
-/// @param z The matrix z from above.
+/// @param y The data vector to condition on
+/// @param x The input coordinates to compute the predictions at
 vector_t predict (const Eigen::VectorXd& y, const Eigen::VectorXd& x) const {
   if (y.rows() != this->N_) throw dimension_mismatch();
   if (!(this->computed_)) throw compute_exception();

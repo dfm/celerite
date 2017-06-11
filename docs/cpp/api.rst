@@ -16,10 +16,9 @@ interfaces are abstracted into the :cpp:class:`celerite::solver::Solver`.
 Fast Solver
 -----------
 
-The :cpp:class:`celerite::solver::CholeskySolver` is an implementation of
-:cpp:class:`celerite::solver::Solver` that exploits the semi-separable nature
-of the matrix to solve and compute determinants in :math:`\mathcal{O}(N)`
-operations.
+The :cpp:class:`celerite::solver::CholeskySolver` is an :math:`\mathcal{O}(N)`
+solver that exploits the semi-separable structure of the matrix to solve and
+compute determinants.
 
 .. doxygenclass:: celerite::solver::CholeskySolver
     :members:
