@@ -426,7 +426,7 @@ evaluated with a scaling of $\mathcal{O}(N\,J^2)$, where $J$ is the number of
 components in the mixture.
 \response{In \sect{factor}, we derive a novel method with the same
 $\mathcal{O}(N\,J^2)$ scaling that can be used when
-$k_\bvec{\alpha}(\tau_{nm})$ is positive semi-definite.}
+$k_\bvec{\alpha}(\tau_{nm})$ is positive definite.}
 
 This kernel function can be made even more general by
 introducing complex parameters $a_j \to a_j\pm i\,b_j$ and
@@ -715,7 +715,7 @@ During the preparation of this paper, we generalized this earlier method to
 include non-zero $b_j$ and $d_j$, but it turns out that we can derive a higher
 performance algorithm by restricting our method to positive definite matrices.
 In \app{psd}, we discuss methods for ensuring that a \celeriteterm\ model is
-positive.
+positive definite.
 
 To start, we define a rank-$R$ semiseparable matrix as a matrix $K$ where the
 elements can be written as
@@ -837,7 +837,7 @@ some \celeriteterm\ terms are real ($b_j=0$ and $d_j=0$) then these terms only
 add one to the rank.
 Therefore, if a \celeriteterm\ model has $J_\mathrm{real}$ real and
 $J_\mathrm{complex}$ general terms, the semiseparable rank is only
-$J_\mathrm{real} + 2\,J_\mathrm{complex}$.}
+$R=J_\mathrm{real} + 2\,J_\mathrm{complex}=2J-J_{real}$.}
 where the components of the relevant matrices are
 \begin{eqnarray}\eqlabel{system}
 U_{n,2\,j-1} &=& a_j\,e^{-c_j\,t_n}\,\cos(d_j\,t_n) +
@@ -923,8 +923,7 @@ this algorithm.
 First, we empirically confirm that the method solves systems of the form
 $K\,\bvec{z} = \bvec{y}$ to high numerical accuracy.
 The left panel of \Figure{error} shows the L-infinity norm for the residual
-$\bvec{z} - K^{-1}\,\bvec{y}$ for a range of dataset sizes $N$ and numbers of
-terms $J$.
+$\bvec{z} - K^{-1}\,\bvec{y} = \bvec{z}-K^{-1}K\bvec{z}$ for a range of dataset sizes $N$ and numbers of terms $J$.
 For each pair of $N$ and $J$ we repeated the experiment 10 times with
 different randomly generated datasets and \celeriteterm\ parameters, and
 averaged across experiments to remove some sampling noise from this figure.
@@ -950,7 +949,8 @@ i5 processor, but we find similar performance on other platforms.
 The \celerite\ implementation used for this test is the \project{Python}
 interface with a \project{C++} back end, but there is little overhead
 introduced by \project{Python} so we find similar performance using
-implementations in \project{C++} and \project{Julia} \citep{Bezanzon:2012}.
+the implementation in \project{C++} and an independent implementation in
+\project{Julia} \citep{Bezanzon:2012}.
 \Figure{benchmark} shows the computational cost of evaluating
 \eq{gp-likelihood} using \celerite\ as a function of $N$ and $J$.
 The empirical scaling as a function of data size matches the theoretical
@@ -959,9 +959,10 @@ number of terms is the theoretical $\mathcal{O}(J^2)$ for $J \gtrsim 10$, with
 some overhead for smaller models.
 For comparison, the computational cost of the same computation using the Intel
 Math Kernel Library, a highly optimized general dense linear algebra package,
-is shown as a dashed line.
+is shown as a dashed line, which is independent of $J$.
 \celerite\ is faster than the reference implementation for all but the
-smallest datasets with many terms.
+smallest datasets with many terms, $J \ga 64$ for $N\approx 512$, 
+and $J$ increasing with larger $N$.
 
 \begin{figure}[tp]
 \begin{center}
@@ -1091,7 +1092,7 @@ the residuals appear qualitatively uncorrelated in this figure.
 
 We then sample the joint posterior probability (\eqalt{joint-post}) using
 \emcee\ \citep{Goodman:2010, Foreman-Mackey:2013}.
-We initialize \exampleinwalkers~walkers by sampling from three-dimensional
+We initialize \exampleinwalkers~walkers by sampling from a three-dimensional
 isotropic Gaussian centered the MAP parameter vector and with a standard
 deviation of $10^{-4}$ in each dimension.
 We then run \exampleinburn~steps of burn-in and \exampleinsteps~steps of MCMC.
@@ -1290,7 +1291,8 @@ As a demonstration, we fit a \celeriteterm\ model with a kernel given
 by \eq{rot-kernel} to a \kepler\ light curve for the star KIC~1430163.
 This star has a published rotation period of $3.88 \pm 0.58\,\mathrm{days}$,
 measured using traditional periodogram and autocorrelation function approaches
-applied to \kepler\ data from Quarters 0--16 \citep{Mathur:2014}.
+applied to \kepler\ data from Quarters 0--16 \citep{Mathur:2014}, covering
+about four years.
 
 \response{We select about 180~days of contiguous observations of
 KIC~1430163 from \kepler.
@@ -1466,7 +1468,7 @@ The MAP model is overplotted on these data and the residuals away from the
 mean prediction of this model are shown in the bottom panel of
 \Figure{astero}.
 There is no obvious structure in these residuals, lending some credibility to
-the model specification.
+the model specification.  
 
 We initialize \exampleivnwalkers~walkers by sampling from an isotropic
 Gaussian centered on the MAP parameters (the full set of parameters and their
@@ -1480,6 +1482,12 @@ samples from the marginalized posterior density.
 and $\Delta\nu$ compared to the results from the literature.
 This result is consistent within the published error bars and the posterior
 constraints are tighter than the published results.
+\Figure{astero_psd} shows a comparison of
+the power spectrum estimated with a Lomb-Scargle periodogram 
+with the power spectrum inferred with \celerite.  Despite the much smaller 
+one-month sequence of data used in the \celerite\ analysis, the power spectrum 
+inferred with \celerite\ matches well the periodogram estimated from
+the full four years of Kepler data.
 All asteroseismic analyses are known to have substantial systematic and
 method-dependent uncertainties \citep{Verner:2011} so further experiments
 would be needed to fully assess the reliability of this specific model.
@@ -1815,7 +1823,7 @@ Furthermore, since \celeriteterm\ models can be interpreted as a mixture of
 stochastically-driven, damped simple harmonic oscillators, they are a
 physically motivated choice of covariance function in many astronomical applications.
 
-\section{Summary and discussion}
+\section{Discussion}
 
 Gaussian Process models have been fruitfully applied to many problems in
 astronomical data analysis, but the fact that the computational cost generally
@@ -2141,7 +2149,7 @@ with $\mu_\bvec{\theta} =0$ is given by
 \end{eqnarray}
 The last quantity is simply the dot product of an $N$-dimensional vector of independent standard normal random variables with itself,
 which is distributed according to the chi-squared distribution with $N$ degrees of freedom, i.e.\ $\mathcal{Q} \sim \chi_N^2$; for
-diagonal $K_\bvec{\alpha}$, $\mathcal{Q}$ is the $\chi^2$ statistic.
+diagonal $K_\bvec{\alpha}$, $\mathcal{Q}$ becomes the $\chi^2$ statistic.
 
 To generate a draw from a Gaussian process with a specified \celerite\ model requires carrying out the
 low-rank Cholesky decomposition first, generating the vector $\bvec{q}$ of random normal deviates, and then multiplying
@@ -2161,7 +2169,7 @@ and multiplication are used.
 
 \subsection{Multiplication and filtering}
 
-Multiplication of the full covariance matrix times a vector can be accomplished in $\mathcal{O}(JN)$
+Multiplication of the full covariance matrix times a vector can be accomplished in $\mathcal{O}(RN)$
 operations with a stable recursive algorithm using the semiseparable form:
 \begin{equation}
 \bvec{y} =  \left(A + \mathrm{tril}(U V^T) + \mathrm{triu}(V U^T)\right) \bvec{z}.
@@ -2170,9 +2178,9 @@ The algorithm for multiplication is given by
 \begin{eqnarray}
 f^+_{n,j} &=& \phi_{n+1,j} \left(f^+_{n+1,j} + \tilde U_{n+1,j} z_{n+1}\right)\\
 f^-_{n,j} &=& \phi_{n,j} \left(f^-_{n-1,j} + \tilde V_{n-1,j} z_{n-1}\right)\\
-y_n &=& A_{n,n} z_n + \sum_{j=1}^J \left[ \tilde V_{n,j} f^+_{n,j} + \tilde U_{n,j} f^-_{n,j}\right],
+y_n &=& A_{n,n} z_n + \sum_{j=1}^R \left[ \tilde V_{n,j} f^+_{n,j} + \tilde U_{n,j} f^-_{n,j}\right],
 \end{eqnarray}
-where $f^+_{N,j} = 0$ and $f^-_{1,j} = 0$ for all $j=1,...,2J$.  The recursion requires
+where $f^+_{N,j} = 0$ and $f^-_{1,j} = 0$ for all $j=1,...,R$.  The recursion requires
 two sweeps, a sweep downward from $n=N-1$ to $n=1$ to compute $f^+_{n,j}$ and a sweep upwards
 from $n=2$ to $n=N$ to compute $f^-_{n,j}$.
 
@@ -2185,7 +2193,7 @@ For example, a white-noise filter is given by:
 \end{eqnarray}
 where $\bvec{y}$ is the vector of measurements and $\bvec{z}$ may be computed from the Cholesky
 decomposition as described above.  The second step multiplication of the white-noise-free
-kernel times $\bvec{z}$ may be accomplished in $\mathcal{O}(JN)$ steps with this multiplication algorithm.
+kernel times $\bvec{z}$ may be accomplished in $\mathcal{O}(RN)$ steps with this multiplication algorithm.
 Note that for this particular example it is more efficient to compute $\bar f = \bvec{y} -\sigma^2 I \bvec{z}$,
 but in general the filtering kernel will not differ from the full kernel by a diagonal matrix.
 
