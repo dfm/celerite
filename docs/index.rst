@@ -109,21 +109,9 @@ Copyright 2016, 2017, Daniel Foreman-Mackey, Eric Agol and contributors.
 
 The source code is made available under the terms of the MIT license.
 
-If you make use of this code, please cite the following papers:
+If you make use of this code, please cite the following paper:
 
 .. code-block:: tex
-
-    @article{genrp,
-         author = {Sivaram Ambikasaran},
-          title = {Generalized Rybicki Press algorithm},
-           year = {2015},
-        journal = {Numer. Linear Algebra Appl.},
-         volume = {22},
-         number = {6},
-          pages = {1102--1114},
-            doi = {10.1002/nla.2003},
-            url = {https://arxiv.org/abs/1409.7852}
-    }
 
     @article{celerite,
         author = {{Foreman-Mackey}, D. and {Agol}, E. and {Angus}, R. and
