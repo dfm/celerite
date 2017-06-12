@@ -1014,25 +1014,44 @@ and $J$ increasing with larger $N$.
 \subsection{How to choose a celerite model}
 
 In any application of \celerite~--~or any other GP model, for that
-matter~--~one must choose a kernel.
-A detailed discussion of how to choose a kernel is beyond the scope of this
-paper and the interested reader is directed to Chapter~5 of
-\citet{Rasmussen:2006} a general introduction, but we include a summary and
-some suggestions specific to \celerite\ here.
-We argue that the most satisfying method of choosing a kernel is to use
-physical motivation and the discussion in \sect{sho} provides an opportunity
-for justified model specification when \celerite\ is applied to parameter
-estimation from stellar light curves.
-However, it is not always possible to rely on physics to specify the model
-and, in these cases, it is useful to have other tools at one's disposal.
-One option is to compute the evidence integral or Bayes factor for a set of
-models and choose the model with the highest evidence.
-Another option is to perform cross validation and select the model with the
-best predictive performance.
-For continuous autoregressive moving average models (we return to these in
-\sect{compare}), \citet{Kelly:2014} recommend the Bayesian Information
-Criterion (BIC) as a method for selecting the order of the model.
-This is a total hack, but I guess that you could do it if you wanted.
+matter~--~we must choose a kernel.
+A detailed discussion of model selection is beyond the scope of this paper and
+the interested reader is directed to Chapter~5 of \citet{Rasmussen:2006} an
+introduction in the context of GPs, but we include a summary and some
+suggestions specific to \celerite\ here.
+
+For many of the astrophysics problems that we will tackle using \celerite, it
+is possible to motivate the kernel choice physically.
+We give three examples of this in the next section and, in these cases, we
+have a physical description of the system that generated our data, we
+represent that system as a \celeriteterm\ model, and use \celerite\ for
+parameter estimation.
+For other projects, we might be interested in comparing different theories
+and, in those case, we would need to perform formal model selection.
+
+Sometimes, it is not possible to choose a physically motivated kernel when we
+use a GP as an effective model.
+In these cases, we recommend starting with a mixture of stochastically-driven
+damped SHOs (as discussed in \sect{sho}) and select the number of oscillators
+using Bayesian model comparison, cross-validation, or another model selection
+technique.
+Despite the fact that it is less flexible than a general \celeriteterm\
+kernel, we recommend the SHO model in most cases because it is 1-time mean
+square differentiable
+\begin{eqnarray}
+\left.\frac{\dd k_\mathrm{SHO}(\tau)}{\dd \tau}\right|_{\tau=0} = 0 \quad,
+\end{eqnarray}
+giving smoother functions than the general \celeriteterm\ model that is only
+mean square continuous.
+
+For a similar class of models~--~we return to these below in
+\sect{compare}~--~\citet{Kelly:2014} recommend using an ``information
+criterion'', such as the Akaike information criterion (AIC) or the Bayesian
+information criterion (BIC), as a model selection metric.
+These criteria are easy to implement and we use the BIC in \sect{example2}
+but, since are only formally valid under specific sets of assumptions, we
+cannot recommend their use in general.
+
 
 \section{Examples}\sectlabel{examples}
 
@@ -1202,6 +1221,19 @@ process is $P=2\,\pi/\omega_1$.
 We note that using \eq{product-rule}, the product of two \celeriteterm\ terms
 can also be expressed using \celerite.
 
+We choose this functional form by comparing the Bayesian information criterion
+(BIC) for a set of different models.
+In each model, we take the sum or product of $J$ SHO terms, find the maximum
+likelihood model using \project{L-BFGS-B} and compute the BIC
+\citep{Schwarz:1978}
+\begin{eqnarray}
+\mathrm{BIC} = -2\,\mathcal{L}^* + K\,\log N
+\end{eqnarray}
+where $\mathcal{L}^*$ is the value of the likelihood at maximum, $K$ is the
+number of parameters, and $N$ is the number of data points.
+\Figure{bic} shows the value of the BIC for a set of products and sums of SHO
+terms and the model that we choose has the lowest BIC.
+
 As in the previous example, we set the mean function to zero and can,
 therefore, omit the parameters $\bvec{\theta}$.
 Table~\ref{tab:example-2-params} lists the proper log-uniform priors that we
@@ -1261,6 +1293,23 @@ other problems as well.
     model is shown as the blue dashed histogram, and the inference made using
     the ``wrong'' effective model is shown as the black histogram.
     \figurelabel{simulated-wrong}}
+\end{center}
+\end{figure}
+
+\begin{figure}[!htbp]
+\begin{center}
+\includegraphics[width=0.5\textwidth]{figures/simulated/bic.pdf}
+\caption{\response{
+    The Bayesian information criterion (BIC) evaluated for the data from
+    \Figure{simulated-wrong} and different kernel choices.
+    The $x$-axis shows the number of terms included in each model.
+    The blue circles show models where the terms have been summed and the
+    orange squares indicate that the model is a product of terms.
+    In the product models, the parameters $S_0$ and $Q$ are held fixed at $1$
+    and $1/\sqrt{2}$ respectively for all but the first term.
+    The dashed black line shows the minium value of the BIC and this
+    corresponds to the model chosen in the text.}
+    \figurelabel{bic}}
 \end{center}
 \end{figure}
 
