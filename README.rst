@@ -12,8 +12,8 @@ Read the documentation at: `celerite.rtfd.io <http://celerite.readthedocs.io>`_.
     :target: https://ci.appveyor.com/project/dfm/celerite
 .. image:: https://readthedocs.org/projects/celerite/badge/?version=latest&style=flat&bust=true
     :target: http://celerite.readthedocs.io/en/latest/?badge=latest
-.. image:: https://zenodo.org/badge/DOI/10.5281/zenodo.438359.svg?style=flat
-   :target: https://doi.org/10.5281/zenodo.438359
+.. image:: https://zenodo.org/badge/DOI/10.5281/zenodo.806847.svg?style=flat
+   :target: https://doi.org/10.5281/zenodo.806847
 .. image:: https://img.shields.io/badge/PDF-latest-orange.svg?style=flat
     :target: https://github.com/dfm/celerite/blob/master-pdf/paper/ms.pdf
 .. image:: https://img.shields.io/badge/ArXiv-1703.09710-orange.svg?style=flat

@@ -50,8 +50,8 @@ celerite is being actively developed in `a public repository on GitHub
 
     <br>
 
-.. image:: https://zenodo.org/badge/DOI/10.5281/zenodo.438359.svg?style=flat
-   :target: https://doi.org/10.5281/zenodo.438359
+.. image:: https://zenodo.org/badge/DOI/10.5281/zenodo.806847.svg?style=flat
+   :target: https://doi.org/10.5281/zenodo.806847
 .. image:: https://img.shields.io/badge/ArXiv-1703.09710-orange.svg?style=flat
     :target: https://arxiv.org/abs/1703.09710
 
