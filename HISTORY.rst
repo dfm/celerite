@@ -1,5 +1,12 @@
 .. :changelog:
 
+0.2.1 (2017-06-12)
+++++++++++++++++++
+
+- Small bug fixes
+- New ``celerite.solver.LinAlgError`` exception thrown for non-positive
+  definite matrices instead of ``RuntimeError``.
+
 0.2.0 (2017-05-09)
 ++++++++++++++++++
 
