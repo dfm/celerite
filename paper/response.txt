@@ -1,6 +1,7 @@
 We would first like to thank the referee for their thorough and constructive
 review. We have taken the feedback to heart and we think that the manuscript
-has been greatly improved as a result.
+has been greatly improved as a result. To simplify a second review, all major
+changes are colored blue.
 
 Beyond addressing each of the referee's concerns in detail, we have also
 derived a new algorithm for solving celerite models that is about a factor of
