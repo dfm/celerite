@@ -740,7 +740,7 @@ K = A + \mathrm{tril}(U\,V^\T) + \mathrm{triu}(V\,U^\T)
 \end{eqnarray}
 where the $\mathrm{tril}$ function extracts the strict lower triangular
 component of its argument and $\mathrm{triu}$ is the equivalent strict upper
-triangular operation.  An example of this type of matrix is given in appendix \ref{operations}.
+triangular operation.
 In this representation, rather than storing the full $N \times N$ matrix $K$,
 it is sufficient to only store the $N \times R$ matrices $U$ and $V$, and the
 $N$ diagonal entries of $A$, for a total storage volume of $(2\,R+1)\,N$
@@ -752,6 +752,7 @@ more details about semiseparable matrices in general.
 
 
 \subsection{Cholesky factorization of positive definite semiseparable matrices}
+\sectlabel{cholesky}
 
 For our purposes, we want to compute the log-determinant of $K$ and solve
 linear systems of the form $K\,\bvec{z}=\bvec{y}$ for $\bvec{z}$, where $K$ is
@@ -2185,64 +2186,37 @@ roots, but only carrying out algebraic manipulation of polynomials to
 determine the number of positive real roots.
 If a non-zero real root is found, the likelihood may be set to zero.
 
-\section{Semiseparable operations} \label{operations}
+\response{
+\section{Semiseparable matrix operations} \sectlabel{operations}
 
-To help clarify equations \eq{system}, we write out here an example of a semiseparable matrix with a
-single \celeriteterm\ term with $c=d=1$:
-\begin{eqnarray}\eqlabel{semi-separable-structure}
-K&=&%
-\begin{pmatrix}
-    {\scriptscriptstyle a+{\sigma_1}^2 }& {\scriptscriptstyle e^{-\tau_{21}}\left(a\,\cos{\tau_{21}}+b\,\sin{\tau_{21}}\right)} & {\scriptscriptstyle e^{-\tau_{31}}\left(a\,\cos{\tau_{31}}+b\,\sin{\tau_{31}}\right)} & \ldots\\
-    {\scriptscriptstyle e^{-\tau_{21}}\left(a\,\cos{\tau_{21}}+b\,\sin{\tau_{21}}\right)}&{\scriptscriptstyle a+{\sigma_2}^2 }& {\scriptscriptstyle e^{-\tau_{32}}\left(a\,\cos{\tau_{32}}+b\,\sin{\tau_{32}}\right)} & \ldots\\
-    {\scriptscriptstyle e^{-\tau_{32}}\left(a\,\cos{\tau_{32}}+b\,\sin{\tau_{32}}\right)}&{\scriptscriptstyle  e^{-\tau_{32}}\left(a\,\cos{\tau_{32}}+b\,\sin{\tau_{32}}\right)} & \scriptscriptstyle{a + {\sigma_3}^2} & \ldots \\
-    \ldots & \ldots & \ldots & \ldots
-\end{pmatrix}\\
-&=&
-\begin{pmatrix}
-    {\scriptscriptstyle a+{\sigma_1}^2} & {\scriptscriptstyle 0} & {\scriptscriptstyle 0} & \ldots\\
-    {\scriptscriptstyle 0} & {\scriptscriptstyle a+{\sigma_2}^2 }& {\scriptscriptstyle 0} & \ldots\\
-    {\scriptscriptstyle 0} & {\scriptscriptstyle 0} & {\scriptscriptstyle a + {\sigma_3}^2} & \ldots\\
-    \ldots & \ldots & \ldots & \ldots
-\end{pmatrix}\\
-&+&\mathrm{tril}\left[\begin{pmatrix}
-    {\scriptscriptstyle e^{-t_1}\left(a\,\cos{t_1}+b\,\sin{t_1}\right)}&
-    {\scriptscriptstyle e^{-t_1}\left(a\,\sin{t_1}-b\,\cos{t_1}\right)}\\
-    {\scriptscriptstyle e^{-t_2}\left(a\,\cos{t_2}+b\,\sin{t_2}\right)}&
-    {\scriptscriptstyle e^{-t_2}\left(a\,\sin{t_2}-b\,\cos{t_2}\right)}\\
-    {\scriptscriptstyle e^{-t_3}\left(a\,\cos{t_3}+b\,\sin{t_3}\right)}&
-    {\scriptscriptstyle e^{-t_3}\left(a\,\sin{t_3}-b\,\cos{t_3}\right)}\\
-   \ldots & \ldots
-\end{pmatrix}
-\times
-\begin{pmatrix}
- {\scriptscriptstyle e^{t_1} \cos{t_1}} & {\scriptscriptstyle e^{t_1} \sin{t_1}} \\
- {\scriptscriptstyle e^{t_2} \cos{t_2}} & {\scriptscriptstyle e^{t_2} \sin{t_2}}\\
- {\scriptscriptstyle e^{t_3} \cos{t_3}} & {\scriptscriptstyle e^{t_3} \sin{t_3}}\\
- \ldots & \ldots
-\end{pmatrix}^T\right]\\
-&+&
-\mathrm{triu}\left[\begin{pmatrix}
- {\scriptscriptstyle e^{t_1} \cos{t_1}} & {\scriptscriptstyle e^{t_1} \sin{t_1}} \\
- {\scriptscriptstyle e^{t_2} \cos{t_2}} & {\scriptscriptstyle e^{t_2} \sin{t_2}}\\
- {\scriptscriptstyle e^{t_3} \cos{t_3}} & {\scriptscriptstyle e^{t_3} \sin{t_3}}\\
- \ldots & \ldots
-\end{pmatrix}
-\times
-\begin{pmatrix}
-    {\scriptscriptstyle e^{-t_1}\left(a\,\cos{t_1}+b\,\sin{t_1}\right)}&
-    {\scriptscriptstyle e^{-t_1}\left(a\,\sin{t_1}-b\,\cos{t_1}\right)}\\
-    {\scriptscriptstyle e^{-t_2}\left(a\,\cos{t_2}+b\,\sin{t_2}\right)}&
-    {\scriptscriptstyle e^{-t_2}\left(a\,\sin{t_2}-b\,\cos{t_2}\right)}\\
-    {\scriptscriptstyle e^{-t_3}\left(a\,\cos{t_3}+b\,\sin{t_3}\right)}&
-    {\scriptscriptstyle e^{-t_3}\left(a\,\sin{t_3}-b\,\cos{t_3}\right)}\\
-   \ldots & \ldots
-\end{pmatrix}^T\right]\\
-&=& A + \mathrm{tril}(U V^T) + \mathrm{triu}(V U^T).
+In this appendix, we summarize some algorithms for manipulating semiseparable
+matrices and discuss how these can be used with GP models and \celerite.
+
+
+\subsection{Multiplication and filtering}
+
+The product of a rank-$R$ semiseparable matrix with general vectors and
+matrices can be computed in $\mathcal{O}(N\,R)$ operations
+\citep{Vandebril:2007}.
+In the context of \celeriteterm\ models, na\"ive application of these methods
+will result in numerical overflow and underflow issues much like we found with
+the Cholesky factorization.
+To avoid these errors, we derive the following numerically stable algorithm
+for computing the dot product of a \celeriteterm\ covariance matrix
+\begin{eqnarray}
+\bvec{y} = K\,\bvec{z}
 \end{eqnarray}
+using the semiseparable representation for $K$ defined in \eqalt{reparam}:
+\begin{eqnarray}
+f^+_{n,j} &=& \phi_{n+1,j}\,\left(f^+_{n+1,j} + \tilde{U}_{n,j}\,z_{n+1}\right) \\
+f^-_{n,j} &=& \phi_{n,j}\,\left(f^-_{n-1,j} + \tilde{V}_{n-1,j}\,z_{n-1}\right) \\
+y_n &=& A_{n,n}\,z_n + \sum_{j=1}^{2\,J} \left[ \tilde{V}_{n,j} f^+_{n,j} +
+    \tilde U_{n-1,j} f^-_{n,j}\right] \quad,
+\end{eqnarray}
+where $f^+_{N,j} = 0$ and $f^-_{1,j} = 0$.
+This algorithm requires two sweeps~--~$n=1, \ldots, N$ to compute $f^-$ and
+$n=N,\ldots,1$ to compute $f^+$~--~with a scaling of $\mathcal{O}(N\,J)$.
 
-In addition to solving $K^{-1} {\bf y}$, several other operations can be
-carried out recursively in $\mathcal{O}(N)$, simulation, multiplication,
-and prediction, which we describe in the following sections.
 
 \subsection{Simulation}
 
@@ -2282,35 +2256,6 @@ process inference algorithms applied to large datasets as even simulation of
 Gaussian processes becomes prohibitive for large $N$ if standard Cholesky decomposition
 and multiplication are used.
 
-\subsection{Multiplication and filtering}
-
-Multiplication of the full covariance matrix times a vector can be accomplished in $\mathcal{O}(RN)$
-operations with a stable recursive algorithm using the semiseparable form:
-\begin{equation}
-\bvec{y} =  \left(A + \mathrm{tril}(U V^T) + \mathrm{triu}(V U^T)\right) \bvec{z}.
-\end{equation}
-The algorithm for multiplication is given by
-\begin{eqnarray}
-f^+_{n,j} &=& \phi_{n+1,j} \left(f^+_{n+1,j} + \tilde U_{n+1,j} z_{n+1}\right)\\
-f^-_{n,j} &=& \phi_{n,j} \left(f^-_{n-1,j} + \tilde V_{n-1,j} z_{n-1}\right)\\
-y_n &=& A_{n,n} z_n + \sum_{j=1}^R \left[ \tilde V_{n,j} f^+_{n,j} + \tilde U_{n,j} f^-_{n,j}\right],
-\end{eqnarray}
-where $f^+_{N,j} = 0$ and $f^-_{1,j} = 0$ for all $j=1,...,R$.  The recursion requires
-two sweeps, a sweep downward from $n=N-1$ to $n=1$ to compute $f^+_{n,j}$ and a sweep upwards
-from $n=2$ to $n=N$ to compute $f^-_{n,j}$.
-
-Multiplication of the full covariance matrix is useful, for example, for isolating
-a particular component of a kernel, which amounts to a customized filter of a dataset.
-For example, a white-noise filter is given by:
-\begin{eqnarray}
-\bar f &=& K(\bvec{t},\bvec{t}) \left[K(\bvec{t},\bvec{t})+\sigma^2I\right]^{-1} \bvec{y},\\
-&=& K(\bvec{t},\bvec{t}) \bvec{z}
-\end{eqnarray}
-where $\bvec{y}$ is the vector of measurements and $\bvec{z}$ may be computed from the Cholesky
-decomposition as described above.  The second step multiplication of the white-noise-free
-kernel times $\bvec{z}$ may be accomplished in $\mathcal{O}(RN)$ steps with this multiplication algorithm.
-Note that for this particular example it is more efficient to compute $\bar f = \bvec{y} -\sigma^2 I \bvec{z}$,
-but in general the filtering kernel will not differ from the full kernel by a diagonal matrix.
 
 \subsection{Prediction and interpolation}
 
@@ -2378,6 +2323,7 @@ point the predicted mean can be computed from
 %Note that this variance formula {\it only} works for prediction; we have
 %yet to derive a formula for which $\bvec{t^*}$ and $\bvec{t}$ are
 %interspersed.
+}
 
 \newpage
 \bibliography{celerite}
