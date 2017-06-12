@@ -170,7 +170,7 @@ practicality of applying general direct solvers in each case.
 >   show that a typical GP with a matrix inversion never works while celerite
 >   successfully works?
 
-For each of the above, we agree and have address each concern.
+For each of the above, we agree and have addressed each concern.
 
 > - Section 6: “Even in these cases, GPs can be useful
 >   effective models and celerite provides computational advantages over other GP
