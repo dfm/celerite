@@ -1,0 +1,353 @@
+We would first like to thank the referee for their thorough and constructive
+review. We have taken the feedback to heart and we think that the manuscript
+has been greatly improved as a result.
+
+Beyond addressing each of the referee's concerns in detail, we have also
+derived a new algorithm for solving celerite models that is about a factor of
+20 faster than the submitted version (and about and order of magnitude faster
+than a reference implementation of a Kalman filter based method). We have
+updated the manuscript to describe and test this new method in Section 5. We
+hope that the referee will consider this updated method and welcome any
+feedback.
+
+The only other major structural change was to switch the order of the section
+titled "celerite as a model of stellar variations" and the section describing
+the algorithm. "Stellar variations" is now Section 4 and the implementation is
+discussed in Section 5.
+
+Below we address each of the referee's comments in detail:
+
+## Major Issues
+
+> Unclear model specification: A Bayesian model is composed of the likelihood
+> function and joint prior distribution of the unknown parameters. The likelihood
+> function of the unknown parameters, L(θ,α), for the proposed GP method is
+> implicitly set to Equation (3). First of all, the components of the two
+> unknown vectors, θ and α, are not the same for all of the examples, and thus
+> the authors must define these clearly in each example. For example, two vectors
+> are θ = (?, ?, ?) and α = (?, ?, ?) so that the likelihood function is uniquely
+> determined. Next, the authors must clearly specify the joint prior distribution
+> p(θ,α). If the authors use a Uniform prior distribution, please clearly specify
+> the range of the Uniform distribution because there are uncountably many
+> Uniform prior distributions depending on the range. Once the likelihood
+> function and joint prior distribution are clearly specified, then the joint
+> posterior distribution, p(θ, α | X, y), is uniquely determined and I cannot say
+> that ‘your model specification is unclear.’ Please clearify your Bayesian
+> models in all the numerical illustrations including the two simulations and
+> three realistic data analyses. It may be possible that the full posterior
+> distribution may contain unknown parameters more than θ and α in their
+> numerical illustrations, e.g., nuisance parameters in Section 7.1. Again,
+> please follow the principle rule by specifying the likelihood function of all
+> the unknown parameters and their prior distributions. Please do not use any
+> MCMC method before clearly specifying the full posterior distribution.
+> Otherwise users do not know what the distribution of the posterior sample
+> represents.
+
+We have updated each example to include a list of each parameter and the chosen
+priors. We also include a table for each example that lists this information.
+
+> Posterior propriety: Posterior propriety means that your full posterior
+> distribution has a finite integral,
+> [...]
+> This is the basis of all the Bayesian analyses because the fundamental Bayes
+> rule holds if and only if posterior propriety holds. Treating X and y as the
+> observed data, we can derive the Bayes
+> rule as follows.
+> [...]
+> Without posterior propriety, the joint posterior distribution p(θ,α | X,y) is
+> not guaranteed to be a probability distribution because the denominator in (2)
+> blows up. Also, without posterior propriety, there is no way to know whether a
+> Markov chain converges to the correct target (stationary) posterior
+> distribution, p(θ, α | X, y). This is because a Markov chain is null recurrent
+> for an improper posterior distribution and thus the stationary distribution of
+> a Markov chain does not exist (see the article in footnote 1 for details). If
+> the authors use any improper prior distributions, e.g., for a parameter θi,
+> log(θi) ∼ Uniform(−∞, ∞) or θi ∼ Uniform(0, ∞), then the authors must mention
+> whether posterior propriety holds before any MCMC method is used. (The authors
+> may say that their MCMC method produces reasonable posterior samples of the
+> unknown parameters, recovering their true values correctly. This is not about
+> whether the MCMC method recovers the true values or not. This is about whether
+> the Markov chain converges to the targeted stationary distribution. Your target
+> posterior distribution may or may not contain the true values and recovering
+> true values does not necessarily mean that your chain converges to the targeted
+> posterior distribution. Converging to the stationary distribution and
+> recovering true values are two different problems.) A well-known insidious
+> property of posterior propriety is that the MCMC sampler may appear to work
+> well even when the posterior distribution is improper, and thus practitioners
+> do their sciences based on non-existent posterior distributions. There are only
+> two ways to guarantee posterior propriety: (i) Using a jointly proper prior
+> distribution, p(θ,α) dθdα < ∞, guarantees posterior propriety, which will
+> become clear when the authors clarify their Bayesian models. (ii) Showing that
+> (1) holds in a mathematically rigorous way.
+
+In each example, we were already using (unspecified!) proper priors. We have
+updated each example to include a discussion of the priors and these are fully
+specified in the tables included with each example.
+
+> Model checking: The authors provide a method for a model fitting but I do not
+> know why I trust their estimates or posterior distributions. In each example,
+> there should at least be graphical model checking, e.g., by plotting residuals
+> with respect to an optimal model. This is one way to conduct posterior
+> predictive check, i.e., generating simulated data using the proposed model
+> given the posterior samples of the parameters and visually checking whether
+> these simulated data match well with the observed data or whether the residuals
+> do not have any patterns. Successful model checking could support an argument
+> that, at least, the present model is not significantly misspecified, so that
+> the uncertainty estimates can be trusted.
+
+We have updated the figures in each example to include plots of the residuals
+between the data and the maximum a posteriori model.
+
+> Unknown data size: In Sections 6 and 7, the authors never specify the data size
+> in each example. It is quite shocking to me that Section 7.1 even does not
+> display any data at all. Section 6 does not seem to motivate the argued
+> ‘scalability’ because the data size appears to be small in Figures 6 and 7. Are
+> the authors motivated by a realistic problem to develop a scalable GP?  Why do
+> the authors need a scalable GP? Do we really need the argued ‘scalability’ to
+> fit the data used in each example? Are there any examples that motivate this
+> research on the scalability of the GP with the specific covariance function?
+> Throughout the manuscript, the authors argue that a conventional GP is not
+> suitable for large data sets. Then please show me or readers a realistic
+> example (evidence) where a conventional GP is almost impossible to implement
+> while celerite works well. I feel that a conventional GP with the same
+> covariance functions (but based on a matrix inversion, i.e., without the trick
+> for the scalability) may work well at least for the simulation studies; I
+> cannot judge whether my feeling is correct for the realistic examples because
+> the authors do not clarify the data sizes. If my feeling is wrong, then please
+> show me evidence.
+
+We agree that this discussion was severely lacking from the submitted
+manuscript and we have included a discussion of the need for scalable methods
+in the introduction, in each example, and in a summary subsection at the end of
+Section 6. We now fully specify the data sizes for each example and discuss the
+practicality of applying general direct solvers in each case.
+
+> Tightening descriptions is needed.
+> - Abstract: “Gaussian Processes are a popular class of models used for this
+>   purpose but, since the computational cost scales as the cube of the number of
+>   data points, their application has been limited to relatively small
+>   datasets.” Is it true for all GPs? This sentence gives me an impression that
+>   all GPs scale as the cube of the number of data points. If I use a
+>   Kalman-filtering-based GP, then what can the authors say? Please tighten the
+>   sentence. The authors are posing a problem of GPs that involve a (large)
+>   matrix inversion.
+>
+> - Abstract “but we also demonstrate that it is effective in many other cases.”,
+>   Section 2 “improving this scaling in many circumstances” and “many
+>   astronomical data analysis problems”: The authors provide three realistic
+>   examples and in Section 9 (Summary) the authors say that the method is
+>   expected to work well in many other situations. Expectations are
+>   expectations. I am not sure whether the authors can use the word ‘many’ such
+>   often based on three realistic examples. Do these three examples represent
+>   various astronomical data analyses listed in Section 9?
+>
+> - Abstract: “flexible, fast, and most importantly, interpretable” The
+>   covariance function for celerite is restrictive as the authors admit in
+>   Section 8. I am not sure whether the word ‘flexible’ describes celerite in an
+>   objective way.
+>
+> - Section 1: “However, there is no further constraint on the data or the
+>   model.” This sentence is wrong because the authors mention that the
+>   covariance function must be stationary on page 4.
+>
+> - Section 1: “As we will discuss in the following pages, this choice of kernel
+>   function is not as restrictive as it first seems because it arises naturally
+>   in some physical systems and it can be used as an effective model in many
+>   other cases.” This sentence is vacuous due to the words, ‘seems’, ‘some’, and
+>   ‘many’. As for the word ‘seems’, the covariance function that celerite allows
+>   is restrictive at my first, second, and third glances and the authors also
+>   admit it in Section 8. As for the word ‘some’, the three examples handles
+>   three physical systems. As for the word ‘many’, in Section 9 (Summary) the
+>   authors say that the method is expected to work well in many other
+>   situations. But I keep feeling that this kind of argument, ‘in many other
+>   cases’, based only on their expectations is appropriate.
+>
+> - Section 1: “GP models have been widely used across the physical sciences but
+>   their application is generally limited to small datasets” How small is small
+>   to the authors? A light curve with 999 data points? Please clarify the cases
+>   where the authors think the data size is small so that the readers can judge
+>   how small is small. Do the authors use a ‘large’ data set in the examples to
+>   show that a typical GP with a matrix inversion never works while celerite
+>   successfully works?
+
+For each of the above, we agree and have address each concern.
+
+> - Section 6: “Even in these cases, GPs can be useful
+>   effective models and celerite provides computational advantages over other GP
+>   methods.” This may imply that celerite has a computational advantage over any
+>   GP methods. The authors mention in Section 8 that a Kalman-filtering is in
+>   practice somewhat faster and the memory requirements are smaller. So the
+>   sentence is not correct.
+
+The current method is now faster than Kalman-filtering methods so this
+statement is now true.
+
+> - Section 7.1: “initialize our celerite model using
+>   a grid search in the parameter space” and “This model requires about a minute
+>   of computation time to find the maximum likelihood parameters and then it
+>   takes about an hour to run the MCMC sampling to convergence on a dual-CPU
+>   laptop.”: For the first sentence, I have never read in the previous sections
+>   about how to initialize the model using a grid search in the parameter space.
+>   What do the authors actually do? Why do the authors do the grid search? What
+>   is the dimension of the parameter space and the grid? The second sentence is
+>   also surprising because the method description in the previous sections never
+>   says that the implementation procedure is actually a two-step procedure. I
+>   guess that the authors use MLEs as initial values of their MCMC method.
+>   Clearly specify the entire procedure including how to set up initial values
+>   of the celerite model parameters for an MCMC in the section that describes
+>   the method implementation. In the numerical illustrations, the authors are
+>   not supposed to say anything new or unexplained about the implementation.
+
+We have updated the discussion of each example to include a description of the
+initialization procedure.
+
+> - Section 7.1: “another GP solver” This phrase is broad. Which GP solver do the
+>   authors indicate? Please be specific.
+
+Fixed.
+
+## Minor concerns
+
+> Abstract: “a comparison to existing scalable Gaussian Process methods.” The
+> authors clearly mention that any CARMA(p, q) model can be matched to their
+> celerite model in Section 4.2. Then why not numerically compare the scaleable
+> method of fitting CARMA(p, q) with celerite?
+
+We have added an explicit numerical comparison between Kalman-filtering based
+CARMA models and celerite. Figure 13 has been added to show the computational
+scaling of the Kelly et al. (2014) solver and find that it is about a factor of
+10 slower than celerite.
+
+> Section 2: The authors say that the log likelihood function is Equation (3).
+> However, Equation (3) is clearly a function of y given X, θ, and α.
+
+We have fixed the sloppy notation by defining this function as L(θ,α).
+
+> Until Section 4, I have thought that the authors may be using a
+> Kalman-filtering for a specific form of a covariance matrix. Maybe it is my
+> fault. When a scalable GP with O(n) is mentioned, the first thing I think about
+> is a Kalman-filtering. What about mentioning that the proposed method is not a
+> Kalman-filtering but is also scalable with O(n) in the early stage of the
+> manuscript.
+
+Good point. We have added this clarification to the introduction.
+
+> Section 2: ‘using a non-linear optimization routine’ I am just curious about
+> how Nocedal and Wright (2006) obtain the uncertainty of their point estimate
+> because I believe that point estimation can be misleading without uncertainty
+> quantification.
+
+We absolutely agree! We have emphasized the fact that this estimate would only
+be a point estimate.
+
+> Section 2: Markov Chain Monte Carlo → Markov chain Monte Carlo. The word
+> ‘chain’ is not a name of a person.
+
+Fixed.
+
+> The parameter J is an obvious tuning parameter of the proposed method. I was
+> surprised when I read ‘but, in many cases, small values of J are sufficient” in
+> Section 9. Maybe the authors think it is ok in an astronomical journal to give
+> users a broad and unclear guideline on how to set the tuning parameter. This
+> issue would be a major issue if it were for a publication in a statistical
+> journal. Please keep in mind that without setting J no one can implement
+> celerite. Imagine a user who wants to use celerite but do not know how to set
+> J. Are the authors going to say ‘use a small value of J’? The current sentence
+> sounds very irresponsible. This sentence gives me an impression that J = 1 must
+> work well ‘in many cases,’ although I am not sure how many is many. The most
+> important thing is to specify what made the authors believe that the small
+> values of J would work well in many cases so that users can judge whether the
+> small values of J are also appropriate for their sciences. Please show the
+> readers the evidence for the argument or a clear procedure to determine J so
+> that they can follow it for their data analyses. If the authors do not have any
+> evidence or a procedure, i.e., the choices of J in the examples of the current
+> manuscript are all ad-hoc, please do more research on it. Please do not use the
+> word ‘small’ because this word means nothing to users. Also please specify the
+> tuning procedure in the section regarding the implementation because without
+> setting J no one can implement celerite. Finally, please clarify how the
+> authors choose J in each of two simulation studies and three realistic data
+> analyses, which will be helpful for users.
+
+We respectfully disagree with the referee's interpretation of J as a "tuning
+parameter" of the method and instead argue that this is just the general
+problem of model selection when using GPs. Every GP analysis must specify a
+kernel and celerite is no different. That being said, we agree with the
+concerns about the vague statement about "small J" so we have removed this and
+added a section (5.4) discussing options for model selection with some
+celerite-specific recommendations.  The models in all examples except Example
+2 are chosen using physical motivation and we have updated Example 2 to
+include a discussion and a new figure to explain the procedure that we used to
+select the model in that case.
+
+> Section 3: The mixture idea shown in Equation (6) also appears in the
+> literature. The discussion about this idea and the one in Ambikasaran (2015)
+> may be interesting but can be distracting. Please give enough credit for the
+> earlier work, if any.
+
+Added.
+
+> Section 3: Ornstein-Uhlenbeck process may need a citation.
+
+Done.
+
+> After Equation (19) in Section 4.1: There are not b and d in Equation (7).
+> Do the authors mean bj and dj?
+
+This section has been removed and replaced by our new derivation.
+
+> Section 5: “This suggests that the Matern-3/2 covariance can be approximated
+> using the celerite framework with a small value of f in Equation (54) but we
+> caution that this might lead to numerical issues for the solver.” In the
+> previous description, there is no approximation at all. Where does the
+> approximation occur in the previous description? This sentence also sounds
+> problematic. It indicates that some models definitely within the celerite
+> framework may not be feasible because of numerical issues. Then the authors
+> must specify feasible class of models among all the possible models within the
+> celerite framework in order not to disappoint users.
+
+We have expanded our discussion in this section and made the approximation
+explicit. The numerical issue comes from the fact that the parameter b_j is
+infinite for Q = 1/2. We now state this explicitly in the manuscript.
+
+> Section 6.2: This is an impressive result. However, at the same time, I feel
+> that this is a dangerous result because the proposed model does not reveal any
+> evidence on a potential model mis-specification.
+
+As with all the examples, we have added a graphical model check. As we discuss
+in the text, any broad use of this method would require more research to
+determine the detailed limits of applicability, but we think that that is
+beyond the scope of this paper.
+
+> Section 7.1: “is is” is a typo.
+
+Fixed.
+
+> Section 8: Comparison to a 20 year old method that the current method is
+> exactly built upon? Without reading further, I can imagine that the proposed
+> method is better.
+
+We have removed this comparison.
+
+> Section 8: Comparison to CARMA. The authors say that any CARMA model has a
+> corresponding celerite model. This means that I can fit any CARMA model via
+> Kalman-filtering, obtain posterior samples of the unknown parameters of the
+> CARMA model, match these posterior samples of the CARMA parame- ters with
+> corresponding celerite parameters, and take advantage of the better physical
+> interpretability of the celerite parameters. Why should the readers use
+> celerite at the beginning instead of using Kalman-filtering in fitting a CARMA
+> model? I am not quite motivated at this point.
+
+We have expanded our discussion in this section to provide further motivation.
+
+> Section 9: The authors list all the possible cases where celerite may work
+> well. I think this section (summary) is full of expectations (too many
+> expectations for a scientific journal in my opinion). I want to understand why
+> the authors expect celerite to work well in such many cases. If the authors
+> have clear evidence for these cases, then what about making another section for
+> potential applications? In my opinion if this section is for ‘Summary’, then it
+> is not a good place to talk about things that have not explained in the
+> previous sections.
+
+We agree and we have changed the section title to "Discussion". We have removed
+some speculation from this section and added a subsection where we explicitly
+discuss some potential future applications.
