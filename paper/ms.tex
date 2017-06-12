@@ -244,8 +244,8 @@ NASA's \kepler\ Mission \citep{Borucki:2010}, for example, measured light
 curves with more than 60,000 observations each for about 190,000 stars.
 Current and forthcoming surveys such as \project{K2} \citep{Howell:2014},
 \tess\ \citep{Ricker:2014}, \lsst\ \citep{Ivezic:2008}, \project{WFIRST}
-\citep{Spergel:2015}, and PLATO \citep{Rauer:2014} will continue to produce
-similar or larger data volumes.}
+\citep{Spergel:2015}, and \project{PLATO} \citep{Rauer:2014} will continue to
+produce similar or larger data volumes.}
 
 In this paper, we present a method for directly and exactly computing a class
 of GP models that scales linearly with the number of data points
@@ -1830,8 +1830,8 @@ Comparing these figures, we find that the Kalman filter solver is slower than
 an order of magnitude.
 
 Another benefit of \celerite\ compared to Kalman filter solvers is the fact
-that it is a direct solver for the relevant matrix equations instead of just
-an algorithm to compute \eq{gp-likelihood}.
+that it is an algebraic solver for the relevant matrix equations instead of
+an algorithm to directly compute \eq{gp-likelihood}.
 This means that the inverse covariance matrix $K^{-1}$ can be applied to
 general vectors and matrices in $\mathcal{O}(N)$, while reusing the
 factorization.
@@ -1863,22 +1863,8 @@ This is a crucial feature when GP models are combined with linear regression
 \end{center}
 \end{figure}
 
-%As discussed previously, the \celerite\ method is based upon a method
-%developed by Rybicki \& Press twenty years ago \citep{Rybicki:1995}.
-%In the case where the kernel function has a single term of the form given in
-%\eq{kernel-simple}, it is interesting to compare the performance of \celerite\
-%and the Rybicki \& Press method.
-%Their method does not require solving the extended matrix because the matrix
-%inverse can be calculated analytically, but the method is made slightly more
-%complicated when white noise is included.
-%We implement their full method and find empirically that it is more
-%computationally efficient by a factor of $\approx 2$ for large $N \gg 1000$,
-%but we note that the requirement of a single, real, exponential kernel is
-%extremely restrictive and this model cannot describe quasi-periodic
-%variability.
-
-Another popular method uses the fact that, in the limit of evenly-spaced data
-and homoscedastic uncertainties, the covariance matrix is ``Toeplitz''
+Another popular GP method uses the fact that, in the limit of evenly-spaced
+data and homoscedastic uncertainties, the covariance matrix is ``Toeplitz''
 \citep[for example][]{Dillon:2013}.
 There are exact methods for solving Toeplitz matrix equations that scale as
 $\mathcal{O}(N\,\log N)$ and methods for computing determinants exactly in
@@ -1934,8 +1920,7 @@ Many other approximate methods for scaling GP inference exist \citep[see, for
 example,][and references therein]{Wilson:2015a} and we make no attempt to make
 our discussion exhaustive.
 The key takeaway here is that \celerite\ provides an \emph{exact} method for
-GP inference for a specific, but flexible, class of one-dimensional kernel
-functions.
+GP inference for a specific class of one-dimensional kernel functions.
 Furthermore, since \celeriteterm\ models can be interpreted as a mixture of
 stochastically-driven, damped simple harmonic oscillators, they are a
 physically motivated choice of covariance function in many astronomical applications.
@@ -1944,10 +1929,14 @@ physically motivated choice of covariance function in many astronomical applicat
 
 Gaussian Process models have been fruitfully applied to many problems in
 astronomical data analysis, but the fact that the computational cost generally
-scales as the cube of the number of data points has limited their use to relatively
-small datasets.
-With the linear scaling of \celerite\, we envision the application of Gaussian
-processes may be expanded to much larger datasets.
+scales as the cube of the number of data points has limited their use to
+small datasets with $N \lesssim 1000$.
+With the linear scaling of \celerite\, we envision that the application of
+Gaussian processes will be expanded to the existing and forthcoming large
+astronomical time domain surveys such as \kepler\ \citep{Borucki:2010},
+\project{K2} \citep{Howell:2014}, \tess\ \citep{Ricker:2014}, \lsst\
+\citep{Ivezic:2008}, \project{WFIRST} \citep{Spergel:2015}, and
+\project{PLATO} \citep{Rauer:2014}.
 Despite the restrictive form of the \celeriteterm\ kernel, with a sufficient
 number of components it is flexible enough to describe a wide range of
 astrophysical variability.
@@ -1955,29 +1944,26 @@ In fact, the relation of the \celeriteterm\ kernel to the damped,
 stochastically-driven harmonic oscillator matches simple models of
 astrophysical variability, and makes the parameterization interpretable in
 terms of resonant frequency, amplitude, and quality factor.
-A drawback of this method is its quadratic scaling with the number of
-terms $J$, but, in some cases, small values of $J$ may suffice.
 
 Our background is in studying transiting exoplanets, a field which has only
-recently begun to adopt full covariance matrices in analyzing the noise in
-stellar light curves when detecting or characterizing transiting planets
-\citep[for example,][]{Carter:2009, Gibson:2012, Barclay:2015, Evans:2015,
-Aigrain:2016, Foreman-Mackey:2016b, Grunblatt:2016, Luger:2016}.
+recently begun to adopt GP methods for analyzing the noise in stellar light
+curves and radial velocity datasets when detecting or characterizing
+transiting planets \citep[for example,][]{Carter:2009, Gibson:2012,
+Haywood:2014, Barclay:2015, Evans:2015, Rajpaul:2015, Aigrain:2016,
+Foreman-Mackey:2016b, Grunblatt:2016, Luger:2016}.
 All of these analyses have been limited to small datasets or restrictive
-kernel choices.
-\celerite\ weakens these requirements by providing a scalable method for
-computing the likelihood and a physical motivation for the choice of kernel.
-\celerite\ can be used to model stellar oscillations using the relation to the
-mixture of stochastically-driven, damped simple harmonic oscillators, as
-we have demonstrated in this paper.
+kernel choices, but \celerite\ weakens these requirements by providing a
+scalable method for computing the likelihood and a physical motivation for the
+choice of kernel.
 As higher signal-to-noise observations of transiting exoplanet systems are
 obtained, the effects of stellar variability will more dramatically impact the
 correct inference of planetary transit parameters.
-We expect that \celerite\ will be important for transit detection
-\citep{Pope:2016, Foreman-Mackey:2016b}, transit timing \citep{Agol:2005,
-Holman:2005}, transit spectroscopy \citep{Brown:2001}, Doppler beaming
-\citep{Loeb:2003, Zucker:2007}, tidal distortion \citep{Zucker:2007}, phase
-functions \citep{Knutson:2007, Zucker:2007}, and more.
+We predict that \celerite\ will be important for scaling methods of transit
+detection \citep{Pope:2016, Foreman-Mackey:2016b}, transit timing
+\citep{Agol:2005, Holman:2005}, transit spectroscopy \citep{Brown:2001},
+Doppler beaming \citep{Loeb:2003, Zucker:2007}, tidal distortion
+\citep{Zucker:2007}, and phase functions \citep{Knutson:2007, Zucker:2007} to
+the large astronomical time domain surveys of the future.
 
 \subsection{Other applications and limitations}
 
@@ -1996,23 +1982,22 @@ We expect that there are also applications beyond astronomy.
 
 The \celeriteterm\ formalism can also be used for power spectrum estimation and
 quantification of its uncertainties.
-In principle, a large number of \celeriteterm\ terms could be used to perform
-non-parametric probabilistic inference of the power spectrum despite
-unevenly-spaced data with heteroscedastic noise \citep[for
-example,][]{Wilson:2013, Kelly:2014}.
+A mixture of \celeriteterm\ terms can be used to perform non-parametric
+probabilistic inference of the power spectrum despite unevenly-spaced data
+with heteroscedastic noise \citep[see][for examples of this
+procedure]{Wilson:2013, Kelly:2014}.
 This type of analysis will be limited by the quadratic scaling of \celerite\
 with the number of terms $J$, but this limits existing methods as well
-\citep[CARMA models,][]{Kelly:2014}.
-In general, we encourage the use of physically motivated models for parameter
-estimation instead of qualitative modeling of the power spectrum itself.
+\citep{Kelly:2014}.
 
-There are many data analysis problems where \celerite\ will not be applicable.
+There are many data analysis problems where \celerite\ will not be immediately
+applicable.
 In particular, the restriction to one-dimensional problems is significant.
 There are many examples of multidimensional GP modeling the astrophysics
 literature \citep[recent examples from the field of exoplanet characterization
 include][]{Haywood:2014, Rajpaul:2015, Aigrain:2016}, where \celerite\ cannot
-be used to accelerate any of these analyses.
-It is plausible that an extension could be derived to tackle some
+be used to speed up the analysis.
+It is plausible that an extension can be derived to tackle some
 multidimensional problems with the right structure~--~simultaneous parallel
 time series, for example~--~and we hope to revisit this possibility in future
 work.
@@ -2199,8 +2184,8 @@ The product of a rank-$R$ semiseparable matrix with general vectors and
 matrices can be computed in $\mathcal{O}(N\,R)$ operations
 \citep{Vandebril:2007}.
 In the context of \celeriteterm\ models, na\"ive application of these methods
-will result in numerical overflow and underflow issues much like we found with
-the Cholesky factorization.
+will result in numerical overflow and underflow issues, much like we found
+with the Cholesky factorization.
 To avoid these errors, we derive the following numerically stable algorithm
 for computing the dot product of a \celeriteterm\ covariance matrix
 \begin{eqnarray}
