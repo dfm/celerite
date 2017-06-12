@@ -2214,8 +2214,8 @@ y_n &=& A_{n,n}\,z_n + \sum_{j=1}^{2\,J} \left[ \tilde{V}_{n,j} f^+_{n,j} +
     \tilde U_{n-1,j} f^-_{n,j}\right] \quad,
 \end{eqnarray}
 where $f^+_{N,j} = 0$ and $f^-_{1,j} = 0$.
-This algorithm requires two sweeps~--~$n=1, \ldots, N$ to compute $f^-$ and
-$n=N,\ldots,1$ to compute $f^+$~--~with a scaling of $\mathcal{O}(N\,J)$.
+This algorithm requires two sweeps~--~$n=2,\,\ldots,\,N$ to compute $f^-$ and
+$n=N-1,\,\ldots,\,1$ to compute $f^+$~--~with a scaling of $\mathcal{O}(N\,J)$.
 
 
 \subsection{Simulation}
