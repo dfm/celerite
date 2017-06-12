@@ -182,8 +182,8 @@ The growing field of large-scale time domain astronomy requires methods for
 probabilistic data analysis that are computationally tractable, even with
 large datasets.
 Gaussian Processes are a popular class of models used for this purpose but,
-since the computational cost commonly scales as the cube of the number of data points,
-their application has been limited to relatively small datasets.
+since the computational cost scales, in general, as the cube of the number of
+data points, their application has been limited to small datasets.
 In this paper, we present a novel method for Gaussian Process modeling in
 one-dimension where the computational requirements scale linearly with the
 size of the dataset.
@@ -198,11 +198,11 @@ spaced observations or uniform noise.
 This form of covariance arises naturally when the process is a mixture of
 stochastically-driven damped harmonic oscillators~--~providing a physical
 motivation for and interpretation of this choice~--~but we also demonstrate
-that it is effective in other cases.
+that it can be a useful effective model in some other cases.
 We present a mathematical description of the method and compare it to existing
 scalable Gaussian Process methods.
-The method is flexible, fast, and most importantly, interpretable, with a wide
-range of potential applications within astronomical data analysis and beyond.
+The method is fast and interpretable, with a wide range of potential
+applications within astronomical data analysis and beyond.
 We provide well-tested and documented open-source implementations of this
 method in \project{C++}, \project{Python}, and \project{Julia}.
 
@@ -334,19 +334,20 @@ given by $[K_\bvec{\alpha}]_{nm} = k_\bvec{\alpha}(\bvec{x}_n,\,\bvec{x}_m)$.
 \eq{gp-likelihood} is the equation of an $N$-dimensional Gaussian and it can
 be derived as the generalization of what we astronomers call ``$\chi^2$''
 to include the effects of correlated noise.
+\response{
 A point estimate for the values of the parameters $\bvec{\theta}$ and
 $\bvec{\alpha}$ for a given dataset $(\bvec{y},\,X)$ can be found by
 maximizing \eq{gp-likelihood} with respect to $\bvec{\theta}$ and
-$\bvec{\alpha}$ using a non-linear optimization routine \citep{Nocedal:2006}.
-\response{Furthermore}, probabilistic constraints on $\bvec{\theta}$ and
-$\bvec{\alpha}$ can be obtained by multiplying the likelihood by a prior
-$p(\bvec{\theta},\,\bvec{\alpha})$ and using a Markov Chain Monte Carlo (MCMC)
-algorithm to sample the joint posterior probability density.
+$\bvec{\alpha}$ using a non-linear optimization routine \citep{Nocedal:2006}.}
+\response{Furthermore, the uncertainties on $\bvec{\theta}$ and
+$\bvec{\alpha}$ can be quantified by multiplying the likelihood by a prior
+$p(\bvec{\theta},\,\bvec{\alpha})$ and using a Markov chain Monte Carlo (MCMC)
+algorithm to sample the joint posterior probability density.}
 
 GP models have been widely used across the physical sciences but their
-application is generally limited to small datasets, $N \approx 10^3$, because the cost of
-computing the inverse and determinant of a general matrix $K_\bvec{\alpha}$ is
-$\mathcal{O}(N^3)$.
+application is generally limited to small datasets, \response{$N \lesssim
+10^3$}, because the cost of computing the inverse and determinant of a general
+matrix $K_\bvec{\alpha}$ is $\mathcal{O}(N^3)$.
 In other words, this cost is proportional to the cube of the number of data
 points $N$.
 Furthermore, the storage requirements also scale as $\mathcal{O}(N^2)$.
@@ -523,9 +524,10 @@ where
     \tilde{c} &=& c_j + c_k \\
     \tilde{d}_{\pm} &=& d_j \mp d_k \quad.
 \end{eqnarray}
-Therefore, the method described in the following section can be used to
+Therefore, the method described in \sect{factor} can be used to
 perform scalable inference on large datasets for any model, where the kernel
 function is a sum or product of \celeriteterm\ terms.
+
 
 \section{celerite as a model of stellar variations}\sectlabel{sho}
 
@@ -1009,6 +1011,28 @@ and $J$ increasing with larger $N$.
 \end{center}
 \end{figure}
 
+\subsection{How to choose a celerite model}
+
+In any application of \celerite~--~or any other GP model, for that
+matter~--~one must choose a kernel.
+A detailed discussion of how to choose a kernel is beyond the scope of this
+paper and the interested reader is directed to Chapter~5 of
+\citet{Rasmussen:2006} a general introduction, but we include a summary and
+some suggestions specific to \celerite\ here.
+We argue that the most satisfying method of choosing a kernel is to use
+physical motivation and the discussion in \sect{sho} provides an opportunity
+for justified model specification when \celerite\ is applied to parameter
+estimation from stellar light curves.
+However, it is not always possible to rely on physics to specify the model
+and, in these cases, it is useful to have other tools at one's disposal.
+One option is to compute the evidence integral or Bayes factor for a set of
+models and choose the model with the highest evidence.
+Another option is to perform cross validation and select the model with the
+best predictive performance.
+For continuous autoregressive moving average models (we return to these in
+\sect{compare}), \citet{Kelly:2014} recommend the Bayesian Information
+Criterion (BIC) as a method for selecting the order of the model.
+This is a total hack, but I guess that you could do it if you wanted.
 
 \section{Examples}\sectlabel{examples}
 
@@ -1713,8 +1737,8 @@ restrictive.
 it requires a specific choice of stationary kernel function and it can only be
 used in one-dimension.
 
-The continuous autoregressive moving average (CARMA) models introduced into
-the astrophysics literature by \citet{Kelly:2014} share many features with
+The continuous autoregressive moving average (CARMA) models introduced to the
+astrophysics literature by \citet{Kelly:2014} share many features with
 \celerite.
 CARMA models are restricted to one-dimensional problems and the likelihood
 function for a CARMA model can be solved in $\mathcal{O}(N\,J^2)$ using a
@@ -1739,26 +1763,32 @@ In practice, this means that \celerite\ could be trivially used to compute any
 CARMA model.
 Using the CARMA solver to compute a \celeriteterm\ model, however, requires
 solving \eq{carma-coeff} numerically for a given set of $\{A_j\}_{j=1}^J$.
+
+\response{
 The computational scaling of CARMA models is also $\mathcal{O}(N\,J^2)$ using
-the Kalman filtering based method for solving CARMA models \citep{Kelly:2014};
-however, in practice this method is somewhat slower.
-An additional benefit of the \celeriteterm\ model is that it is parameterized in terms
-of the amplitudes directly.
-This means that the physical interpretation of these parameters is, in some
-cases, simpler.
-On the other hand, CARMA models are parameterized by modeling the power
-spectrum of the stochastic driving force and this might be the quantity of
-interest in other situations.
-Another benefit of the \celeriteterm\ framework is that, unlike
-filtering-based CARMA solvers, it directly solves matrix equations of the form
-${K_\bvec{\alpha}}^{-1}\,b$ in $\mathcal{O}(N)$.
-This is a crucial feature when GP modeling is combined with linear models
+the Kalman filter method \citep{Kelly:2014}, but we find that, in practice,
+this method is more computationally expensive than \celerite, but it has a
+smaller memory footprint.
+\Figure{benchmark-carma} shows the scaling of the Kalman filter solver for the
+systems shown in \Figure{benchmark}.
+Comparing these figures, we find that the Kalman filter solver is slower than
+\celerite\ for all the systems we tested with an average difference of about
+an order of magnitude.
+
+Another benefit of \celerite\ compared to Kalman filter solvers is the fact
+that it is a direct solver for the relevant matrix equations instead of just
+an algorithm to compute \eq{gp-likelihood}.
+This means that the inverse covariance matrix $K^{-1}$ can be applied to
+general vectors and matrices in $\mathcal{O}(N)$, while reusing the
+factorization.
+This is a crucial feature when GP models are combined with linear regression
 \citep[for example][]{Luger:2017}.
+}
 
 \begin{figure}[tp]
 \begin{center}
 \includegraphics[width=\textwidth]{figures/benchmark_darwin_carma.pdf}
-\caption{The same as \Figure{benchmark}, but using an optimized
+\caption{\response{The same as \Figure{benchmark}, but using an optimized
     \project{C++} implementation of the Kalman filter method developed by
     \citet{Kelly:2014}.
     Comparing this figure to \Figure{benchmark}, we see that \celerite\ is
@@ -1774,13 +1804,10 @@ This is a crucial feature when GP modeling is combined with linear models
     different values of $N$.
     Each line shows the scaling for a specific value of $N$ increasing from
     bottom to top.
-    The black line shows quadratic scaling in $J$.
+    The black line shows quadratic scaling in $J$.}
     \figurelabel{benchmark-carma}}
 \end{center}
 \end{figure}
-
-
-\subsection{Other scalable methods}
 
 %As discussed previously, the \celerite\ method is based upon a method
 %developed by Rybicki \& Press twenty years ago \citep{Rybicki:1995}.
@@ -1819,9 +1846,8 @@ This wavelet method has been demonstrated to improve parameter estimation for
 transiting exoplanets \citep{Carter:2009}, but these strict requirements make
 this method applicable for only a limited set of use cases.
 
-
 Another GP method that has been used extensively in astronomy is the
-hierarchical off-diagonal low rank \citep[HODLR,][]{Ambikasaran:2016} solver.
+hierarchical off-diagonal low rank (HODLR) solver \citep{Ambikasaran:2016}.
 This method exploits the fact that many commonly used kernel functions produce
 ``smooth'' matrices to approximately compute the GP likelihood with the
 scaling $\mathcal{O}(N\,\log^2 N)$.
@@ -1832,11 +1858,11 @@ The proportionality constant in the $N\,\log^2N$ scaling of the HODLR method
 is a function of the specific kernel and we find~--~using the \project{george}
 software package \citep{Foreman-Mackey:2014, Ambikasaran:2016}~--~that this
 scales approximately linearly with $J$, but it requires substantial overhead
-for small models.
-This means that the HODLR solver can \emph{approximately} evaluate
-\celeriteterm\
-models more efficiently than \celerite\ for large models $J \gg 10$ and
-small datasets where $N$ is smaller than a few thousand.
+making it much slower than \celerite\ for all the models we tested.
+For large $J \gtrsim 256$ and small $N \lesssim 1000$, we find that
+\project{george} can approximately evaluate \celeriteterm\ models with the
+same or less computational cost than \celerite, but that \celerite\ is
+faster~--~and exact~--~in all other parts of parameter space.
 
 The structured kernel interpolation \citep[SKI/KISS-GP][]{Wilson:2015}
 framework is another approximate method that can be used to scale GPs to large
@@ -1871,11 +1897,10 @@ processes may be expanded to much larger datasets.
 Despite the restrictive form of the \celeriteterm\ kernel, with a sufficient
 number of components it is flexible enough to describe a wide range of
 astrophysical variability.
-In fact, the relation of the \celeriteterm\ kernel to the damped, stochastically-driven harmonic
-oscillator matches simple models of astrophysical variability, and makes the
-parameterization interpretable in terms of resonant frequency, amplitude, and
-quality factor.
-% Siva: Removed major, since $J$ is most often small as stated in the second half of the sentence
+In fact, the relation of the \celeriteterm\ kernel to the damped,
+stochastically-driven harmonic oscillator matches simple models of
+astrophysical variability, and makes the parameterization interpretable in
+terms of resonant frequency, amplitude, and quality factor.
 A drawback of this method is its quadratic scaling with the number of
 terms $J$, but, in some cases, small values of $J$ may suffice.
 
