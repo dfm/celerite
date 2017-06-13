@@ -74,6 +74,14 @@ void compute (
   d_comp_ = d_comp;
   t_ = x;
 
+  // Special case for jitter only.
+  if (J == 0) {
+    D_ = diag.array() + jitter;
+    this->log_det_ = log(D_.array()).sum();
+    this->computed_ = true;
+    return;
+  }
+
   // Initialize the diagonal.
   D_ = diag.array() + a_real.sum() + a_comp.sum() + jitter;
   T Dn = D_(0);
@@ -193,6 +201,14 @@ matrix_t solve (const Eigen::MatrixXd& b) const {
   int nrhs = b.cols(), N = this->N_, J = J_;
   matrix_t x(N, nrhs);
 
+  // Special case for jitter only.
+  if (J == 0) {
+    for (int k = 0; k < nrhs; ++k) {
+      x.col(k) = b.col(k).array() / D_.array();
+    }
+    return x;
+  }
+
   if (J < 16) {
 
 #define FIXED_SIZE_HACKZ(SIZE_MACRO)                                          \
@@ -292,6 +308,14 @@ T dot_solve (const Eigen::VectorXd& b) const {
 
   int N = this->N_, J = J_;
   T result;
+
+  // Special case for jitter only.
+  if (J == 0) {
+    result = T(0.0);
+    for (int n = 0; n < N; ++n)
+      result += b(n) * (b(n) / D_(n));
+    return result;
+  }
 
   if (J < 16) {
 

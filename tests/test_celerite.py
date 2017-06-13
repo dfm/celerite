@@ -314,7 +314,7 @@ def test_log_likelihood(seed=42):
     ll0 = -0.5 * np.dot(y, np.linalg.solve(K, y))
     ll0 -= 0.5 * np.linalg.slogdet(K)[1]
     ll0 -= 0.5 * len(x) * np.log(2*np.pi)
-    assert np.allclose(ll, ll0), "face"
+    assert np.allclose(ll, ll0)
 
 
 @pytest.mark.parametrize(
