@@ -280,6 +280,81 @@ matrix_t solve (const Eigen::MatrixXd& b) const {
   return x;
 };
 
+/// Solve the system ``b^T . A^-1 . b``
+///
+/// A previous call to `solver::CholeskySolver::compute` defines a matrix ``A``
+/// and this method solves ``b^T . A^-1 . b`` for a vector ``b``.
+///
+/// @param b The right hand side of the linear system.
+T dot_solve (const Eigen::VectorXd& b) const {
+  if (b.rows() != this->N_) throw dimension_mismatch();
+  if (!(this->computed_)) throw compute_exception();
+
+  int N = this->N_, J = J_;
+  T result;
+
+  if (J < 16) {
+
+#define FIXED_SIZE_HACKZ(SIZE_MACRO)                                        \
+    Eigen::Matrix<T, SIZE_MACRO, 1> f(J);                                   \
+    f.setZero();                                                            \
+    T x, xm1 = b(0);                                                        \
+    result = xm1 * (xm1 / D_(0));                                           \
+    for (int n = 1; n < N; ++n) {                                           \
+      x = b(n);                                                             \
+      for (int j = 0; j < J; ++j) {                                         \
+        T value = phi_(j, n-1) * (f(j) + X_(j, n-1) * xm1);                 \
+        f(j) = value;                                                       \
+        x -= u_(j, n-1) * value;                                            \
+      }                                                                     \
+      xm1 = x;                                                              \
+      result += x * x / D_(n);                                              \
+    }                                                                       \
+
+    if (SIZE == Eigen::Dynamic) {
+      switch (J) {
+        case 1:  { FIXED_SIZE_HACKZ(1)  break; }
+        case 2:  { FIXED_SIZE_HACKZ(2)  break; }
+        case 3:  { FIXED_SIZE_HACKZ(3)  break; }
+        case 4:  { FIXED_SIZE_HACKZ(4)  break; }
+        case 5:  { FIXED_SIZE_HACKZ(5)  break; }
+        case 6:  { FIXED_SIZE_HACKZ(6)  break; }
+        case 7:  { FIXED_SIZE_HACKZ(7)  break; }
+        case 8:  { FIXED_SIZE_HACKZ(8)  break; }
+        case 9:  { FIXED_SIZE_HACKZ(9)  break; }
+        case 10: { FIXED_SIZE_HACKZ(10) break; }
+        case 11: { FIXED_SIZE_HACKZ(11) break; }
+        case 12: { FIXED_SIZE_HACKZ(12) break; }
+        case 13: { FIXED_SIZE_HACKZ(13) break; }
+        case 14: { FIXED_SIZE_HACKZ(14) break; }
+        case 15: { FIXED_SIZE_HACKZ(15) break; }
+        case 16: { FIXED_SIZE_HACKZ(16) break; }
+        default: FIXED_SIZE_HACKZ(Eigen::Dynamic)
+      }
+    } else {
+      // The size was already specified at compile time.
+      FIXED_SIZE_HACKZ(SIZE)
+    }
+
+#undef FIXED_SIZE_HACKZ
+
+  } else {
+
+    vector_j_t f(J);
+    f.setZero();
+    T x = T(b(0));
+    result = x * (x / D_(0));
+    for (int n = 1; n < N; ++n) {
+      f = phi_.col(n-1).asDiagonal() * (f + X_.col(n-1) * x);
+      x = b(n) - u_.col(n-1).transpose().dot(f);
+      result += x * x / D_(n);
+    }
+
+  }
+
+  return result;
+};
+
 /// Compute the dot product of the square root of a celerite matrix
 ///
 /// This method computes ``L.z`` where ``A = L.L^T`` is the matrix defined in

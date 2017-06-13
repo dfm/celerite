@@ -36,7 +36,7 @@ include_directories(include)
 include_directories(lib/eigen_3.3.3)
 
 # Some tweaks for speed.
-add_definitions(-DNDEBUG)
+#add_definitions(-DNDEBUG)
 
 # Build the examples.
 add_subdirectory(src)

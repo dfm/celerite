@@ -60,7 +60,7 @@ virtual matrix_t dot_L (const Eigen::MatrixXd& z) const = 0;
 /// and this method solves ``b^T . A^-1 . b`` for a vector ``b``.
 ///
 /// @param b The right hand side of the linear system.
-T dot_solve (const Eigen::VectorXd& b) const {
+virtual T dot_solve (const Eigen::VectorXd& b) const {
   if (!(this->computed_)) throw compute_exception();
   vector_t out = solve(b);
   return b.transpose().cast<T>() * out;
