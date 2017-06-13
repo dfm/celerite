@@ -31,7 +31,10 @@ data_matrix = np.empty((data.xi.max() + 1, data.yi.max() + 1))
 data_matrix[:] = np.nan
 data_matrix[data.xi, data.yi] = data.comp_time + data.ll_time
 
-np_time = np.array(data.numpy_comp_time + data.numpy_ll_time)
+try:
+    np_time = np.array(data.numpy_comp_time + data.numpy_ll_time)
+except AttributeError:
+    np_time = np.nan + np.zeros(len(data))
 np_m = np.isfinite(np_time)
 np_time = np_time[np_m]
 np_n = np.array(data.n)[np_m]
@@ -55,7 +58,7 @@ if len(np_time):
 if suffix == "_george":
     f = N * np.log(N)**2
     ax1.plot(N, 4.0 * f / f[-1], ":k", label=r"$\mathcal{O}(N\,\log^2N)$")
-ax1.plot(N, 4e-2 * N / N[-1], "k", label=r"$\mathcal{O}(N)$")
+ax1.plot(N, 3e-2 * N / N[-1], "k", label=r"$\mathcal{O}(N)$")
 ax1.legend(loc="lower right", bbox_to_anchor=(1.05, 0), fontsize=8)
 
 for i, n in enumerate(N[::2]):
@@ -68,7 +71,7 @@ for i, n in enumerate(N[::2]):
 if suffix == "_george":
     f = J
     ax2.plot(J, 0.1 * f / f[-1], ":k", label=r"$\mathcal{O}(J)$")
-ax2.plot(J, 2e-2 * J**2 / J[-1]**2, "k",
+ax2.plot(J, 1e-2 * J**2 / J[-1]**2, "k",
          label=r"$\mathcal{O}(J^2)$")
 ax2.legend(loc="lower right", bbox_to_anchor=(1.05, 0), fontsize=8)
 
@@ -78,7 +81,7 @@ ax2.set_xscale("log")
 ax1.set_yscale("log")
 ax1.set_xlim(N.min(), N.max())
 ax2.set_xlim(1, J.max())
-ax2.set_ylim(6e-6, 9.0)
+ax2.set_ylim(6e-6, 6.0)
 
 ax1.set_ylabel("computational cost [seconds]")
 ax1.set_xlabel("number of data points [$N$]")
