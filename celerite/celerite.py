@@ -178,17 +178,21 @@ class GP(ModelSet):
 
     def grad_log_likelihood(self, y):
         """
-        Compute the marginalized likelihood of the GP model
+        Compute the gradient of the marginalized likelihood
 
         The factorized matrix from the previous call to :func:`GP.compute` is
-        used so ``compute`` must be called first.
+        used so ``compute`` must be called first. The gradient is taken with
+        respect to the parameters returned by :func:`GP.get_parameter_vector`.
+        This function requires the `autograd
+        <https://github.com/HIPS/autograd>`_ package.
 
         Args:
             y (array[n]): The observations at coordinates ``x`` from
                 :func:`GP.compute`.
 
         Returns:
-            float: The marginalized likelihood of the GP model.
+            The gradient of marginalized likelihood with respect to the
+            parameter vector.
 
         Raises:
             ValueError: For mismatched dimensions.
