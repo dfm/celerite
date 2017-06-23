@@ -1,8 +1,6 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/eigen.h>
 
-#include <iostream>
-
 #include <Eigen/Core>
 
 #ifndef NO_AUTODIFF
@@ -406,15 +404,11 @@ Args:
         for (i = 0; i < J_comp; ++i) d_comp_(i) = g_t(d_comp(i), g_tot, i0+i);
       }
 
-      std::cerr << "face1\n";
-
       // Factorize and track the gradients
       solver.compute(
         jitter_, a_real_, c_real_, a_comp_, b_comp_, c_comp_, d_comp_,
         A, U, V, x, diag
       );
-      std::cerr << "face2\n";
-
 
       // Compute the likelihood and the gradients
       g_t ll = -0.5 * (solver.dot_solve(y) + solver.log_determinant() + M_PI * log(x.rows()));

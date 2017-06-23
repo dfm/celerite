@@ -407,7 +407,7 @@ def test_log_likelihood(with_general, seed=42):
         terms.RealTerm(log_a=0.1, log_c=0.4),
         terms.SHOTerm(log_S0=0.1, log_Q=1.0, log_omega0=0.5) *
         terms.RealTerm(log_a=0.1, log_c=0.4),
-    ], [False,])
+    ], [False, True])
 )
 def test_grad_log_likelihood(kernel, with_general, seed=42, eps=1.34e-7):
     np.random.seed(seed)
@@ -450,8 +450,6 @@ def test_grad_log_likelihood(kernel, with_general, seed=42, eps=1.34e-7):
             grad0[i] = 0.5 * ll / eps
             v[i] = pval
         assert np.allclose(grad, grad0)
-
-# test_grad_log_likelihood(terms.RealTerm(log_a=0.1, log_c=0.5), True)
 
 def test_predict(seed=42):
     np.random.seed(seed)

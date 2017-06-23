@@ -32,11 +32,11 @@ int main (int argc, char* argv[])
 
   // Set up the coefficients.
   size_t p_real = 2, p_complex = 1;
-  g_t jitter = g_t(0.01);
+  int nder = 9, j = 1;
+  g_t jitter = g_t(0.01, nder, 0);
   v_t a_real(p_real), c_real(p_real),
       a_comp(p_complex), b_comp(p_complex), c_comp(p_complex), d_comp(p_complex);
 
-  int nder = 8, j = 0;
   a_real << g_t(1.3, nder, j), g_t(1.5, nder, j+1);
   j += 2;
   c_real  << g_t(0.5, nder, j), g_t(0.2, nder, j+1);
@@ -61,8 +61,28 @@ int main (int argc, char* argv[])
   // Compute the y values.
   y = sin(x.array());
 
+  Eigen::MatrixXd U(3, N), V(3, N);
+  Eigen::VectorXd A(N);
+  for (int n = 0; n < N; ++n) {
+    A(n) = 1e-6;
+    for (int j = 0; j < 3; ++j) {
+      U(j, n) = pow(x(n), j);
+      V(j, n) = pow(x(n), j) / (1.0 + j);
+      A(n) += U(j, n) * V(j, n);
+    }
+  }
+
   celerite::solver::CholeskySolver<g_t> cholesky;
   cholesky.compute(jitter, a_real, c_real, a_comp, b_comp, c_comp, d_comp, x, yerr2);
+  std::cout << cholesky.log_determinant().derivatives() << std::endl;
+  std::cout << cholesky.dot_solve(y).derivatives() << std::endl;
+
+  cholesky.compute(jitter, a_real, c_real, a_comp, b_comp, c_comp, d_comp, A, U, V, x, yerr2);
+  std::cout << cholesky.log_determinant().derivatives() << std::endl;
+  std::cout << cholesky.dot_solve(y).derivatives() << std::endl;
+
+  v_t empty(0);
+  cholesky.compute(jitter, empty, empty, empty, empty, empty, empty, A, U, V, x, yerr2);
   std::cout << cholesky.log_determinant().derivatives() << std::endl;
   std::cout << cholesky.dot_solve(y).derivatives() << std::endl;
 

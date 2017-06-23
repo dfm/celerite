@@ -36,9 +36,6 @@ int main (int argc, char* argv[])
                   beta_complex_real(p_complex),
                   beta_complex_imag(p_complex);
 
-  Eigen::MatrixXd U(3, N), V(3, N);
-  Eigen::VectorXd A(N);
-
   alpha_real << 1.3, 1.5;
   beta_real  << 0.5, 0.2;
   //alpha_complex_real << 1.0;
@@ -65,6 +62,8 @@ int main (int argc, char* argv[])
   // Compute the y values.
   y = sin(x.array());
 
+  Eigen::MatrixXd U(3, N), V(3, N);
+  Eigen::VectorXd A(N);
   for (int n = 0; n < N; ++n) {
     A(n) = 1e-6;
     for (int j = 0; j < 3; ++j) {

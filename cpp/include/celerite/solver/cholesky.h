@@ -155,7 +155,7 @@ void compute (
       T phij = phi_(j, n-1),                                                  \
         xj = Dn*W_(j, n-1);                                                   \
       for (int k = 0; k <= j; ++k) {                                          \
-        S(k, j) = phij*phi_(k, n-1)*(S(k, j) + xj*W_(k, n-1));                \
+        S(k, j) = phij*(phi_(k, n-1)*(S(k, j) + xj*W_(k, n-1)));                \
       }                                                                       \
     }                                                                         \
                                                                               \
@@ -165,7 +165,7 @@ void compute (
         xj = W_(j, n);                                                        \
       for (int k = 0; k < j; ++k) {                                           \
         T tmp = u_(k, n-1) * S(k, j);                                         \
-        Dn -= 2.0*uj*tmp;                                                     \
+        Dn -= 2.0*(uj*tmp);                                                   \
         xj -= tmp;                                                            \
         W_(k, n) -= uj*S(k, j);                                               \
       }                                                                       \
