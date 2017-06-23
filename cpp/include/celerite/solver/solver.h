@@ -47,6 +47,9 @@ virtual void compute (
   const vector_t& b_comp,
   const vector_t& c_comp,
   const vector_t& d_comp,
+  const Eigen::VectorXd& A,
+  const Eigen::MatrixXd& U,
+  const Eigen::MatrixXd& V,
   const Eigen::VectorXd& x,
   const Eigen::VectorXd& diag
 ) = 0;
@@ -76,6 +79,34 @@ T log_determinant () const {
 
 /// Flag indicating if ``compute`` was successfully executed
 bool computed () const { return computed_; };
+
+/// Compute the matrix and factorize for purely real alphas
+///
+/// @param jitter The jitter of the kernel.
+/// @param a_real The coefficients of the real terms.
+/// @param c_real The exponents of the real terms.
+/// @param a_comp The real part of the coefficients of the complex terms.
+/// @param b_comp The imaginary part of the coefficients of the complex terms.
+/// @param c_comp The real part of the exponents of the complex terms.
+/// @param d_comp The imaginary part of the exponents of the complex terms.
+/// @param x The _sorted_ array of input coordinates.
+/// @param diag An array that should be added to the diagonal of the matrix.
+///             This often corresponds to measurement uncertainties and in that case,
+///             ``diag`` should be the measurement _variance_ (i.e. sigma^2).
+void compute (
+  const T& jitter,
+  const vector_t& a_real,
+  const vector_t& c_real,
+  const vector_t& a_comp,
+  const vector_t& b_comp,
+  const vector_t& c_comp,
+  const vector_t& d_comp,
+  const Eigen::VectorXd& x,
+  const Eigen::VectorXd& diag
+) {
+  Eigen::MatrixXd A, U, V;
+  return this->compute(jitter, a_real, c_real, a_comp, b_comp, c_comp, d_comp, A, U, V, x, diag);
+};
 
 
 /// Compute the matrix and factorize for purely real alphas

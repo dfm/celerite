@@ -4,6 +4,7 @@ from __future__ import division, print_function
 
 import pytest
 import numpy as np
+from itertools import product
 
 try:
     import cPickle as pickle
@@ -32,6 +33,7 @@ def test_carma(seed=42):
 
     solver.compute(
         0.0, params[0], params[1], params[2], params[3], params[4], params[5],
+        np.empty(0), np.empty((0, 0)), np.empty((0, 0)),
         t, yerr**2
     )
     celerite_ll = -0.5*(
@@ -50,7 +52,9 @@ def _test_log_determinant(alpha_real, beta_real, alpha_complex_real,
 
     solver.compute(
         0.0, alpha_real, beta_real, alpha_complex_real, alpha_complex_imag,
-        beta_complex_real, beta_complex_imag, t, diag
+        beta_complex_real, beta_complex_imag,
+        np.empty(0), np.empty((0, 0)), np.empty((0, 0)),
+        t, diag
     )
     K = get_kernel_value(
         alpha_real, beta_real, alpha_complex_real, alpha_complex_imag,
@@ -82,7 +86,8 @@ def test_log_determinant(seed=42):
 
 
 def _test_solve(alpha_real, beta_real, alpha_complex_real, alpha_complex_imag,
-                beta_complex_real, beta_complex_imag, seed=42):
+                beta_complex_real, beta_complex_imag, seed=42,
+                with_general=False):
     solver = celerite.CholeskySolver()
     np.random.seed(seed)
     t = np.sort(np.random.rand(500))
@@ -94,21 +99,37 @@ def _test_solve(alpha_real, beta_real, alpha_complex_real, alpha_complex_imag,
     with pytest.raises(RuntimeError):
         solver.dot_solve(b)
 
+    if with_general:
+        U = np.vander(t - np.mean(t), 4).T
+        V = U * np.random.rand(4)[:, None]
+        A = np.sum(U * V, axis=0) + 1e-8
+    else:
+        A = np.empty(0)
+        U = np.empty((0, 0))
+        V = np.empty((0, 0))
+
     solver.compute(
         0.0, alpha_real, beta_real, alpha_complex_real, alpha_complex_imag,
-        beta_complex_real, beta_complex_imag, t, diag
+        beta_complex_real, beta_complex_imag,
+        A, U, V, t, diag
     )
     K = get_kernel_value(
         alpha_real, beta_real, alpha_complex_real, alpha_complex_imag,
         beta_complex_real, beta_complex_imag, t[:, None] - t[None, :]
     )
     K[np.diag_indices_from(K)] += diag
+
+    if len(A):
+        K[np.diag_indices_from(K)] += A
+        K += np.tril(np.dot(U.T, V), -1) + np.triu(np.dot(V.T, U), 1)
+
     assert np.allclose(solver.solve(b).T, np.linalg.solve(K, b))
 
     b = np.random.randn(len(t), 5)
     assert np.allclose(solver.solve(b), np.linalg.solve(K, b))
 
-def test_solve(seed=42):
+@pytest.mark.parametrize("with_general", [True, False])
+def test_solve(with_general, seed=42):
     alpha_real = np.array([1.5, 0.1])
     beta_real = np.array([1.0, 0.3])
     alpha_complex_real = np.array([1.0])
@@ -116,7 +137,8 @@ def test_solve(seed=42):
     beta_complex_real = np.array([1.0])
     beta_complex_imag = np.array([1.0])
     _test_solve(alpha_real, beta_real, alpha_complex_real, alpha_complex_imag,
-                beta_complex_real, beta_complex_imag, seed=seed)
+                beta_complex_real, beta_complex_imag, seed=seed,
+                with_general=with_general)
 
     alpha_real = np.array([1.5, 0.1, 0.6, 0.3, 0.8, 0.7])
     beta_real = np.array([1.0, 0.3, 0.05, 0.01, 0.1, 0.2])
@@ -125,10 +147,12 @@ def test_solve(seed=42):
     beta_complex_real = np.array([1.0, 1.0])
     beta_complex_imag = np.array([1.0, 1.0])
     _test_solve(alpha_real, beta_real, alpha_complex_real, alpha_complex_imag,
-                beta_complex_real, beta_complex_imag, seed=seed)
+                beta_complex_real, beta_complex_imag, seed=seed,
+                with_general=with_general)
 
 
-def test_dot(seed=42):
+@pytest.mark.parametrize("with_general", [True, False])
+def test_dot(with_general, seed=42):
     solver = celerite.CholeskySolver()
     np.random.seed(seed)
     t = np.sort(np.random.rand(500))
@@ -145,15 +169,30 @@ def test_dot(seed=42):
         alpha_real, beta_real, alpha_complex_real, alpha_complex_imag,
         beta_complex_real, beta_complex_imag, t[:, None] - t[None, :]
     )
+
+    if with_general:
+        U = np.vander(t - np.mean(t), 4).T
+        V = U * np.random.rand(4)[:, None]
+        A = np.sum(U * V, axis=0) + 1e-8
+
+        K[np.diag_indices_from(K)] += A
+        K += np.tril(np.dot(U.T, V), -1) + np.triu(np.dot(V.T, U), 1)
+    else:
+        A = np.empty(0)
+        U = np.empty((0, 0))
+        V = np.empty((0, 0))
+
     x0 = np.dot(K, b)
 
     x = solver.dot(
         0.0, alpha_real, beta_real, alpha_complex_real, alpha_complex_imag,
-        beta_complex_real, beta_complex_imag, t, b
+        beta_complex_real, beta_complex_imag,
+        A, U, V, t, b
     )
     assert np.allclose(x0, x)
 
-def test_dot_L(seed=42):
+@pytest.mark.parametrize("with_general", [True, False])
+def test_dot_L(with_general, seed=42):
     solver = celerite.CholeskySolver()
     np.random.seed(seed)
     t = np.sort(np.random.rand(5))
@@ -172,21 +211,45 @@ def test_dot_L(seed=42):
         beta_complex_real, beta_complex_imag, t[:, None] - t[None, :]
     )
     K[np.diag_indices_from(K)] += yerr**2
+
+    if with_general:
+        U = np.vander(t - np.mean(t), 4).T
+        V = U * np.random.rand(4)[:, None]
+        A = np.sum(U * V, axis=0) + 1e-8
+
+        K[np.diag_indices_from(K)] += A
+        K += np.tril(np.dot(U.T, V), -1) + np.triu(np.dot(V.T, U), 1)
+    else:
+        A = np.empty(0)
+        U = np.empty((0, 0))
+        V = np.empty((0, 0))
+
     L = np.linalg.cholesky(K)
     x0 = np.dot(L, b)
 
     solver.compute(
         0.0, alpha_real, beta_real, alpha_complex_real, alpha_complex_imag,
-        beta_complex_real, beta_complex_imag, t, yerr**2)
+        beta_complex_real, beta_complex_imag,
+        A, U, V, t, yerr**2)
     x = solver.dot_L(b)
     assert np.allclose(x0, x)
 
-def test_pickle(seed=42):
+@pytest.mark.parametrize("with_general", [True, False])
+def test_pickle(with_general, seed=42):
     solver = celerite.CholeskySolver()
     np.random.seed(seed)
     t = np.sort(np.random.rand(500))
     diag = np.random.uniform(0.1, 0.5, len(t))
     y = np.sin(t)
+
+    if with_general:
+        U = np.vander(t - np.mean(t), 4).T
+        V = U * np.random.rand(4)[:, None]
+        A = np.sum(U * V, axis=0) + 1e-8
+    else:
+        A = np.empty(0)
+        U = np.empty((0, 0))
+        V = np.empty((0, 0))
 
     alpha_real = np.array([1.3, 1.5])
     beta_real = np.array([0.5, 0.2])
@@ -210,7 +273,8 @@ def test_pickle(seed=42):
 
     solver.compute(
         0.0, alpha_real, beta_real, alpha_complex_real, alpha_complex_imag,
-        beta_complex_real, beta_complex_imag, t, diag
+        beta_complex_real, beta_complex_imag,
+        A, U, V, t, diag
     )
     solver2 = pickle.loads(pickle.dumps(solver, -1))
     compare(solver, solver2)
@@ -244,12 +308,21 @@ def test_build_gp(seed=42):
     with pytest.raises(ValueError):
         gp.set_parameter_vector("face1")
 
-
-def test_log_likelihood(seed=42):
+@pytest.mark.parametrize("with_general", [True, False])
+def test_log_likelihood(with_general, seed=42):
     np.random.seed(seed)
     x = np.sort(np.random.rand(10))
     yerr = np.random.uniform(0.1, 0.5, len(x))
     y = np.sin(x)
+
+    if with_general:
+        U = np.vander(x - np.mean(x), 4).T
+        V = U * np.random.rand(4)[:, None]
+        A = np.sum(U * V, axis=0) + 1e-8
+    else:
+        A = np.empty(0)
+        U = np.empty((0, 0))
+        V = np.empty((0, 0))
 
     kernel = terms.RealTerm(0.1, 0.5)
     gp = GP(kernel)
@@ -271,7 +344,7 @@ def test_log_likelihood(seed=42):
         with pytest.raises(ValueError):
             gp.compute(np.random.rand(len(x)), yerr)
 
-        gp.compute(x, yerr)
+        gp.compute(x, yerr, A=A, U=U, V=V)
         assert gp.computed is True
         assert gp.dirty is False
 
@@ -288,18 +361,18 @@ def test_log_likelihood(seed=42):
     assert gp.computed is False
 
     # Check that changing the parameters changes the likelihood.
-    gp.compute(x, yerr)
+    gp.compute(x, yerr, A=A, U=U, V=V)
     ll1 = gp.log_likelihood(y)
     params = gp.get_parameter_vector()
     params[0] += 10.0
     gp.set_parameter_vector(params)
-    gp.compute(x, yerr)
+    gp.compute(x, yerr, A=A, U=U, V=V)
     ll2 = gp.log_likelihood(y)
     assert not np.allclose(ll1, ll2)
 
     gp[1] += 10.0
     assert gp.dirty is True
-    gp.compute(x, yerr)
+    gp.compute(x, yerr, A=A, U=U, V=V)
     ll3 = gp.log_likelihood(y)
     assert not np.allclose(ll2, ll3)
 
@@ -318,8 +391,8 @@ def test_log_likelihood(seed=42):
 
 
 @pytest.mark.parametrize(
-    "kernel",
-    [
+    "kernel,with_general",
+    product([
         terms.RealTerm(log_a=0.1, log_c=0.5),
         terms.RealTerm(log_a=0.1, log_c=0.5) +
         terms.RealTerm(log_a=-0.1, log_c=0.7),
@@ -334,24 +407,33 @@ def test_log_likelihood(seed=42):
         terms.RealTerm(log_a=0.1, log_c=0.4),
         terms.SHOTerm(log_S0=0.1, log_Q=1.0, log_omega0=0.5) *
         terms.RealTerm(log_a=0.1, log_c=0.4),
-    ]
+    ], [False,])
 )
-def test_grad_log_likelihood(kernel, seed=42, eps=1.34e-7):
+def test_grad_log_likelihood(kernel, with_general, seed=42, eps=1.34e-7):
     np.random.seed(seed)
     x = np.sort(np.random.rand(100))
     yerr = np.random.uniform(0.1, 0.5, len(x))
     y = np.sin(x)
 
+    if with_general:
+        U = np.vander(x - np.mean(x), 4).T
+        V = U * np.random.rand(4)[:, None]
+        A = np.sum(U * V, axis=0) + 1e-8
+    else:
+        A = np.empty(0)
+        U = np.empty((0, 0))
+        V = np.empty((0, 0))
+
     if not terms.HAS_AUTOGRAD:
         gp = GP(kernel)
-        gp.compute(x, yerr)
+        gp.compute(x, yerr, A=A, U=U, V=V)
         with pytest.raises(ImportError):
             _, grad = gp.grad_log_likelihood(y)
         return
 
     for fit_mean in [True, False]:
         gp = GP(kernel, fit_mean=fit_mean)
-        gp.compute(x, yerr)
+        gp.compute(x, yerr, A=A, U=U, V=V)
         _, grad = gp.grad_log_likelihood(y)
         grad0 = np.empty_like(grad)
 
@@ -368,6 +450,8 @@ def test_grad_log_likelihood(kernel, seed=42, eps=1.34e-7):
             grad0[i] = 0.5 * ll / eps
             v[i] = pval
         assert np.allclose(grad, grad0)
+
+# test_grad_log_likelihood(terms.RealTerm(log_a=0.1, log_c=0.5), True)
 
 def test_predict(seed=42):
     np.random.seed(seed)

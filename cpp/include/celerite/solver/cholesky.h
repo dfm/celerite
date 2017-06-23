@@ -46,24 +46,36 @@ void compute (
   const vector_t& b_comp,
   const vector_t& c_comp,
   const vector_t& d_comp,
+  const Eigen::VectorXd& A,
+  const Eigen::MatrixXd& U,
+  const Eigen::MatrixXd& V,
   const Eigen::VectorXd& x,
   const Eigen::VectorXd& diag
 )
 {
+  int N = x.rows();
   this->computed_ = false;
-  if (x.rows() != diag.rows()) throw dimension_mismatch();
+
+  if (N != diag.rows()) throw dimension_mismatch();
   if (a_real.rows() != c_real.rows()) throw dimension_mismatch();
   if (a_comp.rows() != b_comp.rows()) throw dimension_mismatch();
   if (a_comp.rows() != c_comp.rows()) throw dimension_mismatch();
   if (a_comp.rows() != d_comp.rows()) throw dimension_mismatch();
 
-  int N = this->N_ = x.rows();
+  bool has_general = (A.rows() != 0);
+  if (has_general && A.rows() != N) throw dimension_mismatch();
+  if (has_general && U.cols() != N) throw dimension_mismatch();
+  if (has_general && V.cols() != N) throw dimension_mismatch();
+  if (U.rows() != V.rows()) throw dimension_mismatch();
+
+  this->N_ = N;
+  int J_general = U.rows();
   int J_real = a_real.rows(), J_comp = a_comp.rows();
-  int J = J_ = J_real + 2*J_comp;
+  int J = J_ = J_real + 2*J_comp + J_general;
   if (SIZE != Eigen::Dynamic && J != SIZE) throw dimension_mismatch();
   phi_.resize(J, N-1);
   u_.resize(J, N-1);
-  X_.resize(J, N);
+  W_.resize(J, N);
 
   // Save the inputs. We need these for the 'predict' method.
   a_real_ = a_real;
@@ -84,6 +96,7 @@ void compute (
 
   // Initialize the diagonal.
   D_ = diag.array() + a_real.sum() + a_comp.sum() + jitter;
+  if (has_general) D_.array() += A.array();
   T Dn = D_(0);
 
   // Compute the values at x[0]
@@ -91,12 +104,15 @@ void compute (
     T value = 1.0 / Dn,
       t = x(0);
     for (int j = 0; j < J_real; ++j) {
-      X_(j, 0) = value;
+      W_(j, 0) = value;
     }
     for (int j = 0, k = J_real; j < J_comp; ++j, k += 2) {
       T d = d_comp(j) * t;
-      X_(k,   0) = cos(d)*value;
-      X_(k+1, 0) = sin(d)*value;
+      W_(k,   0) = cos(d)*value;
+      W_(k+1, 0) = sin(d)*value;
+    }
+    for (int j = 0, k = J_real+2*J_comp; j < J_general; ++j, ++k) {
+      W_(k, 0) = V(j, 0) * value;
     }
   }
 
@@ -113,7 +129,7 @@ void compute (
     for (int j = 0; j < J_real; ++j) {                                        \
       phi_(j, n-1) = exp(-c_real(j)*dx);                                      \
       u_(j, n-1) = a_real(j);                                                 \
-      X_(j, n) = T(1.0);                                                      \
+      W_(j, n) = T(1.0);                                                      \
     }                                                                         \
     for (int j = 0, k = J_real; j < J_comp; ++j, k += 2) {                    \
       T a = a_comp(j),                                                        \
@@ -126,35 +142,40 @@ void compute (
       phi_(k+1, n-1) = value;                                                 \
       u_(k,   n-1) = a*cd + b*sd;                                             \
       u_(k+1, n-1) = a*sd - b*cd;                                             \
-      X_(k,   n) = cd;                                                        \
-      X_(k+1, n) = sd;                                                        \
+      W_(k,   n) = cd;                                                        \
+      W_(k+1, n) = sd;                                                        \
+    }                                                                         \
+    for (int j = 0, k = J_real+2*J_comp; j < J_general; ++j, ++k) {           \
+      phi_(k, n-1) = T(1.0);                                                  \
+      u_(k,   n-1) = T(U(j, n));                                              \
+      W_(k,   n)   = T(V(j, n));                                              \
     }                                                                         \
                                                                               \
     for (int j = 0; j < J; ++j) {                                             \
       T phij = phi_(j, n-1),                                                  \
-        xj = Dn*X_(j, n-1);                                                   \
+        xj = Dn*W_(j, n-1);                                                   \
       for (int k = 0; k <= j; ++k) {                                          \
-        S(k, j) = phij*phi_(k, n-1)*(S(k, j) + xj*X_(k, n-1));                \
+        S(k, j) = phij*phi_(k, n-1)*(S(k, j) + xj*W_(k, n-1));                \
       }                                                                       \
     }                                                                         \
                                                                               \
     Dn = D_(n);                                                               \
     for (int j = 0; j < J; ++j) {                                             \
       T uj = u_(j, n-1),                                                      \
-        xj = X_(j, n);                                                        \
+        xj = W_(j, n);                                                        \
       for (int k = 0; k < j; ++k) {                                           \
         T tmp = u_(k, n-1) * S(k, j);                                         \
         Dn -= 2.0*uj*tmp;                                                     \
         xj -= tmp;                                                            \
-        X_(k, n) -= uj*S(k, j);                                               \
+        W_(k, n) -= uj*S(k, j);                                               \
       }                                                                       \
       T tmp = uj*S(j, j);                                                     \
       Dn -= uj*tmp;                                                           \
-      X_(j, n) = xj - tmp;                                                    \
+      W_(j, n) = xj - tmp;                                                    \
     }                                                                         \
     if (Dn < 0) throw linalg_exception();                                     \
     D_(n) = Dn;                                                               \
-    X_.col(n) /= Dn;                                                          \
+    W_.col(n) /= Dn;                                                          \
   }
 
   if (SIZE == Eigen::Dynamic) {
@@ -220,7 +241,7 @@ matrix_t solve (const Eigen::MatrixXd& b) const {
         T xnm1 = x(n-1, k);                                                   \
         x(n, k) = b(n, k);                                                    \
         for (int j = 0; j < J; ++j) {                                         \
-          T value = phi_(j, n-1) * (f(j) + X_(j, n-1) * xnm1);                \
+          T value = phi_(j, n-1) * (f(j) + W_(j, n-1) * xnm1);                \
           f(j) = value;                                                       \
           x(n, k) -= u_(j, n-1) * value;                                      \
         }                                                                     \
@@ -233,7 +254,7 @@ matrix_t solve (const Eigen::MatrixXd& b) const {
         for (int j = 0; j < J; ++j) {                                         \
           T value = phi_(j, n) * (f(j) + u_(j, n) * xnp1);                    \
           f(j) = value;                                                       \
-          x(n, k) -= X_(j, n) * value;                                        \
+          x(n, k) -= W_(j, n) * value;                                        \
         }                                                                     \
       }                                                                       \
     }
@@ -275,7 +296,7 @@ matrix_t solve (const Eigen::MatrixXd& b) const {
       T value = b(0, k);
       x(0, k) = value;
       for (int n = 1; n < N; ++n) {
-        f = phi_.col(n-1).asDiagonal() * (f + X_.col(n-1) * value);
+        f = phi_.col(n-1).asDiagonal() * (f + W_.col(n-1) * value);
         value = b(n, k) - u_.col(n-1).transpose().dot(f);
         x(n, k) = value;
       }
@@ -286,7 +307,7 @@ matrix_t solve (const Eigen::MatrixXd& b) const {
       value = x(N-1, k);
       for (int n = N-2; n >= 0; --n) {
         f = phi_.col(n).asDiagonal() * (f + u_.col(n) * value);
-        value = x(n, k) - X_.col(n).transpose().dot(f);
+        value = x(n, k) - W_.col(n).transpose().dot(f);
         x(n, k) = value;
       }
     }
@@ -327,7 +348,7 @@ T dot_solve (const Eigen::VectorXd& b) const {
     for (int n = 1; n < N; ++n) {                                           \
       x = b(n);                                                             \
       for (int j = 0; j < J; ++j) {                                         \
-        T value = phi_(j, n-1) * (f(j) + X_(j, n-1) * xm1);                 \
+        T value = phi_(j, n-1) * (f(j) + W_(j, n-1) * xm1);                 \
         f(j) = value;                                                       \
         x -= u_(j, n-1) * value;                                            \
       }                                                                     \
@@ -369,7 +390,7 @@ T dot_solve (const Eigen::VectorXd& b) const {
     T x = T(b(0));
     result = x * (x / D_(0));
     for (int n = 1; n < N; ++n) {
-      f = phi_.col(n-1).asDiagonal() * (f + X_.col(n-1) * x);
+      f = phi_.col(n-1).asDiagonal() * (f + W_.col(n-1) * x);
       x = b(n) - u_.col(n-1).transpose().dot(f);
       result += x * x / D_(n);
     }
@@ -400,7 +421,7 @@ matrix_t dot_L (const Eigen::MatrixXd& z) const {
     tmp = z(0, k) * D(0);
     y(0, k) = tmp;
     for (int n = 1; n < N; ++n) {
-      f = phi_.col(n-1).asDiagonal() * (f + X_.col(n-1) * tmp);
+      f = phi_.col(n-1).asDiagonal() * (f + W_.col(n-1) * tmp);
       tmp = D(n) * z(n, k);
       y(n, k) = tmp + u_.col(n-1).transpose().dot(f);
     }
@@ -428,17 +449,27 @@ matrix_t dot (
   const vector_t& b_comp,
   const vector_t& c_comp,
   const vector_t& d_comp,
+  const vector_t& A,
+  const matrix_t& U,
+  const matrix_t& V,
   const Eigen::VectorXd& x,
   const Eigen::MatrixXd& z
 ) {
+  int N = z.rows(), nrhs = z.cols();
   if (x.rows() != z.rows()) throw dimension_mismatch();
   if (a_real.rows() != c_real.rows()) throw dimension_mismatch();
   if (a_comp.rows() != b_comp.rows()) throw dimension_mismatch();
   if (a_comp.rows() != c_comp.rows()) throw dimension_mismatch();
   if (a_comp.rows() != d_comp.rows()) throw dimension_mismatch();
 
-  int N = z.rows(), nrhs = z.cols();
-  int J_real = a_real.rows(), J_comp = a_comp.rows(), J = J_real + 2*J_comp;
+  bool has_general = (A.rows() != 0);
+  if (has_general && A.rows() != N) throw dimension_mismatch();
+  if (has_general && U.cols() != N) throw dimension_mismatch();
+  if (has_general && V.cols() != N) throw dimension_mismatch();
+  if (U.rows() != V.rows()) throw dimension_mismatch();
+
+  int J_general = U.rows();
+  int J_real = a_real.rows(), J_comp = a_comp.rows(), J = J_real + 2*J_comp + J_general;
   if (SIZE != Eigen::Dynamic && J != SIZE) throw dimension_mismatch();
   Eigen::Array<T, Eigen::Dynamic, 1> a1(J_real), a2(J_comp), b2(J_comp),
                                      c1(J_real), c2(J_comp), d2(J_comp),
@@ -450,10 +481,13 @@ matrix_t dot (
   c2 << c_comp;
   d2 << d_comp;
 
-  T a_sum = jitter + a1.sum() + a2.sum();
+  vector_t diag(N);
+  diag.setConstant(jitter + a1.sum() + a2.sum());
+  if (A.rows() != 0) diag.array() += A.array();
 
   vector_j_t f(J);
   matrix_t y(N, nrhs), phi(J, N-1), u(J, N-1), v(J, N-1);
+  phi.setConstant(T(1.0));
 
   cd = cos(d2*x(0));
   sd = sin(d2*x(0));
@@ -461,12 +495,14 @@ matrix_t dot (
     v.col(n).head(J_real).setOnes();
     v.col(n).segment(J_real, J_comp) = cd;
     v.col(n).segment(J_real+J_comp, J_comp) = sd;
+    v.col(n).segment(J_real+2*J_comp, J_general) = V.col(n);
 
     cd = cos(d2*x(n+1));
     sd = sin(d2*x(n+1));
     u.col(n).head(J_real) = a1;
     u.col(n).segment(J_real, J_comp) = a2 * cd + b2 * sd;
     u.col(n).segment(J_real+J_comp, J_comp) = a2 * sd - b2 * cd;
+    u.col(n).segment(J_real+2*J_comp, J_general) = U.col(n+1);
 
     T dx = x(n+1) - x(n);
     phi.col(n).head(J_real) = exp(-c1*dx);
@@ -475,11 +511,11 @@ matrix_t dot (
   }
 
   for (int k = 0; k < nrhs; ++k) {
-    y(N-1, k) = a_sum * z(N-1, k);
+    y(N-1, k) = diag(N-1) * z(N-1, k);
     f.setZero();
     for (int n = N-2; n >= 0; --n) {
       f = phi.col(n).asDiagonal() * (f + u.col(n) * z(n+1, k));
-      y(n, k) = a_sum * z(n, k) + v.col(n).transpose().dot(f);
+      y(n, k) = diag(n) * z(n, k) + v.col(n).transpose().dot(f);
     }
 
     f.setZero();
@@ -604,7 +640,7 @@ using Solver<T>::compute;
 
 protected:
 int J_;
-matrix_j_t u_, phi_, X_;
+matrix_j_t u_, phi_, W_;
 vector_t D_, a_real_, c_real_, a_comp_, b_comp_, c_comp_, d_comp_;
 Eigen::VectorXd t_;
 

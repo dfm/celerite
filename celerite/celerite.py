@@ -94,7 +94,8 @@ class GP(ModelSet):
             not self.dirty
         )
 
-    def compute(self, t, yerr=1.123e-12, check_sorted=True):
+    def compute(self, t, yerr=1.123e-12, check_sorted=True,
+                A=None, U=None, V=None):
         """
         Compute the extended form of the covariance matrix and factorize
 
@@ -123,11 +124,15 @@ class GP(ModelSet):
         self._yerr[:] = yerr
         (alpha_real, beta_real, alpha_complex_real, alpha_complex_imag,
          beta_complex_real, beta_complex_imag) = self.kernel.coefficients
+        self._A = np.empty(0) if A is None else A
+        self._U = np.empty((0, 0)) if U is None else U
+        self._V = np.empty((0, 0)) if V is None else V
         self.solver.compute(
             self.kernel.jitter,
             alpha_real, beta_real,
             alpha_complex_real, alpha_complex_imag,
             beta_complex_real, beta_complex_imag,
+            self._A, self._U, self._V,
             t, self._yerr**2
         )
         self.dirty = False
@@ -136,7 +141,8 @@ class GP(ModelSet):
         if not self.computed:
             if self._t is None:
                 raise RuntimeError("you must call 'compute' first")
-            self.compute(self._t, self._yerr, check_sorted=False)
+            self.compute(self._t, self._yerr, check_sorted=False,
+                         A=self._A, U=self._U, V=self._V)
 
     def _process_input(self, y):
         if self._t is None:
@@ -217,6 +223,7 @@ class GP(ModelSet):
             alpha_real, beta_real,
             alpha_complex_real, alpha_complex_imag,
             beta_complex_real, beta_complex_imag,
+            self._A, self._U, self._V,
             self._t, resid, self._yerr**2
         )
 
@@ -291,6 +298,7 @@ class GP(ModelSet):
             alpha_real, beta_real,
             alpha_complex_real, alpha_complex_imag,
             beta_complex_real, beta_complex_imag,
+            self._A, self._U, self._V,
             self._t, self._process_input(y)
         )
 
@@ -348,10 +356,11 @@ class GP(ModelSet):
         if t is None:
             alpha = self.solver.solve(resid).flatten()
             alpha = resid - (self._yerr**2 + self.kernel.jitter) * alpha
-        else:
-            # Kxs = self.get_matrix(xs, self._t)
-            # alpha = np.dot(Kxs, alpha)
+        elif not len(self._A):
             alpha = self.solver.predict(resid, xs)
+        else:
+            Kxs = self.get_matrix(xs, self._t)
+            alpha = np.dot(Kxs, alpha)
 
         mu = self.mean.get_value(xs) + alpha
         if not (return_var or return_cov):
@@ -370,7 +379,8 @@ class GP(ModelSet):
         cov -= np.dot(Kxs, self.apply_inverse(KxsT))
         return mu, cov
 
-    def get_matrix(self, x1=None, x2=None, include_diagonal=None):
+    def get_matrix(self, x1=None, x2=None, include_diagonal=None,
+                   include_general=None):
         """
         Get the covariance matrix at given independent coordinates
 
@@ -394,6 +404,10 @@ class GP(ModelSet):
                 K[np.diag_indices_from(K)] += (
                     self._yerr**2 + self.kernel.jitter
                 )
+            if (include_general is None or include_general) and len(self._A):
+                K[np.diag_indices_from(K)] += self._A
+                K += np.tril(np.dot(self._U.T, self._V), -1)
+                K += np.triu(np.dot(self._V.T, self._U), 1)
             return K
 
         incl = False

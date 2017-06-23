@@ -1,6 +1,8 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/eigen.h>
 
+#include <iostream>
+
 #include <Eigen/Core>
 
 #ifndef NO_AUTODIFF
@@ -36,7 +38,7 @@ public:
   auto serialize () const {
     return std::make_tuple(
       this->computed_, this->N_, this->J_, this->log_det_,
-      this->phi_, this->u_, this->X_, this->D_
+      this->phi_, this->u_, this->W_, this->D_
     );
   };
 
@@ -44,7 +46,7 @@ public:
       bool computed, int n, int J, double log_det,
       Eigen::MatrixXd phi,
       Eigen::MatrixXd u,
-      Eigen::MatrixXd X,
+      Eigen::MatrixXd W,
       Eigen::VectorXd D) {
     this->computed_ = computed;
     this->N_        = n;
@@ -52,7 +54,7 @@ public:
     this->log_det_  = log_det;
     this->phi_      = phi;
     this->u_        = u;
-    this->X_        = X;
+    this->W_        = W;
     this->D_        = D;
   };
 };
@@ -253,6 +255,9 @@ A thin wrapper around the C++ CholeskySolver class
         const vector_t& b_comp,
         const vector_t& c_comp,
         const vector_t& d_comp,
+        const vector_t& A,
+        const matrix_t& U,
+        const matrix_t& V,
         const vector_t& x,
         const vector_t& y,
         const vector_t& diag
@@ -279,7 +284,8 @@ A thin wrapper around the C++ CholeskySolver class
 
       // Factorize the matrix while propagating the gradients
       solver.compute(
-        jitter_, a_real_, c_real_, a_comp_, b_comp_, c_comp_, d_comp_, x, diag
+        jitter_, a_real_, c_real_, a_comp_, b_comp_, c_comp_, d_comp_,
+        A, U, V, x, diag
       );
 
       // Compute the likelihood
@@ -349,6 +355,9 @@ Args:
       const vector_t& b_comp,
       const vector_t& c_comp,
       const vector_t& d_comp,
+      const vector_t& A,
+      const matrix_t& U,
+      const matrix_t& V,
       const vector_t& x,
       const vector_t& y,
       const vector_t& diag
@@ -397,10 +406,15 @@ Args:
         for (i = 0; i < J_comp; ++i) d_comp_(i) = g_t(d_comp(i), g_tot, i0+i);
       }
 
+      std::cerr << "face1\n";
+
       // Factorize and track the gradients
       solver.compute(
-        jitter_, a_real_, c_real_, a_comp_, b_comp_, c_comp_, d_comp_, x, diag
+        jitter_, a_real_, c_real_, a_comp_, b_comp_, c_comp_, d_comp_,
+        A, U, V, x, diag
       );
+      std::cerr << "face2\n";
+
 
       // Compute the likelihood and the gradients
       g_t ll = -0.5 * (solver.dot_solve(y) + solver.log_determinant() + M_PI * log(x.rows()));
@@ -463,10 +477,13 @@ Args:
       const vector_t& b_comp,
       const vector_t& c_comp,
       const vector_t& d_comp,
+      const vector_t& A,
+      const matrix_t& U,
+      const matrix_t& V,
       const vector_t& x,
       const vector_t& diag) {
     return solver.compute(
-      jitter, a_real, c_real, a_comp, b_comp, c_comp, d_comp, x, diag
+      jitter, a_real, c_real, a_comp, b_comp, c_comp, d_comp, A, U, V, x, diag
     );
   },
   R"delim(
@@ -560,9 +577,12 @@ Raises:
       const vector_t& b_comp,
       const vector_t& c_comp,
       const vector_t& d_comp,
+      const vector_t& A,
+      const matrix_t& U,
+      const matrix_t& V,
       const vector_t& x,
       const matrix_t& b) {
-    return solver.dot(jitter, a_real, c_real, a_comp, b_comp, c_comp, d_comp, x, b);
+    return solver.dot(jitter, a_real, c_real, a_comp, b_comp, c_comp, d_comp, A, U, V, x, b);
   },
   R"delim(
 Compute the dot product of a ``celerite`` matrix and another arbitrary matrix
@@ -599,31 +619,6 @@ Raises:
     return solver.predict(y, x);
   },
   R"delim(
-Compute the dot product of a ``celerite`` matrix and another arbitrary matrix
-
-This method computes ``A.b`` where ``A`` is defined by the parameters and
-``b`` is an arbitrary matrix of the correct shape.
-
-Args:
-    jitter (float): The jitter of the kernel.
-    a_real (array[j_real]): The coefficients of the real terms.
-    c_real (array[j_real]): The exponents of the real terms.
-    a_comp (array[j_complex]): The real part of the coefficients of the
-        complex terms.
-    b_comp (array[j_complex]): The imaginary part of the coefficients of
-        the complex terms.
-    c_comp (array[j_complex]): The real part of the exponents of the
-        complex terms.
-    d_comp (array[j_complex]): The imaginary part of the exponents of the
-        complex terms.
-    x (array[n]): The _sorted_ array of input coordinates.
-    b (array[n] or array[n, neq]): The matrix ``b`` described above.
-
-Returns:
-    array[n] or array[n, neq]: The dot product ``A.b`` as described above.
-
-Raises:
-    ValueError: For mismatched dimensions.
 
 )delim");
 

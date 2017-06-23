@@ -32,6 +32,9 @@ void compute (
   const vector_t& b_comp,
   const vector_t& c_comp,
   const vector_t& d_comp,
+  const Eigen::VectorXd& A,
+  const Eigen::MatrixXd& U,
+  const Eigen::MatrixXd& V,
   const Eigen::VectorXd& x,
   const Eigen::VectorXd& diag
 ) {
@@ -42,8 +45,16 @@ void compute (
   if (a_comp.rows() != c_comp.rows()) throw dimension_mismatch();
   if (a_comp.rows() != d_comp.rows()) throw dimension_mismatch();
 
+  int N = x.rows();
+  bool has_general = (A.rows() != 0);
+  if (has_general && A.rows() != N) throw dimension_mismatch();
+  if (has_general && U.cols() != N) throw dimension_mismatch();
+  if (has_general && V.cols() != N) throw dimension_mismatch();
+  if (U.rows() != V.rows()) throw dimension_mismatch();
+
   // Save the dimensions for later use
   this->N_ = x.rows();
+  int J_general = U.rows();
 
   // Build the matrix.
   double dx;
@@ -51,10 +62,16 @@ void compute (
   matrix_t K(this->N_, this->N_);
   for (int i = 0; i < this->N_; ++i) {
     K(i, i) = asum + diag(i);
+    if (has_general) K(i, i) += A(i);
 
     for (int j = i+1; j < this->N_; ++j) {
       dx = x(j) - x(i);
       v = get_kernel_value(a_real, c_real, a_comp, b_comp, c_comp, d_comp, dx);
+
+      if (has_general) {
+        for (int k = 0; k < J_general; ++k) v += U(k, i) * V(k, j);
+      }
+
       K(i, j) = v;
       K(j, i) = v;
     }
