@@ -104,7 +104,7 @@ void compute (
   const Eigen::VectorXd& x,
   const Eigen::VectorXd& diag
 ) {
-  Eigen::MatrixXd A, U, V;
+  Eigen::MatrixXd A(0, 1), U(0, 0), V(0, 0);
   return this->compute(jitter, a_real, c_real, a_comp, b_comp, c_comp, d_comp, A, U, V, x, diag);
 };
 
