@@ -1,9 +1,14 @@
 .. :changelog:
 
+0.3.0 (upcoming)
+++++++++++++++++
+
+- Added support for fully general semiseparable kernels.
+
 0.2.1 (2017-06-12)
 ++++++++++++++++++
 
-- Small bug fixes
+- Small bug fixes.
 - New ``celerite.solver.LinAlgError`` exception thrown for non-positive
   definite matrices instead of ``RuntimeError``.
 
