@@ -327,7 +327,7 @@ def test_log_likelihood(with_general, seed=42):
     # Check quiet argument with a non-positive definite kernel.
     class NPDTerm(terms.Term):
         parameter_names = ("par1", )
-        def get_real_coefficients(self, params):
+        def get_real_coefficients(self, params):  # NOQA
             return [params[0]], [0.1]
     gp = GP(NPDTerm(-1.0))
     with pytest.raises(celerite.solver.LinAlgError):
