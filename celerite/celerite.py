@@ -112,6 +112,7 @@ class GP(ModelSet):
 
         Raises:
             ValueError: For un-sorted data or mismatched dimensions.
+            solver.LinAlgError: For non-positive definite matrices.
 
         """
         t = np.atleast_1d(t)
@@ -151,7 +152,7 @@ class GP(ModelSet):
             raise ValueError("dimension mismatch")
         return np.ascontiguousarray(y, dtype=float)
 
-    def log_likelihood(self, y, _const=math.log(2.0*math.pi)):
+    def log_likelihood(self, y, _const=math.log(2.0*math.pi), quiet=False):
         """
         Compute the marginalized likelihood of the GP model
 
@@ -161,17 +162,25 @@ class GP(ModelSet):
         Args:
             y (array[n]): The observations at coordinates ``x`` from
                 :func:`GP.compute`.
+            quiet (bool): If true, return ``-numpy.inf`` for non-positive
+                definite matrices instead of throwing an error.
 
         Returns:
             float: The marginalized likelihood of the GP model.
 
         Raises:
             ValueError: For mismatched dimensions.
+            solver.LinAlgError: For non-positive definite matrices.
 
         """
         y = self._process_input(y)
         resid = y - self.mean.get_value(self._t)
-        self._recompute()
+        try:
+            self._recompute()
+        except solver.LinAlgError:
+            if quiet:
+                return -np.inf
+            raise
         if len(y.shape) > 1:
             raise ValueError("dimension mismatch")
         logdet = self.solver.log_determinant()
@@ -182,7 +191,7 @@ class GP(ModelSet):
             return -np.inf
         return loglike
 
-    def grad_log_likelihood(self, y):
+    def grad_log_likelihood(self, y, quiet=False):
         """
         Compute the gradient of the marginalized likelihood
 
@@ -195,6 +204,9 @@ class GP(ModelSet):
         Args:
             y (array[n]): The observations at coordinates ``x`` from
                 :func:`GP.compute`.
+            quiet (bool): If true, return ``-numpy.inf`` and a gradient vector
+                of zeros for non-positive definite matrices instead of
+                throwing an error.
 
         Returns:
             The gradient of marginalized likelihood with respect to the
@@ -202,6 +214,7 @@ class GP(ModelSet):
 
         Raises:
             ValueError: For mismatched dimensions.
+            solver.LinAlgError: For non-positive definite matrices.
 
         """
         if not solver.has_autodiff():
@@ -209,7 +222,7 @@ class GP(ModelSet):
                                "support to use the gradient methods")
 
         if not self.kernel.vector_size:
-            return self.log_likelihood(y), np.empty(0)
+            return self.log_likelihood(y, quiet=quiet), np.empty(0)
 
         y = self._process_input(y)
         if len(y.shape) > 1:
@@ -218,14 +231,19 @@ class GP(ModelSet):
 
         (alpha_real, beta_real, alpha_complex_real, alpha_complex_imag,
          beta_complex_real, beta_complex_imag) = self.kernel.coefficients
-        val, grad = self.solver.grad_log_likelihood(
-            self.kernel.jitter,
-            alpha_real, beta_real,
-            alpha_complex_real, alpha_complex_imag,
-            beta_complex_real, beta_complex_imag,
-            self._A, self._U, self._V,
-            self._t, resid, self._yerr**2
-        )
+        try:
+            val, grad = self.solver.grad_log_likelihood(
+                self.kernel.jitter,
+                alpha_real, beta_real,
+                alpha_complex_real, alpha_complex_imag,
+                beta_complex_real, beta_complex_imag,
+                self._A, self._U, self._V,
+                self._t, resid, self._yerr**2
+            )
+        except solver.LinAlgError:
+            if quiet:
+                return -np.inf, np.zeros(self.vector_size)
+            raise
 
         if self.kernel._has_coeffs:
             coeffs_jac = self.kernel.get_coeffs_jacobian()

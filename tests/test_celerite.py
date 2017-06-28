@@ -324,6 +324,20 @@ def test_log_likelihood(with_general, seed=42):
         U = np.empty((0, 0))
         V = np.empty((0, 0))
 
+    # Check quiet argument with a non-positive definite kernel.
+    class NPDTerm(terms.Term):
+        parameter_names = ("par1", )
+        def get_real_coefficients(self, params):
+            return [params[0]], [0.1]
+    gp = GP(NPDTerm(-1.0))
+    with pytest.raises(celerite.solver.LinAlgError):
+        gp.compute(x, 0.0)
+    with pytest.raises(celerite.solver.LinAlgError):
+        gp.log_likelihood(y)
+    assert np.isinf(gp.log_likelihood(y, quiet=True))
+    if terms.HAS_AUTOGRAD:
+        assert np.isinf(gp.grad_log_likelihood(y, quiet=True)[0])
+
     kernel = terms.RealTerm(0.1, 0.5)
     gp = GP(kernel)
     with pytest.raises(RuntimeError):
