@@ -312,7 +312,7 @@ class GP(ModelSet):
         (alpha_real, beta_real, alpha_complex_real, alpha_complex_imag,
          beta_complex_real, beta_complex_imag) = kernel.coefficients
         return self.solver.dot(
-            self.kernel.jitter,
+            kernel.jitter,
             alpha_real, beta_real,
             alpha_complex_real, alpha_complex_imag,
             beta_complex_real, beta_complex_imag,
