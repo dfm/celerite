@@ -72,5 +72,11 @@ script: |
       CTEST_OUTPUT_ON_FAILURE=1 make test
     elif [[ $TEST_LANG == python ]]
     then
-      py.test -v
+      py.test -v --cov celerite
+    fi
+
+after_success: |
+    if [[ $TEST_LANG == python ]]
+    then
+      coveralls
     fi

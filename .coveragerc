@@ -1,0 +1,14 @@
+[report]
+omit =
+    docs/*
+    *__init__*
+    celerite/build.py
+    celerite/timer.py
+    celerite/plot_setup.py
+
+exclude_lines =
+    pragma: no cover
+    raise NotImplementedError
+    raise ImportError
+    except ImportError
+    def __len__

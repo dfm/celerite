@@ -50,7 +50,8 @@ conda update -q conda
 conda info -a
 conda create --yes -n test python=$PYTHON_VERSION
 source activate test
-conda install -c conda-forge numpy=$NUMPY_VERSION setuptools pytest pybind11 $AUTOGRAD
+conda install -c conda-forge numpy=$NUMPY_VERSION setuptools pytest pytest-cov pybind11 $AUTOGRAD pip
+pip install coveralls
 
 if [[ $AUTODIFF_LIBRARY == stan ]]
 then
