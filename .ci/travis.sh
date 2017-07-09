@@ -67,7 +67,7 @@ fi
 
 # Build the extension
 if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
-  python setup.py install
+  python setup.py develop
 else
-  CXX=g++-4.8 CC=gcc-4.8 python setup.py build_ext $BUILD_ARGS install
+  CXX=g++-4.8 CC=gcc-4.8 python setup.py build_ext $BUILD_ARGS develop
 fi
