@@ -201,8 +201,8 @@ motivation for and interpretation of this choice~--~but we also demonstrate
 that it can be a useful effective model in some other cases.
 We present a mathematical description of the method and compare it to existing
 scalable Gaussian Process methods.
-The method is fast and interpretable, with a wide range of potential
-applications within astronomical data analysis and beyond.
+The method is fast and interpretable, with a range of potential applications
+within astronomical data analysis and beyond.
 We provide well-tested and documented open-source implementations of this
 method in \project{C++}, \project{Python}, and \project{Julia}.
 
@@ -275,9 +275,8 @@ and fast.
 
 Our main expertise lies in the field of exoplanet discovery and
 characterization where GPs have become a model of choice.
-We are confident that the method described in the following pages will benefit
-this field, but we also expect that there will be applications in other
-branches of astrophysics and beyond.
+We are confident that this method will benefit this field, but we also expect
+that there will be applications in other branches of astrophysics and beyond.
 In \sect{examples}, we present applications of the method to research problems
 in stellar rotation (\sect{rotation}), asteroseismic analysis (\sect{astero}),
 and exoplanet transit fitting (\sect{transit}).
@@ -375,8 +374,8 @@ Scalable methods will be required if we ever hope to use GP models with these
 datasets.
 }
 
-In the following section, we present a method for improving the cubic scaling
-for some use cases.
+In this paper, we present a method for improving the cubic scaling for some
+use cases.
 We call our method and its implementations \celerite.\footnote{The name
 \celerite\ comes from the French word \foreign{c\'elerit\'e} meaning the speed
 of light in a vacuum.
@@ -423,8 +422,8 @@ k_\bvec{\alpha}(\tau_{nm}) = \sigma_n^2\,\delta_{nm} +
 In this case, the inverse is dense but \eq{gp-likelihood} can still be
 evaluated with a scaling of $\mathcal{O}(N\,J^2)$, where $J$ is the number of
 components in the mixture \citep{Kelly:2014,Ambikasaran:2015}.
-In \sect{factor}, we build on previous work \citep{Ambikasaran:2015} derive a
-faster method with the same $\mathcal{O}(N\,J^2)$ scaling that can be used
+In \sect{factor}, we build on previous work \citep{Ambikasaran:2015} to derive
+a faster method with the same $\mathcal{O}(N\,J^2)$ scaling that can be used
 when $k_\bvec{\alpha}(\tau_{nm})$ is positive definite.}
 
 This kernel function can be made even more general by
@@ -443,8 +442,8 @@ k_\bvec{\alpha}(\tau_{nm}) = \sigma_n^2\,\delta_{nm} +
 and, for this function, \eq{gp-likelihood} can still be evaluated with
 $\mathcal{O}(N\,J^2)$ operations.
 The details of this method and a few implementation considerations are
-outlined in the following section but we first discuss some
-properties of this covariance function.
+outlined in \sect{factor}, but we first discuss some properties of this
+covariance function.
 
 By rewriting the exponentials in \eq{celerite-kernel-complex} as sums of sine
 and cosine functions, we can see the autocorrelation structure is defined by a
@@ -694,7 +693,8 @@ described in the next section.
     \eq{lorentz-psd} with $c_j = \omega_0/(2\,Q) = 1/20$ and normalized so that
     $S(d_j)/S(0) = 100$.
     (middle) The corresponding autocorrelation functions with the same colors.
-    \response{(right) Three realizations from each model in the same colors.}
+    \response{(right) Three realizations in arbitrary units from each model in
+    the same colors.}
     \figurelabel{sho}}
 \end{center}
 \end{figure}
@@ -946,8 +946,8 @@ Library\footnote{\url{https://software.intel.com/en-us/intel-mkl}}.
 The right-hand panel of \Figure{error} shows a histogram of the fractional
 error in the log determinant calculation for each of the 480~experiments with
 $N \le 2048$.
-Across the board, these results agree within machine precision and the error
-only weakly increases with $N$ and $J$.
+These results agree to about $10^{-15}$ and the error only weakly increases
+with $N$ and $J$.
 
 We continue by measuring the real-world computational efficiency of this
 method as a function of $N$ and $J$.

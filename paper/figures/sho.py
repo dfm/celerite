@@ -67,6 +67,6 @@ ax2.set_ylabel("$k(\\tau) / k(0)$")
 
 ax3.set_xlim(0, 20)
 ax3.set_yticklabels([])
-ax3.set_xlabel("$t$")
+ax3.set_xlabel("$\omega_0\,t$")
 
 fig.savefig("sho.pdf", bbox_inches="tight")
