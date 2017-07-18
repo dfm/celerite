@@ -5,7 +5,7 @@ RM          = rm -rf
 TMP_SUFFS   = pdf aux bbl blg log dvi ps eps out
 CHECK_RERUN =
 
-NAME = ms
+NAME = ms.tex
 
 all: ${NAME}.pdf
 
