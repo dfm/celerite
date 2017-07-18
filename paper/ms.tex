@@ -683,7 +683,7 @@ likelihood (\eqalt{gp-likelihood}) can be evaluated for a time series with $N$
 measurements in $\mathcal{O}(N)$ operations using the \celeriteterm\ method
 described in the next section.
 
-\begin{figure}[!htbp]
+\begin{figure}[!hptb]
 \begin{center}
 \includegraphics[width=0.95\textwidth]{figures/sho.pdf}
 \caption{(left) The power spectrum of a stochastically-driven simple harmonic
@@ -1021,8 +1021,8 @@ and $J$ increasing with larger $N$.
 In any application of \celerite~--~or any other GP model, for that
 matter~--~we must choose a kernel.
 A detailed discussion of model selection is beyond the scope of this paper and
-the interested reader is directed to Chapter~5 of \citet{Rasmussen:2006} an
-introduction in the context of GPs, but we include a summary and some
+the interested reader is directed to Chapter~5 of \citet{Rasmussen:2006} for
+an introduction in the context of GPs, but we include a summary and some
 suggestions specific to \celerite\ here.
 
 For many of the astrophysics problems that we will tackle using \celerite, it
@@ -1041,7 +1041,7 @@ damped SHOs (as discussed in \sect{sho}) and select the number of oscillators
 using Bayesian model comparison, cross-validation, or another model selection
 technique.
 Despite the fact that it is less flexible than a general \celeriteterm\
-kernel, we recommend the SHO model in most cases because it is 1-time mean
+kernel, we recommend the SHO model in most cases because it is once mean
 square differentiable
 \begin{eqnarray}
 \left.\frac{\dd k_\mathrm{SHO}(\tau)}{\dd \tau}\right|_{\tau=0} = 0 \quad,
@@ -1112,7 +1112,7 @@ but we generally assume separable uniform priors with plausibly broad support.
 In this first example, we simulate a dataset using a known \celeriteterm\
 process and fit it with \celerite\ to show that valid inferences can be made
 in this idealized case.
-\response{We simulated a small ($N = \exampleindata$) dataset using a GP model
+\response{We simulate a small ($N = \exampleindata$) dataset using a GP model
 with a SHO kernel (\eqalt{sho-kernel}) with parameters $S_0 =
 1\,\mathrm{ppm}^2$, $\omega_0 = e^2\,\mathrm{day}^{-1}$, and $Q = e^2$, where
 the units are arbitrarily chosen to simplify the discussion.
@@ -1160,7 +1160,7 @@ reproduces the true PSD.
 
 \input{figures/simulated/correct-params}
 
-\begin{figure}[!htbp]
+\begin{figure}[!hptb]
 \begin{center}
 \includegraphics[width=0.9\textwidth]{figures/simulated/correct.pdf}
 \caption{(top left) A simulated dataset (black error bars), and MAP
@@ -1286,7 +1286,7 @@ other problems as well.
 
 \input{figures/simulated/wrong-qpo-params}
 
-\begin{figure}[!htbp]
+\begin{figure}[!hptb]
 \begin{center}
 \includegraphics[width=0.9\textwidth]{figures/simulated/wrong-qpo.pdf}
 \caption{(top left) A simulated dataset (black error bars), and MAP
@@ -1301,7 +1301,7 @@ other problems as well.
 \end{center}
 \end{figure}
 
-\begin{figure}[!htbp]
+\begin{figure}[!hptb]
 \begin{center}
 \includegraphics[width=0.5\textwidth]{figures/simulated/bic.pdf}
 \caption{\response{
@@ -1331,7 +1331,7 @@ the empirical autocorrelation function provides a reliable estimate of the
 rotation period of a star \citep{Mcquillan:2013, Mcquillan:2014, Aigrain:2015}
 and that a GP model with a
 quasiperiodic covariance function can be used to make probabilistic
-measurements even with sparsely sampled data (R.~Angus, \etal\ submitted).
+measurements even with sparsely sampled data \citep{Angus:2017}.
 The covariance function used for this type of analysis has the form
 \begin{eqnarray}\eqlabel{sine2}
 k(\tau) = A\,\exp\left(-\frac{\tau^2}{2\,\ell^2} -
@@ -1405,9 +1405,9 @@ shown in the right panel of \Figure{rotation}.
 This result is in good agreement with the literature value with smaller
 uncertainties.
 A detailed comparison of GP rotation period measurements and the traditional
-methods is beyond the scope of this paper, but forthcoming work (R.~Angus,
-\etal, submitted) demonstrates that GP inferences are, at a population level,
-more reliable than other methods.
+methods is beyond the scope of this paper, but \citet{Angus:2017} demonstrate
+that GP inferences are, at a population level, more reliable than other
+methods.
 
 The total computational cost for this inference using \celerite\ is about
 4~CPU-minutes.
@@ -1421,7 +1421,7 @@ stars.
 
 \input{figures/rotation/rotation-params}
 
-\begin{figure}[htbp]
+\begin{figure}[hptb]
 \begin{center}
 \includegraphics[width=0.9\textwidth]{figures/rotation/rotation.pdf}
 \caption{Inferred constraints on a quasiperiodic GP model using the covariance
@@ -1597,7 +1597,7 @@ but we hope to revisit this opportunity in the future.
 
 \input{figures/astero/astero-params}
 
-\begin{figure}[!htbp]
+\begin{figure}[!hptb]
 \begin{center}
 \includegraphics[width=0.5\textwidth]{figures/astero/astero.pdf}
 \caption{
@@ -1720,7 +1720,7 @@ computation using a general direct solver.
 
 \input{figures/transit/transit-params-edited}
 
-\begin{figure}[!htbp]
+\begin{figure}[!hptb]
 \begin{center}
 \includegraphics[width=\textwidth]{figures/transit/transit-ml.pdf}
     \caption{\emph{(top)} A month-long segment of \kepler\ light curve for
