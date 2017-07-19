@@ -29,11 +29,18 @@ def find_figures(tex):
     return re.findall("includegraphics(?:.*?){(.*)}", tex)
 
 def find_includes(tex):
-    return re.findall("\\include{(.*)}", tex)
+    return re.findall("include{(.*)}", tex)
+
+def find_inputs(tex):
+    return re.findall("input{(.*)}", tex)
 
 for fn in find_includes(tex):
     txt = open(fn + ".tex").read()
     tex = tex.replace("\\include{{{0}}}".format(fn), txt)
+
+for fn in find_inputs(tex):
+    txt = open(fn + ".tex").read()
+    tex = tex.replace("\\input{{{0}}}".format(fn), txt)
 
 for name, loc in map(rename, find_figures(tex)):
     shutil.copyfile(loc, os.path.join(TMPDIR, name))
