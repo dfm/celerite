@@ -745,10 +745,11 @@ In this representation, rather than storing the full $N \times N$ matrix $K$,
 it is sufficient to only store the $N \times R$ matrices $U$ and $V$, and the
 $N$ diagonal entries of $A$, for a total storage volume of $(2\,R+1)\,N$
 floating point numbers.
-Given a semiseparable matrix of this form, it is known that matrix-vector
-products and matrix-matrix products can be evaluated in $\mathcal{O}(N)$
-operations and the interested reader is directed to \citet{Vandebril:2007} for
-more details about semiseparable matrices in general.
+Given a semiseparable matrix of this form, the matrix-vector products and
+matrix-matrix products can be evaluated in $\mathcal{O}(N)$ operations.
+We include a summary of the key operations in \app{operations}, but the
+interested reader is directed to \citet{Vandebril:2007} for more details about
+semiseparable matrices in general.
 
 
 \subsection{Cholesky factorization of positive definite semiseparable matrices}
@@ -1058,6 +1059,7 @@ but, since these are only formally valid under specific sets of assumptions, we
 cannot recommend their use in general.
 }
 
+\newpage
 \section{Examples}\sectlabel{examples}
 
 \response{
@@ -1443,6 +1445,7 @@ stars.
 \end{center}
 \end{figure}
 
+\newpage
 \subsection{Example 4: Asteroseismic oscillations}\sectlabel{astero}
 
 The asteroseismic oscillations of thousands of stars were measured using light
@@ -1647,7 +1650,7 @@ harmonic oscillators.
 \end{center}
 \end{figure}
 
-
+\newpage
 \subsection{Example 5: Exoplanet transit fitting}\sectlabel{transit}
 
 \response{
@@ -1766,9 +1769,8 @@ intractable without substantial computational investment.
 
 Table~\ref{tab:example-stats} lists the specifications of each example.
 In this table, we list the computational cost required for a single likelihood
-evaluation using a general Cholesky factorization\footnote{We use the Intel
-Math Kernel Library \url{https://software.intel.com/en-us/intel-mkl}}
-and the cost of computing the same likelihood using \celerite.
+evaluation using a general Cholesky factorization and the cost of computing
+the same likelihood using \celerite.
 Combining this with the total number of model evaluations required to run the
 MCMC algorithm to convergence (this number is also listed in
 Table~\ref{tab:example-stats}), we can estimate the total CPU time required in
