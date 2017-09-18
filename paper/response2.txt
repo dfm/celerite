@@ -1,0 +1,212 @@
+We would like to thank the referee for their comments after a second reading
+and apologize for the slow response. We have addressed the comments and
+responded inline below.
+
+> Major issue: MCMC convergence:
+>
+> Reporting the effective sample size does not guarantee the convergence of the
+> Markov chains. It is hard to say that the Markov chains (at least) nearly
+> converged to the stationary distribution with such small effective sample sizes
+> in Sections 6.4 and 6.5 because the effective sample size is way smaller than
+> the total number of iterations.
+>
+> If the parameter surface is unimodal, the authors may want to try thinning the
+> Markov chain to increase the effective sample size, i.e., by running a long
+> Markov chain with length n and then by taking every kth posterior sample
+> (iteration) to have n/k posterior samples. The auto-correlation will decrease
+> as k increases, which leads to a larger effective sample size.
+>
+> However, this thinning may not be helpful for increasing the effective sample
+> size when the parameter surface is highly multi-modal, e.g., in Section 6.4 and
+> potentially in Section 6.5 (considering that it is difficult to get such small
+> effective sample size in a unimodal case). In this case, the authors need a
+> multimodal sampler, such as parallel tempering (Kelly et al., 2014), that helps
+> Markov chains jump between modes frequently. For reference, there are various
+> choices for a multimodal MCMC sampler other than parallel tempering.
+>
+> If the authors think that using a multi-modal sampler is beyond the scope and
+> decide to leave these two examples with such small effective sample sizes, then
+> I recommend the authors present celerite in a fair way by clearly specifying
+> two limitations; (i) the current inference in Sections 6.4 and 6.5 may not
+> reflect on the targeted stationary distribution, i.e., may not be based on the
+> converged MCMC, and (ii) celerite is designed to improve the scalability but
+> not the convergence rate of the MCMC especially for multimodal cases and thus a
+> multimodal MCMC sampler, e.g., parallel tempering used in Kelly et al. (2014),
+> is required for a statistically appropriate inference in Sections 6.4 and
+> (potentially) 6.5. Additionally, I think reporting the (average) acceptance
+> rate of the posterior sample is another easy-to-report criterion for the MCMC
+> convergence considering that it may be quite burdensome for the authors to
+> display some figures related to monitoring the MCMC convergence.
+
+We agree with the general concern that convergence cannot be unambiguously
+tested. However, in each case, we ran the sampler until each parallel chain had
+generated at least many tens of autocorrelation times of samples. In the worst
+case (Section 6.5), 32 parallel chains were run until each chain had about 50
+independent samples (many more than the 10 recommended by Sokal 1989, and more
+than most published results that we know from the astronomical literature).
+That being said, we recognize the relevant caveats and we agree that all
+convergence diagnostics are based on circular arguments. We have therefore
+added a paragraph to the beginning of Section 6 to highlight these caveats and
+list some sampling algorithms that users might consider if they are worried
+about multimodality.
+
+> Minor issues:
+>
+> 1. The last two sentences in the first paragraph of Section 2: In the first
+> paragraph of Section 2, the authors seem to provide an overview of Gaussian
+> processes from modeling to estimation. As for estimation, the authors introduce
+> MLE as a point estimate and Bayesian posterior sampling as an uncertainty
+> quantification. It does not appear natural to me because most people (I
+> believe) do not use Bayesian method to quantify the uncertainty of MLEs. For a
+> more meaningful overview, it may be better to mention both approaches;
+> frequentist’s MLE and its asymptotic or bootstrapping-based uncertainty
+> quantification and Bayesian posterior inference such as an MAP (maximum a
+> posteriori) estimate and simultaneous uncertainty quantification via posterior
+> distribution. Or, since the authors adopt a Bayesian approach for the rest of
+> the manuscript, it may be also reasonable to introduce an MAP estimate (instead
+> of MLE) and simultaneous uncertainty quantification via posterior distribution.
+
+Agreed. We have changed the wording to make this clearer.
+
+> 2. “This model is often called an Ornstein-Uhlenbeck process (...)” just after
+> Equation (13) on page 6: Would it be reasonable to mention that the Ornstein-
+> Uhlenbeck process is also called a damped random walk process because
+> astrophysicists may be more familiar with the latter?
+
+Added.
+
+> 3. Equation (14) on page 6: The subscript k of k is confusing. Please consider
+> using a different subscript, e.g., i or l.
+
+Good catch! We have changed this to use "i".
+
+> 4. “(...) we can derive a higher performance algorithm by restricting our
+> method to positive definite matrices” in the second paragraph of Section 5:
+> Here I am concerned about three things. (i) What is the meaning of restricting
+> a method to matrices? (ii) Do the authors mean that the better performance is
+> for a class of celerite models with semi-separable and positive-definite
+> covariance matrices? Isn’t a covariance matrix almost always a
+> positive-definite matrix in practice? Considering that a covariance matrix is
+> positive-semi-definite by definition, did Ambikasaran (2015) focus on a case
+> with a semi-separable and positive-semi- definite covariance matrix? I do not
+> understand why the positive-definiteness is the key to the newly argued
+> improvement since it is almost always the case (even in the previous
+> manuscript). (iii) In addition, I feel that it is better to briefly mention
+> here what the better performance means; I had to read all the technical details
+> until the end of Section 5.1 to learn the improvement.
+
+We have added a paragraph to this section to clarify this argument and state the
+performance improvement. The generalization of the Ambikasaran (2015) method in
+the first draft of this manuscript could, in principle, have been applied to
+factorize matrices non-positive-definite matrices. But, as the referee points
+out, this generality was not needed for celerite models because they must always
+be positive definite. This realization led us to try deriving a Cholesky
+factorization algorithm. We didn't explore this for the first draft of the
+paper because we only expected a factor of ~2 performance increase, but we
+implemented the new method after submission and were pleasantly surprised by
+the results.
+
+> 5. “(...) only formally valid under specific sets of assumptions, we cannot
+> recommend their use in general.” at the end of Section 5.4: What do the authors
+> mean by ‘formally valid under specific sets of assumptions’? I am curious
+> because there is no reference cited. Do the authors happen to intend that
+> physical motivation is more important than statistical motivation in model
+> selection, i.e., some celerite models whose AICs or BICs are not optimal can be
+> more meaningful in modeling physical phenomena?
+
+We have changed the wording in this section to be less ambiguous and pointed
+readers to the textbook by Ivezić et al. that includes a discussion of these
+caveats. We do think that interpretability of a model can be more important
+than the value of an *IC when used to study physical phenomena, but that is a
+discussion that is beyond the scope of this paper.
+
+> 6. “separable uniform priors” on the first line on page 17: I think the authors
+> mean independent uniform priors. Am I correct? Can the authors use the words,
+> ‘separable’ and ‘independent’, alternatively in the text to make it clear?
+
+We do mean "independent". Fixed.
+
+> 7. “The top left panel of Figure 4 shows the conditional mean and standard
+> deviation of the MAP model over-plotted on the simulated data (...)” in the
+> middle of the third paragraph in Section 6.1: The top left panel of Figure 4
+> does not exhibit the conditional mean and standard deviation, I mean, numbers.
+> Maybe these are denoted by the blue contours, considering the caption.
+
+We have changed the wording in this section to make the meaning clear.
+
+> 8. “We initialize 32 walkers by (...)” in the fourth paragraph of Section 6.1:
+> What are the walkers? Do the walkers mean parallel Markov chains (i.e., 32
+> chains are independently run)?
+
+The algorithm used here (as implemented in "emcee") is an ensemble method
+initially described by Goodman & Weare (2010) where they coined the term
+"walkers". The chains are not run independently, but this method is the most
+commonly used sampling algorithm in astronomy and the term "walkers" is common
+enough that we won't give details in this paper, but we have added a footnote
+to point out the references.
+
+> 9. “effective model” repeatedly used in Section 6: What do the authors mean by
+> ‘effective model’? I have no idea about when statisticians call a model an
+> effective model. Is this a jargon in Astrophysics? Then, when and in what sense
+> do astrophysicists consider a model as an effective model?
+
+This term refers to a model that we use to make inferences even though we know
+it to be wrong. This is, of course, true with nearly every model of real data,
+but we use it to emphasize when it is important.
+We believe that this is commonly used in physics and astronomy, but we have
+added a footnote that clarifies the definition.
+
+> 10. Is the reported effective sample size (e.g., 2900 independent samples in
+> Section 6.3) the average effective sample size that is averaged over the
+> effective sample sizes of the sampled parameters? It is not clear in the text.
+
+In example 1, the effective sample size is averaged across parameters. For the
+other examples, only the chains for the most "important" parameters are
+considered. The specific choices are given in the text for each example. The
+only example that seemed somewhat ambiguous was example 1 so we updated the
+wording there.
+
+> 11. The right panel in Figure 7: It may be more informative if the authors
+> display the uncertainty of the reported rotation period, i.e., ±0.15, in some
+> ways, e.g., two dashed vertical lines.
+
+Added.
+
+> 12. “This model requires about 10 CPU minutes to run the MCMC to convergence.”
+> in the eighth paragraph of Section 6.4: How do the authors know that the MCMC
+> converged after 10 CPU minutes? I cannot see any evidence. Do the authors mean
+> that it took 10 CPU minutes in total to run the 20,000 iterations?
+
+Fixed.
+
+> 13. The panels for the marginal distributions in Figure 9: It may be more
+> informative if the authors display the published values of the asteroseismic
+> parameters and their uncertainties in the marginal posterior distributions.
+
+Added.
+
+> 14. “(error bar)” in the caption of Figure 9: Isn’t it clearer to say ‘(blue
+> error bar)’?
+
+Added.
+
+> 15. “(...) because, in this case, do not set the deterministic (...)” in the
+> first paragraph of Section 6.5: Maybe the authors intend “(...) in this case,
+> we do not set (...).”
+
+Changed.
+
+> 16. Table 6: It will be even more convincing to exhibit ‘evaluations’ and
+> ‘Neff’ of direct.
+
+The direct method and celerite give the same result to nearly machine
+precision. "evaluations" doesn't depend on the algorithm used to compute the
+model and "Neff" is the same (within sampling uncertainty) for each method.
+
+> 17. “(...) and the parameters aj, bj, cj, and dj can be easily computed
+> analytically.” in the second paragraph of Section 7: If it is easy to compute,
+> then what about specifying the closed-form equations of the parameters in a
+> footnote, e.g., aj = ..., bj = ..., etc., clearly connecting the CARMA and
+> celerite?
+
+Added.

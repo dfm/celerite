@@ -8,7 +8,7 @@ derived a new algorithm for solving celerite models that is about a factor of
 20 faster than the submitted version (and about and order of magnitude faster
 than a reference implementation of a Kalman filter based method). We have
 updated the manuscript to describe and test this new method in Section 5. We
-hope that the referee will consider this updated method and welcome any
+hope that the referee will consider this updated method and we welcome any
 feedback.
 
 The only other major structural change was to switch the order of the section
