@@ -1179,9 +1179,9 @@ parallel MCMC chain in the ensemble sampling algorithm used in \emcee.}} by
 sampling from a three-dimensional isotropic Gaussian centered the MAP
 parameter vector and with a standard deviation of $10^{-4}$ in each dimension.
 We then run \exampleinburn~steps of burn-in and \exampleinsteps~steps of MCMC.
-To assess convergence, we estimate the mean integrated autocorrelation time of
-the chain across parameters \citep{Sokal:1989, Goodman:2010} and find that the
-chain results in \exampleineff~effective samples.
+To assess convergence, we estimate the integrated autocorrelation time of the
+chain \responseb{averaged across parameters} \citep{Sokal:1989, Goodman:2010}
+and find that the chain results in \exampleineff~effective samples.
 
 Each sample in the chain corresponds to a model PSD and we compare this
 posterior constraint on the PSD to the true spectral density in the
@@ -1471,7 +1471,10 @@ stars.
     the dataset and model from \Figure{rotation}.
     The period is the parameter $P_\mathrm{rot}$ in \eq{rot-kernel} and this
     figure shows the posterior distribution marginalized over all other
-    nuisance parameters in \eq{rot-kernel}.  This is consistent with the
+    nuisance parameters in \eq{rot-kernel}.
+    \responseb{The 1-$\sigma$ error bar on this measurement is indicated with
+    vertical dashed lines.}
+    This result is consistent with the
     published rotation period made using the full
     \kepler\ baseline shown as a vertical gray line \citep{Mathur:2014}.
     \figurelabel{rotation}}
@@ -1616,7 +1619,8 @@ All asteroseismic analyses are known to have substantial systematic and
 method-dependent uncertainties \citep{Verner:2011} so further experiments
 would be needed to fully assess the reliability of this specific model.
 
-This model requires about 10~CPU minutes to run the MCMC to convergence.
+\responseb{For this example, about 10~CPU minutes were required to run the
+MCMC.}
 This is more computationally intensive than traditional methods of measuring
 asteroseismic oscillations, but it is much cheaper than the same analysis
 using a general direct GP solver.
@@ -1654,8 +1658,8 @@ but we hope to revisit this opportunity in the future.
 \includegraphics[width=0.8\textwidth]{figures/astero/astero-corner.pdf}
 \caption{The probabilistic constraints on $\nu_\mathrm{max}$ and $\Delta \nu$
     from the inference shown in \Figure{astero} compared to the published
-    value (error bar) based on several years of \kepler\ observations
-    \citep{Pinsonneault:2014}.
+    value (\responseb{blue error bars}) based on several years of \kepler\
+    observations \citep{Pinsonneault:2014}.
     The two-dimensional contours show the 0.5-, 1-, 1.5, and 2-sigma credible
     regions in the marginalized planes and the histograms along the diagonal
     show the marginalized posterior for each parameter.
@@ -1687,8 +1691,8 @@ harmonic oscillators.
 
 \response{
 This example is different from all the previous examples~--~both simulated and
-real~--~because, in this case, do not set the deterministic
-mean function $\mu_\bvec{\theta}$ to zero.
+real~--~because, in this case, do not set the mean function $\mu_\bvec{\theta}$
+to zero.
 Instead, we make inferences about $\mu_\bvec{\theta}$ because it is a
 physically significant function and the parameters are fundamental properties
 of the system.
@@ -1833,7 +1837,7 @@ function for a CARMA model can be solved in $\mathcal{O}(N\,J^2)$ using a
 Kalman filter \citep{Kelly:2014}.
 The kernel function for a CARMA$(J,\,K)$ model is
 \begin{eqnarray}\eqlabel{carma-kernel}
-k_\mathrm{CARMA}(\tau) = \sum_{j=1}^J A_j\,\exp\,(r_j\,\tau)
+k_\mathrm{CARMA}(\tau) = \sum_{j=1}^{2\,J} A_j\,\exp\,(r_j\,\tau)
 \end{eqnarray}
 where
 \begin{eqnarray}\eqlabel{carma-coeff}
@@ -1841,11 +1845,15 @@ A_j = \sigma^2 \,\frac{\left[\sum_{k=0}^K\beta_k\,{(r_j)}^k\right]\,
     \left[\sum_{k=0}^K\beta_k\,{(-r_j)}^k\right]}
     {-2\,\mathrm{Re}(r_j)\,\prod_{k=1,\,k \ne j}^{J}(r_k-r_j)({r_k}^*+r_j)}
 \end{eqnarray}
-and $\sigma$, $\{r_j\}_{j=1}^J$ and $\{\beta_k\}_{k=1}^K$ are parameters of
-the model; $\sigma$ is real, while the others are complex.
+and $\sigma$, $\{r_j\}_{j=1}^{J}$ and $\{\beta_k\}_{k=1}^K$ are parameters
+of the model; $\sigma$ is real, while the others are complex.
 Comparing \eq{carma-kernel} to \eq{celerite-kernel-complex}, we can see that
 every CARMA model corresponds to an equivalent \celeriteterm\ model and the
-parameters $a_j$, $b_j$, $c_j$, and $d_j$ can be easily computed analytically.
+parameters $a_j$, $b_j$, $c_j$, and $d_j$ can be easily computed
+analytically.\footnote{\responseb{Each CARMA term with complex parameters
+$A_j$ and $r_j$ corresponds to a \celeriteterm\ term with parameters $a_j =
+2\,\mathrm{Re}(A_j)$, $b_j = 2\,\mathrm{Im}(A_j)$, $c_j = -\mathrm{Re}(r_j)$,
+and $d_j = -\mathrm{Im}(r_j)$.}}
 The inverse statement is not as simple.
 In practice, this means that \celerite\ could be trivially used to compute any
 CARMA model.

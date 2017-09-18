@@ -156,4 +156,57 @@ but we use it to emphasize when it is important.
 We believe that this is commonly used in physics and astronomy, but we have
 added a footnote that clarifies the definition.
 
+> 10. Is the reported effective sample size (e.g., 2900 independent samples in
+> Section 6.3) the average effective sample size that is averaged over the
+> effective sample sizes of the sampled parameters? It is not clear in the text.
 
+In example 1, the effective sample size is averaged across parameters. For the
+other examples, only the chains for the most "important" parameters are
+considered. The specific choices are given in the text for each example. The
+only example that seemed somewhat ambiguous was example 1 so we updated the
+wording there.
+
+> 11. The right panel in Figure 7: It may be more informative if the authors
+> display the uncertainty of the reported rotation period, i.e., ±0.15, in some
+> ways, e.g., two dashed vertical lines.
+
+Added.
+
+> 12. “This model requires about 10 CPU minutes to run the MCMC to convergence.”
+> in the eighth paragraph of Section 6.4: How do the authors know that the MCMC
+> converged after 10 CPU minutes? I cannot see any evidence. Do the authors mean
+> that it took 10 CPU minutes in total to run the 20,000 iterations?
+
+Fixed.
+
+> 13. The panels for the marginal distributions in Figure 9: It may be more
+> informative if the authors display the published values of the asteroseismic
+> parameters and their uncertainties in the marginal posterior distributions.
+
+Added.
+
+> 14. “(error bar)” in the caption of Figure 9: Isn’t it clearer to say ‘(blue
+> error bar)’?
+
+Added.
+
+> 15. “(...) because, in this case, do not set the deterministic (...)” in the
+> first paragraph of Section 6.5: Maybe the authors intend “(...) in this case,
+> we do not set (...).”
+
+Changed.
+
+> 16. Table 6: It will be even more convincing to exhibit ‘evaluations’ and
+> ‘Neff’ of direct.
+
+The direct method and celerite give the same result to nearly machine
+precision. "evaluations" doesn't depend on the algorithm used to compute the
+model and "Neff" is the same (within sampling uncertainty) for each method.
+
+> 17. “(...) and the parameters aj, bj, cj, and dj can be easily computed
+> analytically.” in the second paragraph of Section 7: If it is easy to compute,
+> then what about specifying the closed-form equations of the parameters in a
+> footnote, e.g., aj = ..., bj = ..., etc., clearly connecting the CARMA and
+> celerite?
+
+Added.
