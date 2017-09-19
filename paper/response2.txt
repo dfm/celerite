@@ -1,6 +1,6 @@
 We would like to thank the referee for their comments after a second reading
-and apologize for the slow response. We have addressed the comments and
-responded inline below.
+and apologize for the slow response. We have addressed the comments (changes
+are indicated using blue text in the manuscript) and responded inline below.
 
 > Major issue: MCMC convergence:
 >
