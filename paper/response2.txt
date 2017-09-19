@@ -40,7 +40,7 @@ are indicated using blue text in the manuscript) and responded inline below.
 
 We agree with the general concern that convergence cannot be unambiguously
 tested. However, in each case, we ran the sampler until each parallel chain had
-generated at least many tens of autocorrelation times of samples. In the worst
+generated at least many tens of autocorrelation times worth of samples. In the worst
 case (Section 6.5), 32 parallel chains were run until each chain had about 50
 independent samples (many more than the 10 recommended by Sokal 1989, and more
 than most published results that we know from the astronomical literature).
