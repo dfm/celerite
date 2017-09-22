@@ -20,7 +20,7 @@ install:
     conda config --set always_yes yes --set changeps1 no
     conda update -q conda
     conda info -a
-    conda install -c conda-forge conda-build numpy setuptools autograd pybind11 pytest
+    conda install -c conda-forge conda-build numpy setuptools autograd pybind11 pytest<3.2
 build_script:
 - ps: python setup.py install
 test_script:
