@@ -285,7 +285,8 @@ class GP(ModelSet):
         self._recompute()
         return self.solver.solve(self._process_input(y))
 
-    def dot(self, y, kernel=None):
+    def dot(self, y, t=None, A=None, U=None, V=None, kernel=None,
+            check_sorted=True):
         """
         Dot the covariance matrix into a vector or matrix
 
@@ -309,15 +310,34 @@ class GP(ModelSet):
         """
         if kernel is None:
             kernel = self.kernel
+
+        if t is not None:
+            t = np.atleast_1d(t)
+            if check_sorted and np.any(np.diff(t) < 0.0):
+                raise ValueError("the input coordinates must be sorted")
+            if check_sorted and len(t.shape) > 1:
+                raise ValueError("dimension mismatch")
+
+            A = np.empty(0) if A is None else A
+            U = np.empty((0, 0)) if U is None else U
+            V = np.empty((0, 0)) if V is None else V
+        else:
+            if not self.computed:
+                raise RuntimeError("you must call 'compute' first")
+            t = self._t
+            A = self._A
+            U = self._U
+            V = self._V
+
         (alpha_real, beta_real, alpha_complex_real, alpha_complex_imag,
          beta_complex_real, beta_complex_imag) = kernel.coefficients
+
         return self.solver.dot(
             kernel.jitter,
             alpha_real, beta_real,
             alpha_complex_real, alpha_complex_imag,
             beta_complex_real, beta_complex_imag,
-            self._A, self._U, self._V,
-            self._t, self._process_input(y)
+            A, U, V, t, np.ascontiguousarray(y, dtype=float)
         )
 
     def predict(self, y, t=None, return_cov=True, return_var=False):

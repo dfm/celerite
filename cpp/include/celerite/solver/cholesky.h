@@ -155,7 +155,7 @@ void compute (
       T phij = phi_(j, n-1),                                                  \
         xj = Dn*W_(j, n-1);                                                   \
       for (int k = 0; k <= j; ++k) {                                          \
-        S(k, j) = phij*(phi_(k, n-1)*(S(k, j) + xj*W_(k, n-1)));                \
+        S(k, j) = phij*(phi_(k, n-1)*(S(k, j) + xj*W_(k, n-1)));              \
       }                                                                       \
     }                                                                         \
                                                                               \
@@ -469,61 +469,122 @@ matrix_t dot (
   if (U.rows() != V.rows()) throw dimension_mismatch();
 
   int J_general = U.rows();
-  int J_real = a_real.rows(), J_comp = a_comp.rows(), J = J_real + 2*J_comp + J_general;
+  int J_real = a_real.rows(), J_comp = a_comp.rows();
+  int J = J_real + 2*J_comp + J_general;
   if (SIZE != Eigen::Dynamic && J != SIZE) throw dimension_mismatch();
-  Eigen::Array<T, Eigen::Dynamic, 1> a1(J_real), a2(J_comp), b2(J_comp),
-                                     c1(J_real), c2(J_comp), d2(J_comp),
-                                     cd, sd;
-  a1 << a_real;
-  a2 << a_comp;
-  b2 << b_comp;
-  c1 << c_real;
-  c2 << c_comp;
-  d2 << d_comp;
+
+  // Special case for jitter only.
+  if (J == 0) {
+    matrix_t y(N, nrhs);
+    y.array() = jitter * z.array();
+    return y;
+  }
 
   vector_t diag(N);
-  diag.setConstant(jitter + a1.sum() + a2.sum());
+  diag.setConstant(a_real.sum() + a_comp.sum() + jitter);
   if (A.rows() != 0) diag.array() += A.array();
 
-  vector_j_t f(J);
-  matrix_t y(N, nrhs), phi(J, N-1), u(J, N-1), v(J, N-1);
-  phi.setConstant(T(1.0));
+  matrix_t y(N, nrhs), phi(J, N-1), u(J, N-1), v(J, N);
 
-  cd = cos(d2*x(0));
-  sd = sin(d2*x(0));
+  T dx, arg, cd, sd, a, b, z0, y0, value;
+
+  // Compute the first row of v
+  for (int j = 0; j < J_real; ++j) {
+    v(j, 0) = T(1.0);
+  }
+  for (int j = 0, k = J_real; j < J_comp; ++j, k += 2) {
+    arg = d_comp(j) * x(0);
+    v(k,   0) = cos(arg);
+    v(k+1, 0) = sin(arg);
+  }
+
+  // Loop over the rest of the rows
   for (int n = 0; n < N-1; ++n) {
-    v.col(n).head(J_real).setOnes();
-    v.col(n).segment(J_real, J_comp) = cd;
-    v.col(n).segment(J_real+J_comp, J_comp) = sd;
-    v.col(n).segment(J_real+2*J_comp, J_general) = V.col(n);
-
-    cd = cos(d2*x(n+1));
-    sd = sin(d2*x(n+1));
-    u.col(n).head(J_real) = a1;
-    u.col(n).segment(J_real, J_comp) = a2 * cd + b2 * sd;
-    u.col(n).segment(J_real+J_comp, J_comp) = a2 * sd - b2 * cd;
-    u.col(n).segment(J_real+2*J_comp, J_general) = U.col(n+1);
-
-    T dx = x(n+1) - x(n);
-    phi.col(n).head(J_real) = exp(-c1*dx);
-    phi.col(n).segment(J_real, J_comp) = exp(-c2*dx);
-    phi.col(n).segment(J_real+J_comp, J_comp) = phi.col(n).segment(J_real, J_comp);
-  }
-
-  for (int k = 0; k < nrhs; ++k) {
-    y(N-1, k) = diag(N-1) * z(N-1, k);
-    f.setZero();
-    for (int n = N-2; n >= 0; --n) {
-      f = phi.col(n).asDiagonal() * (f + u.col(n) * z(n+1, k));
-      y(n, k) = diag(n) * z(n, k) + v.col(n).transpose().dot(f);
+    dx = x(n+1) - x(n);
+    for (int j = 0; j < J_real; ++j) {
+      v(j, n+1) = T(1.0);
+      u(j, n)   = a_real(j);
+      phi(j, n) = exp(-c_real(j) * dx);
     }
 
-    f.setZero();
-    for (int n = 1; n < N; ++n) {
-      f = phi.col(n-1).asDiagonal() * (f + v.col(n-1) * z(n-1, k));
-      y(n, k) += u.col(n-1).transpose().dot(f);
+    for (int j = 0, k = J_real; j < J_comp; ++j, k += 2) {
+      a = a_comp(j);
+      b = b_comp(j);
+      arg = d_comp(j) * x(n+1);
+      cd = cos(arg);
+      sd = sin(arg);
+
+      v(k,   n+1) = cd;
+      v(k+1, n+1) = sd;
+
+      u(k, n)   = a * cd + b * sd;
+      u(k+1, n) = a * sd - b * cd;
+
+      phi(k, n) = phi(k+1, n) = exp(-c_comp(j)*dx);
+    }
+
+    for (int j = 0, k = J_real+2*J_comp; j < J_general; ++j, ++k) {
+      v(k,   n) = T(V(j, n));
+      u(k,   n) = T(U(j, n+1));
+      phi(k, n) = T(1.0);
     }
   }
+
+#define FIXED_SIZE_HACKZ(SIZE_MACRO)                                          \
+  Eigen::Matrix<T, SIZE_MACRO, 1> f(J);                                       \
+  for (int k = 0; k < nrhs; ++k) {                                            \
+    y(N-1, k) = diag(N-1) * z(N-1, k);                                        \
+    f.setZero();                                                              \
+    for (int n = N-2; n >= 0; --n) {                                          \
+      z0 = z(n+1, k);                                                         \
+      y0 = diag(n) * z(n, k);                                                 \
+      for (int j = 0; j < J; ++j) {                                           \
+        value = phi(j, n) * (f(j) + u(j, n) * z0);                            \
+        f(j) = value;                                                         \
+        y0 += v(j, n) * value;                                                \
+      }                                                                       \
+      y(n, k) = y0;                                                           \
+    }                                                                         \
+                                                                              \
+    f.setZero();                                                              \
+    for (int n = 1; n < N; ++n) {                                             \
+      z0 = z(n-1, k);                                                         \
+      y0 = y(n, k);                                                           \
+      for (int j = 0; j < J; ++j) {                                           \
+        value = phi(j, n-1) * (f(j) + v(j, n-1) * z0);                        \
+        f(j) = value;                                                         \
+        y0 += u(j, n-1) * value;                                              \
+      }                                                                       \
+      y(n, k) = y0;                                                           \
+    }                                                                         \
+  }
+
+  if (SIZE == Eigen::Dynamic) {
+    switch (J) {
+      case 1:  { FIXED_SIZE_HACKZ(1)  break; }
+      case 2:  { FIXED_SIZE_HACKZ(2)  break; }
+      case 3:  { FIXED_SIZE_HACKZ(3)  break; }
+      case 4:  { FIXED_SIZE_HACKZ(4)  break; }
+      case 5:  { FIXED_SIZE_HACKZ(5)  break; }
+      case 6:  { FIXED_SIZE_HACKZ(6)  break; }
+      case 7:  { FIXED_SIZE_HACKZ(7)  break; }
+      case 8:  { FIXED_SIZE_HACKZ(8)  break; }
+      case 9:  { FIXED_SIZE_HACKZ(9)  break; }
+      case 10: { FIXED_SIZE_HACKZ(10) break; }
+      case 11: { FIXED_SIZE_HACKZ(11) break; }
+      case 12: { FIXED_SIZE_HACKZ(12) break; }
+      case 13: { FIXED_SIZE_HACKZ(13) break; }
+      case 14: { FIXED_SIZE_HACKZ(14) break; }
+      case 15: { FIXED_SIZE_HACKZ(15) break; }
+      case 16: { FIXED_SIZE_HACKZ(16) break; }
+      default: FIXED_SIZE_HACKZ(Eigen::Dynamic)
+    }
+  } else {
+    // The size was already specified at compile time.
+    FIXED_SIZE_HACKZ(SIZE)
+  }
+
+#undef FIXED_SIZE_HACKZ
 
   return y;
 };
