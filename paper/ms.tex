@@ -125,7 +125,7 @@
 \newcommand{\racomment}[1]{{\color{magenta}#1}}
 
 \newcommand{\response}[1]{{#1}}
-\newcommand{\responseb}[1]{{\color{blue}{#1}}}
+\newcommand{\responseb}[1]{{#1}}
 
 
 % \shorttitle{}
@@ -153,6 +153,10 @@ to astronomical time series
 \altaffiltext{\uw}{Astronomy Department, University of Washington,
                    Seattle, WA}
 
+\edef \cca {\arabic{affilcounter}}\stepcounter{affilcounter}
+\altaffiltext{\cca}{Center for Computational Astrophysics,
+                   Flatiron Institue, New York, NY}
+
 \edef \guggenheim {\arabic{affilcounter}}\stepcounter{affilcounter}
 \altaffiltext{\guggenheim}{Guggenheim Fellow}
 
@@ -160,19 +164,20 @@ to astronomical time series
 \altaffiltext{\iis}{Department of Computational and Data Sciences,
                     Indian Institute of Science, Bangalore, India}
 
-\edef \simons {\arabic{affilcounter}}\stepcounter{affilcounter}
-\altaffiltext{\simons}{Simons Fellow}
+%\edef \simons {\arabic{affilcounter}}\stepcounter{affilcounter}
+%\altaffiltext{\simons}{Simons Fellow}
 
 \edef \columbia {\arabic{affilcounter}}\stepcounter{affilcounter}
-\altaffiltext{\columbia}{Department of Astronomy, Columbia University,
+\altaffiltext{\columbia}{Simons Fellow;
+                         Department of Astronomy, Columbia University,
                          New York, NY}
 
 
 \author{%
-    Daniel~Foreman-Mackey\altaffilmark{\sagan,\uw},
+    Daniel~Foreman-Mackey\altaffilmark{\sagan,\uw,\cca},
     Eric~Agol\altaffilmark{\uw,\guggenheim},
     Sivaram~Ambikasaran\altaffilmark{\iis}, and
-    Ruth~Angus\altaffilmark{\simons,\columbia}
+    Ruth~Angus\altaffilmark{\columbia}
 }
 
 
@@ -293,8 +298,8 @@ Alongside this paper, we have released well-tested and documented open source
 implementations written in \project{C++}, \project{Python}, and
 \project{Julia}.
 These are available online at \project{GitHub}
-\url{https://github.com/dfm/celerite} and \project{Zenodo}
-\citep{Foreman-Mackey:2017}.
+\url{https://github.com/dfm/celerite} and
+\dataset[Zenodo]{https://doi.org/10.5281/zenodo.806847}.
 
 \section{Gaussian processes}\sectlabel{gps}
 
@@ -2050,8 +2055,9 @@ source software package that implements the method and all of the examples
 discussed in these pages.
 This software is available on GitHub
 \url{https://github.com/dfm/celerite}\footnote{This version of the paper was
-generated with git commit \texttt{\githash} (\gitdate).} and Zenodo
-\citep{Foreman-Mackey:2017}, and it is made available under the MIT license.
+generated with git commit \texttt{\githash} (\gitdate).} and
+\dataset[Zenodo]{https://doi.org/10.5281/zenodo.806847}, and it is made
+available under the MIT license.
 
 \acknowledgments
 It is a pleasure to thank
