@@ -1,9 +1,10 @@
 .. :changelog:
 
-0.3.0 (upcoming)
-++++++++++++++++
+0.3.0 (2017-11-13)
+++++++++++++++++++
 
 - Added support for fully general semiseparable kernels.
+- Added ``quiet`` argument to likelihood functions.
 
 0.2.1 (2017-06-12)
 ++++++++++++++++++
