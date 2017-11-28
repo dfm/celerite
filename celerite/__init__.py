@@ -8,7 +8,10 @@ __bibtex__ = """
      title = {Fast and scalable Gaussian process modeling
               with applications to astronomical time series},
       year = {2017},
-   journal = {ArXiv},
+   journal = {AJ},
+    volume = {154},
+     pages = {220},
+       doi = {10.3847/1538-3881/aa9332},
        url = {https://arxiv.org/abs/1703.09710}
 }
 """
