@@ -207,7 +207,7 @@ void compute (
 };
 
 }; // class Solver
-}; // namespace solver
-}; // namespace celerite
+} // namespace solver
+} // namespace celerite
 
 #endif

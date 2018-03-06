@@ -162,6 +162,6 @@ inline get_psd_value (
   return sqrt(2.0 / M_PI) * p;
 }
 
-};
+} // namespace celerite
 
 #endif

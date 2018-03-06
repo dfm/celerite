@@ -285,7 +285,7 @@ private:
 
 }; // class CARMASolver
 
-}; // namespace carma
-}; // namespace celerite
+} // namespace carma
+} // namespace celerite
 
 #endif // _CELERITE_CARMA_H_

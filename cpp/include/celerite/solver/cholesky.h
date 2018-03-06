@@ -707,7 +707,7 @@ Eigen::VectorXd t_;
 
 };
 
-};
-};
+}
+}
 
 #endif

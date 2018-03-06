@@ -35,6 +35,6 @@ struct linalg_exception : public std::exception {
   }
 };
 
-}; // namespace celerite
+} // namespace celerite
 
 #endif // _CELERITE_EXCEPTIONS_H_
