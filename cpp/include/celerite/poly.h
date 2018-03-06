@@ -137,6 +137,6 @@ inline int polycountroots (const Eigen::Matrix<T, Eigen::Dynamic, 1>& p) {
   return count;
 }
 
-};
+} // namespace celerite
 
 #endif

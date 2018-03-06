@@ -138,7 +138,7 @@ using Solver<T>::compute;
 
 };
 
-};
-};
+}
+}
 
 #endif
