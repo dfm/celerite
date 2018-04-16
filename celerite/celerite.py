@@ -118,6 +118,8 @@ class GP(ModelSet):
         t = np.atleast_1d(t)
         if check_sorted and np.any(np.diff(t) < 0.0):
             raise ValueError("the input coordinates must be sorted")
+        if check_sorted and np.any(np.diff(t) == 0.0):
+            raise ValueError("the input coordinates must not be identical")
         if check_sorted and len(t.shape) > 1:
             raise ValueError("dimension mismatch")
         self._t = t
