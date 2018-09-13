@@ -124,6 +124,12 @@ class GP(ModelSet):
             raise ValueError("dimension mismatch")
         self._t = t
         self._yerr = np.empty_like(self._t)
+        try:
+            yerrt = yerr.dtype
+        except AttributeError:
+            yerrt = type(yerr)
+        if not np.can_cast(yerrt, t.dtype):
+            raise(ValueError("Cast from data type of 'yerr' (" + str(yerrt) + ") to type of 'x' (" + str(t.dtype) + ") is not safe. Use fitting types."))
         self._yerr[:] = yerr
         (alpha_real, beta_real, alpha_complex_real, alpha_complex_imag,
          beta_complex_real, beta_complex_imag) = self.kernel.coefficients
