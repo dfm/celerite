@@ -33,7 +33,8 @@ class PicklableCholeskySolver : public celerite::solver::CholeskySolver<double> 
 public:
   PicklableCholeskySolver () : celerite::solver::CholeskySolver<double>() {};
 
-  auto serialize () const {
+  std::tuple<bool, int, int, double, Eigen::MatrixXd, Eigen::MatrixXd, Eigen::MatrixXd, Eigen::VectorXd>
+  serialize () const {
     return std::make_tuple(
       this->computed_, this->N_, this->J_, this->log_det_,
       this->phi_, this->u_, this->W_, this->D_
@@ -660,6 +661,4 @@ Returns:
       t[7].cast<vector_t>()
     );
   });
-
-  return m.ptr();
 }
