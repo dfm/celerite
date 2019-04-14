@@ -35,29 +35,31 @@ matrix:
         - os: linux
           env: PYTHON_VERSION=2.7 NUMPY_VERSION=1.12
 
-        # Linux, Python 3.4
-        - os: linux
-          env: PYTHON_VERSION=3.4 NUMPY_VERSION=1.11
-
         # Linux, Python 3.5
         - os: linux
           env: PYTHON_VERSION=3.5 NUMPY_VERSION=1.12
 
         # Linux, Python 3.6
         - os: linux
-          env: PYTHON_VERSION=3.6 NUMPY_VERSION=1.11
+          env: PYTHON_VERSION=3.6 NUMPY_VERSION=1.13
+
+        # Linux, Python 3.7
         - os: linux
-          env: PYTHON_VERSION=3.6 NUMPY_VERSION=1.12
+          env: PYTHON_VERSION=3.7 NUMPY_VERSION=1.11
         - os: linux
-          env: PYTHON_VERSION=3.6 NUMPY_VERSION=1.12 AUTOGRAD=''
+          env: PYTHON_VERSION=3.7 NUMPY_VERSION=1.16
         - os: linux
-          env: PYTHON_VERSION=3.6 NUMPY_VERSION=1.12 AUTODIFF_LIBRARY=stan
+          env: PYTHON_VERSION=3.7 NUMPY_VERSION=1.12 AUTOGRAD=''
+        - os: linux
+          env: PYTHON_VERSION=3.7 NUMPY_VERSION=1.12 AUTODIFF_LIBRARY=stan
 
         # OSX
         - os: osx
-          env: PYTHON_VERSION=2.7 NUMPY_VERSION=1.12
+          env: PYTHON_VERSION=2.7 NUMPY_VERSION=1.16
         - os: osx
-          env: PYTHON_VERSION=3.6 NUMPY_VERSION=1.12
+          env: PYTHON_VERSION=3.6 NUMPY_VERSION=1.16
+        - os: osx
+          env: PYTHON_VERSION=3.7 NUMPY_VERSION=1.16
 
 install:
     - source .ci/travis.sh
