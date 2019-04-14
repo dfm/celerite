@@ -60,17 +60,17 @@ public:
 //
 // Below is the boilerplate code for the pybind11 extension module.
 //
-PYBIND11_PLUGIN(solver) {
+PYBIND11_MODULE(solver, m) {
   typedef Eigen::MatrixXd matrix_t;
   typedef Eigen::VectorXd vector_t;
 
-  py::module m("solver", R"delim(
+  m.doc() = R"delim(
 This is the low-level interface to the C++ implementation of the celerite
 algorithm. These methods do most of the heavy lifting but most users shouldn't
 need to call these directly. This interface was built using `pybind11
 <http://pybind11.readthedocs.io/>`_.
 
-)delim");
+)delim";
 
   m.def("get_library_version", []() { return CELERITE_VERSION_STRING; },
         "The version of the linked C++ library");
