@@ -4,7 +4,6 @@ from __future__ import division, print_function
 
 import os
 import sys
-import numpy
 import tempfile
 
 import setuptools
@@ -76,6 +75,7 @@ class build_ext(_build_ext):
             raise RuntimeError("couldn't find celerite headers")
 
         # Add the pybind11 include directory
+        import numpy
         import pybind11
         include_dirs = [
             localincl,
