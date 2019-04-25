@@ -34,6 +34,7 @@ setup(
     url="https://github.com/dfm/celerite",
     license="MIT",
     packages=["celerite"],
+    setup_requires=["numpy", "pybind11"],
     install_requires=["numpy", "pybind11"],
     ext_modules=[ext],
     description="Scalable 1D Gaussian Processes",
