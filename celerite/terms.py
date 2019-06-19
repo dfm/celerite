@@ -221,7 +221,7 @@ class TermProduct(Term, ModelSet):
         _has_jitter = False
         if hasattr(k1, '_has_jitter') and k1._has_jitter:
             _has_jitter = True
-        if hasattr(k1, '_has_jitter') and k1._has_jitter:
+        if hasattr(k2, '_has_jitter') and k2._has_jitter:
             _has_jitter = True
         
         if _has_jitter:
