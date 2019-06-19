@@ -218,7 +218,13 @@ class Term(Model):
 class TermProduct(Term, ModelSet):
 
     def __init__(self, k1, k2):
-        if k1._has_jitter or k2._has_jitter:
+        _has_jitter = False
+        if hasattr(k1, '_has_jitter') and k1._has_jitter:
+            _has_jitter = True
+        if hasattr(k1, '_has_jitter') and k1._has_jitter:
+            _has_jitter = True
+        
+        if _has_jitter:
             raise ValueError("Products are not implemented for terms with "
                              "jitter")
         super(TermProduct, self).__init__([("k1", k1), ("k2", k2)])
