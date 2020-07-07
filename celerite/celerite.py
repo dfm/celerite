@@ -25,10 +25,14 @@ class GP(ModelSet):
 
     """
 
-    def __init__(self,
-                 kernel,
-                 mean=0.0, fit_mean=False,
-                 log_white_noise=None, fit_white_noise=False):
+    def __init__(
+        self,
+        kernel,
+        mean=0.0,
+        fit_mean=False,
+        log_white_noise=None,
+        fit_white_noise=False,
+    ):
         self._solver = None
         self._computed = False
         self._t = None
@@ -36,8 +40,10 @@ class GP(ModelSet):
 
         # Backwards compatibility for 'log_white_noise' parameter
         if log_white_noise is not None:
-            warnings.warn("The 'log_white_noise' parameter is deprecated. "
-                          "Use a 'JitterTerm' instead.")
+            warnings.warn(
+                "The 'log_white_noise' parameter is deprecated. "
+                "Use a 'JitterTerm' instead."
+            )
             k = terms.JitterTerm(log_sigma=float(log_white_noise))
             if not fit_white_noise:
                 k.freeze_parameter("log_sigma")
@@ -89,13 +95,14 @@ class GP(ModelSet):
     @property
     def computed(self):
         return (
-            self._solver is not None and
-            self.solver.computed() and
-            not self.dirty
+            self._solver is not None
+            and self.solver.computed()
+            and not self.dirty
         )
 
-    def compute(self, t, yerr=1.123e-12, check_sorted=True,
-                A=None, U=None, V=None):
+    def compute(
+        self, t, yerr=1.123e-12, check_sorted=True, A=None, U=None, V=None
+    ):
         """
         Compute the extended form of the covariance matrix and factorize
 
@@ -123,18 +130,30 @@ class GP(ModelSet):
         self._t = t
         self._yerr = np.empty_like(self._t)
         self._yerr[:] = yerr
-        (alpha_real, beta_real, alpha_complex_real, alpha_complex_imag,
-         beta_complex_real, beta_complex_imag) = self.kernel.coefficients
+        (
+            alpha_real,
+            beta_real,
+            alpha_complex_real,
+            alpha_complex_imag,
+            beta_complex_real,
+            beta_complex_imag,
+        ) = self.kernel.coefficients
         self._A = np.empty(0) if A is None else A
         self._U = np.empty((0, 0)) if U is None else U
         self._V = np.empty((0, 0)) if V is None else V
         self.solver.compute(
             self.kernel.jitter,
-            alpha_real, beta_real,
-            alpha_complex_real, alpha_complex_imag,
-            beta_complex_real, beta_complex_imag,
-            self._A, self._U, self._V,
-            t, self._yerr**2
+            alpha_real,
+            beta_real,
+            alpha_complex_real,
+            alpha_complex_imag,
+            beta_complex_real,
+            beta_complex_imag,
+            self._A,
+            self._U,
+            self._V,
+            t,
+            self._yerr ** 2,
         )
         self.dirty = False
 
@@ -142,8 +161,14 @@ class GP(ModelSet):
         if not self.computed:
             if self._t is None:
                 raise RuntimeError("you must call 'compute' first")
-            self.compute(self._t, self._yerr, check_sorted=False,
-                         A=self._A, U=self._U, V=self._V)
+            self.compute(
+                self._t,
+                self._yerr,
+                check_sorted=False,
+                A=self._A,
+                U=self._U,
+                V=self._V,
+            )
 
     def _process_input(self, y):
         if self._t is None:
@@ -152,7 +177,7 @@ class GP(ModelSet):
             raise ValueError("dimension mismatch")
         return np.ascontiguousarray(y, dtype=float)
 
-    def log_likelihood(self, y, _const=math.log(2.0*math.pi), quiet=False):
+    def log_likelihood(self, y, _const=math.log(2.0 * math.pi), quiet=False):
         """
         Compute the marginalized likelihood of the GP model
 
@@ -186,7 +211,9 @@ class GP(ModelSet):
         logdet = self.solver.log_determinant()
         if not np.isfinite(logdet):
             return -np.inf
-        loglike = -0.5*(self.solver.dot_solve(resid)+logdet+len(y)*_const)
+        loglike = -0.5 * (
+            self.solver.dot_solve(resid) + logdet + len(y) * _const
+        )
         if not np.isfinite(loglike):
             return -np.inf
         return loglike
@@ -218,8 +245,10 @@ class GP(ModelSet):
 
         """
         if not solver.has_autodiff():
-            raise RuntimeError("celerite must be compiled with autodiff "
-                               "support to use the gradient methods")
+            raise RuntimeError(
+                "celerite must be compiled with autodiff "
+                "support to use the gradient methods"
+            )
 
         if not self.kernel.vector_size:
             return self.log_likelihood(y, quiet=quiet), np.empty(0)
@@ -229,16 +258,29 @@ class GP(ModelSet):
             raise ValueError("dimension mismatch")
         resid = y - self.mean.get_value(self._t)
 
-        (alpha_real, beta_real, alpha_complex_real, alpha_complex_imag,
-         beta_complex_real, beta_complex_imag) = self.kernel.coefficients
+        (
+            alpha_real,
+            beta_real,
+            alpha_complex_real,
+            alpha_complex_imag,
+            beta_complex_real,
+            beta_complex_imag,
+        ) = self.kernel.coefficients
         try:
             val, grad = self.solver.grad_log_likelihood(
                 self.kernel.jitter,
-                alpha_real, beta_real,
-                alpha_complex_real, alpha_complex_imag,
-                beta_complex_real, beta_complex_imag,
-                self._A, self._U, self._V,
-                self._t, resid, self._yerr**2
+                alpha_real,
+                beta_real,
+                alpha_complex_real,
+                alpha_complex_imag,
+                beta_complex_real,
+                beta_complex_imag,
+                self._A,
+                self._U,
+                self._V,
+                self._t,
+                resid,
+                self._yerr ** 2,
             )
         except solver.LinAlgError:
             if quiet:
@@ -285,8 +327,9 @@ class GP(ModelSet):
         self._recompute()
         return self.solver.solve(self._process_input(y))
 
-    def dot(self, y, t=None, A=None, U=None, V=None, kernel=None,
-            check_sorted=True):
+    def dot(
+        self, y, t=None, A=None, U=None, V=None, kernel=None, check_sorted=True
+    ):
         """
         Dot the covariance matrix into a vector or matrix
 
@@ -329,15 +372,28 @@ class GP(ModelSet):
             U = self._U
             V = self._V
 
-        (alpha_real, beta_real, alpha_complex_real, alpha_complex_imag,
-         beta_complex_real, beta_complex_imag) = kernel.coefficients
+        (
+            alpha_real,
+            beta_real,
+            alpha_complex_real,
+            alpha_complex_imag,
+            beta_complex_real,
+            beta_complex_imag,
+        ) = kernel.coefficients
 
         return self.solver.dot(
             kernel.jitter,
-            alpha_real, beta_real,
-            alpha_complex_real, alpha_complex_imag,
-            beta_complex_real, beta_complex_imag,
-            A, U, V, t, np.ascontiguousarray(y, dtype=float)
+            alpha_real,
+            beta_real,
+            alpha_complex_real,
+            alpha_complex_imag,
+            beta_complex_real,
+            beta_complex_imag,
+            A,
+            U,
+            V,
+            t,
+            np.ascontiguousarray(y, dtype=float),
         )
 
     def predict(self, y, t=None, return_cov=True, return_var=False):
@@ -393,7 +449,7 @@ class GP(ModelSet):
 
         if t is None:
             alpha = self.solver.solve(resid).flatten()
-            alpha = resid - (self._yerr**2 + self.kernel.jitter) * alpha
+            alpha = resid - (self._yerr ** 2 + self.kernel.jitter) * alpha
         elif not len(self._A):
             alpha = self.solver.predict(resid, xs)
         else:
@@ -408,7 +464,7 @@ class GP(ModelSet):
         Kxs = self.get_matrix(xs, self._t)
         KxsT = np.ascontiguousarray(Kxs.T, dtype=np.float64)
         if return_var:
-            var = -np.sum(KxsT*self.apply_inverse(KxsT), axis=0)
+            var = -np.sum(KxsT * self.apply_inverse(KxsT), axis=0)
             var += self.kernel.get_value(0.0)
             return mu, var
 
@@ -417,8 +473,9 @@ class GP(ModelSet):
         cov -= np.dot(Kxs, self.apply_inverse(KxsT))
         return mu, cov
 
-    def get_matrix(self, x1=None, x2=None, include_diagonal=None,
-                   include_general=None):
+    def get_matrix(
+        self, x1=None, x2=None, include_diagonal=None, include_general=None
+    ):
         """
         Get the covariance matrix at given independent coordinates
 
@@ -440,7 +497,7 @@ class GP(ModelSet):
             K = self.kernel.get_value(self._t[:, None] - self._t[None, :])
             if include_diagonal is None or include_diagonal:
                 K[np.diag_indices_from(K)] += (
-                    self._yerr**2 + self.kernel.jitter
+                    self._yerr ** 2 + self.kernel.jitter
                 )
             if (include_general is None or include_general) and len(self._A):
                 K[np.diag_indices_from(K)] += self._A
@@ -480,7 +537,7 @@ class GP(ModelSet):
             return self.mean.get_value(self._t) + n[:, 0]
         return self.mean.get_value(self._t)[None, :] + n.T
 
-    def sample_conditional(self, y, t=None, size=None):
+    def sample_conditional(self, y, t=None, size=None, regularize=None):
         """
         Sample from the conditional (predictive) distribution
 
@@ -495,6 +552,9 @@ class GP(ModelSet):
                 will be assumed to be ``x`` from :func:`GP.compute` and an
                 efficient method will be used to compute the prediction.
             size (Optional[int]): The number of samples to draw.
+            regularize (Optional[float]): For poorly conditioned systems, you
+                can provide a small number here to regularize the predictive
+                covariance. This number will be added to the diagonal.
 
         Returns:
             array[n] or array[size, n]: The samples from the conditional
@@ -502,4 +562,6 @@ class GP(ModelSet):
 
         """
         mu, cov = self.predict(y, t, return_cov=True)
+        if regularize is not None:
+            cov[np.diag_indices_from(cov)] += regularize
         return np.random.multivariate_normal(mu, cov, size=size)
