@@ -6,6 +6,6 @@ channels:
 dependencies:
   - python=3.5
   - numpy
-  - pybind11<2.2
+  - pybind11
   - pip:
       - https://github.com/arximboldi/breathe/zipball/2af44a0d9f40e672dd1989b67d0e90a61deba77e
