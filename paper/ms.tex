@@ -135,10 +135,10 @@
 \begin{document}
 
 \title{%
-\vspace{-\baselineskip}
-Fast and scalable Gaussian process modeling with applications
-to astronomical time series
-\vspace{-2\baselineskip}
+    \vspace{-\baselineskip}
+    Fast and scalable Gaussian process modeling with applications
+    to astronomical time series
+    \vspace{-2\baselineskip}
 }
 
 \newcounter{affilcounter}
@@ -151,26 +151,26 @@ to astronomical time series
 
 \edef \uw {\arabic{affilcounter}}\stepcounter{affilcounter}
 \altaffiltext{\uw}{Astronomy Department, University of Washington,
-                   Seattle, WA}
+    Seattle, WA}
 
 \edef \cca {\arabic{affilcounter}}\stepcounter{affilcounter}
 \altaffiltext{\cca}{Center for Computational Astrophysics,
-                   Flatiron Institue, New York, NY}
+    Flatiron Institue, New York, NY}
 
 \edef \guggenheim {\arabic{affilcounter}}\stepcounter{affilcounter}
 \altaffiltext{\guggenheim}{Guggenheim Fellow}
 
 \edef \iis {\arabic{affilcounter}}\stepcounter{affilcounter}
 \altaffiltext{\iis}{Department of Computational and Data Sciences,
-                    Indian Institute of Science, Bangalore, India}
+    Indian Institute of Science, Bangalore, India}
 
 %\edef \simons {\arabic{affilcounter}}\stepcounter{affilcounter}
 %\altaffiltext{\simons}{Simons Fellow}
 
 \edef \columbia {\arabic{affilcounter}}\stepcounter{affilcounter}
 \altaffiltext{\columbia}{Simons Fellow;
-                         Department of Astronomy, Columbia University,
-                         New York, NY}
+    Department of Astronomy, Columbia University,
+    New York, NY}
 
 
 \author{%
@@ -184,46 +184,46 @@ to astronomical time series
 
 \begin{abstract}
 
-The growing field of large-scale time domain astronomy requires methods for
-probabilistic data analysis that are computationally tractable, even with
-large datasets.
-Gaussian Processes are a popular class of models used for this purpose but,
-since the computational cost scales, in general, as the cube of the number of
-data points, their application has been limited to small datasets.
-In this paper, we present a novel method for Gaussian Process modeling in
-one-dimension where the computational requirements scale linearly with the
-size of the dataset.
-We demonstrate the method by applying it to simulated and real astronomical
-time series datasets.
-These demonstrations are examples of probabilistic inference of stellar
-rotation periods, asteroseismic oscillation spectra, and transiting planet
-parameters.
-The method exploits structure in the problem when the covariance function is
-expressed as a mixture of complex exponentials, without requiring evenly
-spaced observations or uniform noise.
-This form of covariance arises naturally when the process is a mixture of
-stochastically-driven damped harmonic oscillators~--~providing a physical
-motivation for and interpretation of this choice~--~but we also demonstrate
-that it can be a useful effective model in some other cases.
-We present a mathematical description of the method and compare it to existing
-scalable Gaussian Process methods.
-The method is fast and interpretable, with a range of potential applications
-within astronomical data analysis and beyond.
-We provide well-tested and documented open-source implementations of this
-method in \project{C++}, \project{Python}, and \project{Julia}.
+    The growing field of large-scale time domain astronomy requires methods for
+    probabilistic data analysis that are computationally tractable, even with
+    large datasets.
+    Gaussian Processes are a popular class of models used for this purpose but,
+    since the computational cost scales, in general, as the cube of the number of
+    data points, their application has been limited to small datasets.
+    In this paper, we present a novel method for Gaussian Process modeling in
+    one-dimension where the computational requirements scale linearly with the
+    size of the dataset.
+    We demonstrate the method by applying it to simulated and real astronomical
+    time series datasets.
+    These demonstrations are examples of probabilistic inference of stellar
+    rotation periods, asteroseismic oscillation spectra, and transiting planet
+    parameters.
+    The method exploits structure in the problem when the covariance function is
+    expressed as a mixture of complex exponentials, without requiring evenly
+    spaced observations or uniform noise.
+    This form of covariance arises naturally when the process is a mixture of
+    stochastically-driven damped harmonic oscillators~--~providing a physical
+    motivation for and interpretation of this choice~--~but we also demonstrate
+    that it can be a useful effective model in some other cases.
+    We present a mathematical description of the method and compare it to existing
+    scalable Gaussian Process methods.
+    The method is fast and interpretable, with a range of potential applications
+    within astronomical data analysis and beyond.
+    We provide well-tested and documented open-source implementations of this
+    method in \project{C++}, \project{Python}, and \project{Julia}.
 
 \end{abstract}
 
 \keywords{%
- methods: data analysis
- ---
- methods: statistical
- ---
- asteroseismology
- ---
- stars: rotation
- ---
- planetary systems
+    methods: data analysis
+    ---
+    methods: statistical
+    ---
+    asteroseismology
+    ---
+    stars: rotation
+    ---
+    planetary systems
 }
 
 \section{Introduction}
@@ -236,7 +236,7 @@ in light curves of stars \citep{Brewer:2009}, active galactic nuclei
 They have also been used as models for the cosmic microwave background
 \citep{Bond:1987, Bond:1999, Wandelt:2003}, correlated instrumental noise
 \citep{Gibson:2012}, and spectroscopic calibration \citep{Czekala:2017,
-Evans:2015}.
+    Evans:2015}.
 While these models are widely applicable, their use has been limited, in
 practice, by the computational cost and scaling.
 The cost of computing a general GP likelihood scales as the cube of the number
@@ -245,21 +245,21 @@ surveys~--~with as many as $\sim10^{4-9}$ targets with $\sim10^{3-5}$
 observations each~--~this scaling is prohibitive.
 
 \response{Existing astronomical time series datasets have already reached the
-limit where na\"ive application GP models is no longer tractable.
-NASA's \kepler\ Mission \citep{Borucki:2010}, for example, measured light
-curves with more than 60,000 observations each for about 190,000 stars.
-Current and forthcoming surveys such as \project{K2} \citep{Howell:2014},
-\tess\ \citep{Ricker:2014}, \lsst\ \citep{Ivezic:2008}, \project{WFIRST}
-\citep{Spergel:2015}, and \project{PLATO} \citep{Rauer:2014} will continue to
-produce similar or larger data volumes.}
+    limit where na\"ive application GP models is no longer tractable.
+    NASA's \kepler\ Mission \citep{Borucki:2010}, for example, measured light
+    curves with more than 60,000 observations each for about 190,000 stars.
+    Current and forthcoming surveys such as \project{K2} \citep{Howell:2014},
+    \tess\ \citep{Ricker:2014}, \lsst\ \citep{Ivezic:2008}, \project{WFIRST}
+    \citep{Spergel:2015}, and \project{PLATO} \citep{Rauer:2014} will continue to
+    produce similar or larger data volumes.}
 
 In this paper, we present a method for directly and exactly computing a class
 of GP models that scales linearly with the number of data points
 $\mathcal{O}(N)$ for one dimensional data sets.
 \response{Unlike earlier linear methods using Kalman filters \citep[for
-example,][]{Kelly:2014}, this novel algorithm exploits the semiseparable
-structure of a specific class of covariance matrices to directly factorize and
-solve the system.
+        example,][]{Kelly:2014}, this novel algorithm exploits the semiseparable
+    structure of a specific class of covariance matrices to directly factorize and
+    solve the system.
 }
 This method can only be used with one-dimensional datasets and the covariance
 function must be represented by a mixture of exponentials; we will return to a
@@ -270,13 +270,13 @@ can be heteroscedastic.
 This method achieves linear scaling by exploiting structure in the covariance
 matrix when it is generated by a mixture of exponentials.
 \response{The semiseparable nature of these matrices was first recognized by
-\citet{Ambikasaran:2015}, building on intuition from a twenty year old paper
-\citep{Rybicki:1995}.}
+    \citet{Ambikasaran:2015}, building on intuition from a twenty year old paper
+    \citep{Rybicki:1995}.}
 As we will discuss in the following pages, this choice of kernel function
 arises naturally in physical systems and we demonstrate it can be used as
 an effective model\footnote{\responseb{Here and throughout, we use the term
-``effective model'' to refer to a model that we use to make inferences even
-though it is known to be wrong.}} in other cases.
+        ``effective model'' to refer to a model that we use to make inferences even
+        though it is known to be wrong.}} in other cases.
 This method is especially appealing compared to other similar methods~--~we
 discuss these comparisons in \sect{compare}~--~because it is exact, simple,
 and fast.
@@ -308,33 +308,33 @@ $\mu_\bvec{\theta}(\bvec{x})$ and a covariance, autocorrelation, or ``kernel''
 function $k_\bvec{\alpha}(\bvec{x}_n,\,\bvec{x}_m)$ parameterized by
 $\bvec{\theta}$ and $\bvec{\alpha}$ respectively.
 Under this model, \response{the log-likelihood function $\mathcal{L}
-(\bvec{\theta},\,\bvec{\alpha})$} with a dataset
+        (\bvec{\theta},\,\bvec{\alpha})$} with a dataset
 \begin{eqnarray}
-\bvec{y} = \left(\begin{array}{ccccc}
-    y_1\quad && \cdots\quad && y_N
-\end{array}\right)^\T
+    \bvec{y} = \left(\begin{array}{ccccc}
+            y_1\quad &  & \cdots\quad &  & y_N
+        \end{array}\right)^\T
 \end{eqnarray}
 at coordinates
 \begin{eqnarray}
-X = \left(\begin{array}{ccccc}
-    \bvec{x}_1\quad && \cdots\quad && \bvec{x}_N
-\end{array}\right)^\T
+    X = \left(\begin{array}{ccccc}
+        \bvec{x}_1\quad &  & \cdots\quad &  & \bvec{x}_N
+    \end{array}\right)^\T
 \end{eqnarray}
 is
 \begin{eqnarray}\eqlabel{gp-likelihood}
-\ln \mathcal{L} (\bvec{\theta},\,\bvec{\alpha}) =
-\ln{p(\bvec{y}\,|\,{X,\,\bvec{\theta}},\,\bvec{\alpha})} =
+    \ln \mathcal{L} (\bvec{\theta},\,\bvec{\alpha}) =
+    \ln{p(\bvec{y}\,|\,{X,\,\bvec{\theta}},\,\bvec{\alpha})} =
     -\frac{1}{2} {\bvec{r}_\bvec{\theta}}^\T\,{K_\bvec{\alpha}}^{-1}\,
-        \bvec{r}_\bvec{\theta}
+    \bvec{r}_\bvec{\theta}
     -\frac{1}{2}\ln\det K_\bvec{\alpha}
     - \frac{N}{2} \ln{(2\pi)}
 \end{eqnarray}
 where
 \begin{eqnarray}
     \bvec{r}_\bvec{\theta} = \left(\begin{array}{ccccc}
-    y_1 - \mu_\bvec{\theta}(\bvec{x}_1)\quad && \cdots\quad &&
-    y_N - \mu_\bvec{\theta}(\bvec{x}_N)
-\end{array}\right)^\T
+            y_1 - \mu_\bvec{\theta}(\bvec{x}_1)\quad &  & \cdots\quad &  &
+            y_N - \mu_\bvec{\theta}(\bvec{x}_N)
+        \end{array}\right)^\T
 \end{eqnarray}
 is the vector of residuals and the elements of the covariance matrix $K$ are
 given by $[K_\bvec{\alpha}]_{nm} = k_\bvec{\alpha}(\bvec{x}_n,\,\bvec{x}_m)$.
@@ -342,19 +342,19 @@ given by $[K_\bvec{\alpha}]_{nm} = k_\bvec{\alpha}(\bvec{x}_n,\,\bvec{x}_m)$.
 be derived as the generalization of what we astronomers call ``$\chi^2$''
 to include the effects of correlated noise.
 \response{
-A point estimate for the values of the parameters $\bvec{\theta}$ and
-$\bvec{\alpha}$ for a given dataset $(\bvec{y},\,X)$ can be found by
-maximizing \eq{gp-likelihood}~--~\responseb{or the likelihood times a prior for
-a Bayesian estimate}~---~with respect to $\bvec{\theta}$ and $\bvec{\alpha}$
-using a non-linear optimization routine \citep{Nocedal:2006}.}
+    A point estimate for the values of the parameters $\bvec{\theta}$ and
+    $\bvec{\alpha}$ for a given dataset $(\bvec{y},\,X)$ can be found by
+    maximizing \eq{gp-likelihood}~--~\responseb{or the likelihood times a prior for
+        a Bayesian estimate}~---~with respect to $\bvec{\theta}$ and $\bvec{\alpha}$
+    using a non-linear optimization routine \citep{Nocedal:2006}.}
 \responseb{Furthermore, the posterior probability density for $\bvec{\theta}$
-and $\bvec{\alpha}$ can be quantified by multiplying the likelihood by a prior
-$p(\bvec{\theta},\,\bvec{\alpha})$ and using a Markov chain Monte Carlo (MCMC)
-algorithm to sample the joint posterior probability density.}
+    and $\bvec{\alpha}$ can be quantified by multiplying the likelihood by a prior
+    $p(\bvec{\theta},\,\bvec{\alpha})$ and using a Markov chain Monte Carlo (MCMC)
+    algorithm to sample the joint posterior probability density.}
 
 GP models have been widely used across the physical sciences but their
 application is generally limited to small datasets, \response{$N \lesssim
-10^3$}, because the cost of computing the inverse and determinant of a general
+        10^3$}, because the cost of computing the inverse and determinant of a general
 matrix $K_\bvec{\alpha}$ is $\mathcal{O}(N^3)$.
 In other words, this cost is proportional to the cube of the number of data
 points $N$.
@@ -366,31 +366,31 @@ In this case, the use of non-linear optimization or MCMC is no longer
 practical.
 
 \response{This is not a purely academic concern.
-While the cost of directly evaluating the GP likelihood using a tuned linear
-algebra library\footnote{For comparisons throughout this paper, we use the
-Intel Math Kernel Library (\url{https://software.intel.com/en-us/intel-mkl})
-running on a recent Apple MacBook Pro.} with a dataset of $N=1024$
-measurements is less than a tenth of a second, the same calculation with
-$N=8192$ takes over 8~seconds.
-Furthermore, most optimization and sampling routines are iterative, requiring
-many evaluations of this model to perform parameter estimation or inference.
-Existing datasets from astronomical surveys like \kepler\ and \project{K2}
-include tens of thousands of observations for hundreds of thousands of
-targets, and upcoming surveys like \lsst\ are expected to produce thousands or
-tens of thousands of measurements each for billions of astronomical sources
-\citep{Ivezic:2008}.
-Scalable methods will be required if we ever hope to use GP models with these
-datasets.
+    While the cost of directly evaluating the GP likelihood using a tuned linear
+    algebra library\footnote{For comparisons throughout this paper, we use the
+        Intel Math Kernel Library (\url{https://software.intel.com/en-us/intel-mkl})
+        running on a recent Apple MacBook Pro.} with a dataset of $N=1024$
+    measurements is less than a tenth of a second, the same calculation with
+    $N=8192$ takes over 8~seconds.
+    Furthermore, most optimization and sampling routines are iterative, requiring
+    many evaluations of this model to perform parameter estimation or inference.
+    Existing datasets from astronomical surveys like \kepler\ and \project{K2}
+    include tens of thousands of observations for hundreds of thousands of
+    targets, and upcoming surveys like \lsst\ are expected to produce thousands or
+    tens of thousands of measurements each for billions of astronomical sources
+    \citep{Ivezic:2008}.
+    Scalable methods will be required if we ever hope to use GP models with these
+    datasets.
 }
 
 In this paper, we present a method for improving the cubic scaling for some
 use cases.
 We call our method and its implementations \celerite.\footnote{The name
-\celerite\ comes from the French word \foreign{c\'elerit\'e} meaning the speed
-of light in a vacuum.
-\response{Throughout the paper, when referring to the \celeriteterm\ model, we
-typeset \celeriteterm\ in italics and, in reference to the implementation of
-this model, we typeset \celerite\ in sans-serif.}}
+    \celerite\ comes from the French word \foreign{c\'elerit\'e} meaning the speed
+    of light in a vacuum.
+    \response{Throughout the paper, when referring to the \celeriteterm\ model, we
+        typeset \celeriteterm\ in italics and, in reference to the implementation of
+        this model, we typeset \celerite\ in sans-serif.}}
 The \celerite\ method requires using a specific model
 for the covariance $k_\bvec{\alpha}(\bvec{x}_n,\,\bvec{x}_m)$ and, although it
 has some limitations, we demonstrate in subsequent sections that it can
@@ -398,15 +398,15 @@ increase the computational efficiency of many astronomical data analysis
 problems.
 The main limitation of this method is that it can only be applied to
 one-dimensional datasets, where by ``one-dimensional'' we mean that the
- \emph{input coordinates} $\bvec{x}_n$ are scalar, $\bvec{x}_n \equiv
-t_n$.
+\emph{input coordinates} $\bvec{x}_n$ are scalar, $\bvec{x}_n \equiv
+    t_n$.
 We use $t$ as the input coordinate because one-dimensional GPs are often
 applied to time series data but this isn't a real restriction and the
 \celerite\ method can be applied to \emph{any} one-dimensional dataset.
 Furthermore, the covariance function for the \celerite\ method is
 ``stationary''.
 In other words, $k_\bvec{\alpha}(t_n,\,t_m)$ is only a function of $\tau_{nm}
-\equiv |t_n - t_m|$.
+    \equiv |t_n - t_m|$.
 
 \section{The celerite model}\sectlabel{celerite}
 
@@ -414,7 +414,7 @@ To scale GP models to larger datasets, \citet{Rybicki:1995} presented a method
 of computing the first term in \eq{gp-likelihood} in $\mathcal{O}(N)$
 operations when the covariance function is given by
 \begin{eqnarray}\eqlabel{kernel-simple}
-k_\bvec{\alpha}(\tau_{nm}) = \sigma_n^2\,\delta_{nm} + a\,\exp(-c\,\tau_{nm})
+    k_\bvec{\alpha}(\tau_{nm}) = \sigma_n^2\,\delta_{nm} + a\,\exp(-c\,\tau_{nm})
 \end{eqnarray}
 where $\{{\sigma_n}^2\}_{n=1}^N$ are the measurement uncertainties,
 $\delta_{nm}$ is the Kronecker delta, and $\bvec{\alpha} = (a,\,c)$.
@@ -422,30 +422,30 @@ The intuition behind this method is that, for this choice of $k_\bvec{\alpha}$,
 the inverse of $K_\bvec{\alpha}$ is tridiagonal and can be computed
 with a small number of operations for each data point.
 \response{This model has been generalized to arbitrary mixtures of
-exponentials \citep[for example,][]{Kelly:2011}
-\begin{eqnarray}
-k_\bvec{\alpha}(\tau_{nm}) = \sigma_n^2\,\delta_{nm} +
-    \sum_{j=1}^J a_j\,\exp(-c_j\,\tau_{nm}) \quad.
-\end{eqnarray}
-In this case, the inverse is dense but \eq{gp-likelihood} can still be
-evaluated with a scaling of $\mathcal{O}(N\,J^2)$, where $J$ is the number of
-components in the mixture \citep{Kelly:2014,Ambikasaran:2015}.
-In \sect{factor}, we build on previous work \citep{Ambikasaran:2015} to derive
-a faster method with the same $\mathcal{O}(N\,J^2)$ scaling that can be used
-when $k_\bvec{\alpha}(\tau_{nm})$ is positive definite.}
+    exponentials \citep[for example,][]{Kelly:2011}
+    \begin{eqnarray}
+        k_\bvec{\alpha}(\tau_{nm}) = \sigma_n^2\,\delta_{nm} +
+        \sum_{j=1}^J a_j\,\exp(-c_j\,\tau_{nm}) \quad.
+    \end{eqnarray}
+    In this case, the inverse is dense but \eq{gp-likelihood} can still be
+    evaluated with a scaling of $\mathcal{O}(N\,J^2)$, where $J$ is the number of
+    components in the mixture \citep{Kelly:2014,Ambikasaran:2015}.
+    In \sect{factor}, we build on previous work \citep{Ambikasaran:2015} to derive
+    a faster method with the same $\mathcal{O}(N\,J^2)$ scaling that can be used
+    when $k_\bvec{\alpha}(\tau_{nm})$ is positive definite.}
 
 This kernel function can be made even more general by
 introducing complex parameters $a_j \to a_j\pm i\,b_j$ and
 $c_j \to c_j\pm i\,d_j$.
 In this case, the covariance function becomes
 \begin{eqnarray}\eqlabel{celerite-kernel-complex}
-k_\bvec{\alpha}(\tau_{nm}) = \sigma_n^2\,\delta_{nm} +
+    k_\bvec{\alpha}(\tau_{nm}) = \sigma_n^2\,\delta_{nm} +
     \sum_{j=1}^J &&\left[
-    \frac{1}{2}(a_j + i\,b_j)\,\exp\left(-(c_j+i\,d_j)\,\tau_{nm}\right)
+        \frac{1}{2}(a_j + i\,b_j)\,\exp\left(-(c_j+i\,d_j)\,\tau_{nm}\right)
         \right. \nonumber\\
-    &&+\left.
-    \frac{1}{2}(a_j - i\,b_j)\,\exp\left(-(c_j-i\,d_j)\,\tau_{nm}\right)
-\right]
+        &&+\left.
+        \frac{1}{2}(a_j - i\,b_j)\,\exp\left(-(c_j-i\,d_j)\,\tau_{nm}\right)
+        \right]
 \end{eqnarray}
 and, for this function, \eq{gp-likelihood} can still be evaluated with
 $\mathcal{O}(N\,J^2)$ operations.
@@ -457,24 +457,24 @@ By rewriting the exponentials in \eq{celerite-kernel-complex} as sums of sine
 and cosine functions, we can see the autocorrelation structure is defined by a
 mixture of quasiperiodic oscillators
 \begin{eqnarray}\eqlabel{celerite-kernel}
-k_\bvec{\alpha}(\tau_{nm}) = \sigma_n^2\,\delta_{nm} +
+    k_\bvec{\alpha}(\tau_{nm}) = \sigma_n^2\,\delta_{nm} +
     \sum_{j=1}^J &&\left[
-    a_j\,\exp\left(-c_j\,\tau_{nm}\right)\,\cos\left(d_j\,\tau_{nm}\right)
+        a_j\,\exp\left(-c_j\,\tau_{nm}\right)\,\cos\left(d_j\,\tau_{nm}\right)
         \right.\nonumber\\
-    &&+ \left.
-    b_j\,\exp\left(-c_j\,\tau_{nm}\right)\,\sin\left(d_j\,\tau_{nm}\right)
-\right] \quad.
+        &&+ \left.
+        b_j\,\exp\left(-c_j\,\tau_{nm}\right)\,\sin\left(d_j\,\tau_{nm}\right)
+        \right] \quad.
 \end{eqnarray}
 For clarity, we refer to the argument within the sum as a ``\celeriteterm\
 term'' for the remainder of this paper.
 The Fourier transform\footnote{Here and throughout we have defined the Fourier
 transform of the function $f(t)$ as $F(\omega)={(2\,\pi)}^{-1/2}\,
-\int_{-\infty}^\infty f(t)\,e^{i\,\omega\,t}\dd t$.} of this covariance
+    \int_{-\infty}^\infty f(t)\,e^{i\,\omega\,t}\dd t$.} of this covariance
 function is the power spectral density (PSD) of the process and it is given by
 \begin{eqnarray}\eqlabel{celerite-psd}
-S(\omega) = \sum_{j=1}^J \sqrt{\frac{2}{\pi}}
-\frac{(a_j\,c_j+b_j\,d_j)\,({c_j}^2+{d_j}^2)+(a_j\,c_j-b_j\,d_j)\,\omega^2}
-{\omega^4+2\,({c_j}^2-{d_j}^2)\,\omega^2+{({c_j}^2+{d_j}^2)}^2}\quad.
+    S(\omega) = \sum_{j=1}^J \sqrt{\frac{2}{\pi}}
+    \frac{(a_j\,c_j+b_j\,d_j)\,({c_j}^2+{d_j}^2)+(a_j\,c_j-b_j\,d_j)\,\omega^2}
+    {\omega^4+2\,({c_j}^2-{d_j}^2)\,\omega^2+{({c_j}^2+{d_j}^2)}^2}\quad.
 \end{eqnarray}
 The physical interpretation of this model isn't immediately obvious and we
 return to a more general discussion shortly but we start by considering some
@@ -483,15 +483,15 @@ special cases.
 If we set the imaginary amplitude $b_j$ for some component $j$ to zero, that
 term of \eq{celerite-kernel} becomes
 \begin{eqnarray}
-k_j(\tau_{nm}) =
+    k_j(\tau_{nm}) =
     a_j\,\exp\left(-c_j\,\tau_{nm}\right)\,\cos\left(d_j\,\tau_{nm}\right)
 \end{eqnarray}
 and the PSD for this component is
 \begin{eqnarray}\eqlabel{lorentz-psd}
-S_j(\omega) = \frac{1}{\sqrt{2\,\pi}}\,\frac{a_j}{c_j}\,\left[
+    S_j(\omega) = \frac{1}{\sqrt{2\,\pi}}\,\frac{a_j}{c_j}\,\left[
     \frac{1}{1+{\left(\frac{\omega-d_j}{c_j}\right)}^2} +
     \frac{1}{1+{\left(\frac{\omega+d_j}{c_j}\right)}^2}
-\right] \quad.
+    \right] \quad.
 \end{eqnarray}
 This is the sum of two Lorentzian or Cauchy distributions with width $c_j$
 centered on $\omega = \pm d_j$.
@@ -501,27 +501,27 @@ $P_j = 2\,\pi\,{d_j}^{-1}$.
 
 Similarly, setting both $b_j$ and $d_j$ to zero, we get
 \begin{eqnarray}
-k_j(\tau_{nm}) = a_j\,\exp\left(-c_j\,\tau_{nm}\right)
+    k_j(\tau_{nm}) = a_j\,\exp\left(-c_j\,\tau_{nm}\right)
 \end{eqnarray}
 with the PSD
 \begin{eqnarray}
-S_j(\omega) = \sqrt{\frac{2}{\pi}}\,\frac{a_j}{c_j}\,
+    S_j(\omega) = \sqrt{\frac{2}{\pi}}\,\frac{a_j}{c_j}\,
     \frac{1}{1+{\left(\frac{\omega}{c_j}\right)}^2} \quad.
 \end{eqnarray}
 This model is often called a \responseb{``damped random walk'' or}
 Ornstein--Uhlenbeck process \response{\citep[in reference to the classic
-paper,][]{Uhlenbeck:1930}} and this is the kernel that was studied by Rybicki
+        paper,][]{Uhlenbeck:1930}} and this is the kernel that was studied by Rybicki
 \& Press \citep{Rybicki:1992,Rybicki:1995}.
 
 Finally, we note that the product of two terms of the form found inside the
 sum in \eq{celerite-kernel} can also be re-written as a sum with updated
 parameters
 \begin{eqnarray}\eqlabel{product-rule}
-k_j(\tau) \, k_i(\tau) =
+    k_j(\tau) \, k_i(\tau) =
     e^{-\tilde{c}\,\tau}\,[
-        \tilde{a}_+\,\cos(\tilde{d}_+\,\tau) + \tilde{b}_+\,\sin(\tilde{d}_+\,\tau) +
-        \tilde{a}_-\,\cos(\tilde{d}_-\,\tau) + \tilde{b}_-\,\sin(\tilde{d}_-\,\tau)
-    ]
+            \tilde{a}_+\,\cos(\tilde{d}_+\,\tau) + \tilde{b}_+\,\sin(\tilde{d}_+\,\tau) +
+            \tilde{a}_-\,\cos(\tilde{d}_-\,\tau) + \tilde{b}_-\,\sin(\tilde{d}_-\,\tau)
+        ]
 \end{eqnarray}
 where
 \begin{eqnarray}
@@ -561,7 +561,7 @@ stochastically-driven damped simple harmonic oscillator (SHO).
 The differential equation for this system is
 \begin{equation}
     \left[\frac{\dd^2}{\dd t^2} + \frac{\omega_0}{Q}\,\frac{\dd}{\dd t}
-    + \omega_0^2\right]\, y(t) = \epsilon(t)
+        + \omega_0^2\right]\, y(t) = \epsilon(t)
 \end{equation}
 where $\omega_0$ is the frequency of the undamped oscillator, $Q$ is the
 quality factor of the oscillator, and $\epsilon(t)$ is a stochastic driving
@@ -569,42 +569,42 @@ force.
 If $\epsilon(t)$ is white noise, the PSD of this process is
 \citep{Anderson:1990}
 \begin{equation}\eqlabel{sho-psd}
-S(\omega) = \sqrt{\frac{2}{\pi}}\,\frac{S_0\,\omega_0^4}
+    S(\omega) = \sqrt{\frac{2}{\pi}}\,\frac{S_0\,\omega_0^4}
     {(\omega^2-\omega_0^2)^2 + \omega_0^2\omega^2/Q^2}
 \end{equation}
 where $S_0$ is proportional to the power at $\omega = \omega_0$, $S(\omega_0)
-= \sqrt{2/\pi}\,S_0\,Q^2$.
+    = \sqrt{2/\pi}\,S_0\,Q^2$.
 The power spectrum in \eq{sho-psd} matches \eq{celerite-psd} if
 \begin{eqnarray}\eqlabel{sho-complex}
-a_j &=& S_0\,\omega_0\,Q \\
-b_j &=& \frac{S_0\,\omega_0\,Q}{\sqrt{4\,Q^2-1}} \nonumber\\
-c_j &=& \frac{\omega_0}{2\,Q} \nonumber\\
-d_j &=& \frac{\omega_0}{2\,Q} \sqrt{4\,Q^2-1} \quad, \nonumber
+    a_j &=& S_0\,\omega_0\,Q \\
+    b_j &=& \frac{S_0\,\omega_0\,Q}{\sqrt{4\,Q^2-1}} \nonumber\\
+    c_j &=& \frac{\omega_0}{2\,Q} \nonumber\\
+    d_j &=& \frac{\omega_0}{2\,Q} \sqrt{4\,Q^2-1} \quad, \nonumber
 \end{eqnarray}
 for $Q \ge \frac{1}{2}$.
 For $0 < Q \le \frac{1}{2}$, \eq{sho-psd} can be captured by a pair of
 \celeriteterm\
 terms with parameters
 \begin{eqnarray}\eqlabel{sho-real}
-a_{j\pm} &=& \frac{1}{2}\,S_0\,\omega_0\,Q\,\left[ 1 \pm
+    a_{j\pm} &=& \frac{1}{2}\,S_0\,\omega_0\,Q\,\left[ 1 \pm
         \frac{1}{\sqrt{1-4\,Q^2}}\right] \\
-b_{j\pm} &=& 0 \nonumber\\
+    b_{j\pm} &=& 0 \nonumber\\
     c_{j\pm} &=& \frac{\omega_0}{2\,Q}\,\left[1 \mp \sqrt{1-4\,Q^2}\right]
     \nonumber\\
-d_{j\pm} &=& 0 \quad. \nonumber
+    d_{j\pm} &=& 0 \quad. \nonumber
 \end{eqnarray}
 
 For these definitions, the kernel is
 \begin{equation}\eqlabel{sho-kernel}
-k_\mathrm{SHO}(\tau;\,S_0,\,Q,\,\omega_0) =
-S_0\,\omega_0\,Q\,e^{-\frac{\omega_0\,\tau}{2Q}}\,
-\begin{cases}
-    \cosh{(\eta\,\omega_0\,\tau)} +
-        \frac{1}{2\,\eta\,Q}\,\sinh{(\eta\,\omega_0\,\tau)}, & 0 < Q < 1/2\\
-    2\,(1+\omega_0\,\tau), & Q = 1/2\\
-    \cos{(\eta\,\omega_0\,\tau)} +
-        \frac{1}{2\,\eta\,Q} \sin{(\eta\,\omega_0\,\tau)},& 1/2 < Q\\
-\end{cases}
+    k_\mathrm{SHO}(\tau;\,S_0,\,Q,\,\omega_0) =
+    S_0\,\omega_0\,Q\,e^{-\frac{\omega_0\,\tau}{2Q}}\,
+    \begin{cases}
+        \cosh{(\eta\,\omega_0\,\tau)} +
+        \frac{1}{2\,\eta\,Q}\,\sinh{(\eta\,\omega_0\,\tau)}, & 0 < Q < 1/2 \\
+        2\,(1+\omega_0\,\tau),                               & Q = 1/2     \\
+        \cos{(\eta\,\omega_0\,\tau)} +
+        \frac{1}{2\,\eta\,Q} \sin{(\eta\,\omega_0\,\tau)},   & 1/2 < Q     \\
+    \end{cases}
 \end{equation}
 where $\eta = \vert 1-(4\,Q^2)^{-1}\vert^{1/2}$.
 Because of the damping, the characteristic oscillation frequency in this
@@ -614,62 +614,62 @@ frequency of the undamped oscillator, $\omega_0$.
 The power spectrum in \eq{sho-psd} has several limits of physical interest:
 \begin{itemize}
 
-{\item For $Q = 1/\sqrt{2}$, \eq{sho-psd} simplifies to
-\begin{eqnarray}\eqlabel{granulation-psd}
-S(\omega) = \sqrt{\frac{2}{\pi}}\,\frac{S_0}{(\omega/\omega_0)^4+1} \quad.
-\end{eqnarray}
-This functional form is commonly used to model for the background granulation
-noise in asteoreseismic and helioseismic analyses \citep{Harvey:1985, Michel:2009,
-Kallinger:2014}.
-The kernel for this value of $Q$ is
-\begin{equation}
-k(\tau) = S_0\,\omega_0\,e^{-\frac{1}{\sqrt{2}}\,\omega_0\,\tau}\,
-    \cos{\left(\frac{\omega_0\,\tau}{\sqrt{2}}-\frac{\pi}{4}\right)} \quad.
-\end{equation}}
+    {\item For $Q = 1/\sqrt{2}$, \eq{sho-psd} simplifies to
+          \begin{eqnarray}\eqlabel{granulation-psd}
+              S(\omega) = \sqrt{\frac{2}{\pi}}\,\frac{S_0}{(\omega/\omega_0)^4+1} \quad.
+          \end{eqnarray}
+          This functional form is commonly used to model for the background granulation
+          noise in asteoreseismic and helioseismic analyses \citep{Harvey:1985, Michel:2009,
+              Kallinger:2014}.
+          The kernel for this value of $Q$ is
+          \begin{equation}
+              k(\tau) = S_0\,\omega_0\,e^{-\frac{1}{\sqrt{2}}\,\omega_0\,\tau}\,
+              \cos{\left(\frac{\omega_0\,\tau}{\sqrt{2}}-\frac{\pi}{4}\right)} \quad.
+          \end{equation}}
 
-{\item Substituting $Q = 1/2$, \eq{sho-psd} becomes
-\begin{eqnarray}
-S(\omega) =
-    \sqrt{\frac{2}{\pi}}\,\frac{S_0}{\left[(\omega/\omega_0)^2+1\right]^2}
-\end{eqnarray}
-with the corresponding covariance function (using
-\eqalt{celerite-kernel} and \eqalt{sho-real})
-\begin{eqnarray}\eqlabel{approx-matern}
-k(\tau) &=& \lim_{f \to 0}\,
-    \frac{1}{2}\,S_0\,\omega_0\,
-    \left[\left(1+1/f\right)\,e^{-\omega_0\,(1-f)\,\tau} +
-          \left(1-1/f\right)\,e^{-\omega_0\,(1+f)\,\tau}
-    \right] \\
-&=& S_0\,\omega_0\,e^{-\omega_0\,\tau}\,[1+\omega_0\,\tau]
-\end{eqnarray}
-or, equivalently (using \eqalt{celerite-kernel} and \eqalt{sho-complex})
-\begin{eqnarray}\eqlabel{approx-matern2}
-k(\tau) &=& \lim_{f \to 0}\,
-    S_0\,\omega_0\,e^{-\omega_0\,\tau}\,
-    \left[\cos(f\,\tau) + \frac{\omega_0}{f}\,\sin(f\,\tau)\right] \\
-&=& S_0\,\omega_0\,e^{-\omega_0\,\tau}\,[1+\omega_0\,\tau] \quad.
-\end{eqnarray}
-This covariance function is also known as the Mat\'ern-3/2 function
-\citep{Rasmussen:2006}.
-\response{This model cannot be directly evaluated using \celerite\ because,
-as we can see from \eq{sho-complex}, the parameter $b_j$ is infinite for $Q =
-1/2$.
-The limit in \eq{approx-matern2}, however, suggests that an approximate
-Mat\'ern-3/2 covariance can be computed with \celerite\ by using a small value
-of $f$ in \eq{approx-matern2}.
-The required value of $f$ will depend on the specific dataset and the precision
-requirements for the inference, so we encourage users to test this
-approximation in the context of their research before using it.
-}}
+          {\item Substituting $Q = 1/2$, \eq{sho-psd} becomes
+          \begin{eqnarray}
+              S(\omega) =
+              \sqrt{\frac{2}{\pi}}\,\frac{S_0}{\left[(\omega/\omega_0)^2+1\right]^2}
+          \end{eqnarray}
+          with the corresponding covariance function (using
+          \eqalt{celerite-kernel} and \eqalt{sho-real})
+          \begin{eqnarray}\eqlabel{approx-matern}
+              k(\tau) &=& \lim_{f \to 0}\,
+              \frac{1}{2}\,S_0\,\omega_0\,
+              \left[\left(1+1/f\right)\,e^{-\omega_0\,(1-f)\,\tau} +
+              \left(1-1/f\right)\,e^{-\omega_0\,(1+f)\,\tau}
+              \right] \\
+              &=& S_0\,\omega_0\,e^{-\omega_0\,\tau}\,[1+\omega_0\,\tau]
+          \end{eqnarray}
+          or, equivalently (using \eqalt{celerite-kernel} and \eqalt{sho-complex})
+          \begin{eqnarray}\eqlabel{approx-matern2}
+              k(\tau) &=& \lim_{f \to 0}\,
+              S_0\,\omega_0\,e^{-\omega_0\,\tau}\,
+              \left[\cos(f\,\tau) + \frac{\omega_0}{f}\,\sin(f\,\tau)\right] \\
+              &=& S_0\,\omega_0\,e^{-\omega_0\,\tau}\,[1+\omega_0\,\tau] \quad.
+          \end{eqnarray}
+          This covariance function is also known as the Mat\'ern-3/2 function
+          \citep{Rasmussen:2006}.
+          \response{This model cannot be directly evaluated using \celerite\ because,
+              as we can see from \eq{sho-complex}, the parameter $b_j$ is infinite for $Q =
+                  1/2$.
+              The limit in \eq{approx-matern2}, however, suggests that an approximate
+              Mat\'ern-3/2 covariance can be computed with \celerite\ by using a small value
+              of $f$ in \eq{approx-matern2}.
+              The required value of $f$ will depend on the specific dataset and the precision
+              requirements for the inference, so we encourage users to test this
+              approximation in the context of their research before using it.
+          }}
 
-{\item Finally, in the limit of large $Q$, the model approaches a high
-    quality oscillation with frequency $\omega_0$ and covariance function
-\begin{eqnarray}
-k(\tau) \approx
-    S_0\,\omega_0\,Q\,
-    \exp\left(-\frac{\omega_0\,\tau}{2\,Q}\right)\,
-    \cos\left(\omega_0\,\tau\right) \quad.
-\end{eqnarray}}
+          {\item Finally, in the limit of large $Q$, the model approaches a high
+          quality oscillation with frequency $\omega_0$ and covariance function
+          \begin{eqnarray}
+              k(\tau) \approx
+              S_0\,\omega_0\,Q\,
+              \exp\left(-\frac{\omega_0\,\tau}{2\,Q}\right)\,
+              \cos\left(\omega_0\,\tau\right) \quad.
+          \end{eqnarray}}
 
 \end{itemize}
 \Figure{sho} shows a plot of the PSD for these limits and several other values
@@ -693,19 +693,19 @@ measurements in $\mathcal{O}(N)$ operations using the \celeriteterm\ method
 described in the next section.
 
 \begin{figure}[!hptb]
-\begin{center}
-\includegraphics[width=0.95\textwidth]{figures/sho.pdf}
-\caption{(left) The power spectrum of a stochastically-driven simple harmonic
-    oscillator (\eqalt{sho-psd}) plotted for several values of the quality
-    factor $Q$.
-    For comparison, the dashed line shows the Lorentzian function from
-    \eq{lorentz-psd} with $c_j = \omega_0/(2\,Q) = 1/20$ and normalized so that
-    $S(d_j)/S(0) = 100$.
-    (middle) The corresponding autocorrelation functions with the same colors.
-    \response{(right) Three realizations in arbitrary units from each model in
-    the same colors.}
-    \figurelabel{sho}}
-\end{center}
+    \begin{center}
+        \includegraphics[width=0.95\textwidth]{figures/sho.pdf}
+        \caption{(left) The power spectrum of a stochastically-driven simple harmonic
+            oscillator (\eqalt{sho-psd}) plotted for several values of the quality
+            factor $Q$.
+            For comparison, the dashed line shows the Lorentzian function from
+            \eq{lorentz-psd} with $c_j = \omega_0/(2\,Q) = 1/20$ and normalized so that
+            $S(d_j)/S(0) = 100$.
+            (middle) The corresponding autocorrelation functions with the same colors.
+            \response{(right) Three realizations in arbitrary units from each model in
+                the same colors.}
+            \figurelabel{sho}}
+    \end{center}
 \end{figure}
 
 
@@ -727,33 +727,33 @@ Ambikasaran derived a scalable direct solver for any general semiseparable
 matrix and applied this method to \celeriteterm\ models with $b_j = 0$ and
 $d_j = 0$.
 \responseb{The \citet{Ambikasaran:2015} method uses a factorization routine
-that can be applied to general semiseparable matrices.
-In other words, it can be applied to factorize matrices even if they are not
-positive definite.
-While preparing this paper, we generalized this method to include non-zero
-$b_j$ and $d_j$, but all valid GP covariance matrices are symmetric and
-positive definite so we can exploit this constraint to derive a Cholesky
-factorization algorithm.
-It turns out that this algorithm is more than an order of magnitude faster
-than the previously published method when applied to \celeriteterm\ models.
-In this and the following sections, we derive this novel factorization
-algorithm and, in \app{psd}, we discuss methods for ensuring that the
-covariance matrix for a \celeriteterm\ model is positive definite.}
+    that can be applied to general semiseparable matrices.
+    In other words, it can be applied to factorize matrices even if they are not
+    positive definite.
+    While preparing this paper, we generalized this method to include non-zero
+    $b_j$ and $d_j$, but all valid GP covariance matrices are symmetric and
+    positive definite so we can exploit this constraint to derive a Cholesky
+    factorization algorithm.
+    It turns out that this algorithm is more than an order of magnitude faster
+    than the previously published method when applied to \celeriteterm\ models.
+    In this and the following sections, we derive this novel factorization
+    algorithm and, in \app{psd}, we discuss methods for ensuring that the
+    covariance matrix for a \celeriteterm\ model is positive definite.}
 
 To start, we define a rank-$R$ semiseparable matrix as a matrix $K$ where the
 elements can be written as
 \begin{eqnarray}
-K_{n,m} = \left\{\begin{array}{ll}
-    \sum_{r=1}^R U_{n,r}\,V_{m,r} & \mathrm{if}\,m<n \\
-    A_{n,n} & \mathrm{if}\,m=n \\
-    \sum_{r=1}^R U_{m,r}\,V_{n,r} & \mathrm{otherwise}
-\end{array}\right.
+    K_{n,m} = \left\{\begin{array}{ll}
+        \sum_{r=1}^R U_{n,r}\,V_{m,r} & \mathrm{if}\,m<n   \\
+        A_{n,n}                       & \mathrm{if}\,m=n   \\
+        \sum_{r=1}^R U_{m,r}\,V_{n,r} & \mathrm{otherwise}
+    \end{array}\right.
 \end{eqnarray}
 for some $N \times R$-dimensional matrices $U$ and $V$, and an $N \times
-N$-dimensional diagonal matrix $A$.
+    N$-dimensional diagonal matrix $A$.
 This definition can be equivalently written as
 \begin{eqnarray}\eqlabel{semi-sep}
-K = A + \mathrm{tril}(U\,V^\T) + \mathrm{triu}(V\,U^\T)
+    K = A + \mathrm{tril}(U\,V^\T) + \mathrm{triu}(V\,U^\T)
 \end{eqnarray}
 where the $\mathrm{tril}$ function extracts the strict lower triangular
 component of its argument and $\mathrm{triu}$ is the equivalent strict upper
@@ -777,7 +777,7 @@ linear systems of the form $K\,\bvec{z}=\bvec{y}$ for $\bvec{z}$, where $K$ is
 a rank-$R$ semiseparable positive definite matrix.
 These can both be computed using the Cholesky factorization of $K$:
 \begin{eqnarray}
-K = L\,D\,L^\T
+    K = L\,D\,L^\T
 \end{eqnarray}
 where $L$ is a lower triangular matrix with unit diagonal and $D$ is a
 diagonal matrix.
@@ -789,23 +789,23 @@ where $I$ is the identity, $U$ is the matrix from above, and $W$ is an unknown
 $N \times R$ matrix.
 Combining this with \eq{semi-sep}, we find the equation
 \begin{eqnarray}\eqlabel{cholesky}
-A + \mathrm{tril}(U\,V^\T) + \mathrm{triu}(V\,U^\T)
-&=& \left[I + \mathrm{tril} (U\,W^T)\right]\,D\,
+    A + \mathrm{tril}(U\,V^\T) + \mathrm{triu}(V\,U^\T)
+    &=& \left[I + \mathrm{tril} (U\,W^T)\right]\,D\,
     {\left[I + \mathrm{tril} (U\,W^T)\right]}^\T \\
-&=& D + \mathrm{tril}(U\,W^\T)\,D
+    &=& D + \mathrm{tril}(U\,W^\T)\,D
     + D\,\mathrm{triu}(W\,U^\T) \nonumber\\
-&& +\, \mathrm{tril}(U\,W^\T)\,D\,\mathrm{triu}(W\,U^\T) \nonumber
+    && +\, \mathrm{tril}(U\,W^\T)\,D\,\mathrm{triu}(W\,U^\T) \nonumber
 \end{eqnarray}
 that we can solve for $W$.
 Setting each element on the left side of \eq{cholesky} equal to the
 corresponding element on the right side, we derive the following recursion
 relations
 \begin{eqnarray}
-S_{n,j,k} &=& S_{n-1,j,k} + D_{n-1,n-1}\,W_{n-1,j}\,W_{n-1,k} \nonumber\\
-D_{n,n} &=& A_{n,n} -
+    S_{n,j,k} &=& S_{n-1,j,k} + D_{n-1,n-1}\,W_{n-1,j}\,W_{n-1,k} \nonumber\\
+    D_{n,n} &=& A_{n,n} -
     \sum_{j=1}^{R}\sum_{k=1}^{R} U_{n,j}\,S_{n,j,k}\,U_{n,k}
     \nonumber\\
-W_{n,j} &=& \frac{1}{D_{n,n}}\left[ V_{n,j} -
+    W_{n,j} &=& \frac{1}{D_{n,n}}\left[ V_{n,j} -
     \sum_{k=1}^{R}U_{n,k}\,S_{n,j,k} \right]
     \eqlabel{algorithm}
 \end{eqnarray}
@@ -826,7 +826,7 @@ where, since $K$ is positive definite, $D_{n,n}>0$ for all $n$.
 
 The inverse of $K$ can be applied using the relationship
 \begin{eqnarray}
-\bvec{z} = K^{-1}\,\bvec{y} = {(L^\T)}^{-1}\,D^{-1}\,L^{-1}\,\bvec{y} \quad.
+    \bvec{z} = K^{-1}\,\bvec{y} = {(L^\T)}^{-1}\,D^{-1}\,L^{-1}\,\bvec{y} \quad.
 \end{eqnarray}
 First, we solve for $\bvec{z}^\prime = L^{-1}\,\bvec{y}$ using forward
 substitution
@@ -837,8 +837,8 @@ substitution
 where $f_{0,j} = 0$ for all $j$.
 Then, using this result and backward substitution, we compute $\bvec{z}$
 \begin{eqnarray}\eqlabel{bwd}
-g_{n,j} &=& g_{n+1,j} + U_{n+1,j}\,z_{n+1} \nonumber\\
-z_n &=& \frac{z_n^\prime}{D_{n,n}} - \sum_{j=1}^{R} W_{n,j}\,g_{n,j}
+    g_{n,j} &=& g_{n+1,j} + U_{n+1,j}\,z_{n+1} \nonumber\\
+    z_n &=& \frac{z_n^\prime}{D_{n,n}} - \sum_{j=1}^{R} W_{n,j}\,g_{n,j}
 \end{eqnarray}
 where $g_{N+1,j} = 0$ for all $j$.
 The total cost of the forward and backward substitution passes scales as
@@ -865,13 +865,13 @@ $J_\mathrm{complex}$ general terms, the semiseparable rank is only
 $R=J_\mathrm{real} + 2\,J_\mathrm{complex}=2\,J-J_{real}$.}
 where the components of the relevant matrices are
 \begin{eqnarray}\eqlabel{system}
-U_{n,2\,j-1} &=& a_j\,e^{-c_j\,t_n}\,\cos(d_j\,t_n) +
+    U_{n,2\,j-1} &=& a_j\,e^{-c_j\,t_n}\,\cos(d_j\,t_n) +
     b_j\,e^{-c_j\,t_n}\,\sin(d_j\,t_n) \nonumber\\
-U_{n,2\,j} &=& a_j\,e^{-c_j\,t_n}\,\sin(d_j\,t_n) -
+    U_{n,2\,j} &=& a_j\,e^{-c_j\,t_n}\,\sin(d_j\,t_n) -
     b_j\,e^{-c_j\,t_n}\,\cos(d_j\,t_n) \nonumber\\
-V_{m,2\,j-1} &=& e^{c_j\,t_m}\,\cos(d_j\,t_m) \nonumber\\
-V_{m,2\,j} &=& e^{c_j\,t_m}\,\sin(d_j\,t_m) \nonumber\\
-A_{n,n} &=& \sigma_n^2 + \sum_{j=1}^J a_j \quad.
+    V_{m,2\,j-1} &=& e^{c_j\,t_m}\,\cos(d_j\,t_m) \nonumber\\
+    V_{m,2\,j} &=& e^{c_j\,t_m}\,\sin(d_j\,t_m) \nonumber\\
+    A_{n,n} &=& \sigma_n^2 + \sum_{j=1}^J a_j \quad.
 \end{eqnarray}
 A na\"ive implementation of the algorithm in \eq{algorithm} for this system
 will result in numerical overflow and underflow issues in many realistic cases
@@ -883,30 +883,30 @@ from \eq{system}.
 %avoided using a reparameterization.
 We define the following pre-conditioned variables
 \begin{eqnarray}\eqlabel{reparam}
-\tilde{U}_{n,2\,j-1} &=& a_j\,\cos(d_j\,t_n) + b_j\,\sin(d_j\,t_n) \nonumber\\
-\tilde{U}_{n,2\,j} &=& a_j\,\sin(d_j\,t_n) - b_j\,\cos(d_j\,t_n) \nonumber\\
-\tilde{V}_{m,2\,j-1} &=& \cos(d_j\,t_m) \nonumber\\
-\tilde{V}_{m,2\,j} &=& \sin(d_j\,t_m) \nonumber\\
-\tilde{W}_{n,2\,j-1} &=& e^{-c_j\,t_n}\,W_{n,2\,j-1} \nonumber\\
-\tilde{W}_{n,2\,j} &=& e^{-c_j\,t_n}\,W_{n,2\,j}
+    \tilde{U}_{n,2\,j-1} &=& a_j\,\cos(d_j\,t_n) + b_j\,\sin(d_j\,t_n) \nonumber\\
+    \tilde{U}_{n,2\,j} &=& a_j\,\sin(d_j\,t_n) - b_j\,\cos(d_j\,t_n) \nonumber\\
+    \tilde{V}_{m,2\,j-1} &=& \cos(d_j\,t_m) \nonumber\\
+    \tilde{V}_{m,2\,j} &=& \sin(d_j\,t_m) \nonumber\\
+    \tilde{W}_{n,2\,j-1} &=& e^{-c_j\,t_n}\,W_{n,2\,j-1} \nonumber\\
+    \tilde{W}_{n,2\,j} &=& e^{-c_j\,t_n}\,W_{n,2\,j}
 \end{eqnarray}
 and the new set of variables
 \begin{eqnarray}
-\phi_{n,2\,j-1} = \phi_{n,2\,j} = e^{-c_j\,(t_n - t_{n-1})}
+    \phi_{n,2\,j-1} = \phi_{n,2\,j} = e^{-c_j\,(t_n - t_{n-1})}
 \end{eqnarray}
 with the constraint
 \begin{eqnarray}
-\phi_{1,2\,j-1} = \phi_{1,2\,j} = 0 \quad.
+    \phi_{1,2\,j-1} = \phi_{1,2\,j} = 0 \quad.
 \end{eqnarray}
 Using this parameterization, we find the following, numerically stable,
 algorithm to compute the Cholesky factorization of a \celeriteterm\ model
 \begin{eqnarray}\eqlabel{cholesky-factor}
     S_{n,j,k} &=& \phi_{n,j}\,\phi_{n,k}\,\left[S_{n-1,j,k} +
-    D_{n-1,n-1}\,\tilde{W}_{n-1,j}\,\tilde{W}_{n-1,k}\right] \nonumber\\
-D_{n,n} &=& A_{n,n} -
+        D_{n-1,n-1}\,\tilde{W}_{n-1,j}\,\tilde{W}_{n-1,k}\right] \nonumber\\
+    D_{n,n} &=& A_{n,n} -
     \sum_{j=1}^{2\,J}\sum_{k=1}^{2\,J} \tilde{U}_{n,j}\,S_{n,j,k}\,\tilde{U}_{n,k}
     \nonumber\\
-\tilde{W}_{n,j} &=& \frac{1}{D_{n,n}}\left[ \tilde{V}_{n,j} -
+    \tilde{W}_{n,j} &=& \frac{1}{D_{n,n}}\left[ \tilde{V}_{n,j} -
     \sum_{k=1}^{2\,J}\tilde{U}_{n,k}\,S_{n,j,k} \right] \quad.
 \end{eqnarray}
 As before, a single iteration of this algorithm requires $\mathcal{O}(J^2)$
@@ -928,9 +928,9 @@ The forward substitution with the reparameterized variables is
 where $f_{0,j} = 0$ for all $j$, and the backward substitution algorithm
 becomes
 \begin{eqnarray}
-g_{n,j} &=& \phi_{n+1,j}\,\left[g_{n+1,j} +
+    g_{n,j} &=& \phi_{n+1,j}\,\left[g_{n+1,j} +
     \tilde{U}_{n+1,j}\,z_{n+1}\right] \nonumber\\
-z_n &=& \frac{z_n^\prime}{D_{n,n}} - \sum_{j=1}^{2\,J} \tilde{W}_{n,j}\,g_{n,j}
+    z_n &=& \frac{z_n^\prime}{D_{n,n}} - \sum_{j=1}^{2\,J} \tilde{W}_{n,j}\,g_{n,j}
 \end{eqnarray}
 where $g_{N+1,j} = 0$ for all $j$.
 The only differences, when compared to Equations~(\eqref{fwd})
@@ -990,48 +990,48 @@ smallest datasets with many terms, $J \ga 64$ for $N\approx 512$,
 and $J$ increasing with larger $N$.
 
 \begin{figure}[tp]
-\begin{center}
-\includegraphics[width=\textwidth]{figures/error/error.pdf}
-\caption{\emph{(left)} The maximum numerical error introduced by the algorithm
-    described in the text as a function of the number of \celeriteterm\ terms
-    $J$ and data points $N$.
-    Each line corresponds to a different $J$ and the error increases with $J$
-    as shown in the legend.
-    Each point in this figure is the average result across 10 systems with
-    randomly sampled parameters.
-\emph{(right)} The distribution of fractional error on the log determinant of
-    $K$ computed using the algorithm described in the text compared to the
-    algorithm implemented in \project{NumPy} \citep{Van-Der-Walt:2011} for the
-    same systems shown in the left-hand figure.
-    This histogram only includes comparisons for $N \le 2048$ because standard
-    methods become computationally expensive for larger systems.
-    \figurelabel{error}}
-\end{center}
+    \begin{center}
+        \includegraphics[width=\textwidth]{figures/error/error.pdf}
+        \caption{\emph{(left)} The maximum numerical error introduced by the algorithm
+            described in the text as a function of the number of \celeriteterm\ terms
+            $J$ and data points $N$.
+            Each line corresponds to a different $J$ and the error increases with $J$
+            as shown in the legend.
+            Each point in this figure is the average result across 10 systems with
+            randomly sampled parameters.
+            \emph{(right)} The distribution of fractional error on the log determinant of
+            $K$ computed using the algorithm described in the text compared to the
+            algorithm implemented in \project{NumPy} \citep{Van-Der-Walt:2011} for the
+            same systems shown in the left-hand figure.
+            This histogram only includes comparisons for $N \le 2048$ because standard
+            methods become computationally expensive for larger systems.
+            \figurelabel{error}}
+    \end{center}
 \end{figure}
 
 \begin{figure}[tp]
-\begin{center}
-\includegraphics[width=\textwidth]{figures/benchmark_darwin.pdf}
-\caption{A benchmark showing the computational scaling of \celerite\ using the
-    Cholesky factorization routine for rank-$2\,J$ semiseparable matrices as
-    described in the text.
-    \emph{(left)} The cost of computing \eq{gp-likelihood} with a covariance
-    matrix given by \eq{celerite-kernel} as a function of the number of data
-    points $N$.
-    The different lines show the cost for different numbers of terms $J$
-    increasing from bottom to top.
-    To guide the eye, the straight black line without points
-    shows linear scaling in $N$.
-    For comparison, the computational cost for the same model using a general
-    Cholesky factorization routine implemented in the Intel MKL linear algebra
-    package is shown as the dashed black line.
-    \emph{(right)} The same information plotted as a function of $J$ for
-    different values of $N$.
-    Each line shows the scaling for a specific value of $N$ increasing from
-    bottom to top.
-    The black line shows quadratic scaling in $J$.
-    \figurelabel{benchmark}}
-\end{center}
+    \begin{center}
+        \includegraphics[width=\textwidth]{figures/benchmark_darwin.pdf}
+        \caption{A benchmark showing the computational scaling of \celerite\ using the
+            Cholesky factorization routine for rank-$2\,J$ semiseparable matrices as
+            described in the text.
+            \emph{(left)} The cost of computing \eq{gp-likelihood} with a covariance
+            matrix given by \eq{celerite-kernel} as a function of the number of data
+            points $N$.
+            The different lines show the cost for different numbers of terms $J$
+            increasing from bottom to top.
+            To guide the eye, the straight black line without points
+            shows linear scaling in $N$.
+            For comparison, the computational cost for the same model using a general
+            Cholesky factorization routine implemented in the Intel MKL linear algebra
+            package is shown as the dashed black line.
+            \emph{(right)} The same information plotted as a function of $J$ for
+            different values of $N$.
+            Each line shows the scaling for a specific value of $N$ increasing from
+            bottom to top.
+            The black line shows quadratic scaling in $J$.
+            \figurelabel{benchmark}}
+    \end{center}
 \end{figure}
 
 \newpage
@@ -1063,7 +1063,7 @@ Despite the fact that it is less flexible than a general \celeriteterm\
 kernel, we recommend the SHO model in most cases because it is once mean
 square differentiable
 \begin{eqnarray}
-\left.\frac{\dd k_\mathrm{SHO}(\tau)}{\dd \tau}\right|_{\tau=0} = 0 \quad,
+    \left.\frac{\dd k_\mathrm{SHO}(\tau)}{\dd \tau}\right|_{\tau=0} = 0 \quad,
 \end{eqnarray}
 giving smoother functions than the general \celeriteterm\ model that is only
 mean square continuous.
@@ -1073,74 +1073,74 @@ For a similar class of models~--~we return to these below in
 criterion'', such as the Akaike information criterion (AIC) or the Bayesian
 information criterion (BIC), as a model selection metric.}
 \responseb{These criteria are easy to implement and we use the BIC in
-\sect{example2}, but each information criterion comes with caveats that should
-be considered in any application \citep[see, for example,][]{Ivezic:2014}.}
+    \sect{example2}, but each information criterion comes with caveats that should
+    be considered in any application \citep[see, for example,][]{Ivezic:2014}.}
 
 \section{Examples}\sectlabel{examples}
 
 \response{
-To demonstrate the application of \celerite, we use it to perform posterior
-inference in two examples with realistic simulated data and three examples of
-real-world research problems.
-These examples have been chosen to justify the use of \celerite\ for a range
-of research problems, but they are by no means exhaustive.
-These examples are framed in the time domain with a clear bias in favor of
-large homogeneous photometric surveys, but \celerite\ can also be used for
-other one-dimensional problems like, for example, spectroscopy, where
-wavelength~--~instead of time~--~is the independent coordinate \citep[see][for
-a potential application]{Czekala:2017}.
+    To demonstrate the application of \celerite, we use it to perform posterior
+    inference in two examples with realistic simulated data and three examples of
+    real-world research problems.
+    These examples have been chosen to justify the use of \celerite\ for a range
+    of research problems, but they are by no means exhaustive.
+    These examples are framed in the time domain with a clear bias in favor of
+    large homogeneous photometric surveys, but \celerite\ can also be used for
+    other one-dimensional problems like, for example, spectroscopy, where
+    wavelength~--~instead of time~--~is the independent coordinate \citep[see][for
+        a potential application]{Czekala:2017}.
 
-In the first example, we demonstrate that \celerite\ can be used to infer
-the power spectrum of a process when the data are generated from a
-\celeriteterm\ model.
-In the second example, we demonstrate that \celerite\ can be used as an
-effective model even if the true process cannot be represented in the space of
-allowed models.
-This is an interesting example because, when analyzing real data, we rarely
-have any fundamental reason to believe that the data were generated by a GP
-model with a specific kernel.
-Even in these cases, GPs can be useful effective models and \celerite\
-provides computational advantages over other GP methods.
+    In the first example, we demonstrate that \celerite\ can be used to infer
+    the power spectrum of a process when the data are generated from a
+    \celeriteterm\ model.
+    In the second example, we demonstrate that \celerite\ can be used as an
+    effective model even if the true process cannot be represented in the space of
+    allowed models.
+    This is an interesting example because, when analyzing real data, we rarely
+    have any fundamental reason to believe that the data were generated by a GP
+    model with a specific kernel.
+    Even in these cases, GPs can be useful effective models and \celerite\
+    provides computational advantages over other GP methods.
 
-The next three examples show \celerite\ used to infer the properties of stars
-and exoplanets observed by NASA's \kepler\ Mission.
-Each of these examples touches on an active area of research so we limit our
-examples to be qualitative in nature and do not claim that \celerite\ is the
-optimal method, but we hope these examples encourage interested readers to
-investigate the applicability of \celerite\ to their research.}
+    The next three examples show \celerite\ used to infer the properties of stars
+    and exoplanets observed by NASA's \kepler\ Mission.
+    Each of these examples touches on an active area of research so we limit our
+    examples to be qualitative in nature and do not claim that \celerite\ is the
+    optimal method, but we hope these examples encourage interested readers to
+    investigate the applicability of \celerite\ to their research.}
 
 \response{
-In each example, the joint posterior probability density is given by
-\begin{eqnarray}\eqlabel{joint-post}
-p(\bvec{\theta},\,\bvec{\alpha}\,|\,\bvec{y},\,X) \propto
-p(\bvec{y}\,|\,{X,\,\bvec{\theta}},\,\bvec{\alpha})\,
-p(\bvec{\theta},\,\bvec{\alpha})
-\end{eqnarray}
-where $p(\bvec{y}\,|\,{X,\,\bvec{\theta}},\,\bvec{\alpha})$ is the GP
-likelihood defined in \eq{gp-likelihood} and $p(\bvec{\theta},\,\bvec{\alpha})$
-is the joint prior probability density for the parameters.
-We sample each posterior density using MCMC and investigate the performance of
-the model when used to interpret the physical processes that generated the
-data.
-The specific parameters and priors are discussed in detail in each section,
-but we generally assume \responseb{independent} uniform priors with plausibly
-broad support.}
+    In each example, the joint posterior probability density is given by
+    \begin{eqnarray}\eqlabel{joint-post}
+        p(\bvec{\theta},\,\bvec{\alpha}\,|\,\bvec{y},\,X) \propto
+        p(\bvec{y}\,|\,{X,\,\bvec{\theta}},\,\bvec{\alpha})\,
+        p(\bvec{\theta},\,\bvec{\alpha})
+    \end{eqnarray}
+    where $p(\bvec{y}\,|\,{X,\,\bvec{\theta}},\,\bvec{\alpha})$ is the GP
+    likelihood defined in \eq{gp-likelihood} and $p(\bvec{\theta},\,\bvec{\alpha})$
+    is the joint prior probability density for the parameters.
+    We sample each posterior density using MCMC and investigate the performance of
+    the model when used to interpret the physical processes that generated the
+    data.
+    The specific parameters and priors are discussed in detail in each section,
+    but we generally assume \responseb{independent} uniform priors with plausibly
+    broad support.}
 
 \responseb{
-While we do perform a convergence analysis in each case by computing the
-autocorrelation function and integrated autocorrelation time for the target
-chain \citep{Sokal:1989, Goodman:2010}, the usual caveats associated with MCMC
-analysis apply when interpreting these results.
-For example, if there are multiple posterior modes that are not sampled by any
-chain, the autocorrelation analysis will not identify that the sampler has not
-converged.
-There are published sampling algorithms \citep{Gregory:2005, Liu:2008,
-Feroz:2009, Brewer:2011, Kelly:2014} that can, in some cases, be less
-sensitive to multi-modality than the sampler that we use
-\citep{Goodman:2010,Foreman-Mackey:2013}, but a comparison of sampling
-algorithms is beyond the scope of this paper and \celerite\ will also improve
-the computational efficiency of GP models when using the other inference
-algorithms.
+    While we do perform a convergence analysis in each case by computing the
+    autocorrelation function and integrated autocorrelation time for the target
+    chain \citep{Sokal:1989, Goodman:2010}, the usual caveats associated with MCMC
+    analysis apply when interpreting these results.
+    For example, if there are multiple posterior modes that are not sampled by any
+    chain, the autocorrelation analysis will not identify that the sampler has not
+    converged.
+    There are published sampling algorithms \citep{Gregory:2005, Liu:2008,
+        Feroz:2009, Brewer:2011, Kelly:2014} that can, in some cases, be less
+    sensitive to multi-modality than the sampler that we use
+    \citep{Goodman:2010,Foreman-Mackey:2013}, but a comparison of sampling
+    algorithms is beyond the scope of this paper and \celerite\ will also improve
+    the computational efficiency of GP models when using the other inference
+    algorithms.
 }
 
 \subsection{Example 1: Recovery of a celerite process}\sectlabel{example1}
@@ -1149,67 +1149,67 @@ In this first example, we simulate a dataset using a known \celeriteterm\
 process and fit it with \celerite\ to show that valid inferences can be made
 in this idealized case.
 \response{We simulate a small ($N = \exampleindata$) dataset using a GP model
-with a SHO kernel (\eqalt{sho-kernel}) with parameters $S_0 =
-1\,\mathrm{ppm}^2$, $\omega_0 = e^2\,\mathrm{day}^{-1}$, and $Q = e^2$, where
-the units are arbitrarily chosen to simplify the discussion.
-We add further white noise with the amplitude $\sigma_n = 2.5\, \mathrm{ppm}$
-to each data point.
-The simulated data are plotted in the top left panel of
-\Figure{simulated-correct}.
+    with a SHO kernel (\eqalt{sho-kernel}) with parameters $S_0 =
+        1\,\mathrm{ppm}^2$, $\omega_0 = e^2\,\mathrm{day}^{-1}$, and $Q = e^2$, where
+    the units are arbitrarily chosen to simplify the discussion.
+    We add further white noise with the amplitude $\sigma_n = 2.5\, \mathrm{ppm}$
+    to each data point.
+    The simulated data are plotted in the top left panel of
+    \Figure{simulated-correct}.
 
-In this case, when simulating and fitting, we set the mean function
-$\mu_\bvec{\theta}$ to zero~--~this means that the parameter vector
-$\bvec{\theta}$ is empty~--~and the elements of the covariance matrix are
-given by \eq{sho-kernel} with three parameters $\bvec{\alpha} = (S_0,\,
-\omega_0,\,Q)$.
-We choose a proper separable prior for $\bvec{\alpha}$ with log-uniform
-densities for each parameter as listed in Table~\ref{tab:example-1-params}.
+    In this case, when simulating and fitting, we set the mean function
+    $\mu_\bvec{\theta}$ to zero~--~this means that the parameter vector
+    $\bvec{\theta}$ is empty~--~and the elements of the covariance matrix are
+    given by \eq{sho-kernel} with three parameters $\bvec{\alpha} = (S_0,\,
+        \omega_0,\,Q)$.
+    We choose a proper separable prior for $\bvec{\alpha}$ with log-uniform
+    densities for each parameter as listed in Table~\ref{tab:example-1-params}.
 
-To start, we estimate the maximum \emph{a posteriori} (MAP) parameters using
-the \project{L-BFGS-B} non-linear optimization routine \citep{Byrd:1995,
-Zhu:1997} implemented by the \project{SciPy} project \citep{Jones:2001}.
-The top left panel of \Figure{simulated-correct} shows the mean and standard
-deviation of the \responseb{predicted noise-free data distribution from the
-MAP model over-plotted as a blue contour} on the simulated data and the bottom
-panel shows the residuals away from this model.
-Since we are using the correct model to fit the data, it is reassuring that
-the residuals appear qualitatively uncorrelated in this figure.
+    To start, we estimate the maximum \emph{a posteriori} (MAP) parameters using
+    the \project{L-BFGS-B} non-linear optimization routine \citep{Byrd:1995,
+        Zhu:1997} implemented by the \project{SciPy} project \citep{Jones:2001}.
+    The top left panel of \Figure{simulated-correct} shows the mean and standard
+    deviation of the \responseb{predicted noise-free data distribution from the
+        MAP model over-plotted as a blue contour} on the simulated data and the bottom
+    panel shows the residuals away from this model.
+    Since we are using the correct model to fit the data, it is reassuring that
+    the residuals appear qualitatively uncorrelated in this figure.
 
-We then sample the joint posterior probability (\eqalt{joint-post}) using
-\emcee\ \citep{Goodman:2010, Foreman-Mackey:2013}.
-We initialize \exampleinwalkers~walkers\footnote{\responseb{``Walker'' is the
-name given by \citet{Goodman:2010} and \citet{Foreman-Mackey:2013} to each
-parallel MCMC chain in the ensemble sampling algorithm used in \emcee.}} by
-sampling from a three-dimensional isotropic Gaussian centered the on MAP
-parameter vector and with a standard deviation of $10^{-4}$ in each dimension.
-We then run \exampleinburn~steps of burn-in and \exampleinsteps~steps of MCMC.
-To assess convergence, we estimate the integrated autocorrelation time of the
-chain \responseb{averaged across parameters} \citep{Sokal:1989, Goodman:2010}
-and find that the chain results in \exampleineff~effective samples.
+    We then sample the joint posterior probability (\eqalt{joint-post}) using
+    \emcee\ \citep{Goodman:2010, Foreman-Mackey:2013}.
+    We initialize \exampleinwalkers~walkers\footnote{\responseb{``Walker'' is the
+            name given by \citet{Goodman:2010} and \citet{Foreman-Mackey:2013} to each
+            parallel MCMC chain in the ensemble sampling algorithm used in \emcee.}} by
+    sampling from a three-dimensional isotropic Gaussian centered the on MAP
+    parameter vector and with a standard deviation of $10^{-4}$ in each dimension.
+    We then run \exampleinburn~steps of burn-in and \exampleinsteps~steps of MCMC.
+    To assess convergence, we estimate the integrated autocorrelation time of the
+    chain \responseb{averaged across parameters} \citep{Sokal:1989, Goodman:2010}
+    and find that the chain results in \exampleineff~effective samples.
 
-Each sample in the chain corresponds to a model PSD and we compare this
-posterior constraint on the PSD to the true spectral density in the
-right-hand panel of \Figure{simulated-correct}.
-In this figure, the true PSD is plotted as a dashed black line and the
-numerical estimate of the posterior constraint on the PSD is shown as a blue
-contour indicating 68\% of the MCMC samples.
-It is clear from this figure that, as expected, the inference correctly
-reproduces the true PSD.
+    Each sample in the chain corresponds to a model PSD and we compare this
+    posterior constraint on the PSD to the true spectral density in the
+    right-hand panel of \Figure{simulated-correct}.
+    In this figure, the true PSD is plotted as a dashed black line and the
+    numerical estimate of the posterior constraint on the PSD is shown as a blue
+    contour indicating 68\% of the MCMC samples.
+    It is clear from this figure that, as expected, the inference correctly
+    reproduces the true PSD.
 }
 
 \input{figures/simulated/correct-params}
 
 \begin{figure}[!hptb]
-\begin{center}
-\includegraphics[width=0.9\textwidth]{figures/simulated/correct.pdf}
-\caption{(top left) A simulated dataset (black error bars), and MAP
-    model (blue contours).
-    (bottom left) The residuals between the mean predictive model and the data
-    shown in the top left figure.
-    (right) The inferred PSD~--~the blue contours encompass 68\% of the
-    posterior mass~--~compared to the true PSD (dashed black line).
-    \figurelabel{simulated-correct}}
-\end{center}
+    \begin{center}
+        \includegraphics[width=0.9\textwidth]{figures/simulated/correct.pdf}
+        \caption{(top left) A simulated dataset (black error bars), and MAP
+            model (blue contours).
+            (bottom left) The residuals between the mean predictive model and the data
+            shown in the top left figure.
+            (right) The inferred PSD~--~the blue contours encompass 68\% of the
+            posterior mass~--~compared to the true PSD (dashed black line).
+            \figurelabel{simulated-correct}}
+    \end{center}
 \end{figure}
 
 \subsection{Example 2: Inferences with the ``wrong'' model}\sectlabel{example2}
@@ -1223,7 +1223,7 @@ about the physical parameters of the model.
 
 The data are simulated from a quasiperiodic GP with the kernel
 \begin{eqnarray}\eqlabel{sim-wrong-true}
-k_\mathrm{true} (\tau) = A\,
+    k_\mathrm{true} (\tau) = A\,
     \exp\left(-\frac{\tau^2}{2\,\lambda^2}\right)\,
     \cos\left(\frac{2\,\pi\,\tau}{P_\mathrm{true}}\right)
 \end{eqnarray}
@@ -1231,12 +1231,12 @@ where $P_\mathrm{true}$ is the fundamental period of the process.
 This autocorrelation structure corresponds to the power spectrum
 \citep{Wilson:2013}
 \begin{eqnarray}
-S_\mathrm{true} (\omega) = \frac{\lambda\,A}{2}\,\left[
-    \exp\left(-\frac{\lambda^2}{2}\,\left(\omega-
+    S_\mathrm{true} (\omega) = \frac{\lambda\,A}{2}\,\left[
+        \exp\left(-\frac{\lambda^2}{2}\,\left(\omega-
         \frac{2\,\pi}{P_\mathrm{true}}\right)^2\right) +
-    \exp\left(-\frac{\lambda^2}{2}\,\left(\omega+
+        \exp\left(-\frac{\lambda^2}{2}\,\left(\omega+
         \frac{2\,\pi}{P_\mathrm{true}}\right)^2\right)
-\right]
+        \right]
 \end{eqnarray}
 which, for large values of $\omega$, falls off exponentially.
 When compared to \eq{celerite-psd}~--~which, for large $\omega$, goes as
@@ -1246,115 +1246,115 @@ That being said, we demonstrate that robust inferences can be made about
 $P_\mathrm{true}$ even with this effective model.
 
 \response{We generate a realization of a GP model with the kernel given in
-\eq{sim-wrong-true} with $N = \exampleiindata$, $A = 1\,\mathrm{ppm}^2$,
-$\lambda = 5\,\mathrm{day}$, and $P_\mathrm{true} = 1\,\mathrm{day}$.
-We also add white noise with amplitude $\sigma = 0.5\,\mathrm{ppm}$ to each
-data point.
-The top left panel of \Figure{simulated-wrong} shows this simulated dataset.
+    \eq{sim-wrong-true} with $N = \exampleiindata$, $A = 1\,\mathrm{ppm}^2$,
+    $\lambda = 5\,\mathrm{day}$, and $P_\mathrm{true} = 1\,\mathrm{day}$.
+    We also add white noise with amplitude $\sigma = 0.5\,\mathrm{ppm}$ to each
+    data point.
+    The top left panel of \Figure{simulated-wrong} shows this simulated dataset.
 
-We then fit this simulated data using the product of two SHO terms
-(\eqalt{sho-kernel}) where one of the terms has $S_0 = 1$ and $Q =
-1/\sqrt{2}$ fixed.
-The kernel for this model is
-\begin{eqnarray}
-k(\tau) = k_\mathrm{SHO}(\tau;\,S_0,\,Q,\,\omega_1) \,
-    k_\mathrm{SHO}(\tau;\,S_0 = 1,\,Q = 1/\sqrt{2},\,\omega_2)
-\end{eqnarray}
-where $k_\mathrm{SHO}$ is defined in \eq{sho-kernel} and the period of the
-process is $P=2\,\pi/\omega_1$.
-We note that using \eq{product-rule}, the product of two \celeriteterm\ terms
-can also be expressed using \celerite.
+    We then fit this simulated data using the product of two SHO terms
+    (\eqalt{sho-kernel}) where one of the terms has $S_0 = 1$ and $Q =
+        1/\sqrt{2}$ fixed.
+    The kernel for this model is
+    \begin{eqnarray}
+        k(\tau) = k_\mathrm{SHO}(\tau;\,S_0,\,Q,\,\omega_1) \,
+        k_\mathrm{SHO}(\tau;\,S_0 = 1,\,Q = 1/\sqrt{2},\,\omega_2)
+    \end{eqnarray}
+    where $k_\mathrm{SHO}$ is defined in \eq{sho-kernel} and the period of the
+    process is $P=2\,\pi/\omega_1$.
+    We note that using \eq{product-rule}, the product of two \celeriteterm\ terms
+    can also be expressed using \celerite.
 
-We choose this functional form by comparing the Bayesian information criterion
-(BIC) for a set of different models.
-In each model, we take the sum or product of $J$ SHO terms, find the maximum
-likelihood model using \project{L-BFGS-B} and compute the BIC
-\citep{Schwarz:1978}
-\begin{eqnarray}
-\mathrm{BIC} = -2\,\mathcal{L}^* + K\,\log N
-\end{eqnarray}
-where $\mathcal{L}^*$ is the value of the likelihood at maximum, $K$ is the
-number of parameters, and $N$ is the number of data points.
-\Figure{bic} shows the value of the BIC for a set of products and sums of SHO
-terms and the model that we choose has the lowest BIC.
+    We choose this functional form by comparing the Bayesian information criterion
+    (BIC) for a set of different models.
+    In each model, we take the sum or product of $J$ SHO terms, find the maximum
+    likelihood model using \project{L-BFGS-B} and compute the BIC
+    \citep{Schwarz:1978}
+    \begin{eqnarray}
+        \mathrm{BIC} = -2\,\mathcal{L}^* + K\,\log N
+    \end{eqnarray}
+    where $\mathcal{L}^*$ is the value of the likelihood at maximum, $K$ is the
+    number of parameters, and $N$ is the number of data points.
+    \Figure{bic} shows the value of the BIC for a set of products and sums of SHO
+    terms and the model that we choose has the lowest BIC.
 
-As in the previous example, we set the mean function to zero and can,
-therefore, omit the parameters $\bvec{\theta}$.
-Table~\ref{tab:example-2-params} lists the proper log-uniform priors that we
-choose for each parameter in $\bvec{\alpha} =
-(S_0,\,Q,\,\omega_1,\,\omega_2)$.
-These priors, together with the GP likelihood (\eqalt{gp-likelihood}) fully
-specify the posterior probability density.
+    As in the previous example, we set the mean function to zero and can,
+    therefore, omit the parameters $\bvec{\theta}$.
+    Table~\ref{tab:example-2-params} lists the proper log-uniform priors that we
+    choose for each parameter in $\bvec{\alpha} =
+        (S_0,\,Q,\,\omega_1,\,\omega_2)$.
+    These priors, together with the GP likelihood (\eqalt{gp-likelihood}) fully
+    specify the posterior probability density.
 
-As above, we estimate the MAP parameters using \project{L-BFGS-B} and sample
-the posterior probability density using \emcee.
-The top left panel of \Figure{simulated-wrong} shows the conditional mean and
-standard deviation of the MAP model.
-The bottom left panel shows the residuals between the data and this MAP model
-and, even though this GP model is formally ``wrong'', there are no obvious
-correlations in these residuals.
+    As above, we estimate the MAP parameters using \project{L-BFGS-B} and sample
+    the posterior probability density using \emcee.
+    The top left panel of \Figure{simulated-wrong} shows the conditional mean and
+    standard deviation of the MAP model.
+    The bottom left panel shows the residuals between the data and this MAP model
+    and, even though this GP model is formally ``wrong'', there are no obvious
+    correlations in these residuals.
 
-To perform posterior inference, we initialize \exampleiinwalkers~walkers by
-sampling from the 4-dimensional Gaussian centered on the MAP parameters with
-an isotropic standard deviation of $10^{-4}$.
-We then run \exampleiinburn~steps of burn-in and \exampleiinsteps~steps of
-MCMC.
-To estimate the number of independent samples, we estimate the integrated
-autocorrelation time of the chain for the parameter $\omega_1$~--~the
-parameter of primary interest~--~and find \exampleiineff~effective samples.
+    To perform posterior inference, we initialize \exampleiinwalkers~walkers by
+    sampling from the 4-dimensional Gaussian centered on the MAP parameters with
+    an isotropic standard deviation of $10^{-4}$.
+    We then run \exampleiinburn~steps of burn-in and \exampleiinsteps~steps of
+    MCMC.
+    To estimate the number of independent samples, we estimate the integrated
+    autocorrelation time of the chain for the parameter $\omega_1$~--~the
+    parameter of primary interest~--~and find \exampleiineff~effective samples.
 
-For comparison, we run the same number of steps of MCMC to sample the
-``correct'' joint posterior density.
-For this reference inference, we use a GP likelihood with the kernel given by
-\eq{sim-wrong-true} and choose log-uniform priors on each of the
-three parameters $\ln A/\mathrm{ppm}^2 \sim \mathcal{U}(-10,\,10)$,
-$\ln \lambda/\mathrm{day} \sim \mathcal{U}(-10,\,10)$, and
-$\ln P_\mathrm{true}/\mathrm{day} \sim \mathcal{U}(-10,\,10)$.
+    For comparison, we run the same number of steps of MCMC to sample the
+    ``correct'' joint posterior density.
+    For this reference inference, we use a GP likelihood with the kernel given by
+    \eq{sim-wrong-true} and choose log-uniform priors on each of the
+    three parameters $\ln A/\mathrm{ppm}^2 \sim \mathcal{U}(-10,\,10)$,
+    $\ln \lambda/\mathrm{day} \sim \mathcal{U}(-10,\,10)$, and
+    $\ln P_\mathrm{true}/\mathrm{day} \sim \mathcal{U}(-10,\,10)$.
 
-The marginalized posterior inferences of the characteristic period of the
-process are shown in the right panel of \Figure{simulated-wrong}.
-The inference using the correct model is shown as a dashed blue histogram and
-the inference made using the effective model is shown as a solid black
-histogram.
-These inferences are consistent with each other and with the true period used
-for the simulation (shown as a vertical gray line).
-This demonstrates that, in this case, \celerite\ can be used as a
-computationally efficient effective model and hints that this may be true in
-other problems as well.
+    The marginalized posterior inferences of the characteristic period of the
+    process are shown in the right panel of \Figure{simulated-wrong}.
+    The inference using the correct model is shown as a dashed blue histogram and
+    the inference made using the effective model is shown as a solid black
+    histogram.
+    These inferences are consistent with each other and with the true period used
+    for the simulation (shown as a vertical gray line).
+    This demonstrates that, in this case, \celerite\ can be used as a
+    computationally efficient effective model and hints that this may be true in
+    other problems as well.
 }
 
 \input{figures/simulated/wrong-qpo-params}
 
 \begin{figure}[!hptb]
-\begin{center}
-\includegraphics[width=0.9\textwidth]{figures/simulated/wrong-qpo.pdf}
-\caption{(top left) A simulated dataset (black error bars), and MAP
-    model (blue contours).
-    (bottom left) The residuals between the mean predictive model and the data
-    shown in the top left figure.
-    (right) The inferred period of the process. The true period is indicated
-    by the vertical orange line, the posterior inference using the correct
-    model is shown as the blue dashed histogram, and the inference made using
-    the ``wrong'' effective model is shown as the black histogram.
-    \figurelabel{simulated-wrong}}
-\end{center}
+    \begin{center}
+        \includegraphics[width=0.9\textwidth]{figures/simulated/wrong-qpo.pdf}
+        \caption{(top left) A simulated dataset (black error bars), and MAP
+            model (blue contours).
+            (bottom left) The residuals between the mean predictive model and the data
+            shown in the top left figure.
+            (right) The inferred period of the process. The true period is indicated
+            by the vertical orange line, the posterior inference using the correct
+            model is shown as the blue dashed histogram, and the inference made using
+            the ``wrong'' effective model is shown as the black histogram.
+            \figurelabel{simulated-wrong}}
+    \end{center}
 \end{figure}
 
 \begin{figure}[!hptb]
-\begin{center}
-\includegraphics[width=0.5\textwidth]{figures/simulated/bic.pdf}
-\caption{\response{
-    The Bayesian information criterion (BIC) evaluated for the data from
-    \Figure{simulated-wrong} and different kernel choices.
-    The $x$-axis shows the number of terms included in each model.
-    The blue circles show models where the terms have been summed and the
-    orange squares indicate that the model is a product of terms.
-    In the product models, the parameters $S_0$ and $Q$ are held fixed at $1$
-    and $1/\sqrt{2}$ respectively for all but the first term.
-    The dashed black line shows the minium value of the BIC and this
-    corresponds to the model chosen in the text.}
-    \figurelabel{bic}}
-\end{center}
+    \begin{center}
+        \includegraphics[width=0.5\textwidth]{figures/simulated/bic.pdf}
+        \caption{\response{
+                The Bayesian information criterion (BIC) evaluated for the data from
+                \Figure{simulated-wrong} and different kernel choices.
+                The $x$-axis shows the number of terms included in each model.
+                The blue circles show models where the terms have been summed and the
+                orange squares indicate that the model is a product of terms.
+                In the product models, the parameters $S_0$ and $Q$ are held fixed at $1$
+                and $1/\sqrt{2}$ respectively for all but the first term.
+                The dashed black line shows the minium value of the BIC and this
+                corresponds to the model chosen in the text.}
+            \figurelabel{bic}}
+    \end{center}
 \end{figure}
 
 \newpage
@@ -1373,7 +1373,7 @@ quasiperiodic covariance function can be used to make probabilistic
 measurements even with sparsely sampled data \citep{Angus:2017}.
 The covariance function used for this type of analysis has the form
 \begin{eqnarray}\eqlabel{sine2}
-k(\tau) = A\,\exp\left(-\frac{\tau^2}{2\,\ell^2} -
+    k(\tau) = A\,\exp\left(-\frac{\tau^2}{2\,\ell^2} -
     \Gamma\,\sin^2\left(\frac{\pi\,\tau}{P_\mathrm{rot}} \right) \right)
 \end{eqnarray}
 where $P_\mathrm{rot}$ is the rotation period of the star.
@@ -1385,9 +1385,9 @@ it is positive for all values of $\tau$.
 We construct a simple \celeriteterm\ covariance function with similar
 properties as follows
 \begin{eqnarray}\eqlabel{rot-kernel}
-k(\tau) = \frac{B}{2+C}\,e^{-\tau/L}\,\left[
-    \cos\left(\frac{2\,\pi\,\tau}{P_\mathrm{rot}}\right) + (1 + C)
-\right]
+    k(\tau) = \frac{B}{2+C}\,e^{-\tau/L}\,\left[
+        \cos\left(\frac{2\,\pi\,\tau}{P_\mathrm{rot}}\right) + (1 + C)
+        \right]
 \end{eqnarray}
 for $B>0$, $C>0$, and $L>0$.
 The covariance function in \eq{rot-kernel} cannot exactly reproduce \eq{sine2}
@@ -1395,13 +1395,13 @@ but, since \eq{sine2} is only an effective model, \eq{rot-kernel} can be used
 as a drop-in replacement for a significant gain in computational efficiency.
 
 \response{GPs have been used to measure stellar rotation periods for
-individual datasets \citep[for example][]{Littlefair:2017}, but the
-computational cost of traditional GP methods has hindered the industrial
-application to existing surveys like \kepler\ with hundreds of thousands of
-targets.
-The increase in computational efficiency and scalability provided by
-\celerite\ opens the possibility of inferring rotation periods using GPs at
-scale of existing and forthcoming surveys like \kepler, \tess, and \lsst.
+    individual datasets \citep[for example][]{Littlefair:2017}, but the
+    computational cost of traditional GP methods has hindered the industrial
+    application to existing surveys like \kepler\ with hundreds of thousands of
+    targets.
+    The increase in computational efficiency and scalability provided by
+    \celerite\ opens the possibility of inferring rotation periods using GPs at
+    scale of existing and forthcoming surveys like \kepler, \tess, and \lsst.
 }
 
 As a demonstration, we fit a \celeriteterm\ model with a kernel given
@@ -1412,84 +1412,84 @@ applied to \kepler\ data from Quarters 0--16 \citep{Mathur:2014}, covering
 about four years.
 
 \response{We select about 180~days of contiguous observations of
-KIC~1430163 from \kepler.
-This dataset has \exampleiiindata\ measurements and, using a tuned linear
-algebra
-implementation\footnote{We use the Intel Math Kernel Library
-\url{https://software.intel.com/en-us/intel-mkl}}, a
-single evaluation of the likelihood requires over 8~seconds on a modern Intel
-CPU.
-This calculation, using \celerite\ with the model in \eq{rot-kernel}, only
-takes $\sim 1.5\,\mathrm{ms}$~--~a speed-up of more than three orders of
-magnitude per model evaluation. % :) closer to four orders of magnitude!
+    KIC~1430163 from \kepler.
+    This dataset has \exampleiiindata\ measurements and, using a tuned linear
+    algebra
+    implementation\footnote{We use the Intel Math Kernel Library
+        \url{https://software.intel.com/en-us/intel-mkl}}, a
+    single evaluation of the likelihood requires over 8~seconds on a modern Intel
+    CPU.
+    This calculation, using \celerite\ with the model in \eq{rot-kernel}, only
+    takes $\sim 1.5\,\mathrm{ms}$~--~a speed-up of more than three orders of
+    magnitude per model evaluation. % :) closer to four orders of magnitude!
 
-We set the mean function $\mu_\bvec{\theta}$ to zero and the remaining
-parameters $\bvec{\alpha}$ and their priors are listed in
-Table~\ref{tab:example-3-params}.
-As with the earlier examples, we start by estimating the MAP parameters using
-\project{L-BFGS-B} and initialize \exampleiiinwalkers~walkers by sampling from
-an isotropic Gaussian with a standard deviation of $10^{-5}$ centered on the
-MAP parameters.
-The left panels of \Figure{rotation} show a subset of the data used in this
-example and the residuals away from the MAP predictive mean.
+    We set the mean function $\mu_\bvec{\theta}$ to zero and the remaining
+    parameters $\bvec{\alpha}$ and their priors are listed in
+    Table~\ref{tab:example-3-params}.
+    As with the earlier examples, we start by estimating the MAP parameters using
+    \project{L-BFGS-B} and initialize \exampleiiinwalkers~walkers by sampling from
+    an isotropic Gaussian with a standard deviation of $10^{-5}$ centered on the
+    MAP parameters.
+    The left panels of \Figure{rotation} show a subset of the data used in this
+    example and the residuals away from the MAP predictive mean.
 
-We run \exampleiiinburn~steps of burn-in, followed by \exampleiiinsteps~steps
-of MCMC using \emcee.
-We estimate the integrated autocorrelation time of the chain for $\ln
-P_\mathrm{rot}$ and estimate that we have \exampleiiineff\ independent
-samples.
-These samples give a posterior constraint on the period of $P_\mathrm{rot} =
-\rotationperiod$ days and the marginalized posterior distribution for $P$ is
-shown in the right panel of \Figure{rotation}.
-This result is in good agreement with the literature value with smaller
-uncertainties.
-A detailed comparison of GP rotation period measurements and the traditional
-methods is beyond the scope of this paper, but \citet{Angus:2017} demonstrate
-that GP inferences are, at a population level, more reliable than other
-methods.
+    We run \exampleiiinburn~steps of burn-in, followed by \exampleiiinsteps~steps
+    of MCMC using \emcee.
+    We estimate the integrated autocorrelation time of the chain for $\ln
+        P_\mathrm{rot}$ and estimate that we have \exampleiiineff\ independent
+    samples.
+    These samples give a posterior constraint on the period of $P_\mathrm{rot} =
+        \rotationperiod$ days and the marginalized posterior distribution for $P$ is
+    shown in the right panel of \Figure{rotation}.
+    This result is in good agreement with the literature value with smaller
+    uncertainties.
+    A detailed comparison of GP rotation period measurements and the traditional
+    methods is beyond the scope of this paper, but \citet{Angus:2017} demonstrate
+    that GP inferences are, at a population level, more reliable than other
+    methods.
 
-The total computational cost for this inference using \celerite\ is about
-4~CPU-minutes.
-By contrast, the same inference using a general but optimized Cholesky
-factorization routine would require nearly 400~CPU-hours.
-This speed-up enables probabilistic measurement of rotation periods using
-existing data from \project{K2} and forthcoming surveys like \tess\ and \lsst\
-where this inference will need to be run for at least hundreds of thousands of
-stars.
+    The total computational cost for this inference using \celerite\ is about
+    4~CPU-minutes.
+    By contrast, the same inference using a general but optimized Cholesky
+    factorization routine would require nearly 400~CPU-hours.
+    This speed-up enables probabilistic measurement of rotation periods using
+    existing data from \project{K2} and forthcoming surveys like \tess\ and \lsst\
+    where this inference will need to be run for at least hundreds of thousands of
+    stars.
 }
 
 \input{figures/rotation/rotation-params}
 
 \begin{figure}[hptb]
-\begin{center}
-\includegraphics[width=0.9\textwidth]{figures/rotation/rotation.pdf}
-\caption{Inferred constraints on a quasiperiodic GP model using the covariance
-    function in \eq{rot-kernel} and two quarters of \kepler\ data.
-(top left) The \kepler\ data (black points) and the MAP model
-    prediction (blue curve) for a 60~day subset of the data used.
-    The solid blue line shows the predictive mean and the blue contours show
-    the predictive standard deviation.
-(bottom left) The residuals between the mean predictive model and the data
-    shown in the top left figure.
-(right) The posterior constraint on the rotation period of KIC~1430163 using
-    the dataset and model from \Figure{rotation}.
-    The period is the parameter $P_\mathrm{rot}$ in \eq{rot-kernel} and this
-    figure shows the posterior distribution marginalized over all other
-    nuisance parameters in \eq{rot-kernel}.
-    \responseb{The 1-$\sigma$ error bar on this measurement is indicated with
-    vertical dashed lines.}
-    This result is consistent with the
-    published rotation period made using the full
-    \kepler\ baseline shown as a vertical gray line \citep{Mathur:2014}.
-    \figurelabel{rotation}}
-\end{center}
+    \begin{center}
+        \includegraphics[width=0.9\textwidth]{figures/rotation/rotation.pdf}
+        \caption{Inferred constraints on a quasiperiodic GP model using the covariance
+            function in \eq{rot-kernel} and two quarters of \kepler\ data.
+            (top left) The \kepler\ data (black points) and the MAP model
+            prediction (blue curve) for a 60~day subset of the data used.
+            The solid blue line shows the predictive mean and the blue contours show
+            the predictive standard deviation.
+            (bottom left) The residuals between the mean predictive model and the data
+            shown in the top left figure.
+            (right) The posterior constraint on the rotation period of KIC~1430163 using
+            the dataset and model from \Figure{rotation}.
+            The period is the parameter $P_\mathrm{rot}$ in \eq{rot-kernel} and this
+            figure shows the posterior distribution marginalized over all other
+            nuisance parameters in \eq{rot-kernel}.
+            \responseb{The 1-$\sigma$ error bar on this measurement is indicated with
+                vertical dashed lines.}
+            This result is consistent with the
+            published rotation period made using the full
+            \kepler\ baseline shown as a vertical gray line \citep{Mathur:2014}.
+            \figurelabel{rotation}}
+    \end{center}
 \end{figure}
 
 \subsection{Example 4: Asteroseismic oscillations}\sectlabel{astero}
 
 The asteroseismic oscillations of thousands of stars were measured using light
 curves from the \kepler\ Mission \citep{Gilliland:2010, Huber:2011,
-Chaplin:2011, Chaplin:2013, Stello:2013} and asteroseismology is a key science
+    Chaplin:2011, Chaplin:2013, Stello:2013} and asteroseismology is a key science
 driver for many of the upcoming large scale photometric surveys
 \citep{Campante:2016, Rauer:2014, Gould:2015}.
 Most asteroseismic analyses have been limited to high signal-to-noise
@@ -1500,7 +1500,7 @@ constraints on physical parameters and they instead rely on population-level
 bootstrap uncertainty estimates \citep{Huber:2009}.
 More sophisticated methods that compute the likelihood function in the time
 domain scale poorly to large survey datasets \citep{Brewer:2009,
-Corsaro:2014}.
+    Corsaro:2014}.
 
 \celerite\ alleviates these problems by providing a physically motivated
 probabilistic model that can be evaluated efficiently even for large datasets.
@@ -1511,8 +1511,8 @@ observed time series using a GP where the PSD is a sum of terms given by
 \eq{sho-psd}.
 This gives us a method for computing the likelihood function for the
 parameters of the physical model (for example, $\nu_\mathrm{max}$ and $\Delta
-\nu$, or other more fundamental parameters) \emph{conditioned on the observed
-time series} in $\mathcal{O}(N)$ operations.
+    \nu$, or other more fundamental parameters) \emph{conditioned on the observed
+    time series} in $\mathcal{O}(N)$ operations.
 In other words, \celerite\ provides a computationally efficient framework that
 can be combined with physically-motivated models of stars and numerical
 inference methods to make rigorous probabilistic measurements of asteroseismic
@@ -1529,23 +1529,23 @@ $S_g$ and $\omega_g$.
 The remaining  7 terms are given by \eq{sho-psd} where $Q$ is a nuisance
 parameter shared between terms and the frequencies are given by
 \begin{eqnarray}
-\omega_{0,\,j} = 2\,\pi\,(\nu_\mathrm{max} + j\,\Delta\nu + \epsilon)
+    \omega_{0,\,j} = 2\,\pi\,(\nu_\mathrm{max} + j\,\Delta\nu + \epsilon)
 \end{eqnarray}
 and the amplitudes are given by
 \begin{eqnarray}
-S_{0,\,j} =
+    S_{0,\,j} =
     \frac{A}{Q^2}\,\exp\left(-\frac{[j\,\Delta\nu + \epsilon]^2}{2\,W^2}\right)
 \end{eqnarray}
 where $j$ is an integer running from $-3$ to 3 and $\epsilon$, $A$, and $W$
 are shared nuisance parameters.
 \response{Finally, we also fit for the amplitude of the white noise by adding
-a parameter $\sigma$ in quadrature with the uncertainties given for the
-\kepler\ observations.
-All of these parameters and their chosen priors are listed in
-Table~\ref{tab:example-4-params}.
-As before, these priors are all log-uniform except for $\epsilon$ where we use
-a zero-mean normal prior with a broad variance of $1~\mathrm{day}^2$ to break
-the degeneracy between $\nu_\mathrm{max}$ and $\epsilon$.
+    a parameter $\sigma$ in quadrature with the uncertainties given for the
+    \kepler\ observations.
+    All of these parameters and their chosen priors are listed in
+    Table~\ref{tab:example-4-params}.
+    As before, these priors are all log-uniform except for $\epsilon$ where we use
+    a zero-mean normal prior with a broad variance of $1~\mathrm{day}^2$ to break
+    the degeneracy between $\nu_\mathrm{max}$ and $\epsilon$.
 }
 To build a more realistic model, this prescription could be extended to
 include more angular modes, or $\nu_\mathrm{max}$ and $\Delta \nu$ could be
@@ -1577,144 +1577,144 @@ we can neglect the $\ell = 1$ modes and the model proposed above will be an
 effective model for the combined signal from the $\ell = 0$ and 2 modes.
 
 \response{For this demonstration, we randomly select a month-long segment of
-PDC \kepler\ data \citep{Stumpe:2012, Smith:2012}.
-Unlike the previous examples, the posterior distribution is sharply
-multimodal and na\"ively maximizing the posterior using \project{L-BFGS-B} is
-not practical.
-Instead, we start by estimating the initial values for $\nu_\mathrm{max}$ and
-$\Delta\nu$ using only the month-long subset of data and following the
-standard procedure described by \citet{Huber:2009}.
-We then run a set of \project{L-BFGS-B} optimizations with values of
-$\nu_\mathrm{max}$ selected in logarithmic grid centered on our initial
-estimate of $\nu_\mathrm{max}$ and initial values of $\Delta\nu$ computed
-using the empirical relationship between these two quantities
-\citep{Stello:2009}.
-This initialization procedure is sufficient for this example, but the general
-application of this method will require a more sophisticated prescription.
+    PDC \kepler\ data \citep{Stumpe:2012, Smith:2012}.
+    Unlike the previous examples, the posterior distribution is sharply
+    multimodal and na\"ively maximizing the posterior using \project{L-BFGS-B} is
+    not practical.
+    Instead, we start by estimating the initial values for $\nu_\mathrm{max}$ and
+    $\Delta\nu$ using only the month-long subset of data and following the
+    standard procedure described by \citet{Huber:2009}.
+    We then run a set of \project{L-BFGS-B} optimizations with values of
+    $\nu_\mathrm{max}$ selected in logarithmic grid centered on our initial
+    estimate of $\nu_\mathrm{max}$ and initial values of $\Delta\nu$ computed
+    using the empirical relationship between these two quantities
+    \citep{Stello:2009}.
+    This initialization procedure is sufficient for this example, but the general
+    application of this method will require a more sophisticated prescription.
 
-\Figure{astero} shows a 10~day subset of the dataset used for this example.
-The MAP model is overplotted on these data and the residuals away from the
-mean prediction of this model are shown in the bottom panel of
-\Figure{astero}.
-There is no obvious structure in these residuals, lending some credibility to
-the model specification.
+    \Figure{astero} shows a 10~day subset of the dataset used for this example.
+    The MAP model is overplotted on these data and the residuals away from the
+    mean prediction of this model are shown in the bottom panel of
+    \Figure{astero}.
+    There is no obvious structure in these residuals, lending some credibility to
+    the model specification.
 
-We initialize \exampleivnwalkers~walkers by sampling from an isotropic
-Gaussian centered on the MAP parameters (the full set of parameters and their
-priors are listed in Table~\ref{tab:example-4-params}), run
-\exampleivnburn~steps of burn-in, and run \exampleivnsteps~steps of MCMC using
-\emcee.
-We estimate the mean autocorrelation time for the chains of
-$\ln\nu_\mathrm{max}$ and $\ln\Delta\nu$ and find \exampleivneff\ effective
-samples from the marginalized posterior density.
-\Figure{astero-corner} shows the marginalized density for $\nu_\mathrm{max}$
-and $\Delta\nu$ compared to the results from the literature.
-This result is consistent within the published error bars and the posterior
-constraints are tighter than the published results.
-The top two panels of \Figure{astero_psd} show the Lomb-Scargle periodogram
-\citep{VanderPlas:2017} estimator for the power spectrum based on the full
-4~years of \kepler\ data and the month-long subset used in our analysis.
-The bottom panel of \Figure{astero_psd} shows the posterior inference of the
-PSD using the \celerite\ and the model described here.
-Despite only using one month of data, the \celerite\ inference captures the
-salient features of the power spectrum and it is qualitatively consistent with
-the standard estimator applied to the full baseline.
-All asteroseismic analyses are known to have substantial systematic and
-method-dependent uncertainties \citep{Verner:2011} so further experiments
-would be needed to fully assess the reliability of this specific model.
+    We initialize \exampleivnwalkers~walkers by sampling from an isotropic
+    Gaussian centered on the MAP parameters (the full set of parameters and their
+    priors are listed in Table~\ref{tab:example-4-params}), run
+    \exampleivnburn~steps of burn-in, and run \exampleivnsteps~steps of MCMC using
+    \emcee.
+    We estimate the mean autocorrelation time for the chains of
+    $\ln\nu_\mathrm{max}$ and $\ln\Delta\nu$ and find \exampleivneff\ effective
+    samples from the marginalized posterior density.
+    \Figure{astero-corner} shows the marginalized density for $\nu_\mathrm{max}$
+    and $\Delta\nu$ compared to the results from the literature.
+    This result is consistent within the published error bars and the posterior
+    constraints are tighter than the published results.
+    The top two panels of \Figure{astero_psd} show the Lomb-Scargle periodogram
+    \citep{VanderPlas:2017} estimator for the power spectrum based on the full
+    4~years of \kepler\ data and the month-long subset used in our analysis.
+    The bottom panel of \Figure{astero_psd} shows the posterior inference of the
+    PSD using the \celerite\ and the model described here.
+    Despite only using one month of data, the \celerite\ inference captures the
+    salient features of the power spectrum and it is qualitatively consistent with
+    the standard estimator applied to the full baseline.
+    All asteroseismic analyses are known to have substantial systematic and
+    method-dependent uncertainties \citep{Verner:2011} so further experiments
+    would be needed to fully assess the reliability of this specific model.
 
-\responseb{For this example, about 10~CPU minutes were required to run the
-MCMC.}
-This is more computationally intensive than traditional methods of measuring
-asteroseismic oscillations, but it is much cheaper than the same analysis
-using a general direct GP solver.
-For comparison, we estimate that repeating this analysis using a general
-Cholesky factorization implemented as part of a tuned linear algebra
-library\footnote{We use the Intel Math Kernel Library
-\url{https://software.intel.com/en-us/intel-mkl}} would require about 15~CPU
-hours.
-An in-depth discussion of the benefits of rigorous probabilistic inference of
-asteroseismic parameters in the time domain is beyond the scope of this paper,
-but we hope to revisit this opportunity in the future.
+    \responseb{For this example, about 10~CPU minutes were required to run the
+        MCMC.}
+    This is more computationally intensive than traditional methods of measuring
+    asteroseismic oscillations, but it is much cheaper than the same analysis
+    using a general direct GP solver.
+    For comparison, we estimate that repeating this analysis using a general
+    Cholesky factorization implemented as part of a tuned linear algebra
+    library\footnote{We use the Intel Math Kernel Library
+        \url{https://software.intel.com/en-us/intel-mkl}} would require about 15~CPU
+    hours.
+    An in-depth discussion of the benefits of rigorous probabilistic inference of
+    asteroseismic parameters in the time domain is beyond the scope of this paper,
+    but we hope to revisit this opportunity in the future.
 }
 
 \input{figures/astero/astero-params}
 
 \begin{figure}[!hptb]
-\begin{center}
-\includegraphics[width=0.5\textwidth]{figures/astero/astero.pdf}
-\caption{
-\response{
-(top) The \kepler\ data (black points) and the MAP model
-    prediction (blue curve) for a 10~day subset of the month-long dataset that
-    was used for the fit.
-    The solid blue line shows the predictive mean and the blue contours show
-    the predictive standard deviation.
-(bottom) The residuals between the mean predictive model and the data
-    shown in the top figure.
-}
-    \figurelabel{astero}}
-\end{center}
+    \begin{center}
+        \includegraphics[width=0.5\textwidth]{figures/astero/astero.pdf}
+        \caption{
+            \response{
+                (top) The \kepler\ data (black points) and the MAP model
+                prediction (blue curve) for a 10~day subset of the month-long dataset that
+                was used for the fit.
+                The solid blue line shows the predictive mean and the blue contours show
+                the predictive standard deviation.
+                (bottom) The residuals between the mean predictive model and the data
+                shown in the top figure.
+            }
+            \figurelabel{astero}}
+    \end{center}
 \end{figure}
 
 \begin{figure}[!p]
-\begin{center}
-\includegraphics[width=0.8\textwidth]{figures/astero/astero-corner.pdf}
-\caption{The probabilistic constraints on $\nu_\mathrm{max}$ and $\Delta \nu$
-    from the inference shown in \Figure{astero} compared to the published
-    value (\responseb{blue error bars}) based on several years of \kepler\
-    observations \citep{Pinsonneault:2014}.
-    The two-dimensional contours show the 0.5-, 1-, 1.5, and 2-sigma credible
-    regions in the marginalized planes and the histograms along the diagonal
-    show the marginalized posterior for each parameter.
-    \figurelabel{astero-corner}}
-\end{center}
+    \begin{center}
+        \includegraphics[width=0.8\textwidth]{figures/astero/astero-corner.pdf}
+        \caption{The probabilistic constraints on $\nu_\mathrm{max}$ and $\Delta \nu$
+            from the inference shown in \Figure{astero} compared to the published
+            value (\responseb{blue error bars}) based on several years of \kepler\
+            observations \citep{Pinsonneault:2014}.
+            The two-dimensional contours show the 0.5-, 1-, 1.5, and 2-sigma credible
+            regions in the marginalized planes and the histograms along the diagonal
+            show the marginalized posterior for each parameter.
+            \figurelabel{astero-corner}}
+    \end{center}
 \end{figure}
 
 \begin{figure}[!p]
-\begin{center}
-\includegraphics[width=0.9\textwidth]{figures/astero/astero-comp.pdf}
-\caption{A comparison between the Lomb-Scargle estimator of the PSD and the
-posterior inference of the PSD as a mixture of stochastically-driven simple
-harmonic oscillators.
-(top) The periodogram of the \kepler\ light curve for KIC~11615890 computed
-    on the full four year baseline of the mission. The orange line shows a
-    smoothed periodogram and the blue line indicates the level of the
-    measurement uncertainties.
-(middle) The same periodogram computed using about a month of data.
-(bottom) The power spectrum inferred using the mixture of SHOs model described
-    in the text and only one month of \kepler\ data.
-    The black line shows the median of posterior PSD and the gray contours
-    show the 68\% credible region.
-    \figurelabel{astero_psd}}
-\end{center}
+    \begin{center}
+        \includegraphics[width=0.9\textwidth]{figures/astero/astero-comp.pdf}
+        \caption{A comparison between the Lomb-Scargle estimator of the PSD and the
+            posterior inference of the PSD as a mixture of stochastically-driven simple
+            harmonic oscillators.
+            (top) The periodogram of the \kepler\ light curve for KIC~11615890 computed
+            on the full four year baseline of the mission. The orange line shows a
+            smoothed periodogram and the blue line indicates the level of the
+            measurement uncertainties.
+            (middle) The same periodogram computed using about a month of data.
+            (bottom) The power spectrum inferred using the mixture of SHOs model described
+            in the text and only one month of \kepler\ data.
+            The black line shows the median of posterior PSD and the gray contours
+            show the 68\% credible region.
+            \figurelabel{astero_psd}}
+    \end{center}
 \end{figure}
 
 \newpage
 \subsection{Example 5: Exoplanet transit fitting}\sectlabel{transit}
 
 \response{
-This example is different from all the previous examples~--~both simulated and
-real~--~because, in this case, do not set the mean function $\mu_\bvec{\theta}$
-to zero.
-Instead, we make inferences about $\mu_\bvec{\theta}$ because it is a
-physically significant function and the parameters are fundamental properties
-of the system.
-This is an example using real data~--~because we use the light curve from
-\sect{rotation}~--~but we multiply these data by a simulated transiting
-exoplanet model with known parameters.
-This allows us to show that we can recover the true parameters of the planet
-even when the transit signal is superimposed on the real variability of a
-star.
+    This example is different from all the previous examples~--~both simulated and
+    real~--~because, in this case, do not set the mean function $\mu_\bvec{\theta}$
+    to zero.
+    Instead, we make inferences about $\mu_\bvec{\theta}$ because it is a
+    physically significant function and the parameters are fundamental properties
+    of the system.
+    This is an example using real data~--~because we use the light curve from
+    \sect{rotation}~--~but we multiply these data by a simulated transiting
+    exoplanet model with known parameters.
+    This allows us to show that we can recover the true parameters of the planet
+    even when the transit signal is superimposed on the real variability of a
+    star.
 }
 GP modeling has been used extensively for this purpose throughout the
 exoplanet literature \citep[for example][]{Dawson:2014, Barclay:2015,
-Evans:2015, Foreman-Mackey:2016b, Grunblatt:2016}.
+    Evans:2015, Foreman-Mackey:2016b, Grunblatt:2016}.
 
 In \eq{gp-likelihood} the physical parameters of the exoplanet are called
 $\bvec{\theta}$ and, in this example, the mean function $\mu_\bvec{\theta}(t)$
 is a limb-darkened transit light curve \citep{Mandel:2002,
-Foreman-Mackey:2016a} and the parameters $\bvec{\theta}$ are the orbital
+    Foreman-Mackey:2016a} and the parameters $\bvec{\theta}$ are the orbital
 period $P_\mathrm{orb}$, the transit duration $T$, the phase or epoch $t_0$,
 the impact parameter $b$, the radius of the planet in units of the stellar
 radius $R_P/R_\star$, the baseline relative flux of the light curve $f_0$, and
@@ -1725,100 +1725,100 @@ with a kernel given by \eq{rot-kernel} and fit for the parameters of the
 exoplanet $\bvec{\theta}$ and the stellar variability $\bvec{\alpha}$
 simultaneously.
 \response{The full set of parameters $\bvec{\alpha}$ and $\bvec{\theta}$ are
-listed in Table~\ref{tab:example-5-params} along with their priors and the
-true values for $\bvec{\theta}$.}
+    listed in Table~\ref{tab:example-5-params} along with their priors and the
+    true values for $\bvec{\theta}$.}
 
 \response{ We take a 20~day segment of the \kepler\ light curve for
-KIC~1430163 ($N = \examplevndata$) and multiply it by a simulated transit
-model with the parameters listed in Table~\ref{tab:example-5-params}.
-Using these data, we maximize the joint posterior defined by the likelihood in
-\eq{gp-likelihood} and the priors in Table~\ref{tab:example-5-params} using
-\project{L-BFGS-B} for all the parameters $\bvec{\alpha}$ and $\bvec{\theta}$
-simultaneously.
-The top panel of \Figure{transit-ml} shows the data including the simulated
-transit as black points with the MAP model prediction over-plotted in blue.
-The bottom panel of \Figure{transit-ml} shows the ``de-trended'' light curve
-where the MAP model has been subtracted and the MAP mean model
-$\mu_\bvec{\theta}$ has been added back in.
-For comparison, the transit model is over-plotted in the bottom panel of
-\Figure{transit-ml} and we see no obvious correlations in the residuals.
+    KIC~1430163 ($N = \examplevndata$) and multiply it by a simulated transit
+    model with the parameters listed in Table~\ref{tab:example-5-params}.
+    Using these data, we maximize the joint posterior defined by the likelihood in
+    \eq{gp-likelihood} and the priors in Table~\ref{tab:example-5-params} using
+    \project{L-BFGS-B} for all the parameters $\bvec{\alpha}$ and $\bvec{\theta}$
+    simultaneously.
+    The top panel of \Figure{transit-ml} shows the data including the simulated
+    transit as black points with the MAP model prediction over-plotted in blue.
+    The bottom panel of \Figure{transit-ml} shows the ``de-trended'' light curve
+    where the MAP model has been subtracted and the MAP mean model
+    $\mu_\bvec{\theta}$ has been added back in.
+    For comparison, the transit model is over-plotted in the bottom panel of
+    \Figure{transit-ml} and we see no obvious correlations in the residuals.
 
-Sampling \examplevnwalkers~walkers from an isotropic Gaussian centered on the
-MAP parameters, we run \examplevnburn~steps of burn-in and
-\examplevnsteps~steps of production MCMC using \emcee.
-We estimate the integrated autocorrelation time for the $\ln(P_\mathrm{orb})$
-chain and find \examplevneff~effective samples across the full chain.
-\Figure{transit-corner} shows the marginalized posterior constraints on the
-physical properties of the planet compared to the true values.
-Even though the \celeriteterm\ representation of the stellar variability is
-only an effective model, the inferred distributions for the physical
-properties of the planet $\bvec{\theta}$ are consistent with the true values.
-This promising result suggests that \celerite\ can be used as an effective
-model for transit inference for a significant gain in computational
-tractability.
-Even for this example with small $N$, the cost of computing the likelihood
-using \celerite\ is nearly two orders of magnitude faster than the same
-computation using a general direct solver.
+    Sampling \examplevnwalkers~walkers from an isotropic Gaussian centered on the
+    MAP parameters, we run \examplevnburn~steps of burn-in and
+    \examplevnsteps~steps of production MCMC using \emcee.
+    We estimate the integrated autocorrelation time for the $\ln(P_\mathrm{orb})$
+    chain and find \examplevneff~effective samples across the full chain.
+    \Figure{transit-corner} shows the marginalized posterior constraints on the
+    physical properties of the planet compared to the true values.
+    Even though the \celeriteterm\ representation of the stellar variability is
+    only an effective model, the inferred distributions for the physical
+    properties of the planet $\bvec{\theta}$ are consistent with the true values.
+    This promising result suggests that \celerite\ can be used as an effective
+    model for transit inference for a significant gain in computational
+    tractability.
+    Even for this example with small $N$, the cost of computing the likelihood
+    using \celerite\ is nearly two orders of magnitude faster than the same
+    computation using a general direct solver.
 }
 
 \input{figures/transit/transit-params-edited}
 
 \begin{figure}[!hptb]
-\begin{center}
-\includegraphics[width=\textwidth]{figures/transit/transit-ml.pdf}
-    \caption{\emph{(top)} A month-long segment of \kepler\ light curve for
-    KIC~1430163 with a synthetic transit model injected (black points) and the
-    MAP model for the stellar variability
-    (blue line).
-    \emph{(bottom)} The MAP ``de-trending'' of the data in
-    the top panel.
-    In this panel, the MAP model for the stellar variability
-    has been subtracted to leave only the transits.
-    The de-trended light curve is shown by black error bars and the MAP
-    transit model is shown as a blue line.
-    \figurelabel{transit-ml}}
-\end{center}
+    \begin{center}
+        \includegraphics[width=\textwidth]{figures/transit/transit-ml.pdf}
+        \caption{\emph{(top)} A month-long segment of \kepler\ light curve for
+            KIC~1430163 with a synthetic transit model injected (black points) and the
+            MAP model for the stellar variability
+            (blue line).
+            \emph{(bottom)} The MAP ``de-trending'' of the data in
+            the top panel.
+            In this panel, the MAP model for the stellar variability
+            has been subtracted to leave only the transits.
+            The de-trended light curve is shown by black error bars and the MAP
+            transit model is shown as a blue line.
+            \figurelabel{transit-ml}}
+    \end{center}
 \end{figure}
 
 \begin{figure}[!p]
-\begin{center}
-\includegraphics[width=\textwidth]{figures/transit/transit-corner.pdf}
-\caption{The marginalized posterior constraints on the physical parameters of
-    the planet transit in the light curve shown in the top panel of
-    \Figure{transit-ml}.
-    The two-dimensional contours show the 0.5-, 1-, 1.5, and 2-sigma credible
-    regions in the marginalized planes and the histograms along the diagonal
-    show the marginalized posterior for each parameter.
-    The true values used in the simulation are indicated by blue lines.
-    For each parameter, the inference is consistent with the true value.
-    \figurelabel{transit-corner}}
-\end{center}
+    \begin{center}
+        \includegraphics[width=\textwidth]{figures/transit/transit-corner.pdf}
+        \caption{The marginalized posterior constraints on the physical parameters of
+            the planet transit in the light curve shown in the top panel of
+            \Figure{transit-ml}.
+            The two-dimensional contours show the 0.5-, 1-, 1.5, and 2-sigma credible
+            regions in the marginalized planes and the histograms along the diagonal
+            show the marginalized posterior for each parameter.
+            The true values used in the simulation are indicated by blue lines.
+            For each parameter, the inference is consistent with the true value.
+            \figurelabel{transit-corner}}
+    \end{center}
 \end{figure}
 
 \subsection{Summary}
 
 \response{In the previous subsections, we demonstrate five potential use
-cases for \celerite.
-These examples span a range of data sizes and model complexities, and the last
-three are based on active areas of research with immediate real-world
-applicability.
-The sizes of these datasets are modest on the scale of some existing and
-forthcoming survey datasets because we designed the experiments to be easily
-reproducible but, even in these cases, the inferences made here would be
-intractable without substantial computational investment.
+    cases for \celerite.
+    These examples span a range of data sizes and model complexities, and the last
+    three are based on active areas of research with immediate real-world
+    applicability.
+    The sizes of these datasets are modest on the scale of some existing and
+    forthcoming survey datasets because we designed the experiments to be easily
+    reproducible but, even in these cases, the inferences made here would be
+    intractable without substantial computational investment.
 
-Table~\ref{tab:example-stats} lists the specifications of each example.
-In this table, we list the computational cost required for a single likelihood
-evaluation using a general Cholesky factorization and the cost of computing
-the same likelihood using \celerite.
-Combining this with the total number of model evaluations required to run the
-MCMC algorithm to convergence (this number is also listed in
-Table~\ref{tab:example-stats}), we can estimate the total CPU time required in
-each case.
-While the exact computational requirements for any problem also depend on the
-choice of inference algorithm and the specific precision requirements, this
-table provides a rough estimate of what to expect for projects at these
-scales.
+    Table~\ref{tab:example-stats} lists the specifications of each example.
+    In this table, we list the computational cost required for a single likelihood
+    evaluation using a general Cholesky factorization and the cost of computing
+    the same likelihood using \celerite.
+    Combining this with the total number of model evaluations required to run the
+    MCMC algorithm to convergence (this number is also listed in
+    Table~\ref{tab:example-stats}), we can estimate the total CPU time required in
+    each case.
+    While the exact computational requirements for any problem also depend on the
+    choice of inference algorithm and the specific precision requirements, this
+    table provides a rough estimate of what to expect for projects at these
+    scales.
 }
 
 \input{figures/example-stats}
@@ -1841,12 +1841,12 @@ function for a CARMA model can be solved in $\mathcal{O}(N\,J^2)$ using a
 Kalman filter \citep{Kelly:2014}.
 The kernel function for a CARMA$(J,\,K)$ model is
 \begin{eqnarray}\eqlabel{carma-kernel}
-k_\mathrm{CARMA}(\tau) = \sum_{j=1}^{2\,J} A_j\,\exp\,(r_j\,\tau)
+    k_\mathrm{CARMA}(\tau) = \sum_{j=1}^{J} A_j\,\exp\,(r_j\,\tau)
 \end{eqnarray}
 where
 \begin{eqnarray}\eqlabel{carma-coeff}
-A_j = \sigma^2 \,\frac{\left[\sum_{k=0}^K\beta_k\,{(r_j)}^k\right]\,
-    \left[\sum_{k=0}^K\beta_k\,{(-r_j)}^k\right]}
+    A_j = \sigma^2 \,\frac{\left[\sum_{k=0}^K\beta_k\,{(r_j)}^k\right]\,
+        \left[\sum_{k=0}^K\beta_k\,{(-r_j)}^k\right]}
     {-2\,\mathrm{Re}(r_j)\,\prod_{k=1,\,k \ne j}^{J}(r_k-r_j)({r_k}^*+r_j)}
 \end{eqnarray}
 and $\sigma$, $\{r_j\}_{j=1}^{J}$ and $\{\beta_k\}_{k=1}^K$ are parameters
@@ -1855,9 +1855,9 @@ Comparing \eq{carma-kernel} to \eq{celerite-kernel-complex}, we can see that
 every CARMA model corresponds to an equivalent \celeriteterm\ model and the
 parameters $a_j$, $b_j$, $c_j$, and $d_j$ can be easily computed
 analytically.\footnote{\responseb{Each CARMA term with complex parameters
-$A_j$ and $r_j$ corresponds to a \celeriteterm\ term with parameters $a_j =
-2\,\mathrm{Re}(A_j)$, $b_j = 2\,\mathrm{Im}(A_j)$, $c_j = -\mathrm{Re}(r_j)$,
-and $d_j = -\mathrm{Im}(r_j)$.}}
+        $A_j$ and $r_j$ corresponds to a \celeriteterm\ term with parameters $a_j =
+            2\,\mathrm{Re}(A_j)$, $b_j = 2\,\mathrm{Im}(A_j)$, $c_j = -\mathrm{Re}(r_j)$,
+        and $d_j = -\mathrm{Im}(r_j)$.}}
 The inverse statement is not as simple.
 In practice, this means that \celerite\ could be trivially used to compute any
 CARMA model.
@@ -1865,48 +1865,48 @@ Using the CARMA solver to compute a \celeriteterm\ model, however, requires
 solving \eq{carma-coeff} numerically for a given set of $\{A_j\}_{j=1}^J$.
 
 \response{
-The computational scaling of CARMA models is also $\mathcal{O}(N\,J^2)$ using
-the Kalman filter method \citep{Kelly:2014}, but we find that, in practice,
-this method is more computationally expensive than \celerite, but it has a
-smaller memory footprint.
-\Figure{benchmark-carma} shows the scaling of the Kalman filter solver for the
-systems shown in \Figure{benchmark}.
-Comparing these figures, we find that the Kalman filter solver is slower than
-\celerite\ for all the systems we tested with an average difference of about
-an order of magnitude.
+    The computational scaling of CARMA models is also $\mathcal{O}(N\,J^2)$ using
+    the Kalman filter method \citep{Kelly:2014}, but we find that, in practice,
+    this method is more computationally expensive than \celerite, but it has a
+    smaller memory footprint.
+    \Figure{benchmark-carma} shows the scaling of the Kalman filter solver for the
+    systems shown in \Figure{benchmark}.
+    Comparing these figures, we find that the Kalman filter solver is slower than
+    \celerite\ for all the systems we tested with an average difference of about
+    an order of magnitude.
 
-Another benefit of \celerite\ compared to Kalman filter solvers is the fact
-that it is an algebraic solver for the relevant matrix equations instead of
-an algorithm to directly compute \eq{gp-likelihood}.
-This means that the inverse covariance matrix $K^{-1}$ can be applied to
-general vectors and matrices in $\mathcal{O}(N)$, while reusing the
-factorization.
-This is a crucial feature when GP models are combined with linear regression
-\citep[for example][]{Luger:2017}.
+    Another benefit of \celerite\ compared to Kalman filter solvers is the fact
+    that it is an algebraic solver for the relevant matrix equations instead of
+    an algorithm to directly compute \eq{gp-likelihood}.
+    This means that the inverse covariance matrix $K^{-1}$ can be applied to
+    general vectors and matrices in $\mathcal{O}(N)$, while reusing the
+    factorization.
+    This is a crucial feature when GP models are combined with linear regression
+    \citep[for example][]{Luger:2017}.
 }
 
 \begin{figure}[tp]
-\begin{center}
-\includegraphics[width=\textwidth]{figures/benchmark_darwin_carma.pdf}
-\caption{\response{The same as \Figure{benchmark}, but using an optimized
-    \project{C++} implementation of the Kalman filter method developed by
-    \citet{Kelly:2014}.
-    Comparing this figure to \Figure{benchmark}, we see that \celerite\ is
-    about an order of magnitude faster in all cases.
-    \emph{(left)} The cost of computing \eq{gp-likelihood} with a covariance
-    matrix given by \eq{celerite-kernel} as a function of the number of data
-    points $N$.
-    The different lines show the cost for different numbers of terms $J$
-    increasing from bottom to top.
-    To guide the eye, the straight black line without points
-    shows linear scaling in $N$.
-    \emph{(right)} The same information plotted as a function of $J$ for
-    different values of $N$.
-    Each line shows the scaling for a specific value of $N$ increasing from
-    bottom to top.
-    The black line shows quadratic scaling in $J$.}
-    \figurelabel{benchmark-carma}}
-\end{center}
+    \begin{center}
+        \includegraphics[width=\textwidth]{figures/benchmark_darwin_carma.pdf}
+        \caption{\response{The same as \Figure{benchmark}, but using an optimized
+                \project{C++} implementation of the Kalman filter method developed by
+                \citet{Kelly:2014}.
+                Comparing this figure to \Figure{benchmark}, we see that \celerite\ is
+                about an order of magnitude faster in all cases.
+                \emph{(left)} The cost of computing \eq{gp-likelihood} with a covariance
+                matrix given by \eq{celerite-kernel} as a function of the number of data
+                points $N$.
+                The different lines show the cost for different numbers of terms $J$
+                increasing from bottom to top.
+                To guide the eye, the straight black line without points
+                shows linear scaling in $N$.
+                \emph{(right)} The same information plotted as a function of $J$ for
+                different values of $N$.
+                Each line shows the scaling for a specific value of $N$ increasing from
+                bottom to top.
+                The black line shows quadratic scaling in $J$.}
+            \figurelabel{benchmark-carma}}
+    \end{center}
 \end{figure}
 
 Another popular GP method uses the fact that, in the limit of evenly-spaced
@@ -1963,7 +1963,7 @@ predictions and it is interesting to consider how this could be applied to
 \celeriteterm\ models.
 
 Many other approximate methods for scaling GP inference exist \citep[see, for
-example,][and references therein]{Wilson:2015a} and we make no attempt to make
+    example,][and references therein]{Wilson:2015a} and we make no attempt to make
 our discussion exhaustive.
 The key takeaway here is that \celerite\ provides an \emph{exact} method for
 GP inference for a specific class of one-dimensional kernel functions.
@@ -1995,8 +1995,8 @@ Our background is in studying transiting exoplanets, a field which has only
 recently begun to adopt GP methods for analyzing the noise in stellar light
 curves and radial velocity datasets when detecting or characterizing
 transiting planets \citep[for example,][]{Carter:2009, Gibson:2012,
-Haywood:2014, Barclay:2015, Evans:2015, Rajpaul:2015, Aigrain:2016,
-Foreman-Mackey:2016b, Grunblatt:2016, Luger:2016}.
+    Haywood:2014, Barclay:2015, Evans:2015, Rajpaul:2015, Aigrain:2016,
+    Foreman-Mackey:2016b, Grunblatt:2016, Luger:2016}.
 All of these analyses have been limited to small datasets or restrictive
 kernel choices, but \celerite\ weakens these requirements by providing a
 scalable method for computing the likelihood and a physical motivation for the
@@ -2031,7 +2031,7 @@ quantification of its uncertainties.
 A mixture of \celeriteterm\ terms can be used to perform non-parametric
 probabilistic inference of the power spectrum despite unevenly-spaced data
 with heteroscedastic noise \citep[see][for examples of this
-procedure]{Wilson:2013, Kelly:2014}.
+    procedure]{Wilson:2013, Kelly:2014}.
 This type of analysis will be limited by the quadratic scaling of \celerite\
 with the number of terms $J$, but this limits existing methods as well
 \citep{Kelly:2014}.
@@ -2041,7 +2041,7 @@ applicable.
 In particular, the restriction to one-dimensional problems is significant.
 There are many examples of multidimensional GP modeling the astrophysics
 literature \citep[recent examples from the field of exoplanet characterization
-include][]{Haywood:2014, Rajpaul:2015, Aigrain:2016}, where \celerite\ cannot
+    include][]{Haywood:2014, Rajpaul:2015, Aigrain:2016}, where \celerite\ cannot
 be used to speed up the analysis.
 It is plausible that an extension can be derived to tackle some
 multidimensional problems with the right structure~--~simultaneous parallel
@@ -2055,7 +2055,7 @@ source software package that implements the method and all of the examples
 discussed in these pages.
 This software is available on GitHub
 \url{https://github.com/dfm/celerite}\footnote{This version of the paper was
-generated with git commit \texttt{\githash} (\gitdate).} and
+    generated with git commit \texttt{\githash} (\gitdate).} and
 \dataset[Zenodo]{https://doi.org/10.5281/zenodo.806847}, and it is made
 available under the MIT license.
 
@@ -2073,7 +2073,7 @@ Jake VanderPlas, and
 Andrew Gordon Wilson
 for helpful discussions informing the ideas and code presented here.
 \response{We would also like to thank the anonymous referee for thorough and
-constructive feedback that greatly improved the paper.}
+    constructive feedback that greatly improved the paper.}
 
 This work was performed in part under contract with the Jet Propulsion
 Laboratory (JPL) funded by NASA through the Sagan Fellowship Program executed
@@ -2103,17 +2103,17 @@ for Astronomy \citep{Astropy-Collaboration:2013}.
 
 \facility{Kepler}
 \software{%
-     \project{AstroPy} \citep{Astropy-Collaboration:2013},
-     \project{corner.py} \citep{Foreman-Mackey:2016},
-     \project{Eigen} \citep{Guennebaud:2010},
-     \project{emcee} \citep{Foreman-Mackey:2013},
-     \project{george} \citep{Ambikasaran:2016},
-     \project{Julia} \citep{Bezanzon:2012},
-     \project{LAPACK} \citep{Anderson:1999},
-     \project{matplotlib} \citep{Hunter:2007},
-     \project{numpy} \citep{Van-Der-Walt:2011},
-     \project{transit} \citep{Foreman-Mackey:2016a},
-     \project{scipy} \citep{Jones:2001}.
+    \project{AstroPy} \citep{Astropy-Collaboration:2013},
+    \project{corner.py} \citep{Foreman-Mackey:2016},
+    \project{Eigen} \citep{Guennebaud:2010},
+    \project{emcee} \citep{Foreman-Mackey:2013},
+    \project{george} \citep{Ambikasaran:2016},
+    \project{Julia} \citep{Bezanzon:2012},
+    \project{LAPACK} \citep{Anderson:1999},
+    \project{matplotlib} \citep{Hunter:2007},
+    \project{numpy} \citep{Van-Der-Walt:2011},
+    \project{transit} \citep{Foreman-Mackey:2016a},
+    \project{scipy} \citep{Jones:2001}.
 }
 
 \vspace{5ex}
@@ -2124,7 +2124,7 @@ for Astronomy \citep{Astropy-Collaboration:2013}.
 For a GP kernel to be valid, it must produce a positive definite covariance
 matrix for all input coordinates.
 For stationary kernels, this is equivalent~--~by Bochner's theorem \citep[see
-section 4.2.1 in][]{Rasmussen:2006}~--~to requiring that the kernel be the
+    section 4.2.1 in][]{Rasmussen:2006}~--~to requiring that the kernel be the
 Fourier transform of a positive finite measure.
 This means that the power spectrum of a positive definite kernel must be
 positive for all frequencies.
@@ -2135,8 +2135,8 @@ series, it must be non-negative.
 Using \eq{celerite-psd}, we find that for a single \celeriteterm\ term, this
 requirement is met when
 \begin{eqnarray}\eqlabel{psd-req}
-\frac{(a_j\,c_j+b_j\,d_j)\,({c_j}^2+{d_j}^2)+(a_j\,c_j-b_j\,d_j)\,\omega^2}
-{\omega^4+2\,({c_j}^2-{d_j}^2)\,\omega^2+{({c_j}^2+{d_j}^2)}^2} > 0 \quad.
+    \frac{(a_j\,c_j+b_j\,d_j)\,({c_j}^2+{d_j}^2)+(a_j\,c_j-b_j\,d_j)\,\omega^2}
+    {\omega^4+2\,({c_j}^2-{d_j}^2)\,\omega^2+{({c_j}^2+{d_j}^2)}^2} > 0 \quad.
 \end{eqnarray}
 The denominator is positive for all $c_j \ne 0$ and it can be shown that, when
 $c_j=0$, \eq{psd-req} is satisfied for all $\omega \ne d_j$ where the power is
@@ -2145,8 +2145,8 @@ Therefore, when $c_j \ne 0$, we require that the numerator is positive for all
 $\omega$.
 This requirement can also be written as
 \begin{eqnarray}
-a_j\,c_j > -b_j\,d_j \\
-a_j\,c_j > b_j\,d_j \quad.
+    a_j\,c_j > -b_j\,d_j \\
+    a_j\,c_j > b_j\,d_j \quad.
 \end{eqnarray}
 Furthermore, we can see that $a_j$ must be positive since $k(0) = a_j$ should
 should be positive and, similarly, by requiring the covariance to be finite at
@@ -2157,10 +2157,10 @@ Combining these results, we find the constraint
 \end{eqnarray}
 
 \response{The constraint for $J > 1$ is more complicated so, in most cases, we
-require that each term is positive definite using this relationship and use
-the fact that a product of sum of positive definite kernels will also be
-positive definite \citep{Rasmussen:2006} to show that the full model is
-positive.}
+    require that each term is positive definite using this relationship and use
+    the fact that a product of sum of positive definite kernels will also be
+    positive definite \citep{Rasmussen:2006} to show that the full model is
+    positive.}
 However, in the case of $J$ general \celeriteterm\ terms, we can check for
 negative values of the PSD by solving for the roots of the power spectrum;
 if there are any real, positive roots, then the power-spectrum goes negative
@@ -2168,19 +2168,19 @@ if there are any real, positive roots, then the power-spectrum goes negative
 We rewrite the power spectrum, \eqalt{celerite-psd}), abbreviating with
 $z = \omega^2$:
 \begin{equation}
-S(\omega)=  \sum_{j=1}^J \frac{q_j\,z + r_j}{z^2+s_j\,z + t_j} = 0
+    S(\omega)=  \sum_{j=1}^J \frac{q_j\,z + r_j}{z^2+s_j\,z + t_j} = 0
 \end{equation}
 where
 \begin{eqnarray}
-q_j &=& a_j\,c_j-b_j\,d_j\\
-r_j &=& (d_j^2+c_j^2)(b_j\,d_j+a_j\,c_j)\\
-s_j &=& 2(c_j^2-d_j^2)\\
-t_j &=& (c_j^2+d_j^2)^2.
+    q_j &=& a_j\,c_j-b_j\,d_j\\
+    r_j &=& (d_j^2+c_j^2)(b_j\,d_j+a_j\,c_j)\\
+    s_j &=& 2(c_j^2-d_j^2)\\
+    t_j &=& (c_j^2+d_j^2)^2.
 \end{eqnarray}
 The denominators of each term are positive, so we can multiply through by
 $\prod_j \left(z^2+s_jz + t_j\right)$ to find
 \begin{equation}
-Q_0(z) = \sum_{j=1}^J (q_j z + r_j)\prod_{k \ne j}\left(z^2+s_kz +
+    Q_0(z) = \sum_{j=1}^J (q_j z + r_j)\prod_{k \ne j}\left(z^2+s_kz +
     t_k\right) = 0\quad,
 \end{equation}
 which is a polynomial with order $2\,(J-1)+1$.
@@ -2192,7 +2192,7 @@ $(0,\,\infty]$.
 We first construct $Q_0(z)$ and its derivative $Q_1(z) = {Q_0}^\prime(z)$,
 and then loop from $k=2$ to $k=2\,(J-1)+1$, computing
 \begin{eqnarray}
-Q_k(z) = -{\rm rem}(Q_{k-2},\,Q_{k-1})
+    Q_k(z) = -{\rm rem}(Q_{k-2},\,Q_{k-1})
 \end{eqnarray}
 where the function ${\rm rem}(p,\,q)$ is the remainder polynomial after
 dividing $p(z)$ by $q(z)$.
@@ -2236,15 +2236,15 @@ with the Cholesky factorization.
 To avoid these errors, we derive the following numerically stable algorithm
 for computing the dot product of a \celeriteterm\ covariance matrix
 \begin{eqnarray}
-\bvec{y} = K\,\bvec{z}
+    \bvec{y} = K\,\bvec{z}
 \end{eqnarray}
 using the semiseparable representation for $K$ defined in \eqalt{reparam}:
 \begin{eqnarray}
-f^+_{n,j} &=& \phi_{n+1,j}\,\left[f^+_{n+1,j} +
+    f^+_{n,j} &=& \phi_{n+1,j}\,\left[f^+_{n+1,j} +
     \tilde{U}_{n,j}\,z_{n+1}\right] \\
-f^-_{n,j} &=& \phi_{n,j}\,\left[f^-_{n-1,j} +
+    f^-_{n,j} &=& \phi_{n,j}\,\left[f^-_{n-1,j} +
     \tilde{V}_{n-1,j}\,z_{n-1}\right] \\
-y_n &=& A_{n,n}\,z_n + \sum_{j=1}^{2\,J} \left[ \tilde{V}_{n,j} f^+_{n,j} +
+    y_n &=& A_{n,n}\,z_n + \sum_{j=1}^{2\,J} \left[ \tilde{V}_{n,j} f^+_{n,j} +
     \tilde U_{n-1,j} f^-_{n,j}\right] \quad,
 \end{eqnarray}
 where $f^+_{N,j} = 0$ and $f^-_{1,j} = 0$.
@@ -2257,14 +2257,14 @@ $n=N-1,\,\ldots,\,1$ to compute $f^+$~--~with a scaling of $\mathcal{O}(N\,J)$.
 To sample a dataset $\bvec{y}$ from a GP model for fixed parameters
 $\bvec{\theta}$ and $\bvec{\alpha}$, we must compute
 \begin{equation} \eqlabel{sim}
-\bvec{y} = \bvec{\mu}_\bvec{\theta}(\bvec{t})+
+    \bvec{y} = \bvec{\mu}_\bvec{\theta}(\bvec{t})+
     K_\bvec{\alpha}^{1/2}\,\bvec{q}
 \end{equation}
 where $\bvec{\mu}_\bvec{\theta}(\bvec{t})$ is the mean function evaluated at
 the input coordinates $\bvec{t}$, $\bvec{q}$ is a vector of draws from the
 unit normal $q_i \sim \mathcal{N}(0,\,1)$, and
 \begin{eqnarray}
-K_\bvec{\alpha} = K_\bvec{\alpha}^{1/2} \,
+    K_\bvec{\alpha} = K_\bvec{\alpha}^{1/2} \,
     {\left(K_\bvec{\alpha}^{1/2}\right)}^T\quad.
 \end{eqnarray}
 For a general matrix $K_\bvec{\alpha}$, the cost of this operation scales as
@@ -2276,9 +2276,9 @@ Cholesky factor that we derived in \sect{cholesky} to compute the dot product
 Using the notation from \sect{scalable}, the algorithm to compute this dot
 product is
 \begin{eqnarray}
-f_{n,j} &=& \phi_{n,j}\,\left[f_{n-1,j} + \tilde{W}_{n-1,j}\,
+    f_{n,j} &=& \phi_{n,j}\,\left[f_{n-1,j} + \tilde{W}_{n-1,j}\,
     \sqrt{D_{n-1,n-1}}\,q_{n-1}\right]\\
-y_n &=& \sqrt{D_{n,n}}\,q_n + \sum_{j=1}^{2\,J} \tilde{U}_{n,j}\,f_{n,j}
+    y_n &=& \sqrt{D_{n,n}}\,q_n + \sum_{j=1}^{2\,J} \tilde{U}_{n,j}\,f_{n,j}
 \end{eqnarray}
 where $f_{1,j} = 0$ for all $j$.
 This scalable algorithm is useful for generating large simulated
@@ -2290,21 +2290,21 @@ predictive checks.
 
 The predictive distribution of a GP at a vector of $M$ input coordinates
 \begin{eqnarray}
-\bvec{y}^* = \left(\begin{array}{ccccc}
-    t_1^*\quad && \cdots\quad && t_M^*
-\end{array}\right)^\T
+    \bvec{y}^* = \left(\begin{array}{ccccc}
+            t_1^*\quad &  & \cdots\quad &  & t_M^*
+        \end{array}\right)^\T
 \end{eqnarray}
 conditioned on a dataset $(\bvec{t},\,\bvec{y})$ and GP
 parameters $(\bvec{\theta},\,\bvec{\alpha})$, is a normal $\bvec{y}^* \sim
-\mathcal{N}(\bvec{\mu}^*,\,K^*)$ with mean
+    \mathcal{N}(\bvec{\mu}^*,\,K^*)$ with mean
 \begin{eqnarray}\eqlabel{pred-mean}
-\bvec{\mu}^* &=& \bvec{\mu}_\bvec{\theta}(\bvec{t}^*) +
+    \bvec{\mu}^* &=& \bvec{\mu}_\bvec{\theta}(\bvec{t}^*) +
     K(\bvec{t}^*,\,\bvec{t})\,{K(\bvec{t},\,\bvec{t})}^{-1}\,\left[\bvec{y} -
-    \bvec{\mu}_\bvec{\theta}(\bvec{t})\right]
+        \bvec{\mu}_\bvec{\theta}(\bvec{t})\right]
 \end{eqnarray}
 and covariance
 \begin{eqnarray}
-K^* &=& K(\bvec{t}^*,\,\bvec{t}^*) -
+    K^* &=& K(\bvec{t}^*,\,\bvec{t}^*) -
     K(\bvec{t}^*,\,\bvec{t})\,{K(\bvec{t},\,\bvec{t})}^{-1}\,
     K(\bvec{t},\,\bvec{t}^*)
 \end{eqnarray}
@@ -2315,38 +2315,38 @@ Na\"ively, the computational cost of computing \eq{pred-mean} for a
 \celeriteterm\ model scales as $\mathcal{O}(N\,M)$ if we reuse the Cholesky
 factor derived in \sect{cholesky}.
 It is, however, possible to improve this scaling to $\mathcal{O}(n\,N +
-m\,M)$ where $n$ and $m$ are integer constants.
+    m\,M)$ where $n$ and $m$ are integer constants.
 To derive this, we expand \eq{pred-mean} using \eq{celerite-kernel}
 \begin{eqnarray}
-\mu^*_m &=& K(t^*_m,\bvec{t}) \bvec{z} \\
+    \mu^*_m &=& K(t^*_m,\bvec{t}) \bvec{z} \\
     &=& \sum_{n=1}^N \sum_{j=1}^J e^{-c_j \vert t^*_m-t_n\vert}\,\left[
         a_j\,\cos{(d_j\,\vert t^*_m-t_n\vert)} +
         b_j\,\sin{(d_j\,\vert t^*_m-t_n\vert)}
-    \right] \,z_{n} \quad. \nonumber
+        \right] \,z_{n} \quad. \nonumber
 \end{eqnarray}
 where
 \begin{eqnarray}
-\bvec{z} = {K(\bvec{t},\,\bvec{t})}^{-1}\,\left[\bvec{y} -
-    \bvec{\mu}_\bvec{\theta}(\bvec{t})\right] \quad.
+    \bvec{z} = {K(\bvec{t},\,\bvec{t})}^{-1}\,\left[\bvec{y} -
+        \bvec{\mu}_\bvec{\theta}(\bvec{t})\right] \quad.
 \end{eqnarray}
 Dividing the sum over $n$ into $\{t_1,...,t_{n_0}\} < t^*_m$ and
 $\{t_{n0+1},...,t_N\} \ge t^*_m$, gives
 \begin{eqnarray}
-\mu^*_m &=& \sum_{j=1}^J\sum_{n=1}^{n_0}
+    \mu^*_m &=& \sum_{j=1}^J\sum_{n=1}^{n_0}
     e^{-c_j\,(t^*_m-t_n)}\,\left[a_j\,\cos{(d_j\,(t^*_m-t_n))}
         +b_j\,\sin{(d_j\,(t^*_m-t_n))}\right]\,z_n \\
-&+& \sum_{j=1}^J\sum_{n=n_0+1}^N  e^{-c_j\,(t_n-t^*_m)}\,\left[
-    a_j\,\cos{(d_j\,(t_n-t^*_m))}+b_j\,\sin{(d_j\,(t_n-t^*_m))}\right]\,z_n
-\quad. \nonumber
+    &+& \sum_{j=1}^J\sum_{n=n_0+1}^N  e^{-c_j\,(t_n-t^*_m)}\,\left[
+        a_j\,\cos{(d_j\,(t_n-t^*_m))}+b_j\,\sin{(d_j\,(t_n-t^*_m))}\right]\,z_n
+    \quad. \nonumber
 \end{eqnarray}
 We compute this using two passes, a forward pass $n_0 = 1,\,\ldots,\,N$ and
 a backward pass $n_0 = N,\,\ldots,\,1$.
 Defining
 \begin{eqnarray}
-Q^-_{n,k} &=& \left[Q^-_{n-1,k}+z_n\,\tilde V_{n,k}\right]\,e^{-c_{k//2}\,(t_{n+1}-t_{n})},\\
-X^-_{m,n,k} &=& e^{-c_{k//2}\,(t_m^*-t_{n+1})}\,\tilde U_{m,k}^*,\\
-Q^+_{n,k} &=& \left[Q^+_{n+1,k}+z_n\,\tilde U_{n,k}\right]\,e^{-c_{k//2}(t_{n}-t_{n-1})},\\
-X^+_{m,n,k} &=& e^{-c_{k//2}\,(t_{n-1}-t_m^*)}\,\tilde V_{m,k}^* \quad,
+    Q^-_{n,k} &=& \left[Q^-_{n-1,k}+z_n\,\tilde V_{n,k}\right]\,e^{-c_{k//2}\,(t_{n+1}-t_{n})},\\
+    X^-_{m,n,k} &=& e^{-c_{k//2}\,(t_m^*-t_{n+1})}\,\tilde U_{m,k}^*,\\
+    Q^+_{n,k} &=& \left[Q^+_{n+1,k}+z_n\,\tilde U_{n,k}\right]\,e^{-c_{k//2}(t_{n}-t_{n-1})},\\
+    X^+_{m,n,k} &=& e^{-c_{k//2}\,(t_{n-1}-t_m^*)}\,\tilde V_{m,k}^* \quad,
 \end{eqnarray}
 where $t_0=t_1$, $t_{N+1}=t_N$, $Q^-_{0,k} = 0$ and $Q^+_{N+1,k}=0$ for $k=1$
 to $2\,J$, and in $X^\pm_{m,n,k}$ the expressions
@@ -2354,7 +2354,7 @@ for $\tilde U_{m,i}^*$ and $\tilde V_{m,i}^*$ are evaluated at $t_m^*$.
 For each value of $m$, $Q^\pm$ are recursively updated over $n$ until $n_0$ is
 reached, at which point the predicted mean can be computed from
 \begin{equation}
-\mu^*_m = \sum_{k=1}^{2\,J}
+    \mu^*_m = \sum_{k=1}^{2\,J}
     \left[Q^-_{n_0,k}X^-_{m,n_0,k}+Q^+_{n_0+1,k}X^+_{m,n_0+1,k}\right] \quad.
 \end{equation}
 }
