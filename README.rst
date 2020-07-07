@@ -5,7 +5,7 @@ Read the documentation at: `celerite.rtfd.io <http://celerite.readthedocs.io>`_.
 .. image:: https://img.shields.io/badge/GitHub-dfm%2Fcelerite-blue.svg?style=flat
     :target: https://github.com/dfm/celerite
 .. image:: http://img.shields.io/badge/license-MIT-blue.svg?style=flat&bust
-    :target: https://github.com/dfm/celerite/blob/master/LICENSE
+    :target: https://github.com/dfm/celerite/blob/main/LICENSE
 .. image:: http://img.shields.io/travis/dfm/celerite/main.svg?style=flat
     :target: https://travis-ci.org/dfm/celerite
 .. image:: https://readthedocs.org/projects/celerite/badge/?version=latest&style=flat&bust=truer
@@ -13,7 +13,7 @@ Read the documentation at: `celerite.rtfd.io <http://celerite.readthedocs.io>`_.
 .. image:: https://zenodo.org/badge/DOI/10.5281/zenodo.806847.svg?style=flat
    :target: https://doi.org/10.5281/zenodo.806847
 .. image:: https://img.shields.io/badge/PDF-latest-orange.svg?style=flat
-    :target: https://github.com/dfm/celerite/blob/master-pdf/paper/ms.pdf
+    :target: https://github.com/dfm/celerite/blob/main-pdf/paper/ms.pdf
 .. image:: https://img.shields.io/badge/ArXiv-1703.09710-orange.svg?style=flat
     :target: https://arxiv.org/abs/1703.09710
 

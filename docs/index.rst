@@ -40,11 +40,9 @@ celerite is being actively developed in `a public repository on GitHub
 .. image:: https://img.shields.io/badge/GitHub-dfm%2Fcelerite-blue.svg?style=flat
     :target: https://github.com/dfm/celerite
 .. image:: http://img.shields.io/badge/license-MIT-blue.svg?style=flat
-    :target: https://github.com/dfm/celerite/blob/master/LICENSE
-.. image:: http://img.shields.io/travis/dfm/celerite/master.svg?style=flat
+    :target: https://github.com/dfm/celerite/blob/main/LICENSE
+.. image:: http://img.shields.io/travis/dfm/celerite/main.svg?style=flat
     :target: https://travis-ci.org/dfm/celerite
-.. image:: https://ci.appveyor.com/api/projects/status/74al24yklrlrvwni?svg=true&style=flat
-    :target: https://ci.appveyor.com/project/dfm/celerite
 
 .. raw:: html
 
@@ -105,7 +103,7 @@ Contributors
 License & Attribution
 ---------------------
 
-Copyright 2016, 2017, Daniel Foreman-Mackey, Eric Agol and contributors.
+Copyright 2016-2020 Daniel Foreman-Mackey, Eric Agol and contributors.
 
 The source code is made available under the terms of the MIT license.
 
