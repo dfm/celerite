@@ -8,4 +8,5 @@ dependencies:
   - numpy
   - pybind11
   - pip:
-      - https://github.com/arximboldi/breathe/zipball/2af44a0d9f40e672dd1989b67d0e90a61deba77e
+      - breathe
+        # - https://github.com/arximboldi/breathe/zipball/2af44a0d9f40e672dd1989b67d0e90a61deba77e
