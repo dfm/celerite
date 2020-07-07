@@ -1,5 +1,11 @@
 .. :changelog:
 
+0.4.0 (2020-07-07)
+++++++++++++++++++
+
+- Maintenance release to keep dependencies up to date.
+- Building binary wheels for PyPI using Github Actions.
+
 0.3.0 (2017-11-13)
 ++++++++++++++++++
 

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-__version__ = "0.3.1"
+__version__ = "0.4.0"
 __bibtex__ = """
 @article{celerite,
     author = {{Foreman-Mackey}, D. and {Agol}, E. and {Angus}, R. and
@@ -23,11 +23,16 @@ except NameError:
 
 if not __CELERITE_SETUP__:
     __all__ = [
-        "terms", "solver", "modeling", "GP", "CholeskySolver",
+        "terms",
+        "solver",
+        "modeling",
+        "GP",
+        "CholeskySolver",
         "__library_version__",
     ]
 
     from . import terms, solver, modeling
     from .celerite import GP
     from .solver import CholeskySolver
+
     __library_version__ = solver.get_library_version()
