@@ -1,84 +1,83 @@
 sudo: false
 language: c
 addons:
-    apt:
-        sources:
-            - ubuntu-toolchain-r-test
-        packages:
-            - gcc-4.8
-            - g++-4.8
-            - cmake
+  apt:
+    sources:
+      - ubuntu-toolchain-r-test
+    packages:
+      - gcc-4.8
+      - g++-4.8
+      - cmake
 
 env:
-    global:
-        - EIGEN_VERSION=3.2.9
-          TEST_LANG='python'
-          AUTOGRAD=autograd
-          AUTODIFF_LIBRARY=eigen
+  global:
+    - EIGEN_VERSION=3.2.9
+      TEST_LANG='python'
+      AUTOGRAD=autograd
+      AUTODIFF_LIBRARY=eigen
 
 matrix:
-    include:
+  include:
+    # This build will compile the LaTeX source of the paper
+    - os: linux
+      env: TEST_LANG='paper'
 
-        # This build will compile the LaTeX source of the paper
-        - os: linux
-          env: TEST_LANG='paper'
+    # This one will test the C++ API
+    - os: linux
+      env: TEST_LANG='cpp' CXX=g++-4.8 CC=gcc-4.8
 
-        # This one will test the C++ API
-        - os: linux
-          env: TEST_LANG='cpp' CXX=g++-4.8 CC=gcc-4.8
+    # Linux, Python 2.7
+    - os: linux
+      env: PYTHON_VERSION=2.7 NUMPY_VERSION=1.10
+    - os: linux
+      env: PYTHON_VERSION=2.7 NUMPY_VERSION=1.11
+    - os: linux
+      env: PYTHON_VERSION=2.7 NUMPY_VERSION=1.12
 
-        # Linux, Python 2.7
-        - os: linux
-          env: PYTHON_VERSION=2.7 NUMPY_VERSION=1.10
-        - os: linux
-          env: PYTHON_VERSION=2.7 NUMPY_VERSION=1.11
-        - os: linux
-          env: PYTHON_VERSION=2.7 NUMPY_VERSION=1.12
+    # Linux, Python 3.5
+    - os: linux
+      env: PYTHON_VERSION=3.5 NUMPY_VERSION=1.12
 
-        # Linux, Python 3.5
-        - os: linux
-          env: PYTHON_VERSION=3.5 NUMPY_VERSION=1.12
+    # Linux, Python 3.6
+    - os: linux
+      env: PYTHON_VERSION=3.6 NUMPY_VERSION=1.13
 
-        # Linux, Python 3.6
-        - os: linux
-          env: PYTHON_VERSION=3.6 NUMPY_VERSION=1.13
+    # Linux, Python 3.7
+    - os: linux
+      env: PYTHON_VERSION=3.7 NUMPY_VERSION=1.11
+    - os: linux
+      env: PYTHON_VERSION=3.7 NUMPY_VERSION=1.16
+    - os: linux
+      env: PYTHON_VERSION=3.7 NUMPY_VERSION=1.12 AUTOGRAD=''
+    - os: linux
+      env: PYTHON_VERSION=3.7 NUMPY_VERSION=1.12 AUTODIFF_LIBRARY=stan
 
-        # Linux, Python 3.7
-        - os: linux
-          env: PYTHON_VERSION=3.7 NUMPY_VERSION=1.11
-        - os: linux
-          env: PYTHON_VERSION=3.7 NUMPY_VERSION=1.16
-        - os: linux
-          env: PYTHON_VERSION=3.7 NUMPY_VERSION=1.12 AUTOGRAD=''
-        - os: linux
-          env: PYTHON_VERSION=3.7 NUMPY_VERSION=1.12 AUTODIFF_LIBRARY=stan
-
-        # OSX
-        - os: osx
-          env: PYTHON_VERSION=2.7 NUMPY_VERSION=1.16
-        - os: osx
-          env: PYTHON_VERSION=3.6 NUMPY_VERSION=1.16
-        - os: osx
-          env: PYTHON_VERSION=3.7 NUMPY_VERSION=1.16
+    # OSX
+    - os: osx
+      env: PYTHON_VERSION=2.7 NUMPY_VERSION=1.16
+    - os: osx
+      env: PYTHON_VERSION=3.6 NUMPY_VERSION=1.16
+    - os: osx
+      env: PYTHON_VERSION=3.7 NUMPY_VERSION=1.16
 
 install:
-    - source .ci/travis.sh
+  - source .ci/travis.sh
 
 script: |
-    if [[ $TEST_LANG == paper ]]
-    then
-      source .ci/build-paper.sh
-    elif [[ $TEST_LANG == cpp ]]
-    then
-      cd cpp
-      CTEST_OUTPUT_ON_FAILURE=1 make test
-    elif [[ $TEST_LANG == python ]]
-    then
-      py.test -v --cov celerite
-    fi
+  if [[ $TEST_LANG == paper ]]
+  then
+    source .ci/build-paper.sh
+  elif [[ $TEST_LANG == cpp ]]
+  then
+    cd cpp
+    CTEST_OUTPUT_ON_FAILURE=1 make test
+  elif [[ $TEST_LANG == python ]]
+  then
+    pytest -v --cov celerite
+  fi
 
 after_success: |
-    if [[ $TEST_LANG == python ]]
-    then
-      coveralls
-    fi
+  if [[ $TEST_LANG == python ]]
+  then
+    coveralls
+  fi
