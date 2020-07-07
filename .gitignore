@@ -10,3 +10,4 @@ build
 .clang
 paper/referee.pdf
 .DS_Store
+stan

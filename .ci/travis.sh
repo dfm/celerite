@@ -1,5 +1,7 @@
 #!/bin/bash -x
 
+set -e
+
 # If building the paper, do that here
 if [[ $TEST_LANG == paper ]]
 then
@@ -57,17 +59,20 @@ if [[ $AUTODIFF_LIBRARY == stan ]]
 then
   mkdir -p stan
   cd stan
-  wget "https://github.com/stan-dev/math/archive/v2.15.0.tar.gz"
+  wget --quiet "https://github.com/stan-dev/math/archive/v2.15.0.tar.gz"
   tar -xf v2.15.0.tar.gz --strip-components 1
   cd ..
 
-  CXX=g++-4.8 CC=gcc-4.8 python setup.py build_ext "-Istan/stan -Istan/lib/boost_1.62.0 -Istan/lib/cvodes_2.9.0/include -DUSE_STAN_MATH" install
+  # CXX=g++-4.8 CC=gcc-4.8 python setup.py build_ext "-Istan/stan -Istan/lib/boost_1.62.0 -Istan/lib/cvodes_2.9.0/include -DUSE_STAN_MATH" install
+  CFLAGS="-Istan -Istan/lib/boost_1.62.0 -Istan/lib/cvodes_2.9.0/include -DUSE_STAN_MATH" python -m pip install -e .
   return
 fi
 
 # Build the extension
-if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
-  python setup.py develop
-else
-  CXX=g++-4.8 CC=gcc-4.8 python setup.py build_ext $BUILD_ARGS develop
-fi
+# if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
+#   python setup.py develop
+# else
+#   CXX=g++-4.8 CC=gcc-4.8 python setup.py build_ext $BUILD_ARGS develop
+# fi
+
+python -m pip install -e .
