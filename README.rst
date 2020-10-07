@@ -1,3 +1,6 @@
+**This project has been superseded by** `celerite2 <https://github.com/exoplanet-dev/celerite2>`_.
+**This project will continue to be maintained at a basic level, but no new features will be added and I have limited capacity so you're encouraged to check out the new version.**
+
 **celerite**: Scalable 1D Gaussian Processes in C++, Python, and Julia
 
 Read the documentation at: `celerite.rtfd.io <http://celerite.readthedocs.io>`_.
