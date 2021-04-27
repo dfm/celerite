@@ -5,6 +5,7 @@ import os
 import sys
 
 from setuptools import setup, Extension
+from pybind11.setup_helpers import Pybind11Extension, build_ext
 
 # Publish the library to PyPI.
 if "publish" in sys.argv[-1]:
@@ -12,35 +13,38 @@ if "publish" in sys.argv[-1]:
     sys.exit()
 
 # Default compile arguments.
-ext = Extension("celerite.solver",
-                sources=[os.path.join("celerite", "solver.cpp")],
-                language="c++")
-
-# Hackishly inject a constant into builtins to enable importing of the
-# package before the library is built.
-if sys.version_info[0] < 3:
-    import __builtin__ as builtins
-else:
-    import builtins
-builtins.__CELERITE_SETUP__ = True
-import celerite  # NOQA
-from celerite.build import build_ext  # NOQA
+ext = Pybind11Extension(
+    "celerite.solver",
+    sources=["celerite/solver.cpp"],
+    language="c++",
+    include_dirs=["cpp/include", "cpp/lib/eigen_3.3.3"],
+)
 
 setup(
     name="celerite",
-    version=celerite.__version__,
+    use_scm_version={
+        "write_to": os.path.join("celerite/celerite_version.py"),
+        "write_to_template": '__version__ = "{version}"\n',
+    },
     author="Daniel Foreman-Mackey",
     author_email="foreman.mackey@gmail.com",
     url="https://github.com/dfm/celerite",
     license="MIT",
     packages=["celerite"],
-    setup_requires=["numpy", "pybind11"],
-    install_requires=["numpy", "pybind11"],
+    install_requires=["numpy"],
+    extras_require={
+        "test": [
+            "coverage[toml]",
+            "pytest",
+            "pytest-cov",
+        ]
+    },
     ext_modules=[ext],
     description="Scalable 1D Gaussian Processes",
     long_description=open("README.rst").read(),
     package_data={"": ["README.rst", "LICENSE", "CITATION"]},
     include_package_data=True,
+    python_requires=">=3.6",
     cmdclass=dict(build_ext=build_ext),
     classifiers=[
         "Development Status :: 5 - Production/Stable",

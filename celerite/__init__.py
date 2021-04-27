@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
-__version__ = "0.4.0"
+from .celerite_version import __version__
+
 __bibtex__ = """
 @article{celerite,
     author = {{Foreman-Mackey}, D. and {Agol}, E. and {Angus}, R. and
@@ -16,23 +17,17 @@ __bibtex__ = """
 }
 """
 
-try:
-    __CELERITE_SETUP__
-except NameError:
-    __CELERITE_SETUP__ = False
+__all__ = [
+    "terms",
+    "solver",
+    "modeling",
+    "GP",
+    "CholeskySolver",
+    "__library_version__",
+]
 
-if not __CELERITE_SETUP__:
-    __all__ = [
-        "terms",
-        "solver",
-        "modeling",
-        "GP",
-        "CholeskySolver",
-        "__library_version__",
-    ]
+from . import terms, solver, modeling
+from .celerite import GP
+from .solver import CholeskySolver
 
-    from . import terms, solver, modeling
-    from .celerite import GP
-    from .solver import CholeskySolver
-
-    __library_version__ = solver.get_library_version()
+__library_version__ = solver.get_library_version()

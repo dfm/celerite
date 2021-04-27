@@ -11,3 +11,4 @@ build
 paper/referee.pdf
 .DS_Store
 stan
+celerite/celerite_version.py
