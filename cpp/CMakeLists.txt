@@ -33,7 +33,7 @@ enable_testing()
 
 # Includes.
 include_directories(include)
-include_directories(lib/eigen_3.3.3)
+include_directories(lib/eigen)
 
 # Some tweaks for speed.
 #add_definitions(-DNDEBUG)

@@ -17,7 +17,7 @@ ext = Pybind11Extension(
     "celerite.solver",
     sources=["celerite/solver.cpp"],
     language="c++",
-    include_dirs=["cpp/include", "cpp/lib/eigen_3.3.3"],
+    include_dirs=["cpp/include", "cpp/lib/eigen"],
 )
 
 setup(
