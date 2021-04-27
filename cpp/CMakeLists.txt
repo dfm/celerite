@@ -1,42 +1,45 @@
-# Much of this is inspired by the CMake scripts from the BSD licensed
-# ceres-solver: https://github.com/ceres-solver/ceres-solver
+cmake_minimum_required(VERSION 3.5)
 
-cmake_minimum_required(VERSION 2.8.0)
-project(celerite C CXX)
-
-# Make CMake aware of the cmake folder for local FindXXX scripts,
-# append rather than set in case the user has passed their own
-# additional paths via -D.
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
-
-# On OS X, add the Homebrew prefix to the set of prefixes searched by
-# CMake in find_path & find_library.  This should ensure that we can
-# still build even if Homebrew is installed in a non-standard
-# location (not /usr/local).
-if (CMAKE_SYSTEM_NAME MATCHES "Darwin")
-  find_program(HOMEBREW_EXECUTABLE brew)
-  mark_as_advanced(FORCE HOMEBREW_EXECUTABLE)
-  if (HOMEBREW_EXECUTABLE)
-    # Detected a Homebrew install, query for its install prefix.
-    execute_process(COMMAND ${HOMEBREW_EXECUTABLE} --prefix
-      OUTPUT_VARIABLE HOMEBREW_INSTALL_PREFIX
-      OUTPUT_STRIP_TRAILING_WHITESPACE)
-    message(STATUS "Detected Homebrew with install prefix: "
-      "${HOMEBREW_INSTALL_PREFIX}, adding to CMake search paths.")
-    list(APPEND CMAKE_PREFIX_PATH "${HOMEBREW_INSTALL_PREFIX}")
-  endif()
+# Don't build in-tree
+if (CMAKE_BINARY_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
+    message(FATAL_ERROR "Building in-source is not supported! Create a build dir and remove ${CMAKE_SOURCE_DIR}/CMakeCache.txt")
 endif()
 
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+project(Celerite VERSION 0.1.0 LANGUAGES CXX)
+include(GNUInstallDirs)
+set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
-enable_testing()
+# Get the git hash & print status
+execute_process(COMMAND git rev-parse HEAD WORKING_DIRECTORY ${PROJECT_SOURCE_DIR} OUTPUT_VARIABLE PROJECT_GIT_HASH OUTPUT_STRIP_TRAILING_WHITESPACE)
+message(STATUS "${PROJECT_NAME} version : ${PROJECT_VERSION}")
+message(STATUS "${PROJECT_NAME} Git hash: ${PROJECT_GIT_HASH}")
 
-# Includes.
-include_directories(include)
-include_directories(lib/eigen_3.3.3)
+# Assert that Install directory is given and invalid.
+message(STATUS "CMAKE_INSTALL_PREFIX: ${CMAKE_INSTALL_PREFIX}")
 
-# Some tweaks for speed.
-#add_definitions(-DNDEBUG)
+# Default to Release build type
+if(NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE Release CACHE STRING "Type of build" FORCE)
+endif()
+message(STATUS "Build-type: ${CMAKE_BUILD_TYPE}")
 
-# Build the examples.
-add_subdirectory(src)
+# Export the list of compile-commands into compile_commands.json
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
+include_directories(${CMAKE_CURRENT_LIST_DIR}/include)
+include_directories(${CMAKE_CURRENT_LIST_DIR}/lib/eigen)
+
+# Install the headers
+install(
+  DIRECTORY
+    "include/"
+  DESTINATION
+    "${CMAKE_INSTALL_INCLUDEDIR}"
+)
+
+# Tests
+option(Build_Tests "Build tests" ON)
+if(Build_Tests)
+  enable_testing()
+  add_subdirectory(src)
+endif()

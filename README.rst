@@ -9,8 +9,8 @@ Read the documentation at: `celerite.rtfd.io <http://celerite.readthedocs.io>`_.
     :target: https://github.com/dfm/celerite
 .. image:: http://img.shields.io/badge/license-MIT-blue.svg?style=flat&bust
     :target: https://github.com/dfm/celerite/blob/main/LICENSE
-.. image:: http://img.shields.io/travis/dfm/celerite/main.svg?style=flat
-    :target: https://travis-ci.org/dfm/celerite
+.. image:: https://github.com/dfm/celerite/actions/workflows/python.yml/badge.svg
+    :target: https://github.com/dfm/celerite/actions/workflows/python.yml
 .. image:: https://readthedocs.org/projects/celerite/badge/?version=latest&style=flat&bust=truer
     :target: http://celerite.readthedocs.io/en/latest/?badge=latest
 .. image:: https://zenodo.org/badge/DOI/10.5281/zenodo.806847.svg?style=flat
