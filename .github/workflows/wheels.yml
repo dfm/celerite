@@ -1,6 +1,5 @@
 name: Wheels
 on:
-  pull_request:
   release:
     types: [published]
 
