@@ -22,7 +22,8 @@ jobs:
         run: |
           mkdir -p cpp/build
           cd cpp/build
-          cmake --build .. --parallel 2
+          cmake -DCMAKE_BUILD_TYPE=Debug ..
+          cmake --build . --parallel 2
       - name: Run tests
         run: |
           cd cpp/build
