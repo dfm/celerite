@@ -123,10 +123,15 @@ def test_quiet():
 
     # Quiet is accepted as kwarg without raising error
     terms.RealTerm(log_a=0.1, log_c=0.5, quiet=True)
+    terms.RealTerm(0.1, 0.5, quiet=True)  # Same as above but with args
 
     # Complex with log_a+log_c < log_b+log_d properly fails when quiet=False
     with pytest.raises(ValueError):
         terms.ComplexTerm(log_a=1.0, log_b=10.0, log_c=1.0, log_d=1.0)
+    with pytest.raises(ValueError):
+        terms.ComplexTerm(
+            log_a=1.0, log_b=10.0, log_c=1.0, log_d=1.0, quiet=False
+        )
 
     # quiet=True makes the above raise no error
     terms.ComplexTerm(
