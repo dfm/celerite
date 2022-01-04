@@ -65,6 +65,9 @@ class Model(object):
             raise ValueError("the bounds for each parameter must have the "
                              "format: '(min, max)'")
 
+        # Deal with "quiet" kwarg
+        quiet = kwargs.pop("quiet", False)
+
         # Parameter values can be specified as arguments or keywords
         if len(args):
             if len(args) != self.full_size:
@@ -90,7 +93,6 @@ class Model(object):
                                  .format(list(kwargs.keys())))
 
         # Check the initial prior value
-        quiet = kwargs.get("quiet", False)
         if not quiet and not np.isfinite(self.log_prior()):
             raise ValueError("non-finite log prior value")
 

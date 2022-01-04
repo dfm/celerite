@@ -117,3 +117,18 @@ def test_jitter_jacobian(k, eps=1.34e-7):
         jac0[i] = 0.5 * jitter / eps
         v[i] = pval
     assert np.allclose(jac, jac0)
+
+
+def test_quiet():
+
+    # Quiet is accepted as kwarg without raising error
+    terms.RealTerm(log_a=0.1, log_c=0.5, quiet=True)
+
+    # Complex with log_a+log_c < log_b+log_d properly fails when quiet=False
+    with pytest.raises(ValueError):
+        terms.ComplexTerm(log_a=1.0, log_b=10.0, log_c=1.0, log_d=1.0)
+
+    # quiet=True makes the above raise no error
+    terms.ComplexTerm(
+        log_a=1.0, log_b=10.0, log_c=1.0, log_d=1.0, quiet=True
+    )
