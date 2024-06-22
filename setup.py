@@ -44,7 +44,7 @@ setup(
     long_description=open("README.rst").read(),
     package_data={"": ["README.rst", "LICENSE", "CITATION"]},
     include_package_data=True,
-    python_requires=">=3.6",
+    python_requires=">=3.9",
     cmdclass=dict(build_ext=build_ext),
     classifiers=[
         "Development Status :: 5 - Production/Stable",
