@@ -34,7 +34,6 @@ setup(
     install_requires=["numpy"],
     extras_require={
         "test": [
-            "autograd",
             "coverage[toml]",
             "pytest",
             "pytest-cov",
